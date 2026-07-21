@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       <body>
         <main className="min-h-screen px-4 py-12">
           <ErrorState
-            title="Sistem xetasi"
+            title="Sistem xətası"
             description={error.message}
             actionLabel="Yeniden cehd et"
             onAction={reset}

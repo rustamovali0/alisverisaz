@@ -1,7 +1,7 @@
 "use client";
 
 import { ImagePlus, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,21 @@ type ImageDropzoneProps = {
   onFilesChange: (files: File[]) => void;
   disabled?: boolean;
 };
+
+function FilePreview({ file, alt }: { file: File; alt: string }) {
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    const nextUrl = URL.createObjectURL(file);
+    setUrl(nextUrl);
+
+    return () => URL.revokeObjectURL(nextUrl);
+  }, [file]);
+
+  return url ? (
+    <img src={url} alt={alt} className="h-full w-full object-cover" />
+  ) : null;
+}
 
 function loadImage(file: File) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -136,26 +151,58 @@ export function ImageDropzone({
         }}
       />
       {files.length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {files.map((file, index) => (
-            <div
-              key={`${file.name}-${index}`}
-              className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-sm"
-            >
-              <span className="truncate">{file.name}</span>
+        <div className="grid gap-3">
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <div className="relative aspect-[16/9] bg-muted">
+              <FilePreview file={files[0]} alt="Əsas şəkil" />
+              <span className="absolute left-3 top-3 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
+                Əsas şəkil
+              </span>
               <Button
                 type="button"
-                variant="ghost"
+                variant="secondary"
                 size="icon"
-                onClick={() => {
-                  onFilesChange(files.filter((_, fileIndex) => fileIndex !== index));
-                }}
-                aria-label="Şəkli sil"
+                className="absolute right-3 top-3"
+                onClick={() => onFilesChange(files.slice(1))}
+                aria-label="Əsas şəkli sil"
               >
                 <X className="size-4" aria-hidden="true" />
               </Button>
             </div>
-          ))}
+            <p className="truncate px-3 py-2 text-sm text-muted-foreground">
+              {files[0].name}
+            </p>
+          </div>
+          {files.length > 1 ? (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {files.slice(1).map((file, index) => {
+                const realIndex = index + 1;
+
+                return (
+                  <div
+                    key={`${file.name}-${realIndex}`}
+                    className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
+                  >
+                    <FilePreview file={file} alt={`${realIndex + 1}. şəkil`} />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      className="absolute right-1 top-1 size-7 opacity-90"
+                      onClick={() => {
+                        onFilesChange(
+                          files.filter((_, fileIndex) => fileIndex !== realIndex),
+                        );
+                      }}
+                      aria-label="Şəkli sil"
+                    >
+                      <X className="size-3" aria-hidden="true" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

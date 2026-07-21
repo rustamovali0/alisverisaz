@@ -4,6 +4,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { appAlert } from "@/lib/alerts/swal";
 import { createCheckoutOrdersAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
@@ -200,11 +201,7 @@ export function CartCheckout({
             </label>
             <label className="grid gap-2 text-sm font-medium">
               Telefon
-              <input
-                name="phone"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
-              />
+              <PhoneInput name="phone" required />
             </label>
             <label className="grid gap-2 text-sm font-medium">
               Ünvan

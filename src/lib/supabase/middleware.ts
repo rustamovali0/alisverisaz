@@ -8,7 +8,7 @@ import { clientEnv } from "@/lib/config/env.client";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
-const authRoutes = ["/admin", "/login", "/register", "/radmin/login"];
+const authRoutes = ["/login", "/radmin/login"];
 type CookiesToSet = Array<{
   name: string;
   value: string;
@@ -19,10 +19,6 @@ const protectedRoutes: Array<{
   prefix: string;
   roles: AuthRole[];
 }> = [
-  {
-    prefix: "/cart",
-    roles: ["customer"],
-  },
   {
     prefix: "/radmin",
     roles: ["admin"],

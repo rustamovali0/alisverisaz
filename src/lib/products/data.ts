@@ -81,15 +81,21 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
   };
 }
 
-export async function getCategoryOptions() {
+export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
   const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
+  let query = (supabase as any)
     .from("categories")
-    .select("id,name,slug")
+    .select("id,name,slug,parent_id")
     .eq("is_active", true)
     .order("sort_order", {
       ascending: true,
     });
+
+  if (options?.rootOnly) {
+    query = query.is("parent_id", null);
+  }
+
+  const { data } = await query;
 
   return (data ?? []) as CategoryOption[];
 }

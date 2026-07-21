@@ -4,6 +4,7 @@ import { ImagePlus, Instagram, MessageCircle, Music2, X } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSiteSettingsAction } from "@/lib/cms/actions";
 import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/swal";
@@ -244,8 +245,14 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
           name="contactEmail"
           defaultValue={settings.contactEmail}
         />
-        <Field label="Telefon" name="phone" defaultValue={settings.phone} />
-        <Field label="WhatsApp" name="whatsapp" defaultValue={settings.whatsapp} />
+        <label className="grid gap-2 text-sm font-medium">
+          Telefon
+          <PhoneInput name="phone" defaultValue={settings.phone} />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          WhatsApp
+          <PhoneInput name="whatsapp" defaultValue={settings.whatsapp} />
+        </label>
       </div>
 
       <Field label="Ünvan" name="address" defaultValue={settings.address} />
@@ -302,11 +309,9 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
             <MessageCircle className="size-4" aria-hidden="true" />
             WhatsApp
           </span>
-          <input
+          <PhoneInput
             name="socialWhatsapp"
             defaultValue={settings.socialLinks.whatsapp ?? settings.whatsapp}
-            placeholder="+994..."
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
       </div>

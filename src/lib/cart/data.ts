@@ -23,6 +23,7 @@ type ProductRow = {
   product_images?: Array<{
     url: string;
     is_primary: boolean;
+    sort_order?: number | null;
   }>;
 };
 
@@ -77,10 +78,33 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
   };
 }
 
+function toProductImages(row: ProductRow) {
+  return [...(row.product_images ?? [])]
+    .sort((a, b) => {
+      if (a.is_primary !== b.is_primary) {
+        return a.is_primary ? -1 : 1;
+      }
+
+      return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+    })
+    .map((image) => ({
+      url: image.url,
+      isPrimary: image.is_primary,
+    }));
+}
+
 function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
   const value = settings?.[key];
 
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function normalizeSearchValue(value: string) {
+  return value
+    .toLocaleLowerCase("az-AZ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
 }
 
 export async function getMarketplaceProducts(locale = "az") {
@@ -88,7 +112,7 @@ export async function getMarketplaceProducts(locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary)",
+      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .order("created_at", {
@@ -102,6 +126,7 @@ export async function getMarketplaceProducts(locale = "az") {
 export async function getMarketplaceStores(input: {
   locale?: string;
   categoryId?: string;
+  searchQuery?: string;
   limit?: number;
 } = {}) {
   const supabase = await createSupabaseServerClient();
@@ -123,7 +148,7 @@ export async function getMarketplaceStores(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary)",
+      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .in("store_id", storeIds)
@@ -144,6 +169,8 @@ export async function getMarketplaceStores(input: {
     current.push(product);
     productsByStore.set(product.store_id, current);
   });
+
+  const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
 
   return storeRows
     .map((store): MarketplaceStore => {
@@ -171,7 +198,30 @@ export async function getMarketplaceStores(input: {
         ),
       };
     })
-    .filter((store) => store.productCount > 0);
+    .filter((store) => {
+      if (store.productCount === 0) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const searchableText = [
+        store.name,
+        store.slug,
+        store.description,
+        store.address,
+        ...store.sampleProducts.flatMap((product) => [
+          product.name,
+          product.description,
+        ]),
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return normalizeSearchValue(searchableText).includes(normalizedSearch);
+    });
 }
 
 export async function getMarketplaceStoreBySlug(input: {
@@ -194,7 +244,7 @@ export async function getMarketplaceStoreBySlug(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary)",
+      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("store_id", store.id)
     .eq("status", "active")
@@ -240,7 +290,7 @@ export async function getMarketplaceProductById(input: {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary),stores(id,name,slug,description,logo_url,cover_url,settings)",
+      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,settings)",
     )
     .eq("id", input.productId)
     .eq("status", "active")
@@ -258,6 +308,7 @@ export async function getMarketplaceProductById(input: {
     product: {
       ...toCartProduct(row, input.locale ?? "az"),
       slug: row.slug ?? row.id,
+      images: toProductImages(row),
     },
     store: {
       id: row.stores.id,
@@ -284,7 +335,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary)",
+      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .in("id", productIds);

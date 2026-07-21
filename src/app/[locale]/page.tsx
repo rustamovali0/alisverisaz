@@ -21,7 +21,7 @@ export default async function HomePage({ params }: HomePageProps) {
       getHomepageSections(),
       getActiveHomeTheme(),
       getMarketplaceStores({ locale, limit: 12 }),
-      getCategoryOptions(),
+      getCategoryOptions({ rootOnly: true }),
     ]);
 
   return (

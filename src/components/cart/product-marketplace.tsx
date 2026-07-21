@@ -4,6 +4,7 @@ import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
@@ -16,7 +17,6 @@ import {
   MapPin,
   PackageSearch,
   Phone,
-  Search,
   ShoppingCart,
   Store,
 } from "lucide-react";
@@ -34,6 +34,7 @@ type ProductMarketplaceProps = {
   stores: MarketplaceStore[];
   categories: CategoryOption[];
   selectedCategoryId?: string;
+  searchQuery?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
 };
@@ -66,7 +67,17 @@ function formatMoney(product: CartProduct) {
   }).format(value);
 }
 
-function MarketplaceHeader({ cartLabel }: { cartLabel: string }) {
+function MarketplaceHeader({
+  stores,
+  categories,
+  cartLabel,
+  searchQuery,
+}: {
+  stores: MarketplaceStore[];
+  categories: CategoryOption[];
+  cartLabel: string;
+  searchQuery?: string;
+}) {
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
       <div className="container flex h-16 items-center gap-3">
@@ -76,27 +87,21 @@ function MarketplaceHeader({ cartLabel }: { cartLabel: string }) {
           </span>
           <span className="text-xl font-black tracking-normal">alisveris.az</span>
         </Link>
-        <form action="/products" className="hidden flex-1 md:block" method="get">
-          <label className="relative block">
-            <span className="sr-only">Axtarış</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              className="premium-input h-11 w-full pl-9 pr-3 text-sm"
-              name="q"
-              placeholder="Mağaza, məhsul və kateqoriya axtar"
-              type="search"
-            />
-          </label>
-        </form>
+        <MarketplaceSearch
+          stores={stores}
+          categories={categories}
+          defaultValue={searchQuery}
+          className="hidden flex-1 md:flex"
+        />
         <Button
           asChild
           size="icon"
           variant="ghost"
-          className="size-11 rounded-lg border bg-background"
+          className="size-[52px] rounded-lg border bg-background"
           aria-label="Favorilər"
         >
-          <Link href="/dashboard/favorites">
-            <Heart className="size-6" aria-hidden="true" />
+          <Link href="/favorites">
+            <Heart className="size-7" aria-hidden="true" />
           </Link>
         </Button>
         <Button asChild variant="ghost" className="hidden md:inline-flex">
@@ -107,7 +112,7 @@ function MarketplaceHeader({ cartLabel }: { cartLabel: string }) {
         </Button>
         <Button asChild>
           <Link href="/cart">
-            <ShoppingCart className="mr-2 size-5" aria-hidden="true" />
+            <ShoppingCart className="mr-2 size-6" aria-hidden="true" />
             {cartLabel}
           </Link>
         </Button>
@@ -175,19 +180,21 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
   return (
     <article className="group overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block">
-        <div className="relative h-32 overflow-hidden bg-muted">
-          {store.coverUrl ? (
-            <img
-              src={store.coverUrl}
-              alt={store.name}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <Store className="size-8" aria-hidden="true" />
-            </div>
-          )}
-          <div className="absolute -bottom-7 left-4">
+        <div className="relative bg-muted">
+          <div className="h-32 overflow-hidden">
+            {store.coverUrl ? (
+              <img
+                src={store.coverUrl}
+                alt={store.name}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-muted-foreground">
+                <Store className="size-8" aria-hidden="true" />
+              </div>
+            )}
+          </div>
+          <div className="absolute -bottom-7 left-4 z-10">
             <StoreLogo store={store} className="size-16 shadow-sm" />
           </div>
         </div>
@@ -299,12 +306,18 @@ export function ProductMarketplace({
   stores,
   categories,
   selectedCategoryId,
+  searchQuery,
   footer,
   labels,
 }: ProductMarketplaceProps) {
   return (
     <main className="min-h-screen bg-muted/40">
-      <MarketplaceHeader cartLabel={labels.cart} />
+      <MarketplaceHeader
+        stores={stores}
+        categories={categories}
+        cartLabel={labels.cart}
+        searchQuery={searchQuery}
+      />
       <div className="container py-8">
         <header className="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -356,7 +369,11 @@ export function Storefront({
 }: StorefrontProps) {
   return (
     <main className="min-h-screen bg-muted/40">
-      <MarketplaceHeader cartLabel={labels.cart} />
+      <MarketplaceHeader
+        stores={[store]}
+        categories={categories}
+        cartLabel={labels.cart}
+      />
       <div className="container py-6">
         <nav className="mb-5 text-sm text-muted-foreground">
           <Link href="/products" className="hover:text-primary">

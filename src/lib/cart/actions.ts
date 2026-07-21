@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
 
 const MAX_CHECKOUT_ITEMS = 50;
@@ -131,7 +132,7 @@ export async function createCheckoutOrdersAction(
   });
 
   const fullName = readString(formData, "fullName");
-  const phone = readString(formData, "phone");
+  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
   const address = readString(formData, "address");
   const note = readString(formData, "note");
   const cart = parseCartItems(readString(formData, "items"));

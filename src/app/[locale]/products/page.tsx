@@ -11,6 +11,7 @@ type ProductsPageProps = {
   }>;
   searchParams?: Promise<{
     category?: string;
+    q?: string;
   }>;
 };
 
@@ -39,7 +40,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
   const [categories, siteSettings] = await Promise.all([
-    getCategoryOptions(),
+    getCategoryOptions({ rootOnly: true }),
     getSiteSettings(),
   ]);
   const selectedCategory = categories.find(
@@ -48,6 +49,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const stores = await getMarketplaceStores({
     locale,
     categoryId: selectedCategory?.id,
+    searchQuery: search?.q,
   });
 
   return (
@@ -55,6 +57,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       stores={stores}
       categories={categories}
       selectedCategoryId={selectedCategory?.id}
+      searchQuery={search?.q}
       footer={{
         siteName: siteSettings.shortName || siteSettings.siteName,
         description: siteSettings.defaultMetaDescription,

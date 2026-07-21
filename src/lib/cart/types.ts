@@ -13,6 +13,11 @@ export type CartProduct = {
   depositAmount: number;
 };
 
+export type ProductImage = {
+  url: string;
+  isPrimary: boolean;
+};
+
 export type MarketplaceStore = {
   id: string;
   name: string;
@@ -30,6 +35,7 @@ export type MarketplaceStore = {
 export type MarketplaceProductDetail = {
   product: CartProduct & {
     slug: string;
+    images: ProductImage[];
   };
   store: MarketplaceStore;
 };

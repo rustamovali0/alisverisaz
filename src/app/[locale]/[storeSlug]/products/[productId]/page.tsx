@@ -7,6 +7,10 @@ import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
+import {
+  ProductBackButton,
+  ProductDetailGallery,
+} from "@/components/products/product-detail-gallery";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -90,33 +94,28 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     <main className="min-h-screen bg-muted/40">
       <div className="container py-8">
         <nav className="mb-5 text-sm text-muted-foreground">
-          <Link href="/products" className="hover:text-primary">
-            Mağazalar
-          </Link>
-          <span className="mx-2">·</span>
-          <Link href={`/${detail.store.slug}`} className="hover:text-primary">
-            {detail.store.name}
-          </Link>
-          <span className="mx-2">·</span>
-          <span className="font-medium text-foreground">{detail.product.name}</span>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <Link href="/products" className="hover:text-primary">
+                Mağazalar
+              </Link>
+              <span className="mx-2">·</span>
+              <Link href={`/${detail.store.slug}`} className="hover:text-primary">
+                {detail.store.name}
+              </Link>
+              <span className="mx-2">·</span>
+              <span className="font-medium text-foreground">{detail.product.name}</span>
+            </div>
+            <ProductBackButton />
+          </div>
         </nav>
 
         <section className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="overflow-hidden rounded-lg border bg-card">
-            <div className="aspect-square bg-muted">
-              {detail.product.imageUrl ? (
-                <img
-                  src={detail.product.imageUrl}
-                  alt={detail.product.name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="grid h-full place-items-center text-muted-foreground">
-                  Şəkil yoxdur
-                </div>
-              )}
-            </div>
-          </div>
+          <ProductDetailGallery
+            images={detail.product.images}
+            fallbackImageUrl={detail.product.imageUrl}
+            productName={detail.product.name}
+          />
           <div className="rounded-lg border bg-card p-5 shadow-sm">
             <p className="text-sm text-muted-foreground">{detail.store.name}</p>
             <h1 className="mt-2 text-3xl font-black tracking-normal">
@@ -158,9 +157,32 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <BuyNowButton product={detail.product} />
               <AddToCartButton product={detail.product} />
             </div>
-            <Button asChild variant="outline" className="mt-4">
-              <Link href={`/${detail.store.slug}`}>Mağazaya qayıt</Link>
-            </Button>
+            <div className="mt-5 rounded-lg border bg-background p-4">
+              <div className="flex items-center gap-3">
+                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
+                  {detail.store.logoUrl ? (
+                    <img
+                      src={detail.store.logoUrl}
+                      alt={detail.store.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg font-black text-muted-foreground">
+                      {detail.store.name.slice(0, 1)}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">Mağaza</p>
+                  <h2 className="truncate text-base font-black tracking-normal">
+                    {detail.store.name}
+                  </h2>
+                </div>
+              </div>
+              <Button asChild variant="outline" className="mt-4 w-full">
+                <Link href={`/${detail.store.slug}`}>Mağazaya keç</Link>
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -178,7 +200,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <div className="mt-6 space-y-3">
               {messages.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Bu məhsula hələ mesaj yazılmayıb.
+                  Mesaj tarixçəniz yoxdur.
                 </p>
               ) : (
                 messages.map((item) => (

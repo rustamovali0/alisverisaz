@@ -1,5 +1,4 @@
 import { CartCheckout } from "@/components/cart/cart-checkout";
-import { requireRole } from "@/lib/auth/session";
 import { getMarketplaceProducts } from "@/lib/cart/data";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +11,7 @@ type CartPageProps = {
 
 export default async function CartPage({ params }: CartPageProps) {
   const { locale } = await params;
-  const current = await requireRole(["customer"], "/cart");
   const products = await getMarketplaceProducts(locale);
 
-  return (
-    <CartCheckout
-      products={products}
-      defaultFullName={current?.profile?.full_name ?? ""}
-    />
-  );
+  return <CartCheckout products={products} />;
 }

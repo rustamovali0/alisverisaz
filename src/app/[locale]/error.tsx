@@ -12,7 +12,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
   return (
     <RootShell>
       <ErrorState
-        title="Xeta bas verdi"
+        title="Xəta baş verdi"
         description={error.message}
         actionLabel="Yeniden cehd et"
         onAction={reset}

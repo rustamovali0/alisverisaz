@@ -51,14 +51,14 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      className="glass-panel size-12 rounded-lg border bg-card hover:bg-primary hover:text-primary-foreground"
+      className="glass-panel size-[56px] rounded-lg border bg-card hover:bg-primary hover:text-primary-foreground"
       onClick={toggleTheme}
       aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
     >
       {theme === "dark" ? (
-        <Sun className="size-6" aria-hidden="true" />
+        <Sun className="size-7" aria-hidden="true" />
       ) : (
-        <Moon className="size-6" aria-hidden="true" />
+        <Moon className="size-7" aria-hidden="true" />
       )}
     </Button>
   );

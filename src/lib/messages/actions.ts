@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile, requireRole } from "@/lib/auth/session";
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ActionResult =
@@ -29,7 +30,7 @@ export async function createProductMessageAction(
   const productId = readString(formData, "productId");
   const storeSlug = readString(formData, "storeSlug");
   const senderName = readString(formData, "senderName");
-  const senderPhone = readString(formData, "senderPhone");
+  const senderPhone = normalizeAzerbaijanPhone(readString(formData, "senderPhone"));
   const message = readString(formData, "message");
   const current = await getCurrentUserProfile();
 
@@ -72,7 +73,10 @@ export async function createProductMessageAction(
   if (error) {
     return {
       ok: false,
-      message: error.message,
+      message:
+        error.code === "PGRST205" || error.message.includes("product_messages")
+          ? "Mesaj sistemi üçün Supabase migration işlədilməyib. product_messages cədvəlini yaradın."
+          : error.message,
     };
   }
 

@@ -81,7 +81,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
   const [categories, siteSettings] = await Promise.all([
-    getCategoryOptions(),
+    getCategoryOptions({ rootOnly: true }),
     getSiteSettings(),
   ]);
   const selectedCategory = categories.find(

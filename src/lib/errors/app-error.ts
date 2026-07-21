@@ -31,7 +31,7 @@ export function getErrorMessage(error: unknown) {
     return error;
   }
 
-  return "Gozlenilmez xeta bas verdi.";
+  return "Gözlənilməz xəta baş verdi.";
 }
 
 export function toAppError(error: unknown) {

@@ -18,11 +18,11 @@ export function RegisterForm() {
       const result = await registerAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Qeydiyyat alinmadi");
+        await appAlert.error(result.message, "Qeydiyyat alınmadı");
         return;
       }
 
-      await appAlert.success("Qeydiyyat ugurludur", result.message);
+      await appAlert.success("Qeydiyyat uğurludur", result.message);
       router.replace(result.redirectTo);
       router.refresh();
     });
@@ -34,9 +34,9 @@ export function RegisterForm() {
       description="Müştəri hesabı sifariş üçün, mağaza hesabı satış paneli üçün yaradılır."
       footer={
         <>
-          Artıq hesabiniz var?{" "}
+          Artıq hesabınız var?{" "}
           <Link className="font-medium text-primary hover:underline" href="/admin">
-            Giris
+            Giriş
           </Link>
         </>
       }
@@ -60,7 +60,7 @@ export function RegisterForm() {
         <AuthField
           id="password"
           name="password"
-          label="Sifre"
+          label="Şifrə"
           type="password"
           autoComplete="new-password"
           minLength={8}
@@ -71,7 +71,7 @@ export function RegisterForm() {
           <option value="seller">Mağaza sahibi</option>
         </AuthSelect>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Yaradilir" : "Hesab yarat"}
+          {isPending ? "Yaradılır" : "Hesab yarat"}
         </Button>
       </form>
     </AuthCard>

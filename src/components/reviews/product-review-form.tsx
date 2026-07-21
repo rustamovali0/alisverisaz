@@ -14,7 +14,7 @@ type ProductReviewFormProps = {
 };
 
 export function ProductReviewForm({ productId, storeSlug }: ProductReviewFormProps) {
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {

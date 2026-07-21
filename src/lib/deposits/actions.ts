@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import type { DepositActionResult } from "@/lib/deposits/types";
 
 function readString(formData: FormData, key: string) {
@@ -86,7 +87,7 @@ export async function createDepositAction(
   } = await supabase.auth.getUser();
   const productId = readString(formData, "productId");
   const fullName = readString(formData, "fullName");
-  const phone = readString(formData, "phone");
+  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
 
   if (!productId || !fullName || !phone) {
     return {

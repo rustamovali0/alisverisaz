@@ -5,7 +5,6 @@ import {
   Heart,
   PackageSearch,
   Plus,
-  Search,
   ShieldCheck,
   ShoppingCart,
   Sparkles,
@@ -14,6 +13,7 @@ import {
 import { m } from "framer-motion";
 
 import { SiteFooter } from "@/components/layout/site-footer";
+import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -157,44 +157,32 @@ export function HomeExperience({
               <Link href="/register">Qeydiyyatdan keç</Link>
             </Button>
           </nav>
-          <form
-            action="/products"
-            className="hidden flex-1 items-center gap-2 md:flex"
-            method="get"
-          >
-            <label className="relative flex-1">
-              <span className="sr-only">Axtarış</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                className="premium-input h-11 w-full pl-9 pr-3 text-sm"
-                name="q"
-                placeholder="Məhsul, mağaza və ya kateqoriya axtar"
-                type="search"
-              />
-            </label>
-            <Button type="submit">Axtar</Button>
-          </form>
+          <MarketplaceSearch
+            stores={stores}
+            categories={categories}
+            className="hidden flex-1 md:flex"
+          />
           <div className="ml-auto hidden items-center gap-1 md:flex">
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-11 rounded-lg border bg-background"
+              className="size-[52px] rounded-lg border bg-background"
               aria-label="Favorilər"
             >
-              <Link href="/dashboard/favorites">
-                <Heart className="size-6" aria-hidden="true" />
+              <Link href="/favorites">
+                <Heart className="size-7" aria-hidden="true" />
               </Link>
             </Button>
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-11 rounded-lg border bg-background"
+              className="size-[52px] rounded-lg border bg-background"
               aria-label="Səbət"
             >
               <Link href="/cart">
-                <ShoppingCart className="size-6" aria-hidden="true" />
+                <ShoppingCart className="size-7" aria-hidden="true" />
               </Link>
             </Button>
             <Button asChild>
@@ -227,28 +215,13 @@ export function HomeExperience({
           <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
             {heroDescription}
           </p>
-          <form
-            action="/products"
-            className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10"
-            method="get"
-          >
-            <div className="grid gap-2 md:grid-cols-[1fr_auto]">
-              <label className="relative">
-                <span className="sr-only">Axtarış</span>
-                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  className="premium-input h-12 w-full border-transparent bg-background pl-9"
-                  name="q"
-                  placeholder="Məhsul, marka və kateqoriya"
-                  type="search"
-                />
-              </label>
-              <Button type="submit" size="lg">
-                Axtar
-                <ArrowRight className="ml-2 size-4" aria-hidden="true" />
-              </Button>
-            </div>
-          </form>
+          <MarketplaceSearch
+            stores={stores}
+            categories={categories}
+            className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10 md:grid md:grid-cols-[1fr_auto]"
+            inputClassName="h-12 border-transparent bg-background"
+            buttonSize="lg"
+          />
           <div className="mt-5 flex flex-wrap gap-2">
             {activeCategories.slice(0, 6).map((category) => (
               <Link

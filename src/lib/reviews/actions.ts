@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
-import { requireRole } from "@/lib/auth/session";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ActionResult =
@@ -25,11 +25,25 @@ function readString(formData: FormData, key: string) {
 export async function upsertProductReviewAction(
   formData: FormData,
 ): Promise<ActionResult> {
-  const current = await requireRole(["customer"], "/admin");
+  const current = await getCurrentUserProfile();
   const productId = readString(formData, "productId");
   const storeSlug = readString(formData, "storeSlug");
   const rating = Number(readString(formData, "rating"));
   const comment = readString(formData, "comment");
+
+  if (!current) {
+    return {
+      ok: false,
+      message: "Rəy yazmaq üçün əvvəlcə daxil olun.",
+    };
+  }
+
+  if (current.role !== "customer") {
+    return {
+      ok: false,
+      message: "Rəy yazmaq yalnız istifadəçi hesabı üçün aktivdir.",
+    };
+  }
 
   if (!productId || !Number.isInteger(rating) || rating < 1 || rating > 5) {
     return {

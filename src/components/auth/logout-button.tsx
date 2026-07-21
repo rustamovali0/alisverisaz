@@ -17,11 +17,11 @@ export function LogoutButton() {
       const result = await logoutAction();
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Cixis alinmadi");
+        await appAlert.error(result.message, "Çıxış alınmadı");
         return;
       }
 
-      await appAlert.success("Cixis edildi", result.message);
+      await appAlert.success("Çıxış edildi", result.message);
       router.replace(result.redirectTo);
       router.refresh();
     });
@@ -35,7 +35,7 @@ export function LogoutButton() {
       disabled={isPending}
     >
       <LogOut className="mr-2 size-4" aria-hidden="true" />
-      {isPending ? "Cixilir" : "Cixis"}
+      {isPending ? "Çıxılır" : "Çıxış"}
     </Button>
   );
 }

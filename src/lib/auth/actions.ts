@@ -62,21 +62,21 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   if (!fullName || !email || !password) {
     return {
       ok: false,
-      message: "Ad, email ve sifre mutleqdir.",
+      message: "Ad, email və şifrə mütləqdir.",
     };
   }
 
   if (!isValidEmail(email)) {
     return {
       ok: false,
-      message: "Duzgun email daxil edin.",
+      message: "Düzgün email daxil edin.",
     };
   }
 
   if (password.length < 8) {
     return {
       ok: false,
-      message: "Sifre minimum 8 simvol olmalidir.",
+      message: "Şifrə minimum 8 simvol olmalıdır.",
     };
   }
 
@@ -102,7 +102,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   if (!data.user) {
     return {
       ok: false,
-      message: "Istifadeci yaradilarken xeta bas verdi.",
+      message: "İstifadəçi yaradılarkən xəta baş verdi.",
     };
   }
 
@@ -134,8 +134,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   return {
     ok: true,
     message: data.session
-      ? "Qeydiyyat tamamlandi."
-      : "Qeydiyyat tamamlandi. Email tesdiqi aktivdirse, girisden once emailinizi yoxlayin.",
+      ? "Qeydiyyat tamamlandı."
+      : "Qeydiyyat tamamlandı. Email təsdiqi aktivdirsə, girişdən öncə emailinizi yoxlayın.",
     redirectTo: data.session ? getDashboardPath(role) : "/admin",
   };
 }
@@ -149,7 +149,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   if (!email || !password) {
     return {
       ok: false,
-      message: "Email ve sifre mutleqdir.",
+      message: "Email və şifrə mütləqdir.",
     };
   }
 
@@ -169,7 +169,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   if (!data.user) {
     return {
       ok: false,
-      message: "Session yaradilarken xeta bas verdi.",
+      message: "Sessiya yaradılarkən xəta baş verdi.",
     };
   }
 
@@ -244,7 +244,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   return {
     ok: true,
-    message: "Giris ugurludur.",
+    message: "Giriş uğurludur.",
     redirectTo: nextPath || getDashboardPath(role),
   };
 }
@@ -273,7 +273,7 @@ export async function logoutAction(): Promise<AuthResult> {
 
   return {
     ok: true,
-    message: "Hesabdan cixis edildi.",
+    message: "Hesabdan çıxış edildi.",
     redirectTo: "/admin",
   };
 }

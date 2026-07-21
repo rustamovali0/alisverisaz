@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export type ProductMessage = {
   id: string;
@@ -47,11 +48,18 @@ function mapMessage(row: MessageRow): ProductMessage {
 }
 
 export async function getProductMessagesForProduct(productId: string) {
+  const current = await getCurrentUserProfile();
+
+  if (!current) {
+    return [];
+  }
+
   const supabase = createSupabaseAdminClient();
   const { data } = await (supabase as any)
     .from("product_messages")
     .select("id,product_id,store_id,sender_name,sender_phone,message,status,created_at,products(name),stores(name)")
     .eq("product_id", productId)
+    .eq("sender_id", current.user.id)
     .order("created_at", {
       ascending: true,
     })

@@ -25,11 +25,11 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
       const result = await loginAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Giris alinmadi");
+        await appAlert.error(result.message, "Giriş alınmadı");
         return;
       }
 
-      await appAlert.success("Xos geldiniz", result.message);
+      await appAlert.success("Xoş gəldiniz", result.message);
       router.replace(result.redirectTo);
       router.refresh();
     });
@@ -37,7 +37,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
 
   return (
     <AuthCard
-      title={mode === "admin" ? "Admin girişi" : "Giris"}
+      title={mode === "admin" ? "Admin girişi" : "Giriş"}
       description={
         mode === "admin"
           ? "Admin panelinə yalnız admin rolu olan hesab daxil ola bilər."
@@ -50,7 +50,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
           </Link>
         ) : (
           <>
-            Hesabiniz yoxdur?{" "}
+            Hesabınız yoxdur?{" "}
             <Link className="font-medium text-primary hover:underline" href="/register">
               Qeydiyyat
             </Link>
@@ -72,13 +72,13 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
         <AuthField
           id="password"
           name="password"
-          label="Sifre"
+          label="Şifrə"
           type="password"
           autoComplete="current-password"
           required
         />
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Yoxlanilir" : "Daxil ol"}
+          {isPending ? "Yoxlanılır" : "Daxil ol"}
         </Button>
       </form>
     </AuthCard>

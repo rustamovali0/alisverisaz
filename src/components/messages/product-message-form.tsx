@@ -4,6 +4,7 @@ import { MessageCircle } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { appAlert } from "@/lib/alerts/swal";
 import { createProductMessageAction } from "@/lib/messages/actions";
 
@@ -50,11 +51,7 @@ export function ProductMessageForm({
         </label>
         <label className="grid gap-1 text-sm font-medium">
           Telefon
-          <input
-            className="premium-input h-11"
-            name="senderPhone"
-            placeholder="+994..."
-          />
+          <PhoneInput name="senderPhone" className="h-11" />
         </label>
       </div>
       <label className="grid gap-1 text-sm font-medium">

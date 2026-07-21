@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CmsActionResult } from "@/lib/cms/types";
@@ -63,7 +64,9 @@ function normalizeSocialLinks(formData: FormData) {
     previous && typeof previous === "object" && !Array.isArray(previous)
       ? { ...(previous as Record<string, unknown>) }
       : {};
-  const whatsapp = readString(formData, "socialWhatsapp") || readString(formData, "whatsapp");
+  const whatsapp =
+    normalizeAzerbaijanPhone(readString(formData, "socialWhatsapp")) ||
+    normalizeAzerbaijanPhone(readString(formData, "whatsapp"));
 
   links.instagram = readString(formData, "socialInstagram");
   links.tiktok = readString(formData, "socialTiktok");
@@ -201,8 +204,8 @@ export async function updateSiteSettingsAction(
     default_meta_description: readString(formData, "defaultMetaDescription"),
     default_seo_keywords: readString(formData, "defaultSeoKeywords"),
     contact_email: readString(formData, "contactEmail"),
-    phone: readString(formData, "phone"),
-    whatsapp: readString(formData, "whatsapp"),
+    phone: normalizeAzerbaijanPhone(readString(formData, "phone")),
+    whatsapp: normalizeAzerbaijanPhone(readString(formData, "whatsapp")),
     address: readString(formData, "address"),
     social_links: normalizeSocialLinks(formData),
     copyright_text: readString(formData, "copyrightText"),

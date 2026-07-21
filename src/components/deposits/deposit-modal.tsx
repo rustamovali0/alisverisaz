@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
 import { createDepositAction } from "@/lib/deposits/actions";
@@ -82,11 +83,7 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
               </label>
               <label className="grid gap-2 text-sm font-medium">
                 Telefon
-                <input
-                  name="phone"
-                  className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  required
-                />
+                <PhoneInput name="phone" required />
               </label>
               <label className="grid gap-2 text-sm font-medium">
                 Beh məbləği

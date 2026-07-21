@@ -15,7 +15,7 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({
-  title = "Xeta bas verdi",
+  title = "Xəta baş verdi",
   description,
   actionLabel,
   onAction,

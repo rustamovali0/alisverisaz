@@ -23,27 +23,19 @@ function stripLocalePath(pathname: string) {
   return pathname;
 }
 
-export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const visiblePathname = stripLocalePath(pathname);
+function needsSessionCheck(pathname: string) {
+  return (
+    pathname === "/admin" ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.startsWith("/admin/") ||
+    pathname.startsWith("/radmin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/store/dashboard")
+  );
+}
 
-  if (visiblePathname !== pathname) {
-    return updateSession(request);
-  }
-
-  if (pathname.startsWith("/admin/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/admin/, "/radmin");
-
-    return NextResponse.redirect(url);
-  }
-
-  const sessionResponse = await updateSession(request);
-
-  if (sessionResponse.headers.get("location")) {
-    return sessionResponse;
-  }
-
+function createLocalizedRewrite(request: NextRequest, pathname: string) {
   const url = request.nextUrl.clone();
 
   if (
@@ -60,15 +52,59 @@ export async function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("X-NEXT-INTL-LOCALE", routing.defaultLocale);
-  const rewriteResponse = NextResponse.rewrite(url, {
+
+  const response = NextResponse.rewrite(url, {
     request: {
       headers: requestHeaders,
     },
   });
-  rewriteResponse.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
+  response.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
     path: "/",
     sameSite: "lax",
   });
+
+  return response;
+}
+
+function createLocalizedNextResponse() {
+  const response = NextResponse.next();
+  response.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
+}
+
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const visiblePathname = stripLocalePath(pathname);
+
+  if (visiblePathname !== pathname) {
+    return needsSessionCheck(visiblePathname)
+      ? updateSession(request)
+      : createLocalizedNextResponse();
+  }
+
+  if (pathname.startsWith("/admin/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/admin/, "/radmin");
+
+    return NextResponse.redirect(url);
+  }
+
+  const rewriteResponse = createLocalizedRewrite(request, pathname);
+
+  if (!needsSessionCheck(pathname)) {
+    return rewriteResponse;
+  }
+
+  const sessionResponse = await updateSession(request);
+
+  if (sessionResponse.headers.get("location")) {
+    return sessionResponse;
+  }
+
   copyCookies(sessionResponse, rewriteResponse);
 
   return rewriteResponse;
