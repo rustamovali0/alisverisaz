@@ -1,5 +1,5 @@
 import { CartCheckout } from "@/components/cart/cart-checkout";
-import { requireRole } from "@/lib/auth/session";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProducts } from "@/lib/cart/data";
 
 type CartPageProps = {
@@ -10,13 +10,13 @@ type CartPageProps = {
 
 export default async function CartPage({ params }: CartPageProps) {
   const { locale } = await params;
-  const current = await requireRole(["customer"], "/cart");
+  const current = await getCurrentUserProfile();
   const products = await getMarketplaceProducts(locale);
 
   return (
     <CartCheckout
       products={products}
-      defaultFullName={current.profile?.full_name ?? ""}
+      defaultFullName={current?.profile?.full_name ?? ""}
     />
   );
 }

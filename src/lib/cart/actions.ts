@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireRole } from "@/lib/auth/session";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
@@ -69,18 +69,22 @@ function createOrderNumber() {
 
 async function ensureCustomer(input: {
   storeId: string;
-  userId: string;
+  userId: string | null;
   fullName: string;
   phone: string;
   email: string | null;
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: existing } = await (supabaseAdmin as any)
+  let existingQuery = (supabaseAdmin as any)
     .from("customers")
     .select("id")
-    .eq("store_id", input.storeId)
-    .eq("user_id", input.userId)
-    .maybeSingle();
+    .eq("store_id", input.storeId);
+
+  existingQuery = input.userId
+    ? existingQuery.eq("user_id", input.userId)
+    : existingQuery.is("user_id", null).eq("phone", input.phone);
+
+  const { data: existing } = await existingQuery.limit(1).maybeSingle();
 
   if (existing) {
     await (supabaseAdmin as any)
@@ -117,13 +121,17 @@ async function ensureCustomer(input: {
 export async function createCheckoutOrdersAction(
   formData: FormData,
 ): Promise<CheckoutActionResult> {
-  const current = await requireRole(["customer"], "/cart");
-  await ensureAuthProfile({
-    id: current.user.id,
-    email: current.user.email ?? null,
-    fullName: current.profile?.full_name ?? null,
-    role: current.role,
-  });
+  const current = await getCurrentUserProfile();
+
+  if (current?.user) {
+    await ensureAuthProfile({
+      id: current.user.id,
+      email: current.user.email ?? null,
+      fullName: current.profile?.full_name ?? null,
+      role: current.role,
+    });
+  }
+
   const fullName = readString(formData, "fullName");
   const phone = readString(formData, "phone");
   const address = readString(formData, "address");
@@ -198,10 +206,10 @@ export async function createCheckoutOrdersAction(
     for (const [storeId, storeItems] of grouped) {
       const customerId = await ensureCustomer({
         storeId,
-        userId: current.user.id,
+        userId: current?.user.id ?? null,
         fullName,
         phone,
-        email: current.user.email ?? null,
+        email: current?.user.email ?? null,
       });
       const subtotal = storeItems.reduce(
         (total, item) => total + getUnitPrice(item.product) * item.quantity,
@@ -212,7 +220,7 @@ export async function createCheckoutOrdersAction(
         .insert({
           store_id: storeId,
           customer_id: customerId,
-          user_id: current.user.id,
+          user_id: current?.user.id ?? null,
           order_number: createOrderNumber(),
           status: "pending",
           payment_status: "pending",
