@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { publishThemeAction, updateThemeDraftAction } from "@/lib/cms/actions";
+import { publishThemeAction } from "@/lib/cms/actions";
 import type { ThemeSetting } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/swal";
 
@@ -13,19 +13,6 @@ type ThemeManagerProps = {
 
 export function ThemeManager({ themes }: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
-
-  function handleDraft(formData: FormData) {
-    startTransition(async () => {
-      const result = await updateThemeDraftAction(formData);
-
-      if (!result.ok) {
-        await appAlert.error(result.message, "Draft saxlanmadı");
-        return;
-      }
-
-      await appAlert.success("Draft saxlandı", result.message);
-    });
-  }
 
   function handlePublish(formData: FormData) {
     startTransition(async () => {
@@ -65,44 +52,11 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
               </p>
             </div>
           </div>
-          <form action={handleDraft} className="grid gap-3">
+          <form action={handlePublish} className="grid gap-3">
             <input type="hidden" name="themeKey" value={theme.themeKey} />
-            <input
-              name="name"
-              defaultValue={theme.name}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <input
-                name="heroVariant"
-                defaultValue={theme.heroVariant}
-                placeholder="Hero variant"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-              <input
-                name="productCardVariant"
-                defaultValue={theme.productCardVariant}
-                placeholder="Product card variant"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </div>
-            <textarea
-              name="config"
-              defaultValue={JSON.stringify(theme.config, null, 2)}
-              className="min-h-28 rounded-md border border-input bg-background px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" variant="outline" disabled={isPending}>
-                Draft saxla
-              </Button>
-              <Button
-                type="submit"
-                formAction={handlePublish}
-                disabled={isPending || theme.isActive}
-              >
-                Publish et
-              </Button>
-            </div>
+            <Button type="submit" disabled={isPending || theme.isActive}>
+              {theme.isActive ? "Aktiv temadır" : "Aktiv et"}
+            </Button>
           </form>
         </section>
       ))}

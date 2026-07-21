@@ -27,6 +27,11 @@ function readBoolean(formData: FormData, key: string) {
   return readString(formData, key) === "on";
 }
 
+function revalidateLocalizedPath(path: string, type?: "layout" | "page") {
+  revalidatePath(path, type);
+  revalidatePath(`/az${path === "/" ? "" : path}`, type);
+}
+
 function parseJson(value: string, fallback: unknown) {
   if (!value) {
     return fallback;
@@ -221,7 +226,7 @@ export async function updateSiteSettingsAction(
     };
   }
 
-  revalidatePath("/", "layout");
+  revalidateLocalizedPath("/", "layout");
 
   return {
     ok: true,
@@ -244,8 +249,8 @@ export async function updateHomepageSectionAction(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await (supabase as any)
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await (supabaseAdmin as any)
     .from("homepage_sections")
     .update({
       title: readString(formData, "title"),
@@ -272,7 +277,8 @@ export async function updateHomepageSectionAction(
     };
   }
 
-  revalidatePath("/");
+  revalidateLocalizedPath("/");
+  revalidateLocalizedPath("/admin/homepage-sections");
 
   return {
     ok: true,
@@ -299,7 +305,8 @@ export async function reorderHomepageSectionsAction(
     ),
   );
 
-  revalidatePath("/");
+  revalidateLocalizedPath("/");
+  revalidateLocalizedPath("/admin/homepage-sections");
 
   return {
     ok: true,
@@ -322,8 +329,8 @@ export async function updateNavigationItemAction(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: existing } = await (supabase as any)
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existing } = await (supabaseAdmin as any)
     .from("navigation_items")
     .select("is_system,href")
     .eq("id", itemId)
@@ -336,10 +343,15 @@ export async function updateNavigationItemAction(
     };
   }
 
-  const { error } = await (supabase as any)
+  const nextHref = existing?.is_system
+    ? existing.href
+    : readString(formData, "href") || existing?.href || "/";
+
+  const { error } = await (supabaseAdmin as any)
     .from("navigation_items")
     .update({
       title: readString(formData, "title"),
+      href: nextHref,
       icon_name: readString(formData, "iconName") || "home",
       sort_order: Math.trunc(readNumber(formData, "sortOrder")),
       is_active: readBoolean(formData, "isActive"),
@@ -360,7 +372,8 @@ export async function updateNavigationItemAction(
     };
   }
 
-  revalidatePath("/", "layout");
+  revalidateLocalizedPath("/", "layout");
+  revalidateLocalizedPath("/admin/menus");
 
   return {
     ok: true,
@@ -383,22 +396,38 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
 
   const supabaseAdmin = createSupabaseAdminClient();
 
+  const { data: targetTheme } = await (supabaseAdmin as any)
+    .from("theme_settings")
+    .select("id,status")
+    .eq("theme_key", themeKey)
+    .order("status", {
+      ascending: false,
+    })
+    .limit(1)
+    .maybeSingle();
+
+  if (!targetTheme) {
+    return {
+      ok: false,
+      message: "Tema tapılmadı.",
+    };
+  }
+
   await (supabaseAdmin as any)
     .from("theme_settings")
     .update({
       is_active: false,
     })
-    .eq("status", "published");
+    .neq("id", targetTheme.id);
 
   const { error } = await (supabaseAdmin as any)
     .from("theme_settings")
     .update({
-      status: "published",
       is_active: true,
       published_at: new Date().toISOString(),
       updated_by: current.user.id,
     })
-    .eq("theme_key", themeKey);
+    .eq("id", targetTheme.id);
 
   if (error) {
     return {
@@ -421,7 +450,8 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
     },
   });
 
-  revalidatePath("/");
+  revalidateLocalizedPath("/");
+  revalidateLocalizedPath("/admin/themes");
 
   return {
     ok: true,
@@ -444,8 +474,8 @@ export async function updateThemeDraftAction(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await (supabase as any).from("theme_settings").upsert(
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await (supabaseAdmin as any).from("theme_settings").upsert(
     {
       theme_key: themeKey,
       name: readString(formData, "name") || themeKey,
@@ -469,6 +499,8 @@ export async function updateThemeDraftAction(
       message: error.message,
     };
   }
+
+  revalidateLocalizedPath("/admin/themes");
 
   return {
     ok: true,
@@ -553,7 +585,7 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  revalidatePath("/admin/media");
+  revalidateLocalizedPath("/admin/media");
 
   return {
     ok: true,
@@ -593,7 +625,7 @@ export async function deleteMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  revalidatePath("/admin/media");
+  revalidateLocalizedPath("/admin/media");
 
   return {
     ok: true,
@@ -662,7 +694,11 @@ export async function updatePanelSettingsAction(
     };
   }
 
-  revalidatePath("/", "layout");
+  revalidateLocalizedPath("/", "layout");
+  revalidateLocalizedPath(
+    kind === "store" ? "/admin/store-panel-management" : "/admin/user-panel-management",
+  );
+  revalidateLocalizedPath(kind === "store" ? "/store/dashboard" : "/dashboard", "layout");
 
   return {
     ok: true,

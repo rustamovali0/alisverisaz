@@ -45,10 +45,18 @@ export function NavigationManager({ menus }: NavigationManagerProps) {
                 className="grid gap-3 rounded-md border bg-background p-3"
               >
                 <input type="hidden" name="itemId" value={item.id} />
-                <div className="grid gap-3 lg:grid-cols-[1fr_1fr_120px_120px]">
+                <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_120px_120px]">
                   <input
                     name="title"
                     defaultValue={item.title}
+                    placeholder="Menyu adı"
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                  <input
+                    name="href"
+                    defaultValue={item.href}
+                    readOnly={item.isSystem}
+                    placeholder="/products"
                     className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   <input
@@ -69,7 +77,11 @@ export function NavigationManager({ menus }: NavigationManagerProps) {
                     className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">{item.href}</p>
+                {item.isSystem ? (
+                  <p className="text-xs text-muted-foreground">
+                    Sistem linkidir, URL dəyişdirilmir.
+                  </p>
+                ) : null}
                 <div className="flex flex-wrap gap-4 text-sm">
                   {[
                     ["isActive", "Aktiv", item.isActive],
