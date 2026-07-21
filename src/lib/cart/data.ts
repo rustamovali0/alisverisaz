@@ -25,6 +25,9 @@ type ProductRow = {
     is_primary: boolean;
     sort_order?: number | null;
   }>;
+  stores?: {
+    slug: string | null;
+  } | null;
 };
 
 type StoreRow = {
@@ -62,6 +65,7 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
     id: row.id,
     slug: row.slug ?? row.id,
     storeId: row.store_id,
+    storeSlug: row.stores?.slug ?? null,
     name: readLocalizedText(row.name, row.name_translations, locale),
     description: readLocalizedText(
       row.description,
@@ -119,7 +123,7 @@ export async function getMarketplaceProducts(locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(slug)",
     )
     .eq("status", "active")
     .order("created_at", {
@@ -368,7 +372,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(slug)",
     )
     .eq("status", "active")
     .in("id", productIds);

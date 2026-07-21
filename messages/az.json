@@ -1,7 +1,7 @@
 {
   "seo": {
-    "title": "alisveris.az - Marketplace, mağaza və elan platforması",
-    "description": "alisveris.az Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə, səbət, sifariş və ödəniş prosesləri üçün marketplace platformasıdır."
+    "title": "alisveris.az - Yeni məhsullar üçün e-ticarət marketplace",
+    "description": "alisveris.az Azərbaycanda mağazaların yeni məhsul satışı, səbət, sifariş və ödəniş prosesləri üçün e-ticarət marketplace platformasıdır."
   },
   "common": {
     "brand": "alisveris.az",
@@ -14,7 +14,7 @@
   },
   "home": {
     "title": "alisveris.az",
-    "description": "Azərbaycanda mağaza açmaq, məhsul satmaq, elan yerləşdirmək və sifarişləri idarə etmək üçün müasir marketplace platforması."
+    "description": "Azərbaycanda mağaza açmaq, yeni məhsul satmaq və sifarişləri idarə etmək üçün müasir e-ticarət marketplace platforması."
   },
   "marketplace": {
     "title": "Məhsullar",

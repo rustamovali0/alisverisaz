@@ -14,6 +14,7 @@ import { m } from "framer-motion";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
+import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -87,7 +88,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
             <div>
               <h3 className="text-lg font-black tracking-normal">{store.name}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {store.productCount} elan
+                {store.productCount} məhsul
               </p>
             </div>
             <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
@@ -152,12 +153,7 @@ export function HomeExperience({
             <Button asChild variant="ghost">
               <Link href="/products">Məhsullar</Link>
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/admin">Daxil ol</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/register">Qeydiyyatdan keç</Link>
-            </Button>
+            <HeaderAccountActions />
           </nav>
           <MarketplaceSearch
             stores={stores}
@@ -190,7 +186,7 @@ export function HomeExperience({
             <Button asChild>
               <Link href="/admin">
                 <Plus className="mr-2 size-4" aria-hidden="true" />
-                Elan yerləşdir
+                Məhsul sat
               </Link>
             </Button>
           </div>
@@ -291,7 +287,7 @@ export function HomeExperience({
             </div>
           </div>
           <div className="absolute -bottom-5 right-5 rounded-lg bg-primary p-4 text-primary-foreground shadow-xl">
-            <p className="text-sm opacity-90">Aktiv elan</p>
+            <p className="text-sm opacity-90">Aktiv məhsul</p>
             <p className="text-3xl font-black">{totalProductCount}</p>
           </div>
         </m.div>

@@ -72,7 +72,7 @@ export function MarketplaceSearch({
       key: `store-${store.id}`,
       type: "store",
       label: store.name,
-      description: `${store.productCount} elan`,
+      description: `${store.productCount} məhsul`,
       href: `/${store.slug}`,
     }));
     const productSuggestions: SearchSuggestion[] = stores.flatMap((store) =>
@@ -103,7 +103,6 @@ export function MarketplaceSearch({
   }, [categories, query, stores]);
 
   function submitSearch(value: string) {
-
     if (!value) {
       router.push("/products");
       return;
@@ -138,7 +137,9 @@ export function MarketplaceSearch({
         <span className="sr-only">Axtarış</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
-          autoComplete="off"
+          autoComplete="new-password"
+          autoCorrect="off"
+          spellCheck={false}
           className={cn("premium-input h-11 w-full pl-9 pr-3 text-sm", inputClassName)}
           name="q"
           placeholder="Mağaza, məhsul və kateqoriya axtar"

@@ -17,14 +17,14 @@ type ProductsPageProps = {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Məhsullar və elanlar",
+    title: "Yeni məhsullar",
     description:
-      "alisveris.az marketplace-də aktiv məhsulları, elanları və mağaza təkliflərini kəşf edin. Online alışveriş, səbət və sifariş sistemi.",
+      "alisveris.az marketplace-də mağazaların yeni məhsullarını kəşf edin. Online alışveriş, səbət və sifariş sistemi.",
     alternates: {
       canonical: "/products",
     },
     openGraph: {
-      title: "Mağazalar və elanlar | alisveris.az",
+      title: "Mağazalar və yeni məhsullar | alisveris.az",
       description:
         "Azərbaycanda online alışveriş üçün marketplace məhsulları və mağaza təklifləri.",
       url: "/products",

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     "marketplace Azərbaycan",
     "mağaza açmaq",
     "məhsul satışı",
-    "elan yerləşdirmək",
+    "yeni məhsul satışı",
     "sifariş sistemi",
     "e-commerce Azərbaycan",
     "onlayn mağaza",

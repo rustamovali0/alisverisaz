@@ -38,7 +38,7 @@ function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value = 
 
 export function SiteFooter({
   siteName = "alisveris.az",
-  description = "Azərbaycanda mağazaları, məhsulları və elanları bir yerdə toplayan marketplace platforması.",
+  description = "Azərbaycanda mağazaların yeni məhsullarını bir yerdə toplayan e-ticarət marketplace platforması.",
   socialLinks,
 }: SiteFooterProps) {
   const socials = [
@@ -132,7 +132,7 @@ export function SiteFooter({
       <div className="border-t">
         <div className="container flex flex-col gap-2 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} {siteName}</span>
-          <span>Marketplace, mağaza və elan platforması</span>
+          <span>Yeni məhsullar üçün e-ticarət marketplace</span>
         </div>
       </div>
     </footer>

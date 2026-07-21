@@ -1,10 +1,11 @@
 "use client";
 
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
 import { createCheckoutOrdersAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
@@ -62,6 +63,11 @@ export function CartCheckout({
 
     return sum + unit * entry.item.quantity;
   }, 0);
+  const firstProduct = visibleItems[0]?.product;
+  const returnHref =
+    firstProduct?.storeSlug && firstProduct?.slug
+      ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
+      : "/products";
 
   useEffect(() => {
     setItems(readCart());
@@ -92,7 +98,15 @@ export function CartCheckout({
     <main className="min-h-screen bg-background">
       <div className="container grid gap-6 py-8 lg:grid-cols-[1fr_420px]">
         <section className="rounded-md border bg-card p-4 text-card-foreground shadow-sm">
-          <h1 className="text-2xl font-semibold tracking-normal">Səbət</h1>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild variant="outline" size="sm">
+              <Link href={returnHref}>
+                <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
+                Geri
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-semibold tracking-normal">Səbət</h1>
+          </div>
           <div className="mt-6 divide-y">
             {visibleItems.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
@@ -229,6 +243,9 @@ export function CartCheckout({
             disabled={visibleItems.length === 0 || isPending}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}
+          </Button>
+          <Button asChild variant="outline" className="mt-3 w-full">
+            <Link href={returnHref}>Məhsula qayıt</Link>
           </Button>
         </form>
       </div>

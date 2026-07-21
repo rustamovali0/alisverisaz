@@ -2,10 +2,12 @@
 
 import { ShoppingCart, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { CartProduct } from "@/lib/cart/types";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
 
 const CART_KEY = "alisveris_cart";
@@ -61,21 +63,40 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
 export function BuyNowButton({ product }: { product: CartProduct }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
+  const [isChecking, setIsChecking] = useState(false);
 
-  function handleBuyNow() {
+  async function handleBuyNow() {
     writeCart([
       {
         productId: product.id,
         quantity: 1,
       },
     ]);
+
+    setIsChecking(true);
+    const supabase = createSupabaseBrowserClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    setIsChecking(false);
+
+    if (!user) {
+      showToast({
+        title: "Giriş tələb olunur",
+        description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
+        variant: "info",
+      });
+      router.push("/admin?next=/cart");
+      return;
+    }
+
     router.push("/cart");
   }
 
   return (
-    <Button type="button" onClick={handleBuyNow}>
+    <Button type="button" onClick={handleBuyNow} disabled={isChecking}>
       <Zap className="mr-2 size-4" aria-hidden="true" />
-      {t("buyNow")}
+      {isChecking ? "Yoxlanılır" : t("buyNow")}
     </Button>
   );
 }

@@ -45,7 +45,7 @@ export async function generateMetadata({
       "online mağaza",
       "marketplace",
       "məhsul satışı",
-      "elan yerləşdirmək",
+      "yeni məhsul satışı",
       "mağaza paneli",
       "səbət və sifariş",
       "e-commerce platforması",

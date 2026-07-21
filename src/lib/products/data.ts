@@ -43,19 +43,17 @@ type ProductRow = {
 
 const publicRootCategorySlugs = [
   "elektronika",
-  "ev-ve-bag-ucun",
-  "neqliyyat",
-  "ehtiyat-hisseleri-ve-aksesuarlar",
-  "dasinmaz-emlak",
-  "xidmetler-ve-biznes",
-  "sexsi-esyalar",
-  "hobbi-ve-asude",
-  "meiset-texnikasi",
-  "telefonlar",
-  "usaq-alemi",
-  "heyvanlar",
-  "is-elanlari",
-  "mektebliler-ucun",
+  "ev-ve-bag",
+  "moda",
+  "gozellik-ve-baxim",
+  "ana-ve-usaq",
+  "idman-ve-outdoor",
+  "avto-mehsullari",
+  "tikinti-ve-aletler",
+  "ofis-ve-defterxana",
+  "kitablar",
+  "ev-heyvanlari",
+  "qida-ve-ickiler",
 ];
 
 function toManagedProduct(row: ProductRow): ManagedProduct {

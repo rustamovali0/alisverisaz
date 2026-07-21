@@ -2,6 +2,7 @@ export type CartProduct = {
   id: string;
   slug: string;
   storeId: string;
+  storeSlug?: string | null;
   name: string;
   description: string | null;
   priceAmount: number;

@@ -53,7 +53,7 @@ export async function generateMetadata({
     title: `${store.name} | alisveris.az`,
     description:
       store.description ||
-      `${store.name} mağazasının elanları və məhsulları alisveris.az-da.`,
+      `${store.name} mağazasının yeni məhsulları alisveris.az-da.`,
     alternates: {
       canonical: `/${store.slug}`,
     },
@@ -61,7 +61,7 @@ export async function generateMetadata({
       title: `${store.name} | alisveris.az`,
       description:
         store.description ||
-        `${store.name} mağazasının aktiv elanları və məhsulları.`,
+        `${store.name} mağazasının aktiv yeni məhsulları.`,
       url: `/${store.slug}`,
       images: store.coverUrl ? [store.coverUrl] : undefined,
       type: "website",

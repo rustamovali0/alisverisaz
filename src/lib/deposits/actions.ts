@@ -13,6 +13,17 @@ function readString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function readAmount(formData: FormData, key: string) {
+  const value = readString(formData, key)
+    .replace("AZN", "")
+    .replace("₼", "")
+    .replace(",", ".")
+    .trim();
+  const amount = Number(value);
+
+  return Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0;
+}
+
 function calculateDepositAmount(input: {
   priceAmount: number;
   discountAmount: number;
@@ -88,6 +99,7 @@ export async function createDepositAction(
   const productId = readString(formData, "productId");
   const fullName = readString(formData, "fullName");
   const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+  const requestedAmount = readAmount(formData, "amount");
 
   if (!productId || !fullName || !phone) {
     return {
@@ -143,7 +155,7 @@ export async function createDepositAction(
     };
   }
 
-  const amount = calculateDepositAmount({
+  const productDepositAmount = calculateDepositAmount({
     priceAmount: Number(product.price_amount),
     discountAmount: Number(product.discount_amount ?? 0),
     depositType: product.deposit_type,
@@ -153,6 +165,7 @@ export async function createDepositAction(
     Number(product.price_amount) - Number(product.discount_amount ?? 0),
     0,
   );
+  const amount = requestedAmount > 0 ? requestedAmount : productDepositAmount;
   const remainingAmount = Math.max(finalPrice - amount, 0);
 
   if (amount <= 0) {

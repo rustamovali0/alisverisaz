@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { AppDashboardShell } from "@/components/dashboard/app-dashboard-shell";
 import { requireRole } from "@/lib/auth/session";
-import { getDashboardNavigationForRole } from "@/lib/cms/data";
+import type { DashboardNavItem } from "@/lib/dashboard/navigation";
 
 type CustomerDashboardLayoutProps = {
   children: ReactNode;
@@ -15,12 +15,23 @@ export default async function CustomerDashboardLayout({
 }: CustomerDashboardLayoutProps) {
   const current = await requireRole(["customer"], "/dashboard");
   const userLabel = current.profile?.full_name ?? current.user.email ?? "İstifadəçi";
-  const navItems = await getDashboardNavigationForRole("customer");
+  const navItems: DashboardNavItem[] = [
+    {
+      title: "Sifarişlərim",
+      href: "/dashboard",
+      icon: "shoppingCart",
+    },
+    {
+      title: "Profil",
+      href: "/dashboard/profile",
+      icon: "user",
+    },
+  ];
 
   return (
     <AppDashboardShell
       title="Fərdi panel"
-      description="Elanlar, sifarişlər, favorilər və ödənişlər"
+      description="Sifariş statusu və hesab məlumatları"
       userLabel={userLabel}
       navItems={navItems}
     >

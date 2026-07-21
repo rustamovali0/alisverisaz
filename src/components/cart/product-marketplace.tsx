@@ -1,6 +1,7 @@
 "use client";
 
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
+import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -103,12 +104,7 @@ function MarketplaceHeader({
             <Heart className="size-7" aria-hidden="true" />
           </Link>
         </Button>
-        <Button asChild variant="ghost" className="hidden md:inline-flex">
-          <Link href="/admin">Daxil ol</Link>
-        </Button>
-        <Button asChild variant="outline" className="hidden md:inline-flex">
-          <Link href="/register">Qeydiyyatdan keç</Link>
-        </Button>
+        <HeaderAccountActions className="hidden md:inline-flex" />
         <Button asChild>
           <Link href="/cart">
             <ShoppingCart className="mr-2 size-6" aria-hidden="true" />
@@ -202,7 +198,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             <div>
               <h2 className="text-lg font-black tracking-normal">{store.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {store.productCount} elan
+                {store.productCount} məhsul
               </p>
             </div>
             <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
@@ -251,7 +247,7 @@ export function ProductGrid({
     return (
       <EmptyState
         className="min-h-80"
-        title="Bu mağazada elan yoxdur"
+        title="Bu mağazada məhsul yoxdur"
         description="Seçilən kateqoriya üzrə aktiv məhsul tapılmadı."
       />
     );
@@ -399,7 +395,7 @@ export function Storefront({
               <div className="min-w-0">
                 <h1 className="text-2xl font-black tracking-normal">{store.name}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {store.productCount} elan
+                  {store.productCount} məhsul
                 </p>
                 {store.description ? (
                   <p className="mt-5 max-w-2xl text-sm leading-6 text-foreground">
