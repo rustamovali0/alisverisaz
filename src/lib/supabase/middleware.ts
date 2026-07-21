@@ -3,7 +3,7 @@ import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
-import { isAuthRole, type AuthRole } from "@/lib/auth/types";
+import type { AuthRole } from "@/lib/auth/types";
 import { clientEnv } from "@/lib/config/env.client";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
@@ -19,14 +19,6 @@ const protectedRoutes: Array<{
   prefix: string;
   roles: AuthRole[];
 }> = [
-  {
-    prefix: "/cart",
-    roles: ["customer"],
-  },
-  {
-    prefix: "/payments/deposit",
-    roles: ["customer"],
-  },
   {
     prefix: "/admin",
     roles: ["admin"],
@@ -60,7 +52,11 @@ function getLocalizedPath(locale: string, path: string) {
 }
 
 function getMetadataRole(role: unknown): AuthRole {
-  return isAuthRole(role) ? role : "customer";
+  if (role === "admin") {
+    return "admin";
+  }
+
+  return "seller";
 }
 
 export async function updateSession(request: NextRequest) {

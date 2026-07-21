@@ -3,6 +3,9 @@
 import {
   ArrowRight,
   Heart,
+  Instagram,
+  MessageCircle,
+  Music2,
   PackageSearch,
   Plus,
   Search,
@@ -55,6 +58,28 @@ function sectionByKey(sections: HomepageSection[], key: string) {
 
 function visibleLimit(section: HomepageSection | undefined, fallback: number) {
   return section?.itemLimit && section.itemLimit > 0 ? section.itemLimit : fallback;
+}
+
+function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value: string) {
+  if (!value) {
+    return "";
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  if (kind === "whatsapp") {
+    const digits = value.replace(/\D/g, "");
+
+    return digits ? `https://wa.me/${digits}` : "";
+  }
+
+  const cleanValue = value.replace(/^@/, "");
+
+  return kind === "instagram"
+    ? `https://instagram.com/${cleanValue}`
+    : `https://tiktok.com/@${cleanValue}`;
 }
 
 function ProductCard({ product, index }: { product: CartProduct; index: number }) {
@@ -120,6 +145,29 @@ export function HomeExperience({
   const featuredProducts = products.slice(0, visibleLimit(featuredSection, 8));
   const newProducts = products.slice(0, visibleLimit(newSection, 10));
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
+  const socialItems = [
+    {
+      key: "instagram" as const,
+      label: "Instagram",
+      href: normalizeSocialHref("instagram", siteSettings.socialLinks.instagram ?? ""),
+      icon: Instagram,
+    },
+    {
+      key: "tiktok" as const,
+      label: "TikTok",
+      href: normalizeSocialHref("tiktok", siteSettings.socialLinks.tiktok ?? ""),
+      icon: Music2,
+    },
+    {
+      key: "whatsapp" as const,
+      label: "WhatsApp",
+      href: normalizeSocialHref(
+        "whatsapp",
+        siteSettings.socialLinks.whatsapp ?? siteSettings.whatsapp,
+      ),
+      icon: MessageCircle,
+    },
+  ].filter((item) => item.href);
 
   return (
     <main className={cn("min-h-screen overflow-hidden bg-gradient-to-br", themeClass)}>
@@ -167,6 +215,23 @@ export function HomeExperience({
             <Button type="submit">Axtar</Button>
           </form>
           <div className="ml-auto hidden items-center gap-1 md:flex">
+            {socialItems.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <Button
+                  key={item.key}
+                  asChild
+                  size="icon"
+                  variant="ghost"
+                  aria-label={item.label}
+                >
+                  <a href={item.href} target="_blank" rel="noreferrer">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </a>
+                </Button>
+              );
+            })}
             <Button asChild size="icon" variant="ghost" aria-label="Favorilər">
               <Link href="/dashboard/favorites">
                 <Heart className="size-5" aria-hidden="true" />
@@ -240,6 +305,26 @@ export function HomeExperience({
               </Link>
             ))}
           </div>
+          {socialItems.length > 0 ? (
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              {socialItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <a
+                    key={`hero-${item.key}`}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex size-10 items-center justify-center rounded-full border bg-card text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                    aria-label={item.label}
+                  >
+                    <Icon className="size-5" aria-hidden="true" />
+                  </a>
+                );
+              })}
+            </div>
+          ) : null}
         </m.div>
 
         <m.div

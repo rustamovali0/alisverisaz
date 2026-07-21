@@ -1,11 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { ImagePlus, Instagram, MessageCircle, Music2, X } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { updateSiteSettingsAction } from "@/lib/cms/actions";
 import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/swal";
+import { cn } from "@/lib/utils";
 
 type SiteSettingsFormProps = {
   settings: SiteSettings;
@@ -33,6 +35,171 @@ function Field({
   );
 }
 
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Logo oxuna bilmədi."));
+    };
+    image.src = url;
+  });
+}
+
+async function convertToWebp(file: File) {
+  if (file.type === "image/webp") {
+    return file;
+  }
+
+  if (file.type !== "image/jpeg" && file.type !== "image/png") {
+    throw new Error("Yalnız JPG, PNG və WebP qəbul edilir.");
+  }
+
+  const image = await loadImage(file);
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Logo çevrilməsi mümkün olmadı.");
+  }
+
+  context.drawImage(image, 0, 0);
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (nextBlob) =>
+        nextBlob ? resolve(nextBlob) : reject(new Error("WebP çevrilməsi alınmadı.")),
+      "image/webp",
+      0.88,
+    );
+  });
+
+  return new File([blob], file.name.replace(/\.(jpe?g|png|webp)$/i, ".webp"), {
+    type: "image/webp",
+    lastModified: Date.now(),
+  });
+}
+
+function LogoUploadField({
+  label,
+  fileName,
+  urlName,
+  defaultValue,
+}: {
+  label: string;
+  fileName: string;
+  urlName: string;
+  defaultValue?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedName, setSelectedName] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+
+  async function setFile(file: File) {
+    setIsConverting(true);
+    try {
+      const converted = await convertToWebp(file);
+      const transfer = new DataTransfer();
+      transfer.items.add(converted);
+
+      if (inputRef.current) {
+        inputRef.current.files = transfer.files;
+      }
+
+      setSelectedName(converted.name);
+    } catch (error) {
+      await appAlert.error(
+        error instanceof Error ? error.message : "Logo seçilmədi.",
+        "Logo yüklənmədi",
+      );
+    } finally {
+      setIsConverting(false);
+    }
+  }
+
+  return (
+    <div className="grid gap-2 text-sm font-medium">
+      <span>{label}</span>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          const file = event.dataTransfer.files[0];
+
+          if (file) {
+            void setFile(file);
+          }
+        }}
+        className={cn(
+          "flex min-h-28 flex-col items-center justify-center rounded-md border border-dashed bg-background px-4 py-5 text-center transition",
+          isDragging ? "border-primary bg-primary/5" : "border-input",
+        )}
+      >
+        <ImagePlus className="mb-2 size-6 text-muted-foreground" aria-hidden="true" />
+        <span className="text-sm">
+          {isConverting
+            ? "WebP çevrilir"
+            : selectedName || "Logo faylını buraya sürüklə"}
+        </span>
+        <span className="mt-1 text-xs text-muted-foreground">
+          JPG və PNG avtomatik WebP formatına çevrilir
+        </span>
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        name={fileName}
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+
+          if (file) {
+            void setFile(file);
+          }
+        }}
+      />
+      {selectedName ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="w-fit"
+          onClick={() => {
+            if (inputRef.current) {
+              inputRef.current.value = "";
+            }
+            setSelectedName("");
+          }}
+        >
+          <X className="mr-2 size-4" aria-hidden="true" />
+          Seçiləni sil
+        </Button>
+      ) : null}
+      <input
+        name={urlName}
+        defaultValue={defaultValue ?? ""}
+        placeholder="və ya mövcud URL saxla"
+        className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+    </div>
+  );
+}
+
 export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -54,15 +221,22 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
       <div className="grid gap-4 lg:grid-cols-2">
         <Field label="Sayt adı" name="siteName" defaultValue={settings.siteName} />
         <Field label="Qısa ad" name="shortName" defaultValue={settings.shortName} />
-        <Field label="Logo URL" name="logoUrl" defaultValue={settings.logoUrl} />
-        <Field
-          label="Dark mode logo URL"
-          name="darkLogoUrl"
+        <LogoUploadField
+          label="Logo"
+          fileName="logoFile"
+          urlName="logoUrl"
+          defaultValue={settings.logoUrl}
+        />
+        <LogoUploadField
+          label="Dark mode logo"
+          fileName="darkLogoFile"
+          urlName="darkLogoUrl"
           defaultValue={settings.darkLogoUrl}
         />
-        <Field
-          label="Favicon URL"
-          name="faviconUrl"
+        <LogoUploadField
+          label="Favicon"
+          fileName="faviconFile"
+          urlName="faviconUrl"
           defaultValue={settings.faviconUrl}
         />
         <Field
@@ -93,14 +267,49 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
         name="defaultSeoKeywords"
         defaultValue={settings.defaultSeoKeywords}
       />
-      <label className="grid gap-2 text-sm font-medium">
-        Sosial linklər JSON
-        <textarea
-          name="socialLinks"
-          defaultValue={JSON.stringify(settings.socialLinks, null, 2)}
-          className="min-h-24 rounded-md border border-input bg-background px-3 py-2 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </label>
+      <input
+        type="hidden"
+        name="socialLinksJson"
+        value={JSON.stringify(settings.socialLinks)}
+      />
+      <div className="grid gap-4 rounded-md border bg-background p-4 lg:grid-cols-3">
+        <label className="grid gap-2 text-sm font-medium">
+          <span className="inline-flex items-center gap-2">
+            <Instagram className="size-4" aria-hidden="true" />
+            Instagram
+          </span>
+          <input
+            name="socialInstagram"
+            defaultValue={settings.socialLinks.instagram ?? ""}
+            placeholder="https://instagram.com/alisveris.az"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          <span className="inline-flex items-center gap-2">
+            <Music2 className="size-4" aria-hidden="true" />
+            TikTok
+          </span>
+          <input
+            name="socialTiktok"
+            defaultValue={settings.socialLinks.tiktok ?? ""}
+            placeholder="https://tiktok.com/@alisveris.az"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          <span className="inline-flex items-center gap-2">
+            <MessageCircle className="size-4" aria-hidden="true" />
+            WhatsApp
+          </span>
+          <input
+            name="socialWhatsapp"
+            defaultValue={settings.socialLinks.whatsapp ?? settings.whatsapp}
+            placeholder="+994..."
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+      </div>
       <Field
         label="Copyright mətni"
         name="copyrightText"

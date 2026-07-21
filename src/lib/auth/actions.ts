@@ -7,11 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
-import {
-  isAuthRole,
-  type AuthResult,
-  type AuthRole,
-} from "@/lib/auth/types";
+import type { AuthResult, AuthRole } from "@/lib/auth/types";
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -160,11 +156,10 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const metadataRole = data.user.user_metadata?.role;
   const fallbackRole: AuthRole =
-    data.user.email?.toLowerCase() === "rustamovali664@gmail.com"
+    data.user.email?.toLowerCase() === "rustamovali664@gmail.com" ||
+    metadataRole === "admin"
       ? "admin"
-      : metadataRole === "customer"
-        ? "customer"
-        : "seller";
+      : "seller";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -229,10 +224,10 @@ export async function updateUserRoleAction(
   const userId = readString(formData, "userId");
   const role = readString(formData, "role");
 
-  if (!userId || !isAuthRole(role)) {
+  if (!userId || (role !== "seller" && role !== "admin")) {
     return {
       ok: false,
-      message: "İstifadəçi və rol düzgün seçilməyib.",
+      message: "Rol yalnız satıcı və ya admin ola bilər.",
     };
   }
 

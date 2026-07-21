@@ -8,11 +8,11 @@ import type { Database } from "@/types/database";
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
 function getFallbackRole(email: string | undefined, role: unknown): AuthRole {
-  if (email?.toLowerCase() === "rustamovali664@gmail.com") {
+  if (email?.toLowerCase() === "rustamovali664@gmail.com" || role === "admin") {
     return "admin";
   }
 
-  return role === "customer" ? "customer" : "seller";
+  return "seller";
 }
 
 export async function getCurrentUserProfile() {

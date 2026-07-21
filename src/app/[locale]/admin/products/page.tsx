@@ -4,13 +4,13 @@ import { getAdminResource } from "@/lib/dashboard/data";
 
 export default async function AdminProductsPage() {
   await requireRole(["admin"], "/admin/products");
-  const resource = await getAdminResource("products");
+  const resource = await getAdminResource("stores");
 
   return (
     <ResourcePage
-      title="Məhsullar"
-      description="products cədvəlindən oxunan real məhsullar"
-      totalLabel="Məhsul sayı"
+      title="Məhsullar üçün mağaza seç"
+      description="Məhsullar qarışıq göstərilmir. Mağazaya daxil olub həmin mağazanın məhsullarını idarə edin."
+      totalLabel="Mağaza sayı"
       total={resource.total}
       items={resource.items}
     />

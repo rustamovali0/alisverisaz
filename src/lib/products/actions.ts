@@ -334,7 +334,10 @@ export async function createStoreProductAction(
 export async function updateProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
-  const current = await requireRole(["seller", "customer"], "/dashboard/listings");
+  const current = await requireRole(
+    ["seller", "customer", "admin"],
+    "/dashboard/listings",
+  );
   if (current.role === "seller") {
     const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
 
@@ -439,6 +442,8 @@ export async function updateProductAction(
 
   revalidatePath("/store/dashboard/products");
   revalidatePath("/dashboard/listings");
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/stores");
 
   return {
     ok: true,
@@ -449,7 +454,10 @@ export async function updateProductAction(
 export async function deleteProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
-  const current = await requireRole(["seller", "customer"], "/dashboard/listings");
+  const current = await requireRole(
+    ["seller", "customer", "admin"],
+    "/dashboard/listings",
+  );
   if (current.role === "seller") {
     const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
 
@@ -485,6 +493,8 @@ export async function deleteProductAction(
 
   revalidatePath("/store/dashboard/products");
   revalidatePath("/dashboard/listings");
+  revalidatePath("/admin/products");
+  revalidatePath("/admin/stores");
 
   return {
     ok: true,

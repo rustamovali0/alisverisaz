@@ -9,6 +9,7 @@ import type { CmsActionResult } from "@/lib/cms/types";
 
 const CMS_MEDIA_BUCKET = "cms-media";
 const MAX_MEDIA_SIZE = 5 * 1024 * 1024;
+const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -38,6 +39,90 @@ function parseJson(value: string, fallback: unknown) {
   }
 }
 
+function readFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
+function sanitizeFileName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeSocialLinks(formData: FormData) {
+  const previous = parseJson(readString(formData, "socialLinksJson"), {});
+  const links =
+    previous && typeof previous === "object" && !Array.isArray(previous)
+      ? { ...(previous as Record<string, unknown>) }
+      : {};
+  const whatsapp = readString(formData, "socialWhatsapp") || readString(formData, "whatsapp");
+
+  links.instagram = readString(formData, "socialInstagram");
+  links.tiktok = readString(formData, "socialTiktok");
+  links.whatsapp = whatsapp;
+
+  return Object.fromEntries(
+    Object.entries(links)
+      .map(([key, value]) => [key, typeof value === "string" ? value.trim() : ""])
+      .filter(([, value]) => value),
+  );
+}
+
+async function uploadCmsMediaFile(input: {
+  file: File;
+  currentUserId: string;
+  folder: string;
+  altText: string;
+}) {
+  if (input.file.size > MAX_MEDIA_SIZE) {
+    throw new Error(`${input.file.name} maksimum 5MB ola bilər.`);
+  }
+
+  if (!ALLOWED_MEDIA_TYPES.includes(input.file.type)) {
+    throw new Error("Yalnız JPG, PNG və WebP qəbul edilir. SVG deaktivdir.");
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const fileName = sanitizeFileName(input.file.name) || "image.webp";
+  const path = `${input.folder}/${input.currentUserId}/${crypto.randomUUID()}-${fileName}`;
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from(CMS_MEDIA_BUCKET)
+    .upload(path, body, {
+      contentType: input.file.type,
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  const { data } = supabaseAdmin.storage.from(CMS_MEDIA_BUCKET).getPublicUrl(path);
+
+  const { error: insertError } = await (supabaseAdmin as any)
+    .from("media_assets")
+    .insert({
+      bucket: CMS_MEDIA_BUCKET,
+      path,
+      url: data.publicUrl,
+      file_name: input.file.name,
+      mime_type: input.file.type,
+      size_bytes: input.file.size,
+      alt_text: input.altText,
+      created_by: input.currentUserId,
+      updated_by: input.currentUserId,
+    });
+
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+
+  return data.publicUrl;
+}
+
 async function audit(action: string, entityType: string, metadata: Record<string, unknown>) {
   const current = await requireRole(["admin"], "/admin");
   const supabaseAdmin = createSupabaseAdminClient();
@@ -55,16 +140,58 @@ async function audit(action: string, entityType: string, metadata: Record<string
 export async function updateSiteSettingsAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
-  await audit("update_site_settings", "platform_settings", {
+  const current = await audit("update_site_settings", "platform_settings", {
     key: "site",
   });
-  const supabase = await createSupabaseServerClient();
+  const supabaseAdmin = createSupabaseAdminClient();
+  let logoUrl = readString(formData, "logoUrl");
+  let darkLogoUrl = readString(formData, "darkLogoUrl");
+  let faviconUrl = readString(formData, "faviconUrl");
+
+  try {
+    const logoFile = readFile(formData, "logoFile");
+    const darkLogoFile = readFile(formData, "darkLogoFile");
+    const faviconFile = readFile(formData, "faviconFile");
+
+    if (logoFile) {
+      logoUrl = await uploadCmsMediaFile({
+        file: logoFile,
+        currentUserId: current.user.id,
+        folder: "site-logo",
+        altText: readString(formData, "siteName") || "alisveris.az logo",
+      });
+    }
+
+    if (darkLogoFile) {
+      darkLogoUrl = await uploadCmsMediaFile({
+        file: darkLogoFile,
+        currentUserId: current.user.id,
+        folder: "site-logo-dark",
+        altText: `${readString(formData, "siteName") || "alisveris.az"} dark logo`,
+      });
+    }
+
+    if (faviconFile) {
+      faviconUrl = await uploadCmsMediaFile({
+        file: faviconFile,
+        currentUserId: current.user.id,
+        folder: "site-favicon",
+        altText: `${readString(formData, "siteName") || "alisveris.az"} favicon`,
+      });
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Logo yüklənmədi.",
+    };
+  }
+
   const value = {
     site_name: readString(formData, "siteName"),
     short_name: readString(formData, "shortName"),
-    logo_url: readString(formData, "logoUrl"),
-    dark_logo_url: readString(formData, "darkLogoUrl"),
-    favicon_url: readString(formData, "faviconUrl"),
+    logo_url: logoUrl,
+    dark_logo_url: darkLogoUrl,
+    favicon_url: faviconUrl,
     default_seo_title: readString(formData, "defaultSeoTitle"),
     default_meta_description: readString(formData, "defaultMetaDescription"),
     default_seo_keywords: readString(formData, "defaultSeoKeywords"),
@@ -72,7 +199,7 @@ export async function updateSiteSettingsAction(
     phone: readString(formData, "phone"),
     whatsapp: readString(formData, "whatsapp"),
     address: readString(formData, "address"),
-    social_links: parseJson(readString(formData, "socialLinks"), {}),
+    social_links: normalizeSocialLinks(formData),
     copyright_text: readString(formData, "copyrightText"),
     maintenance_mode: readBoolean(formData, "maintenanceMode"),
     user_registration_enabled: readBoolean(formData, "userRegistrationEnabled"),
@@ -82,7 +209,7 @@ export async function updateSiteSettingsAction(
     default_theme_mode: readString(formData, "defaultThemeMode") || "system",
   };
 
-  const { error } = await (supabase as any).from("platform_settings").upsert({
+  const { error } = await (supabaseAdmin as any).from("platform_settings").upsert({
     key: "site",
     value,
   });
@@ -379,7 +506,7 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
           throw new Error(`${file.name} maksimum 5MB ola bilər.`);
         }
 
-        if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
           throw new Error("Yalnız JPG, PNG və WebP qəbul edilir. SVG deaktivdir.");
         }
 

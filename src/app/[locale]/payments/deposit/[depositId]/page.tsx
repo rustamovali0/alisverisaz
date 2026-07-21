@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { requireRole } from "@/lib/auth/session";
 
 type DepositPaymentPageProps = {
   params: Promise<{
@@ -12,7 +11,6 @@ type DepositPaymentPageProps = {
 export default async function DepositPaymentPage({
   params,
 }: DepositPaymentPageProps) {
-  await requireRole(["customer"], "/products");
   const { depositId } = await params;
 
   return (

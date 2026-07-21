@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireRole } from "@/lib/auth/session";
-import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { DepositActionResult } from "@/lib/deposits/types";
 
 function readString(formData: FormData, key: string) {
@@ -30,30 +29,33 @@ function calculateDepositAmount(input: {
 
 async function ensureCustomer(input: {
   storeId: string;
-  userId: string;
+  userId: string | null;
   email: string | null;
   fullName: string;
   phone: string;
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: existing } = await (supabaseAdmin as any)
-    .from("customers")
-    .select("id")
-    .eq("store_id", input.storeId)
-    .eq("user_id", input.userId)
-    .maybeSingle();
 
-  if (existing) {
-    await (supabaseAdmin as any)
+  if (input.userId) {
+    const { data: existing } = await (supabaseAdmin as any)
       .from("customers")
-      .update({
-        email: input.email,
-        full_name: input.fullName,
-        phone: input.phone,
-      })
-      .eq("id", existing.id);
+      .select("id")
+      .eq("store_id", input.storeId)
+      .eq("user_id", input.userId)
+      .maybeSingle();
 
-    return existing.id as string;
+    if (existing) {
+      await (supabaseAdmin as any)
+        .from("customers")
+        .update({
+          email: input.email,
+          full_name: input.fullName,
+          phone: input.phone,
+        })
+        .eq("id", existing.id);
+
+      return existing.id as string;
+    }
   }
 
   const { data: customer, error } = await (supabaseAdmin as any)
@@ -78,13 +80,10 @@ async function ensureCustomer(input: {
 export async function createDepositAction(
   formData: FormData,
 ): Promise<DepositActionResult> {
-  const current = await requireRole(["customer"], "/products");
-  await ensureAuthProfile({
-    id: current.user.id,
-    email: current.user.email ?? null,
-    fullName: current.profile?.full_name ?? null,
-    role: current.role,
-  });
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const productId = readString(formData, "productId");
   const fullName = readString(formData, "fullName");
   const phone = readString(formData, "phone");
@@ -165,8 +164,8 @@ export async function createDepositAction(
   try {
     const customerId = await ensureCustomer({
       storeId: product.store_id,
-      userId: current.user.id,
-      email: current.user.email ?? null,
+      userId: user?.id ?? null,
+      email: user?.email ?? null,
       fullName,
       phone,
     });
@@ -175,7 +174,7 @@ export async function createDepositAction(
       .insert({
         store_id: product.store_id,
         owner_id: ownerId,
-        user_id: current.user.id,
+        user_id: user?.id ?? null,
         customer_id: customerId,
         product_id: product.id,
         full_name: fullName,

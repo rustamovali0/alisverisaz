@@ -22,7 +22,7 @@ export default async function AdminUsersPage() {
       />
       <DashboardPanel
         title="Rol idarəetməsi"
-        description="Admin istifadəçilərin rolunu customer, seller və admin olaraq dəyişə bilər."
+        description="Admin istifadəçilərin rolunu satıcı və admin olaraq dəyişə bilər."
       >
         <UserRoleManager users={users} />
       </DashboardPanel>
