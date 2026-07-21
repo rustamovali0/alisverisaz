@@ -221,6 +221,14 @@ export async function getNavigationMenus() {
   );
 }
 
+function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: string) {
+  if (role === "admin" && (href === "/admin" || href.startsWith("/admin/"))) {
+    return href.replace(/^\/admin/, "/radmin");
+  }
+
+  return href;
+}
+
 export async function getDashboardNavigationForRole(role: "seller" | "customer" | "admin") {
   const fallback = dashboardNavigation[role];
   const location =
@@ -236,7 +244,11 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
     return fallback;
   }
 
-  const overrides = new Map(menu.items.map((item) => [item.href, item]));
+  const normalizedMenuItems = menu.items.map((item) => ({
+    ...item,
+    href: normalizeDashboardHref(role, item.href),
+  }));
+  const overrides = new Map(normalizedMenuItems.map((item) => [item.href, item]));
   const merged = fallback
     .map((item) => {
       const override = overrides.get(item.href);
@@ -257,7 +269,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
     })
     .filter(Boolean) as DashboardNavItem[];
 
-  const extra = menu.items
+  const extra = normalizedMenuItems
     .filter((item) => !fallback.some((base) => base.href === item.href) && item.isActive)
     .map(
       (item): DashboardNavItem => ({

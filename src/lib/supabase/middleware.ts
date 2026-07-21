@@ -2,13 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
+import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import type { AuthRole } from "@/lib/auth/types";
 import { clientEnv } from "@/lib/config/env.client";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
-const authRoutes = ["/login", "/register"];
+const authRoutes = ["/login", "/register", "/radmin/login"];
 type CookiesToSet = Array<{
   name: string;
   value: string;
@@ -19,6 +19,14 @@ const protectedRoutes: Array<{
   prefix: string;
   roles: AuthRole[];
 }> = [
+  {
+    prefix: "/cart",
+    roles: ["customer"],
+  },
+  {
+    prefix: "/radmin",
+    roles: ["admin"],
+  },
   {
     prefix: "/admin",
     roles: ["admin"],
@@ -48,7 +56,9 @@ function createRedirectResponse(request: NextRequest, response: NextResponse, pa
 }
 
 function getLocalizedPath(locale: string, path: string) {
-  return `/${locale}${path === "/" ? "" : path}`;
+  void locale;
+
+  return path;
 }
 
 function getMetadataRole(role: unknown): AuthRole {
@@ -56,13 +66,22 @@ function getMetadataRole(role: unknown): AuthRole {
     return "admin";
   }
 
-  return "seller";
+  if (role === "seller") {
+    return "seller";
+  }
+
+  return "customer";
 }
 
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
+export async function updateSession(
+  request: NextRequest,
+  initialResponse?: NextResponse,
+) {
+  let response =
+    initialResponse ??
+    NextResponse.next({
+      request,
+    });
 
   const supabase = createServerClient<Database>(
     clientEnv.supabaseUrl,
@@ -75,10 +94,6 @@ export async function updateSession(request: NextRequest) {
         setAll(cookiesToSet: CookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
-          });
-
-          response = NextResponse.next({
-            request,
           });
 
           cookiesToSet.forEach(({ name, value, options }) => {
@@ -102,10 +117,15 @@ export async function updateSession(request: NextRequest) {
     segments[1] === locale
       ? `/${segments.slice(2).join("/")}`.replace(/\/$/, "") || "/"
       : pathname;
-  const route = protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
-  const localizedRoute = protectedRoutes.find((item) =>
-    matchesPath(localizedPathname, item.prefix),
-  );
+  const isAdminLogin =
+    matchesPath(pathname, "/radmin/login") ||
+    matchesPath(localizedPathname, "/radmin/login");
+  const route = isAdminLogin
+    ? undefined
+    : protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
+  const localizedRoute = isAdminLogin
+    ? undefined
+    : protectedRoutes.find((item) => matchesPath(localizedPathname, item.prefix));
 
   if (!user) {
     if (route || localizedRoute) {
@@ -114,7 +134,9 @@ export async function updateSession(request: NextRequest) {
         response,
         getLocalizedPath(
           locale,
-          getLoginPath(`${pathname}${request.nextUrl.search}`),
+          (route ?? localizedRoute)?.roles.includes("admin")
+            ? getAdminLoginPath(`${pathname}${request.nextUrl.search}`)
+            : getLoginPath(`${pathname}${request.nextUrl.search}`),
         ),
       );
     }

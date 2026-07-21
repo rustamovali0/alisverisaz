@@ -18,7 +18,7 @@ import { m } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import type { CartProduct } from "@/lib/cart/types";
+import type { MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ type HomeExperienceProps = {
   siteSettings: SiteSettings;
   sections: HomepageSection[];
   activeTheme: string;
-  products: CartProduct[];
+  stores: MarketplaceStore[];
   categories: CategoryOption[];
   title: string;
   description: string;
@@ -42,15 +42,6 @@ const themeClasses: Record<string, string> = {
   "minimal-storefront": "from-background via-background to-muted/50",
   "bold-catalog": "from-rose-50 via-background to-cyan-50 dark:from-rose-950/20 dark:via-background dark:to-cyan-950/20",
 };
-
-function formatMoney(product: CartProduct) {
-  const value = Math.max(product.priceAmount - product.discountAmount, 0);
-
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
-}
 
 function sectionByKey(sections: HomepageSection[], key: string) {
   return sections.find((section) => section.key === key);
@@ -82,7 +73,7 @@ function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value: s
     : `https://tiktok.com/@${cleanValue}`;
 }
 
-function ProductCard({ product, index }: { product: CartProduct; index: number }) {
+function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: number }) {
   return (
     <m.article
       initial={{ opacity: 0, y: 16 }}
@@ -90,33 +81,44 @@ function ProductCard({ product, index }: { product: CartProduct; index: number }
       transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.28 }}
       className="group overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
     >
-      <Link href="/products" className="block">
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
-          {product.imageUrl ? (
+      <Link href={`/${store.slug}`} className="block">
+        <div className="relative h-32 overflow-hidden bg-muted">
+          {store.coverUrl ? (
             <img
-              src={product.imageUrl}
-              alt={product.name}
+              src={store.coverUrl}
+              alt={store.name}
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <PackageSearch className="size-8" aria-hidden="true" />
+            <div className="flex h-full items-center justify-center">
+              <Store className="size-8 text-muted-foreground" aria-hidden="true" />
             </div>
           )}
-          {product.discountAmount > 0 ? (
-            <span className="absolute left-2 top-2 rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">
-              Endirim
-            </span>
-          ) : null}
+          <div className="absolute -bottom-7 left-4 grid size-16 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm">
+            {store.logoUrl ? (
+              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-xl font-black text-primary">
+                {store.name.slice(0, 1).toUpperCase()}
+              </span>
+            )}
+          </div>
         </div>
-        <div className="p-3">
-          <h3 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5">
-            {product.name}
-          </h3>
-          <p className="mt-2 text-base font-bold">{formatMoney(product)}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Stok: {product.stockQuantity}
-          </p>
+        <div className="p-4 pt-10">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-black tracking-normal">{store.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {store.productCount} elan
+              </p>
+            </div>
+            <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+          </div>
+          {store.description ? (
+            <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+              {store.description}
+            </p>
+          ) : null}
         </div>
       </Link>
     </m.article>
@@ -128,12 +130,13 @@ export function HomeExperience({
   siteSettings,
   sections,
   activeTheme,
-  products,
+  stores,
   categories,
   title,
   description,
   productsLabel,
 }: HomeExperienceProps) {
+  void locale;
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
@@ -142,8 +145,9 @@ export function HomeExperience({
   const heroTitle = hero?.title || title;
   const heroDescription = hero?.description || description;
   const themeClass = themeClasses[activeTheme] ?? themeClasses.default;
-  const featuredProducts = products.slice(0, visibleLimit(featuredSection, 8));
-  const newProducts = products.slice(0, visibleLimit(newSection, 10));
+  const featuredStores = stores.slice(0, visibleLimit(featuredSection, 8));
+  const newStores = stores.slice(0, visibleLimit(newSection, 8));
+  const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
   const socialItems = [
     {
@@ -198,7 +202,7 @@ export function HomeExperience({
             </Button>
           </nav>
           <form
-            action={`/${locale}/products`}
+            action="/products"
             className="hidden flex-1 items-center gap-2 md:flex"
             method="get"
           >
@@ -273,7 +277,7 @@ export function HomeExperience({
             {heroDescription}
           </p>
           <form
-            action={`/${locale}/products`}
+            action="/products"
             className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10"
             method="get"
           >
@@ -298,7 +302,7 @@ export function HomeExperience({
             {activeCategories.slice(0, 6).map((category) => (
               <Link
                 key={category.id}
-                href="/products"
+                href={`/products?category=${category.slug}`}
                 className="rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
               >
                 {category.name}
@@ -349,18 +353,18 @@ export function HomeExperience({
                 />
               ) : (
                 <div className="grid h-full grid-cols-2 gap-3 p-4">
-                  {featuredProducts.slice(0, 4).map((product, index) => (
+                  {featuredStores.slice(0, 4).map((store, index) => (
                     <div
-                      key={product.id}
+                      key={store.id}
                       className={cn(
                         "overflow-hidden rounded-lg border bg-background",
                         index === 0 ? "col-span-2" : "",
                       )}
                     >
-                      {product.imageUrl ? (
+                      {store.coverUrl || store.logoUrl ? (
                         <img
-                          src={product.imageUrl}
-                          alt={product.name}
+                          src={store.coverUrl || store.logoUrl || ""}
+                          alt={store.name}
                           className="h-full w-full object-cover"
                         />
                       ) : (
@@ -370,10 +374,10 @@ export function HomeExperience({
                       )}
                     </div>
                   ))}
-                  {featuredProducts.length === 0 ? (
+                  {featuredStores.length === 0 ? (
                     <div className="col-span-2 flex h-full items-center justify-center rounded-lg border bg-background text-muted-foreground">
                       <PackageSearch className="mr-2 size-5" />
-                      Məhsullar hazır olduqda burada görünəcək
+                      Mağazalar hazır olduqda burada görünəcək
                     </div>
                   ) : null}
                 </div>
@@ -381,8 +385,8 @@ export function HomeExperience({
             </div>
           </div>
           <div className="absolute -bottom-5 right-5 rounded-lg bg-primary p-4 text-primary-foreground shadow-xl">
-            <p className="text-sm opacity-90">Aktiv məhsul</p>
-            <p className="text-3xl font-black">{products.length}</p>
+            <p className="text-sm opacity-90">Aktiv elan</p>
+            <p className="text-3xl font-black">{totalProductCount}</p>
           </div>
         </m.div>
       </section>
@@ -412,7 +416,7 @@ export function HomeExperience({
                 transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.26 }}
               >
                 <Link
-                  href="/products"
+                  href={`/products?category=${category.slug}`}
                   className="flex min-h-28 items-center justify-between rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
                 >
                   <span className="text-base font-bold">{category.name}</span>
@@ -424,15 +428,15 @@ export function HomeExperience({
         </section>
       ) : null}
 
-      {featuredProducts.length > 0 ? (
+      {featuredStores.length > 0 ? (
         <section className="container py-6 md:py-10">
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
-                {featuredSection?.title || "Seçilmiş məhsullar"}
+                {featuredSection?.title || "Seçilmiş mağazalar"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {featuredSection?.description || "Platformadakı aktiv təkliflər."}
+                {featuredSection?.description || "Platformadakı aktiv mağazalar."}
               </p>
             </div>
             <Button asChild variant="outline">
@@ -440,28 +444,28 @@ export function HomeExperience({
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {featuredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+            {featuredStores.map((store, index) => (
+              <HomeStoreCard key={store.id} store={store} index={index} />
             ))}
           </div>
         </section>
       ) : null}
 
-      {newProducts.length > 0 ? (
+      {newStores.length > 0 ? (
         <section className="container py-6 md:py-10">
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
-                {newSection?.title || "Yeni məhsullar"}
+                {newSection?.title || "Yeni mağazalar"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {newSection?.description || "Ən son əlavə olunan aktiv məhsullar."}
+                {newSection?.description || "Ən son əlavə olunan aktiv mağazalar."}
               </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-            {newProducts.map((product, index) => (
-              <ProductCard key={`new-${product.id}`} product={product} index={index} />
+            {newStores.map((store, index) => (
+              <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
             ))}
           </div>
         </section>

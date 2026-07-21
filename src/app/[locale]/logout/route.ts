@@ -9,10 +9,10 @@ type LogoutRouteContext = {
 };
 
 export async function GET(request: Request, context: LogoutRouteContext) {
-  const { locale } = await context.params;
+  await context.params;
   const supabase = await createSupabaseServerClient();
 
   await supabase.auth.signOut();
 
-  return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+  return NextResponse.redirect(new URL("/login", request.url));
 }

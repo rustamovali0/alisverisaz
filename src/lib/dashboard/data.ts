@@ -607,7 +607,7 @@ export async function getAdminResource(
         title: row.name,
         description: row.status,
         value: row.slug,
-        href: `/admin/stores/${row.id}`,
+        href: `/radmin/stores/${row.id}`,
       })),
     };
   }

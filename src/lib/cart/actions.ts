@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getCurrentUserProfile } from "@/lib/auth/session";
+import { requireRole } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
@@ -121,16 +121,13 @@ async function ensureCustomer(input: {
 export async function createCheckoutOrdersAction(
   formData: FormData,
 ): Promise<CheckoutActionResult> {
-  const current = await getCurrentUserProfile();
-
-  if (current?.user) {
-    await ensureAuthProfile({
-      id: current.user.id,
-      email: current.user.email ?? null,
-      fullName: current.profile?.full_name ?? null,
-      role: current.role,
-    });
-  }
+  const current = await requireRole(["customer"], "/cart");
+  await ensureAuthProfile({
+    id: current.user.id,
+    email: current.user.email ?? null,
+    fullName: current.profile?.full_name ?? null,
+    role: current.role,
+  });
 
   const fullName = readString(formData, "fullName");
   const phone = readString(formData, "phone");
@@ -206,10 +203,10 @@ export async function createCheckoutOrdersAction(
     for (const [storeId, storeItems] of grouped) {
       const customerId = await ensureCustomer({
         storeId,
-        userId: current?.user.id ?? null,
+        userId: current.user.id,
         fullName,
         phone,
-        email: current?.user.email ?? null,
+        email: current.user.email ?? null,
       });
       const subtotal = storeItems.reduce(
         (total, item) => total + getUnitPrice(item.product) * item.quantity,
@@ -220,7 +217,7 @@ export async function createCheckoutOrdersAction(
         .insert({
           store_id: storeId,
           customer_id: customerId,
-          user_id: current?.user.id ?? null,
+          user_id: current.user.id,
           order_number: createOrderNumber(),
           status: "pending",
           payment_status: "pending",

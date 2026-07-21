@@ -47,4 +47,5 @@ export type ManagedProduct = {
 export type CategoryOption = {
   id: string;
   name: string;
+  slug: string;
 };

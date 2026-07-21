@@ -10,7 +10,11 @@ import { AuthField } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 
-export function LoginForm() {
+type LoginFormProps = {
+  mode?: "public" | "admin";
+};
+
+export function LoginForm({ mode = "public" }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -33,19 +37,30 @@ export function LoginForm() {
 
   return (
     <AuthCard
-      title="Giris"
-      description="Hesabiniza daxil olun ve rolunuza uygun panelden davam edin."
+      title={mode === "admin" ? "Admin girişi" : "Giris"}
+      description={
+        mode === "admin"
+          ? "Admin panelinə yalnız admin rolu olan hesab daxil ola bilər."
+          : "Müştəri və ya mağaza hesabınıza daxil olun."
+      }
       footer={
-        <>
-          Hesabiniz yoxdur?{" "}
-          <Link className="font-medium text-primary hover:underline" href="/register">
-            Qeydiyyat
+        mode === "admin" ? (
+          <Link className="font-medium text-primary hover:underline" href="/login">
+            Sayt girişinə qayıt
           </Link>
-        </>
+        ) : (
+          <>
+            Hesabiniz yoxdur?{" "}
+            <Link className="font-medium text-primary hover:underline" href="/register">
+              Qeydiyyat
+            </Link>
+          </>
+        )
       }
     >
       <form action={handleSubmit} className="grid gap-4">
         <input name="next" type="hidden" value={next} />
+        <input name="mode" type="hidden" value={mode} />
         <AuthField
           id="email"
           name="email"

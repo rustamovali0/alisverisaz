@@ -85,7 +85,7 @@ export async function getCategoryOptions() {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("categories")
-    .select("id,name")
+    .select("id,name,slug")
     .eq("is_active", true)
     .order("sort_order", {
       ascending: true,

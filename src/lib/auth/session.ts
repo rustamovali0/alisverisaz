@@ -12,7 +12,11 @@ function getFallbackRole(email: string | undefined, role: unknown): AuthRole {
     return "admin";
   }
 
-  return "seller";
+  if (role === "seller") {
+    return "seller";
+  }
+
+  return "customer";
 }
 
 export async function getCurrentUserProfile() {

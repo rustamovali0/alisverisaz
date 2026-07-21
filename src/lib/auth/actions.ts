@@ -7,7 +7,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
-import type { AuthResult, AuthRole } from "@/lib/auth/types";
+import {
+  isAuthRole,
+  isPublicAuthRole,
+  type AuthResult,
+  type AuthRole,
+} from "@/lib/auth/types";
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -50,7 +55,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const fullName = readString(formData, "fullName");
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
-  const role: AuthRole = "seller";
+  const requestedRole = readString(formData, "role");
+  const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
 
   if (!fullName || !email || !password) {
     return {
@@ -126,6 +132,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
   const nextPath = normalizeNextPath(readString(formData, "next"));
+  const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
 
   if (!email || !password) {
     return {
@@ -159,7 +166,9 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     data.user.email?.toLowerCase() === "rustamovali664@gmail.com" ||
     metadataRole === "admin"
       ? "admin"
-      : "seller";
+      : isAuthRole(metadataRole)
+        ? metadataRole
+        : "customer";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -169,6 +178,24 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     .maybeSingle();
 
   const role = profile?.role ?? fallbackRole;
+
+  if (mode === "admin" && role !== "admin") {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Bu giriş yalnız admin hesabı üçündür.",
+    };
+  }
+
+  if (mode === "public" && role === "admin") {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Admin girişi üçün /radmin/login səhifəsindən istifadə edin.",
+    };
+  }
 
   if (!profile) {
     try {
@@ -224,10 +251,10 @@ export async function updateUserRoleAction(
   const userId = readString(formData, "userId");
   const role = readString(formData, "role");
 
-  if (!userId || (role !== "seller" && role !== "admin")) {
+  if (!userId || !isAuthRole(role)) {
     return {
       ok: false,
-      message: "Rol yalnız satıcı və ya admin ola bilər.",
+      message: "Rol müştəri, satıcı və ya admin ola bilər.",
     };
   }
 

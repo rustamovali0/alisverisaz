@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/swal";
 import { updateUserRoleAction } from "@/lib/auth/actions";
-type AssignableRole = "seller" | "admin";
+type AssignableRole = "customer" | "seller" | "admin";
 
 type AdminUserRow = {
   id: string;
@@ -16,6 +16,7 @@ type AdminUserRow = {
 };
 
 const roleLabels: Record<AssignableRole, string> = {
+  customer: "Müştəri",
   seller: "Satıcı",
   admin: "Admin",
 };
@@ -65,10 +66,16 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
             Rol
             <select
               name="role"
-              defaultValue={user.role === "admin" ? "admin" : "seller"}
+              defaultValue={
+                user.role === "admin"
+                  ? "admin"
+                  : user.role === "seller"
+                    ? "seller"
+                    : "customer"
+              }
               className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {(["seller", "admin"] as AssignableRole[]).map((role) => (
+              {(["customer", "seller", "admin"] as AssignableRole[]).map((role) => (
                 <option key={role} value={role}>
                   {roleLabels[role]}
                 </option>

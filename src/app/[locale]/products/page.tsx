@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
-import { getMarketplaceProducts } from "@/lib/cart/data";
-import { getDepositSettings } from "@/lib/settings/data";
+import { getMarketplaceStores } from "@/lib/cart/data";
+import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 type ProductsPageProps = {
   params: Promise<{
     locale: string;
+  }>;
+  searchParams?: Promise<{
+    category?: string;
   }>;
 };
 
@@ -16,32 +19,38 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "alisveris.az marketplace-də aktiv məhsulları, elanları və mağaza təkliflərini kəşf edin. Online alışveriş, səbət və sifariş sistemi.",
     alternates: {
-      canonical: "/az/products",
+      canonical: "/products",
     },
     openGraph: {
-      title: "Məhsullar və elanlar | alisveris.az",
+      title: "Mağazalar və elanlar | alisveris.az",
       description:
         "Azərbaycanda online alışveriş üçün marketplace məhsulları və mağaza təklifləri.",
-      url: "/az/products",
+      url: "/products",
       type: "website",
     },
   };
 }
 
-export default async function ProductsPage({ params }: ProductsPageProps) {
+export default async function ProductsPage({ params, searchParams }: ProductsPageProps) {
   const { locale } = await params;
+  const search = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const [products, depositSettings] = await Promise.all([
-    getMarketplaceProducts(locale),
-    getDepositSettings(),
-  ]);
+  const categories = await getCategoryOptions();
+  const selectedCategory = categories.find(
+    (category) => category.slug === search?.category || category.id === search?.category,
+  );
+  const stores = await getMarketplaceStores({
+    locale,
+    categoryId: selectedCategory?.id,
+  });
 
   return (
     <ProductMarketplace
-      products={products}
-      depositEnabled={depositSettings.enabled}
+      stores={stores}
+      categories={categories}
+      selectedCategoryId={selectedCategory?.id}
       labels={{
         title: t("title"),
         description: t("description"),

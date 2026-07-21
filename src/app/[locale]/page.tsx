@@ -1,6 +1,6 @@
 import { HomeExperience } from "@/components/home/home-experience";
 import { getHomepageSections, getSiteSettings, getActiveHomeTheme } from "@/lib/cms/data";
-import { getMarketplaceProducts } from "@/lib/cart/data";
+import { getMarketplaceStores } from "@/lib/cart/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -15,12 +15,12 @@ export default async function HomePage({ params }: HomePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("home");
   const common = await getTranslations("common");
-  const [siteSettings, sections, activeTheme, products, categories] =
+  const [siteSettings, sections, activeTheme, stores, categories] =
     await Promise.all([
       getSiteSettings(),
       getHomepageSections(),
       getActiveHomeTheme(),
-      getMarketplaceProducts(locale),
+      getMarketplaceStores({ locale, limit: 12 }),
       getCategoryOptions(),
     ]);
 
@@ -30,7 +30,7 @@ export default async function HomePage({ params }: HomePageProps) {
       siteSettings={siteSettings}
       sections={sections}
       activeTheme={activeTheme}
-      products={products}
+      stores={stores}
       categories={categories}
       title={t("title")}
       description={t("description")}

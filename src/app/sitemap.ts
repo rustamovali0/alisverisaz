@@ -7,25 +7,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [
     {
-      url: `${siteConfig.url}/az`,
+      url: siteConfig.url,
       lastModified: now,
       changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${siteConfig.url}/az/products`,
+      url: `${siteConfig.url}/products`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
     {
-      url: `${siteConfig.url}/az/login`,
+      url: `${siteConfig.url}/login`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.3,
     },
     {
-      url: `${siteConfig.url}/az/register`,
+      url: `${siteConfig.url}/register`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,

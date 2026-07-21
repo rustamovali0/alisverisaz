@@ -13,6 +13,20 @@ export type CartProduct = {
   depositAmount: number;
 };
 
+export type MarketplaceStore = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  address: string | null;
+  phone: string | null;
+  logoUrl: string | null;
+  coverUrl: string | null;
+  productCount: number;
+  sampleProducts: CartProduct[];
+  categoryIds: string[];
+};
+
 export type CartItem = {
   productId: string;
   quantity: number;
