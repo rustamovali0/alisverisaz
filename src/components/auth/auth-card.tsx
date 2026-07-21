@@ -14,7 +14,7 @@ export function AuthCard({
   footer,
 }: AuthCardProps) {
   return (
-    <section className="w-full max-w-md rounded-md border bg-card p-6 text-card-foreground shadow-sm">
+    <section className="glass-panel w-full max-w-md rounded-md p-6 text-card-foreground shadow-2xl shadow-slate-900/10">
       <div className="mb-6 space-y-2">
         <h1 className="text-2xl font-semibold tracking-normal">{title}</h1>
         <p className="text-sm leading-6 text-muted-foreground">{description}</p>

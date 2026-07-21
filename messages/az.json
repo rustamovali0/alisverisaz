@@ -1,0 +1,66 @@
+{
+  "seo": {
+    "title": "alisveris.az - Marketplace, mağaza və elan platforması",
+    "description": "alisveris.az Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə, səbət, sifariş və ödəniş prosesləri üçün marketplace platformasıdır."
+  },
+  "common": {
+    "brand": "alisveris.az",
+    "products": "Məhsullar",
+    "cart": "Səbət",
+    "loading": "Yüklənir",
+    "empty": "Məlumat yoxdur",
+    "save": "Yadda saxla",
+    "close": "Bağla"
+  },
+  "home": {
+    "title": "alisveris.az",
+    "description": "Azərbaycanda mağaza açmaq, məhsul satmaq, elan yerləşdirmək və sifarişləri idarə etmək üçün müasir marketplace platforması."
+  },
+  "marketplace": {
+    "title": "Məhsullar",
+    "description": "Real Supabase məhsulları",
+    "emptyTitle": "Aktiv məhsul yoxdur",
+    "emptyDescription": "Satıcılar məhsul əlavə etdikcə burada görünəcək.",
+    "stock": "Stok",
+    "addToCart": "Səbətə əlavə et",
+    "buyNow": "İndi al",
+    "sendDeposit": "Beh göndər"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "listings": "Elanlarım",
+    "orders": "Sifarişlər",
+    "favorites": "Favorilər",
+    "payments": "Ödənişlər",
+    "profile": "Profil",
+    "products": "Məhsullar",
+    "customers": "Müştərilər",
+    "analytics": "Analitika",
+    "subscription": "Abunəlik",
+    "settings": "Ayarlar",
+    "deposits": "Beh sifarişləri",
+    "users": "İstifadəçilər",
+    "stores": "Mağazalar",
+    "systemSettings": "Sistem ayarları"
+  },
+  "productFields": {
+    "name": "Ad",
+    "category": "Kateqoriya",
+    "price": "Qiymət",
+    "discount": "Endirim",
+    "stock": "Stok",
+    "description": "Açıqlama",
+    "images": "Şəkillər",
+    "variants": "Variantlar",
+    "status": "Status",
+    "seoTitle": "SEO başlıq",
+    "seoDescription": "SEO açıqlama"
+  },
+  "orderStatus": {
+    "pending": "Yeni",
+    "confirmed": "Təsdiqləndi",
+    "processing": "Hazırlanır",
+    "delivered": "Çatdırıldı",
+    "canceled": "Ləğv edildi"
+  }
+}

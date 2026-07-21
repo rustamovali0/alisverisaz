@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import { isAuthRole, type AuthRole } from "@/lib/auth/types";
 import { clientEnv } from "@/lib/config/env.client";
+import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
 const authRoutes = ["/login", "/register"];
@@ -18,6 +19,14 @@ const protectedRoutes: Array<{
   prefix: string;
   roles: AuthRole[];
 }> = [
+  {
+    prefix: "/cart",
+    roles: ["customer"],
+  },
+  {
+    prefix: "/payments/deposit",
+    roles: ["customer"],
+  },
   {
     prefix: "/admin",
     roles: ["admin"],
@@ -44,6 +53,10 @@ function createRedirectResponse(request: NextRequest, response: NextResponse, pa
   });
 
   return redirectResponse;
+}
+
+function getLocalizedPath(locale: string, path: string) {
+  return `/${locale}${path === "/" ? "" : path}`;
 }
 
 function getMetadataRole(role: unknown): AuthRole {
@@ -85,14 +98,28 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
+  const segments = pathname.split("/");
+  const locale = routing.locales.includes(segments[1] as any)
+    ? segments[1]
+    : routing.defaultLocale;
+  const localizedPathname =
+    segments[1] === locale
+      ? `/${segments.slice(2).join("/")}`.replace(/\/$/, "") || "/"
+      : pathname;
   const route = protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
+  const localizedRoute = protectedRoutes.find((item) =>
+    matchesPath(localizedPathname, item.prefix),
+  );
 
   if (!user) {
-    if (route) {
+    if (route || localizedRoute) {
       return createRedirectResponse(
         request,
         response,
-        getLoginPath(`${pathname}${request.nextUrl.search}`),
+        getLocalizedPath(
+          locale,
+          getLoginPath(`${pathname}${request.nextUrl.search}`),
+        ),
       );
     }
 
@@ -108,12 +135,24 @@ export async function updateSession(request: NextRequest) {
 
   const role = profile?.role ?? getMetadataRole(user.user_metadata?.role);
 
-  if (authRoutes.some((path) => matchesPath(pathname, path))) {
-    return createRedirectResponse(request, response, getDashboardPath(role));
+  if (
+    authRoutes.some(
+      (path) => matchesPath(pathname, path) || matchesPath(localizedPathname, path),
+    )
+  ) {
+    return createRedirectResponse(
+      request,
+      response,
+      getLocalizedPath(locale, getDashboardPath(role)),
+    );
   }
 
-  if (route && !route.roles.includes(role)) {
-    return createRedirectResponse(request, response, getDashboardPath(role));
+  if (localizedRoute && !localizedRoute.roles.includes(role)) {
+    return createRedirectResponse(
+      request,
+      response,
+      getLocalizedPath(locale, getDashboardPath(role)),
+    );
   }
 
   return response;

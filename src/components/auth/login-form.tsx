@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
 import { loginAction } from "@/lib/auth/actions";
@@ -9,6 +8,7 @@ import { appAlert } from "@/lib/alerts/swal";
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthField } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
+import { Link, useRouter } from "@/i18n/navigation";
 
 export function LoginForm() {
   const router = useRouter();

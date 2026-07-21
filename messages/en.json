@@ -1,0 +1,66 @@
+{
+  "seo": {
+    "title": "alisveris.az",
+    "description": "Marketplace SaaS platform"
+  },
+  "common": {
+    "brand": "alisveris.az",
+    "products": "Products",
+    "cart": "Cart",
+    "loading": "Loading",
+    "empty": "No data",
+    "save": "Save",
+    "close": "Close"
+  },
+  "home": {
+    "title": "alisveris.az",
+    "description": "The multilingual structure for the marketplace SaaS platform is ready."
+  },
+  "marketplace": {
+    "title": "Products",
+    "description": "Real Supabase products",
+    "emptyTitle": "No active products",
+    "emptyDescription": "Products will appear here as sellers add them.",
+    "stock": "Stock",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "sendDeposit": "Send deposit"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "listings": "My listings",
+    "orders": "Orders",
+    "favorites": "Favorites",
+    "payments": "Payments",
+    "profile": "Profile",
+    "products": "Products",
+    "customers": "Customers",
+    "analytics": "Analytics",
+    "subscription": "Subscription",
+    "settings": "Settings",
+    "deposits": "Deposit orders",
+    "users": "Users",
+    "stores": "Stores",
+    "systemSettings": "System settings"
+  },
+  "productFields": {
+    "name": "Name",
+    "category": "Category",
+    "price": "Price",
+    "discount": "Discount",
+    "stock": "Stock",
+    "description": "Description",
+    "images": "Images",
+    "variants": "Variants",
+    "status": "Status",
+    "seoTitle": "SEO title",
+    "seoDescription": "SEO description"
+  },
+  "orderStatus": {
+    "pending": "New",
+    "confirmed": "Confirmed",
+    "processing": "Preparing",
+    "delivered": "Delivered",
+    "canceled": "Canceled"
+  }
+}

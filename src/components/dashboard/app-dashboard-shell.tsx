@@ -1,14 +1,14 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { m } from "framer-motion";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { DashboardIconView } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
+import { Link, usePathname } from "@/i18n/navigation";
 import type { DashboardNavItem } from "@/lib/dashboard/navigation";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +28,7 @@ export function AppDashboardShell({
   children,
 }: AppDashboardShellProps) {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
 
   function isActive(href: string) {
@@ -35,9 +36,9 @@ export function AppDashboardShell({
   }
 
   const sidebar = (
-    <aside className="flex h-full w-72 flex-col border-r bg-card">
+    <aside className="glass-panel flex h-full w-72 flex-col border-r">
       <div className="border-b px-5 py-5">
-        <Link href="/" className="block text-lg font-semibold tracking-normal">
+        <Link href="/" className="block text-lg font-semibold tracking-normal text-foreground">
           alisveris.az
         </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{userLabel}</p>
@@ -49,14 +50,14 @@ export function AppDashboardShell({
             href={item.href}
             onClick={() => setIsOpen(false)}
             className={cn(
-              "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors",
+              "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-all duration-200",
               isActive(item.href)
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : "text-muted-foreground hover:translate-x-0.5 hover:bg-primary/10 hover:text-foreground",
             )}
           >
             <DashboardIconView name={item.icon} className="size-4 shrink-0" />
-            <span>{item.title}</span>
+            <span>{item.titleKey ? t(item.titleKey as any) : item.title}</span>
           </Link>
         ))}
       </nav>
@@ -67,7 +68,7 @@ export function AppDashboardShell({
   );
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background soft-grid-bg">
       <div className="hidden min-h-screen lg:fixed lg:inset-y-0 lg:flex">
         {sidebar}
       </div>
@@ -103,7 +104,7 @@ export function AppDashboardShell({
       ) : null}
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur">
+        <header className="sticky top-0 z-30 border-b bg-background/[0.82] backdrop-blur-xl">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <Button
               type="button"

@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthField, AuthSelect } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
+import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
 import { registerAction } from "@/lib/auth/actions";
 

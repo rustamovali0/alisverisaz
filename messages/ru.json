@@ -1,0 +1,66 @@
+{
+  "seo": {
+    "title": "alisveris.az",
+    "description": "Marketplace SaaS платформа"
+  },
+  "common": {
+    "brand": "alisveris.az",
+    "products": "Товары",
+    "cart": "Корзина",
+    "loading": "Загрузка",
+    "empty": "Нет данных",
+    "save": "Сохранить",
+    "close": "Закрыть"
+  },
+  "home": {
+    "title": "alisveris.az",
+    "description": "Многоязычная структура marketplace SaaS платформы готова."
+  },
+  "marketplace": {
+    "title": "Товары",
+    "description": "Реальные товары из Supabase",
+    "emptyTitle": "Активных товаров нет",
+    "emptyDescription": "Товары появятся здесь после добавления продавцами.",
+    "stock": "Склад",
+    "addToCart": "В корзину",
+    "buyNow": "Купить сейчас",
+    "sendDeposit": "Отправить аванс"
+  },
+  "nav": {
+    "dashboard": "Панель",
+    "listings": "Мои объявления",
+    "orders": "Заказы",
+    "favorites": "Избранное",
+    "payments": "Платежи",
+    "profile": "Профиль",
+    "products": "Товары",
+    "customers": "Клиенты",
+    "analytics": "Аналитика",
+    "subscription": "Подписка",
+    "settings": "Настройки",
+    "deposits": "Авансовые заказы",
+    "users": "Пользователи",
+    "stores": "Магазины",
+    "systemSettings": "Системные настройки"
+  },
+  "productFields": {
+    "name": "Название",
+    "category": "Категория",
+    "price": "Цена",
+    "discount": "Скидка",
+    "stock": "Склад",
+    "description": "Описание",
+    "images": "Изображения",
+    "variants": "Варианты",
+    "status": "Статус",
+    "seoTitle": "SEO заголовок",
+    "seoDescription": "SEO описание"
+  },
+  "orderStatus": {
+    "pending": "Новый",
+    "confirmed": "Подтвержден",
+    "processing": "Готовится",
+    "delivered": "Доставлен",
+    "canceled": "Отменен"
+  }
+}

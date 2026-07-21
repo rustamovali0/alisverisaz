@@ -6,9 +6,11 @@ type StatCardProps = {
 
 export function StatCard({ label, value, description }: StatCardProps) {
   return (
-    <article className="rounded-md border bg-card p-4 text-card-foreground shadow-sm">
+    <article className="premium-card p-4">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-normal">{value}</p>
+      <p className="mt-2 text-3xl font-semibold tracking-normal text-foreground">
+        {value}
+      </p>
       {description ? (
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           {description}
