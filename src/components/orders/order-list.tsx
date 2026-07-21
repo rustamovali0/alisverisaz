@@ -84,12 +84,17 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
               <h3 className="text-base font-semibold tracking-normal">
                 {order.orderNumber}
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {order.customerName} · {order.customerPhone}
+              <p className="mt-1 text-sm font-medium text-foreground">
+                Mağaza: {order.storeName}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">{order.address}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Alıcı: {order.customerName} · {order.customerPhone}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ünvan: {order.address}
+              </p>
               {order.note ? (
-                <p className="mt-1 text-sm text-muted-foreground">{order.note}</p>
+                <p className="mt-1 text-sm text-muted-foreground">Qeyd: {order.note}</p>
               ) : null}
             </div>
             <div className="space-y-2 text-sm lg:text-right">
@@ -102,6 +107,9 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
               {canUpdateStatus ? <OrderStatusForm order={order} /> : null}
             </div>
           </div>
+          <p className="mt-4 text-xs font-bold uppercase text-muted-foreground">
+            Məhsullar
+          </p>
           <div className="mt-4 divide-y rounded-md border bg-background">
             {order.items.map((item) => (
               <div

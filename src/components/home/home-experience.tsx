@@ -58,19 +58,21 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       className="group overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
     >
       <Link href={`/${store.slug}`} className="block">
-        <div className="relative h-32 overflow-hidden bg-muted">
-          {store.coverUrl ? (
-            <img
-              src={store.coverUrl}
-              alt={store.name}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <Store className="size-8 text-muted-foreground" aria-hidden="true" />
-            </div>
-          )}
-          <div className="absolute -bottom-7 left-4 grid size-16 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm">
+        <div className="relative bg-muted">
+          <div className="h-32 overflow-hidden">
+            {store.coverUrl ? (
+              <img
+                src={store.coverUrl}
+                alt={store.name}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <Store className="size-8 text-muted-foreground" aria-hidden="true" />
+              </div>
+            )}
+          </div>
+          <div className="absolute -bottom-7 left-4 z-10 grid size-16 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm">
             {store.logoUrl ? (
               <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
             ) : (

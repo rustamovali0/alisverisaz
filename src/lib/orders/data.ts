@@ -18,8 +18,13 @@ type OrderRow = {
     | null;
   notes: string | null;
   created_at: string;
+  stores?: {
+    name: string;
+    slug: string | null;
+  } | null;
   order_items?: Array<{
     id: string;
+    product_id: string | null;
     product_name: string;
     quantity: number;
     total_amount: string | number;
@@ -34,6 +39,8 @@ function toManagedOrder(row: OrderRow): ManagedOrder {
     paymentStatus: row.payment_status,
     totalAmount: Number(row.total_amount),
     currency: row.currency,
+    storeName: row.stores?.name ?? "-",
+    storeSlug: row.stores?.slug ?? null,
     customerName: row.shipping_address?.full_name ?? "-",
     customerPhone: row.shipping_address?.phone ?? "-",
     address: row.shipping_address?.address ?? "-",
@@ -41,6 +48,7 @@ function toManagedOrder(row: OrderRow): ManagedOrder {
     createdAt: row.created_at,
     items: (row.order_items ?? []).map((item) => ({
       id: item.id,
+      productId: item.product_id,
       productName: item.product_name,
       quantity: item.quantity,
       totalAmount: Number(item.total_amount),
@@ -56,7 +64,7 @@ async function getOrders(filters: {
   let query = (supabaseAdmin as any)
     .from("orders")
     .select(
-      "id,order_number,status,payment_status,total_amount,currency,shipping_address,notes,created_at,order_items(id,product_name,quantity,total_amount)",
+      "id,order_number,status,payment_status,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,quantity,total_amount)",
     )
     .order("created_at", {
       ascending: false,

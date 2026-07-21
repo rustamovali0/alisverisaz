@@ -8,7 +8,7 @@ import type {
 type ProductRow = {
   id: string;
   store_id: string;
-  slug?: string;
+  slug: string | null;
   name: string;
   description: string | null;
   name_translations?: Record<string, string> | null;
@@ -60,6 +60,7 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
 
   return {
     id: row.id,
+    slug: row.slug ?? row.id,
     storeId: row.store_id,
     name: readLocalizedText(row.name, row.name_translations, locale),
     description: readLocalizedText(
@@ -107,12 +108,18 @@ function normalizeSearchValue(value: string) {
     .trim();
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
 export async function getMarketplaceProducts(locale = "az") {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .order("created_at", {
@@ -148,7 +155,7 @@ export async function getMarketplaceStores(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .in("store_id", storeIds)
@@ -244,7 +251,7 @@ export async function getMarketplaceStoreBySlug(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("store_id", store.id)
     .eq("status", "active")
@@ -285,16 +292,43 @@ export async function getMarketplaceStoreBySlug(input: {
 export async function getMarketplaceProductById(input: {
   productId: string;
   locale?: string;
+  storeSlug?: string;
 }): Promise<MarketplaceProductDetail | null> {
   const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
+
+  let storeId: string | undefined;
+
+  if (input.storeSlug) {
+    const { data: store } = await (supabase as any)
+      .from("stores")
+      .select("id")
+      .eq("slug", input.storeSlug)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (!store) {
+      return null;
+    }
+
+    storeId = String(store.id);
+  }
+
+  let query = (supabase as any)
     .from("products")
     .select(
       "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,settings)",
     )
-    .eq("id", input.productId)
-    .eq("status", "active")
-    .maybeSingle();
+    .eq("status", "active");
+
+  if (storeId) {
+    query = query.eq("store_id", storeId);
+  }
+
+  query = isUuid(input.productId)
+    ? query.eq("id", input.productId)
+    : query.eq("slug", input.productId);
+
+  const { data } = await query.maybeSingle();
 
   if (!data || !data.stores) {
     return null;
@@ -307,7 +341,6 @@ export async function getMarketplaceProductById(input: {
   return {
     product: {
       ...toCartProduct(row, input.locale ?? "az"),
-      slug: row.slug ?? row.id,
       images: toProductImages(row),
     },
     store: {
@@ -335,7 +368,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .in("id", productIds);

@@ -86,13 +86,6 @@ export async function middleware(request: NextRequest) {
       : createLocalizedNextResponse();
   }
 
-  if (pathname.startsWith("/admin/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/admin/, "/radmin");
-
-    return NextResponse.redirect(url);
-  }
-
   const rewriteResponse = createLocalizedRewrite(request, pathname);
 
   if (!needsSessionCheck(pathname)) {

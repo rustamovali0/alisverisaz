@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { siteConfig } from "@/lib/config/site";
 
@@ -92,6 +93,7 @@ export default async function LocaleLayout({
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
+      <ToastViewport />
       <StructuredData />
       {children}
     </NextIntlClientProvider>

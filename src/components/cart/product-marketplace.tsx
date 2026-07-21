@@ -12,7 +12,6 @@ import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
-  Clock,
   Heart,
   MapPin,
   PackageSearch,
@@ -265,7 +264,7 @@ export function ProductGrid({
           key={product.id}
           className="group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
         >
-          <Link href={`/${storeSlug}/products/${product.id}`} className="block">
+          <Link href={`/${storeSlug}/products/${product.slug}`} className="block">
             <div className="aspect-[4/3] overflow-hidden bg-muted">
               {product.imageUrl ? (
                 <img
@@ -281,7 +280,7 @@ export function ProductGrid({
             </div>
           </Link>
           <div className="flex flex-1 flex-col p-3">
-            <Link href={`/${storeSlug}/products/${product.id}`}>
+            <Link href={`/${storeSlug}/products/${product.slug}`}>
               <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-normal hover:text-primary">
                 {product.name}
               </h2>
@@ -322,16 +321,13 @@ export function ProductMarketplace({
         <header className="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-black tracking-normal">Mağazalar</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {labels.description}
-            </p>
           </div>
           <span className="rounded-md border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground">
             {stores.length} aktiv mağaza
           </span>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[240px_1fr]">
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <CategoryFilters
               categories={categories}
@@ -346,7 +342,7 @@ export function ProductMarketplace({
               description={labels.emptyDescription}
             />
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
               {stores.map((store) => (
                 <StoreCard key={store.id} store={store} />
               ))}
@@ -417,10 +413,6 @@ export function Storefront({
                       {store.address}
                     </span>
                   ) : null}
-                  <span className="inline-flex items-center gap-2">
-                    <Clock className="size-4" aria-hidden="true" />
-                    Açıqdır
-                  </span>
                 </div>
               </div>
             </div>

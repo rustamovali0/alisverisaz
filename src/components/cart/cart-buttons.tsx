@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import { appAlert } from "@/lib/alerts/swal";
 import type { CartProduct } from "@/lib/cart/types";
+import { showToast } from "@/lib/toast";
 
 const CART_KEY = "alisveris_cart";
 
@@ -43,7 +43,11 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
     }
 
     writeCart(items);
-    void appAlert.success("Səbətə əlavə edildi", product.name);
+    showToast({
+      title: "Məhsul səbətə əlavə edildi",
+      description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
+      variant: "success",
+    });
   }
 
   return (

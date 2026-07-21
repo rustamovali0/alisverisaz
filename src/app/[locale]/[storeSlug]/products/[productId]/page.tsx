@@ -40,10 +40,11 @@ function formatMoney(priceAmount: number, discountAmount: number) {
 export async function generateMetadata({
   params,
 }: ProductDetailPageProps): Promise<Metadata> {
-  const { locale, productId } = await params;
+  const { locale, storeSlug, productId } = await params;
   const detail = await getMarketplaceProductById({
     productId,
     locale,
+    storeSlug,
   });
 
   if (!detail) {
@@ -59,20 +60,24 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { locale, storeSlug, productId } = await params;
   setRequestLocale(locale);
-  const [detail, depositSettings, messages, reviews, siteSettings] = await Promise.all([
+  const [detail, depositSettings, siteSettings] = await Promise.all([
     getMarketplaceProductById({
       productId,
       locale,
+      storeSlug,
     }),
     getDepositSettings(),
-    getProductMessagesForProduct(productId),
-    getProductReviews(productId),
     getSiteSettings(),
   ]);
 
   if (!detail || detail.store.slug !== storeSlug) {
     notFound();
   }
+
+  const [messages, reviews] = await Promise.all([
+    getProductMessagesForProduct(detail.product.id),
+    getProductReviews(detail.product.id),
+  ]);
 
   after(() => {
     void trackActivityEvent({
@@ -94,7 +99,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     <main className="min-h-screen bg-muted/40">
       <div className="container py-8">
         <nav className="mb-5 text-sm text-muted-foreground">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <ProductBackButton />
             <div>
               <Link href="/products" className="hover:text-primary">
                 Mağazalar
@@ -106,7 +112,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <span className="mx-2">·</span>
               <span className="font-medium text-foreground">{detail.product.name}</span>
             </div>
-            <ProductBackButton />
           </div>
         </nav>
 

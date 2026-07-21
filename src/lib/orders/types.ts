@@ -23,6 +23,8 @@ export type ManagedOrder = {
   paymentStatus: string;
   totalAmount: number;
   currency: string;
+  storeName: string;
+  storeSlug: string | null;
   customerName: string;
   customerPhone: string;
   address: string;
@@ -31,6 +33,7 @@ export type ManagedOrder = {
   items: Array<{
     id: string;
     productName: string;
+    productId: string | null;
     quantity: number;
     totalAmount: number;
   }>;

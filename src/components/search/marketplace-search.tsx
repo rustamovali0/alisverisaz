@@ -81,7 +81,7 @@ export function MarketplaceSearch({
         type: "product" as const,
         label: product.name,
         description: store.name,
-        href: `/${store.slug}/products/${product.id}`,
+        href: `/${store.slug}/products/${product.slug}`,
       })),
     );
     const allSuggestions = [

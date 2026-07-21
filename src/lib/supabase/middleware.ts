@@ -116,7 +116,7 @@ export async function updateSession(
   const isAdminLogin =
     matchesPath(pathname, "/radmin/login") ||
     matchesPath(localizedPathname, "/radmin/login");
-  const isPublicAdminEntry = pathname === "/admin";
+  const isPublicAdminEntry = pathname === "/admin" || localizedPathname === "/admin";
   const route = isAdminLogin || isPublicAdminEntry
     ? undefined
     : protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
@@ -150,15 +150,22 @@ export async function updateSession(
 
   const role = profile?.role ?? getMetadataRole(user.user_metadata?.role);
 
-  if (
-    authRoutes.some(
-      (path) => pathname === path || localizedPathname === path,
-    )
-  ) {
+  const matchedAuthRoute = authRoutes.find(
+    (path) => pathname === path || localizedPathname === path,
+  );
+
+  if (matchedAuthRoute) {
     return createRedirectResponse(
       request,
       response,
-      getLocalizedPath(locale, getDashboardPath(role)),
+      getLocalizedPath(
+        locale,
+        matchedAuthRoute === "/radmin/login"
+          ? getDashboardPath(role)
+          : role === "admin"
+            ? "/admin"
+            : getDashboardPath(role),
+      ),
     );
   }
 

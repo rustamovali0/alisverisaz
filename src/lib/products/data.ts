@@ -41,6 +41,23 @@ type ProductRow = {
   }>;
 };
 
+const publicRootCategorySlugs = [
+  "elektronika",
+  "ev-ve-bag-ucun",
+  "neqliyyat",
+  "ehtiyat-hisseleri-ve-aksesuarlar",
+  "dasinmaz-emlak",
+  "xidmetler-ve-biznes",
+  "sexsi-esyalar",
+  "hobbi-ve-asude",
+  "meiset-texnikasi",
+  "telefonlar",
+  "usaq-alemi",
+  "heyvanlar",
+  "is-elanlari",
+  "mektebliler-ucun",
+];
+
 function toManagedProduct(row: ProductRow): ManagedProduct {
   return {
     id: row.id,
@@ -97,7 +114,19 @@ export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
 
   const { data } = await query;
 
-  return (data ?? []) as CategoryOption[];
+  const categories = (data ?? []) as CategoryOption[];
+
+  if (!options?.rootOnly) {
+    return categories;
+  }
+
+  const order = new Map(
+    publicRootCategorySlugs.map((slug, index) => [slug, index]),
+  );
+
+  return categories
+    .filter((category) => order.has(category.slug))
+    .sort((a, b) => Number(order.get(a.slug)) - Number(order.get(b.slug)));
 }
 
 export async function getManagedProducts(filters: {

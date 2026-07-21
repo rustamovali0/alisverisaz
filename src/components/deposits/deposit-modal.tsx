@@ -3,6 +3,7 @@
 import { HandCoins } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -49,14 +50,9 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
     return null;
   }
 
-  return (
-    <>
-      <Button type="button" variant="secondary" onClick={() => setIsOpen(true)}>
-        <HandCoins className="mr-2 size-4" aria-hidden="true" />
-        {t("sendDeposit")}
-      </Button>
-      {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+  const modal = isOpen
+    ? createPortal(
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
           <button
             type="button"
             className="absolute inset-0 bg-background/80 backdrop-blur-sm"
@@ -65,7 +61,7 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
           />
           <form
             action={handleSubmit}
-            className="relative w-full max-w-md rounded-md border bg-card p-5 text-card-foreground shadow-lg"
+            className="relative w-full max-w-md rounded-lg border bg-card p-5 text-card-foreground shadow-2xl"
           >
             <input type="hidden" name="productId" value={product.id} />
             <div className="space-y-1">
@@ -108,8 +104,18 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
               </Button>
             </div>
           </form>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <>
+      <Button type="button" variant="secondary" onClick={() => setIsOpen(true)}>
+        <HandCoins className="mr-2 size-4" aria-hidden="true" />
+        {t("sendDeposit")}
+      </Button>
+      {modal}
     </>
   );
 }

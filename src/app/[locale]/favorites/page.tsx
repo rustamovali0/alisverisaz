@@ -2,8 +2,11 @@ import { Heart } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+import { requireUser } from "@/lib/auth/session";
 
-export default function PublicFavoritesPage() {
+export default async function PublicFavoritesPage() {
+  await requireUser("/favorites");
+
   return (
     <main className="min-h-screen bg-background">
       <div className="container grid min-h-[70vh] place-items-center py-10">
