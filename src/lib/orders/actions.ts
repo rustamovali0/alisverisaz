@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { OrderActionResult, OrderStatus } from "@/lib/orders/types";
@@ -44,6 +45,15 @@ export async function updateOrderStatusAction(
   const supabaseAdmin = createSupabaseAdminClient();
 
   if (current.role === "seller") {
+    const featureEnabled = await getSellerFeatureAccess(current.user.id, "orders");
+
+    if (!featureEnabled) {
+      return {
+        ok: false,
+        message: "Sifariş idarəetməsi admin tərəfindən deaktiv edilib.",
+      };
+    }
+
     const stores = await getOwnedStores(current.user.id);
     const storeIds = stores.map((store) => store.id);
     const { data: order } = await (supabaseAdmin as any)

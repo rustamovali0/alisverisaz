@@ -7,7 +7,11 @@ import {
   CreditCard,
   Heart,
   Home,
+  Image,
+  LayoutDashboard,
+  Menu,
   Package,
+  Palette,
   ReceiptText,
   Settings,
   ShoppingCart,
@@ -26,7 +30,11 @@ const icons: Record<DashboardIcon, LucideIcon> = {
   creditCard: CreditCard,
   heart: Heart,
   home: Home,
+  image: Image,
+  layout: LayoutDashboard,
+  menu: Menu,
   package: Package,
+  palette: Palette,
   receipt: ReceiptText,
   settings: Settings,
   shoppingCart: ShoppingCart,
@@ -41,7 +49,7 @@ type DashboardIconViewProps = {
 };
 
 export function DashboardIconView({ name, className }: DashboardIconViewProps) {
-  const Icon = icons[name];
+  const Icon = icons[name] ?? Home;
 
   return <Icon className={className} aria-hidden="true" />;
 }

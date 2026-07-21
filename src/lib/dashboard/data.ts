@@ -25,6 +25,7 @@ type ResourceItem = {
   title: string;
   description?: string;
   value?: string;
+  href?: string;
 };
 
 function formatDate(value?: string | null) {
@@ -566,6 +567,9 @@ export async function getAdminResource(
     | "stores"
     | "products"
     | "orders"
+    | "deposits"
+    | "payments"
+    | "categories"
     | "subscriptions"
     | "settings",
 ) {
@@ -603,6 +607,7 @@ export async function getAdminResource(
         title: row.name,
         description: row.status,
         value: row.slug,
+        href: `/admin/stores/${row.id}`,
       })),
     };
   }
@@ -630,6 +635,28 @@ export async function getAdminResource(
     };
   }
 
+  if (resource === "categories") {
+    const [total, rows] = await Promise.all([
+      countRows("categories"),
+      getRows<{
+        id: string;
+        name: string;
+        slug: string;
+        is_active: boolean;
+      }>("categories", "id,name,slug,is_active"),
+    ]);
+
+    return {
+      total,
+      items: rows.map((row) => ({
+        id: row.id,
+        title: row.name,
+        description: row.is_active ? "Aktiv" : "Deaktiv",
+        value: row.slug,
+      })),
+    };
+  }
+
   if (resource === "orders") {
     const [total, rows] = await Promise.all([
       countRows("orders"),
@@ -649,6 +676,52 @@ export async function getAdminResource(
         title: row.order_number,
         description: row.status,
         value: formatMoney(row.total_amount, row.currency),
+      })),
+    };
+  }
+
+  if (resource === "deposits") {
+    const [total, rows] = await Promise.all([
+      countRows("deposits"),
+      getRows<{
+        id: string;
+        status: string;
+        amount: string | number;
+        currency: string;
+        full_name: string | null;
+      }>("deposits", "id,status,amount,currency,full_name"),
+    ]);
+
+    return {
+      total,
+      items: rows.map((row) => ({
+        id: row.id,
+        title: row.full_name || row.id,
+        description: row.status,
+        value: formatMoney(row.amount, row.currency),
+      })),
+    };
+  }
+
+  if (resource === "payments") {
+    const [total, rows] = await Promise.all([
+      countRows("payments"),
+      getRows<{
+        id: string;
+        status: string;
+        amount: string | number;
+        currency: string;
+        provider: string;
+      }>("payments", "id,status,amount,currency,provider"),
+    ]);
+
+    return {
+      total,
+      items: rows.map((row) => ({
+        id: row.id,
+        title: row.provider,
+        description: row.status,
+        value: formatMoney(row.amount, row.currency),
       })),
     };
   }

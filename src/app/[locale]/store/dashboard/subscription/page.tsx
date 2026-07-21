@@ -1,12 +1,20 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { PlanCard } from "@/components/subscriptions/plan-card";
 import { SubscriptionStatusCard } from "@/components/subscriptions/subscription-status-card";
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getSellerSubscriptionOverview } from "@/lib/subscriptions/data";
 
 export default async function StoreSubscriptionPage() {
   const current = await requireRole(["seller"], "/store/dashboard/subscription");
+  const enabled = await getSellerFeatureAccess(current.user.id, "subscription");
+
+  if (!enabled) {
+    return <FeatureBlocked title="Abunəlik" />;
+  }
+
   const overview = await getSellerSubscriptionOverview(current.user.id);
   const selectedStore = overview.storeSubscriptions[0];
 

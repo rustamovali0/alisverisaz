@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
 
@@ -117,6 +118,12 @@ export async function createCheckoutOrdersAction(
   formData: FormData,
 ): Promise<CheckoutActionResult> {
   const current = await requireRole(["customer"], "/cart");
+  await ensureAuthProfile({
+    id: current.user.id,
+    email: current.user.email ?? null,
+    fullName: current.profile?.full_name ?? null,
+    role: current.role,
+  });
   const fullName = readString(formData, "fullName");
   const phone = readString(formData, "phone");
   const address = readString(formData, "address");

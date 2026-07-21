@@ -1,9 +1,17 @@
+import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { ResourcePage } from "@/components/dashboard/resource-page";
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getStoreResource } from "@/lib/dashboard/data";
 
 export default async function StoreSettingsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/settings");
+  const enabled = await getSellerFeatureAccess(current.user.id, "settings");
+
+  if (!enabled) {
+    return <FeatureBlocked title="Ayarlar" />;
+  }
+
   const resource = await getStoreResource(current.user.id, "settings");
 
   return (

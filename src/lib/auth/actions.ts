@@ -1,8 +1,8 @@
 "use server";
 
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDashboardPath } from "@/lib/auth/redirects";
+import { ensureAuthProfile } from "@/lib/auth/profiles";
 import {
   isAuthRole,
   isPublicAuthRole,
@@ -35,19 +35,17 @@ async function upsertProfile(input: {
   fullName: string | null;
   role: AuthRole;
 }) {
-  const supabaseAdmin = createSupabaseAdminClient();
+  try {
+    await ensureAuthProfile(input);
 
-  return supabaseAdmin.from("profiles").upsert(
-    {
-      id: input.id,
-      email: input.email,
-      full_name: input.fullName,
-      role: input.role,
-    },
-    {
-      onConflict: "id",
-    },
-  );
+    return {
+      error: null,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error : new Error("Profil yaradıla bilmədi."),
+    };
+  }
 }
 
 export async function registerAction(formData: FormData): Promise<AuthResult> {
@@ -164,12 +162,34 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role,full_name")
     .eq("id", data.user.id)
-    .returns<{ role: AuthRole }[]>()
+    .returns<{ role: AuthRole; full_name: string | null }[]>()
     .maybeSingle();
 
   const role = profile?.role ?? fallbackRole;
+
+  if (!profile) {
+    try {
+      await ensureAuthProfile({
+        id: data.user.id,
+        email: data.user.email ?? email,
+        fullName:
+          typeof data.user.user_metadata?.full_name === "string"
+            ? data.user.user_metadata.full_name
+            : null,
+        role,
+      });
+    } catch (profileError) {
+      return {
+        ok: false,
+        message:
+          profileError instanceof Error
+            ? profileError.message
+            : "Profil bərpa edilə bilmədi.",
+      };
+    }
+  }
 
   return {
     ok: true,

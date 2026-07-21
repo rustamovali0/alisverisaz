@@ -13,6 +13,7 @@ type ResourcePageProps = {
     title: string;
     description?: string;
     value?: string;
+    href?: string;
   }>;
 };
 

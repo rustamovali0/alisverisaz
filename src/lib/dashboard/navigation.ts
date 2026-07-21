@@ -7,7 +7,11 @@ export type DashboardIcon =
   | "creditCard"
   | "heart"
   | "home"
+  | "image"
+  | "layout"
+  | "menu"
   | "package"
+  | "palette"
   | "receipt"
   | "settings"
   | "shoppingCart"
@@ -143,16 +147,78 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "shoppingCart",
     },
     {
+      title: "Beh sifarişləri",
+      titleKey: "deposits",
+      href: "/admin/deposits",
+      icon: "creditCard",
+    },
+    {
       title: "Abunəliklər",
       titleKey: "subscription",
       href: "/admin/subscriptions",
       icon: "receipt",
     },
     {
+      title: "Ödənişlər",
+      titleKey: "payments",
+      href: "/admin/payments",
+      icon: "creditCard",
+    },
+    {
+      title: "Kateqoriyalar",
+      href: "/admin/categories",
+      icon: "package",
+    },
+    {
+      title: "Sayt idarəetməsi",
+      href: "/admin/site-management",
+      icon: "settings",
+    },
+    {
+      title: "Ana səhifə bölmələri",
+      href: "/admin/homepage-sections",
+      icon: "layout",
+    },
+    {
+      title: "Menyular",
+      href: "/admin/menus",
+      icon: "menu",
+    },
+    {
+      title: "Temalar",
+      href: "/admin/themes",
+      icon: "palette",
+    },
+    {
+      title: "Satıcı paneli idarəsi",
+      href: "/admin/store-panel-management",
+      icon: "building",
+    },
+    {
+      title: "İstifadəçi paneli idarəsi",
+      href: "/admin/user-panel-management",
+      icon: "user",
+    },
+    {
+      title: "Bildirişlər",
+      href: "/admin/announcements",
+      icon: "sparkles",
+    },
+    {
+      title: "Media",
+      href: "/admin/media",
+      icon: "image",
+    },
+    {
       title: "Sistem ayarları",
       titleKey: "systemSettings",
       href: "/admin/settings",
       icon: "settings",
+    },
+    {
+      title: "Audit log",
+      href: "/admin/audit-log",
+      icon: "receipt",
     },
   ],
 };

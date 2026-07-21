@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DepositActionResult } from "@/lib/deposits/types";
 
@@ -78,6 +79,12 @@ export async function createDepositAction(
   formData: FormData,
 ): Promise<DepositActionResult> {
   const current = await requireRole(["customer"], "/products");
+  await ensureAuthProfile({
+    id: current.user.id,
+    email: current.user.email ?? null,
+    fullName: current.profile?.full_name ?? null,
+    role: current.role,
+  });
   const productId = readString(formData, "productId");
   const fullName = readString(formData, "fullName");
   const phone = readString(formData, "phone");

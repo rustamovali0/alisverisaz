@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { AppDashboardShell } from "@/components/dashboard/app-dashboard-shell";
 import { requireRole } from "@/lib/auth/session";
-import { dashboardNavigation } from "@/lib/dashboard/navigation";
+import { getDashboardNavigationForRole } from "@/lib/cms/data";
 
 type AdminLayoutProps = {
   children: ReactNode;
@@ -11,13 +11,14 @@ type AdminLayoutProps = {
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   const current = await requireRole(["admin"], "/admin");
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Admin";
+  const navItems = await getDashboardNavigationForRole("admin");
 
   return (
     <AppDashboardShell
       title="Admin panel"
       description="Platforma istifadəçiləri, mağazalar və sistem idarəsi"
       userLabel={userLabel}
-      navItems={dashboardNavigation.admin}
+      navItems={navItems}
     >
       {children}
     </AppDashboardShell>

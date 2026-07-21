@@ -1,13 +1,21 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { ProductForm } from "@/components/products/product-form";
 import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 
 export default async function StoreProductsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/products");
+  const enabled = await getSellerFeatureAccess(current.user.id, "products");
+
+  if (!enabled) {
+    return <FeatureBlocked title="Məhsullar" />;
+  }
+
   const [stores, categories] = await Promise.all([
     getOwnedStores(current.user.id),
     getCategoryOptions(),

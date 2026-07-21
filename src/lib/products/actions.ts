@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -231,6 +233,15 @@ export async function createStoreProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["seller"], "/store/dashboard/products");
+  const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+
+  if (!featureEnabled) {
+    return {
+      ok: false,
+      message: "Məhsul idarəetməsi admin tərəfindən deaktiv edilib.",
+    };
+  }
+
   const storeId = readString(formData, "storeId");
   const payload = readProductPayload(formData);
   const validationError = validatePayload(payload);
@@ -324,6 +335,17 @@ export async function updateProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["seller", "customer"], "/dashboard/listings");
+  if (current.role === "seller") {
+    const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+
+    if (!featureEnabled) {
+      return {
+        ok: false,
+        message: "Məhsul idarəetməsi admin tərəfindən deaktiv edilib.",
+      };
+    }
+  }
+
   const productId = readString(formData, "productId");
   const payload = readProductPayload(formData);
   const validationError = validatePayload(payload);
@@ -427,7 +449,18 @@ export async function updateProductAction(
 export async function deleteProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
-  await requireRole(["seller", "customer"], "/dashboard/listings");
+  const current = await requireRole(["seller", "customer"], "/dashboard/listings");
+  if (current.role === "seller") {
+    const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+
+    if (!featureEnabled) {
+      return {
+        ok: false,
+        message: "Məhsul idarəetməsi admin tərəfindən deaktiv edilib.",
+      };
+    }
+  }
+
   const productId = readString(formData, "productId");
 
   if (!productId) {
@@ -537,6 +570,13 @@ export async function createPersonalListingAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["customer"], "/dashboard/listings");
+  await ensureAuthProfile({
+    id: current.user.id,
+    email: current.user.email ?? null,
+    fullName: current.profile?.full_name ?? null,
+    role: current.role,
+  });
+
   const payload = readProductPayload(formData);
   const validationError = validatePayload(payload);
 
