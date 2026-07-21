@@ -27,6 +27,13 @@ export type MarketplaceStore = {
   categoryIds: string[];
 };
 
+export type MarketplaceProductDetail = {
+  product: CartProduct & {
+    slug: string;
+  };
+  store: MarketplaceStore;
+};
+
 export type CartItem = {
   productId: string;
   quantity: number;

@@ -5,6 +5,8 @@ import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getSellerDeposits } from "@/lib/deposits/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoreDepositsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/deposits");
   const enabled = await getSellerFeatureAccess(current.user.id, "deposits");

@@ -8,6 +8,8 @@ import { requireRole } from "@/lib/auth/session";
 import { getAdminStoreDetail } from "@/lib/cms/data";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 
+export const dynamic = "force-dynamic";
+
 type AdminStoreDetailPageProps = {
   params: Promise<{
     storeId: string;
@@ -17,7 +19,7 @@ type AdminStoreDetailPageProps = {
 export default async function AdminStoreDetailPage({
   params,
 }: AdminStoreDetailPageProps) {
-  await requireRole(["admin"], "/admin/stores");
+  await requireRole(["admin"], "/radmin/stores");
   const { storeId } = await params;
   const [detail, categories, products] = await Promise.all([
     getAdminStoreDetail(storeId),

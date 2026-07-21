@@ -8,6 +8,8 @@ import { getOwnedStores } from "@/lib/dashboard/data";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoreProductsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/products");
   const enabled = await getSellerFeatureAccess(current.user.id, "products");

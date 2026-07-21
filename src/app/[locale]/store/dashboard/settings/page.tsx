@@ -4,6 +4,8 @@ import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getStoreResource } from "@/lib/dashboard/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoreSettingsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/settings");
   const enabled = await getSellerFeatureAccess(current.user.id, "settings");

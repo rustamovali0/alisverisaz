@@ -442,8 +442,8 @@ export async function updateProductAction(
 
   revalidatePath("/store/dashboard/products");
   revalidatePath("/dashboard/listings");
-  revalidatePath("/admin/products");
-  revalidatePath("/admin/stores");
+  revalidatePath("/radmin/products");
+  revalidatePath("/radmin/stores");
 
   return {
     ok: true,
@@ -493,8 +493,8 @@ export async function deleteProductAction(
 
   revalidatePath("/store/dashboard/products");
   revalidatePath("/dashboard/listings");
-  revalidatePath("/admin/products");
-  revalidatePath("/admin/stores");
+  revalidatePath("/radmin/products");
+  revalidatePath("/radmin/stores");
 
   return {
     ok: true,

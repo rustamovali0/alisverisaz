@@ -2,8 +2,10 @@ import { ResourcePage } from "@/components/dashboard/resource-page";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminResource } from "@/lib/dashboard/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminStoresPage() {
-  await requireRole(["admin"], "/admin/stores");
+  await requireRole(["admin"], "/radmin/stores");
   const resource = await getAdminResource("stores");
 
   return (

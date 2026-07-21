@@ -35,7 +35,7 @@ export function RegisterForm() {
       footer={
         <>
           Artıq hesabiniz var?{" "}
-          <Link className="font-medium text-primary hover:underline" href="/login">
+          <Link className="font-medium text-primary hover:underline" href="/admin">
             Giris
           </Link>
         </>

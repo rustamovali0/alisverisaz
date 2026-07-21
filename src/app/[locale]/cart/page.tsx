@@ -2,6 +2,8 @@ import { CartCheckout } from "@/components/cart/cart-checkout";
 import { requireRole } from "@/lib/auth/session";
 import { getMarketplaceProducts } from "@/lib/cart/data";
 
+export const dynamic = "force-dynamic";
+
 type CartPageProps = {
   params: Promise<{
     locale: string;

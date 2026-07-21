@@ -3,9 +3,6 @@
 import {
   ArrowRight,
   Heart,
-  Instagram,
-  MessageCircle,
-  Music2,
   PackageSearch,
   Plus,
   Search,
@@ -16,6 +13,7 @@ import {
 } from "lucide-react";
 import { m } from "framer-motion";
 
+import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -49,28 +47,6 @@ function sectionByKey(sections: HomepageSection[], key: string) {
 
 function visibleLimit(section: HomepageSection | undefined, fallback: number) {
   return section?.itemLimit && section.itemLimit > 0 ? section.itemLimit : fallback;
-}
-
-function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value: string) {
-  if (!value) {
-    return "";
-  }
-
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    return value;
-  }
-
-  if (kind === "whatsapp") {
-    const digits = value.replace(/\D/g, "");
-
-    return digits ? `https://wa.me/${digits}` : "";
-  }
-
-  const cleanValue = value.replace(/^@/, "");
-
-  return kind === "instagram"
-    ? `https://instagram.com/${cleanValue}`
-    : `https://tiktok.com/@${cleanValue}`;
 }
 
 function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: number }) {
@@ -149,29 +125,6 @@ export function HomeExperience({
   const newStores = stores.slice(0, visibleLimit(newSection, 8));
   const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
-  const socialItems = [
-    {
-      key: "instagram" as const,
-      label: "Instagram",
-      href: normalizeSocialHref("instagram", siteSettings.socialLinks.instagram ?? ""),
-      icon: Instagram,
-    },
-    {
-      key: "tiktok" as const,
-      label: "TikTok",
-      href: normalizeSocialHref("tiktok", siteSettings.socialLinks.tiktok ?? ""),
-      icon: Music2,
-    },
-    {
-      key: "whatsapp" as const,
-      label: "WhatsApp",
-      href: normalizeSocialHref(
-        "whatsapp",
-        siteSettings.socialLinks.whatsapp ?? siteSettings.whatsapp,
-      ),
-      icon: MessageCircle,
-    },
-  ].filter((item) => item.href);
 
   return (
     <main className={cn("min-h-screen overflow-hidden bg-gradient-to-br", themeClass)}>
@@ -198,7 +151,10 @@ export function HomeExperience({
               <Link href="/products">Məhsullar</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href="/login">Panel</Link>
+              <Link href="/admin">Daxil ol</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/register">Qeydiyyatdan keç</Link>
             </Button>
           </nav>
           <form
@@ -219,42 +175,37 @@ export function HomeExperience({
             <Button type="submit">Axtar</Button>
           </form>
           <div className="ml-auto hidden items-center gap-1 md:flex">
-            {socialItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <Button
-                  key={item.key}
-                  asChild
-                  size="icon"
-                  variant="ghost"
-                  aria-label={item.label}
-                >
-                  <a href={item.href} target="_blank" rel="noreferrer">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </a>
-                </Button>
-              );
-            })}
-            <Button asChild size="icon" variant="ghost" aria-label="Favorilər">
+            <Button
+              asChild
+              size="icon"
+              variant="ghost"
+              className="size-11 rounded-lg border bg-background"
+              aria-label="Favorilər"
+            >
               <Link href="/dashboard/favorites">
-                <Heart className="size-5" aria-hidden="true" />
+                <Heart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild size="icon" variant="ghost" aria-label="Səbət">
+            <Button
+              asChild
+              size="icon"
+              variant="ghost"
+              className="size-11 rounded-lg border bg-background"
+              aria-label="Səbət"
+            >
               <Link href="/cart">
-                <ShoppingCart className="size-5" aria-hidden="true" />
+                <ShoppingCart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
             <Button asChild>
-              <Link href="/login">
+              <Link href="/admin">
                 <Plus className="mr-2 size-4" aria-hidden="true" />
                 Elan yerləşdir
               </Link>
             </Button>
           </div>
           <Button asChild className="ml-auto md:hidden" size="sm">
-            <Link href="/products">Axtar</Link>
+            <Link href="/admin">Daxil ol</Link>
           </Button>
         </div>
       </header>
@@ -309,26 +260,6 @@ export function HomeExperience({
               </Link>
             ))}
           </div>
-          {socialItems.length > 0 ? (
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              {socialItems.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <a
-                    key={`hero-${item.key}`}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex size-10 items-center justify-center rounded-full border bg-card text-muted-foreground transition hover:border-primary/50 hover:text-primary"
-                    aria-label={item.label}
-                  >
-                    <Icon className="size-5" aria-hidden="true" />
-                  </a>
-                );
-              })}
-            </div>
-          ) : null}
         </m.div>
 
         <m.div
@@ -493,6 +424,15 @@ export function HomeExperience({
           </div>
         </div>
       </section>
+      <SiteFooter
+        siteName={siteSettings.shortName || siteSettings.siteName}
+        description={siteSettings.defaultMetaDescription}
+        socialLinks={{
+          instagram: siteSettings.socialLinks.instagram,
+          tiktok: siteSettings.socialLinks.tiktok,
+          whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+        }}
+      />
     </main>
   );
 }

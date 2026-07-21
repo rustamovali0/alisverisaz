@@ -99,7 +99,7 @@ export async function activatePlanPlaceholderAction(
 export async function updatePlanAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  await requireRole(["admin"], "/admin/subscriptions");
+  await requireRole(["admin"], "/radmin/subscriptions");
 
   const planId = readString(formData, "planId");
   const name = readString(formData, "name");
@@ -146,7 +146,7 @@ export async function updatePlanAction(
     };
   }
 
-  revalidatePath("/admin/subscriptions");
+  revalidatePath("/radmin/subscriptions");
   revalidatePath("/store/dashboard/subscription");
 
   return {

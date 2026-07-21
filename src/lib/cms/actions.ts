@@ -129,7 +129,7 @@ async function uploadCmsMediaFile(input: {
 }
 
 async function audit(action: string, entityType: string, metadata: Record<string, unknown>) {
-  const current = await requireRole(["admin"], "/admin");
+  const current = await requireRole(["admin"], "/radmin");
   const supabaseAdmin = createSupabaseAdminClient();
 
   await (supabaseAdmin as any).from("admin_audit_logs").insert({
@@ -278,7 +278,7 @@ export async function updateHomepageSectionAction(
   }
 
   revalidateLocalizedPath("/");
-  revalidateLocalizedPath("/admin/homepage-sections");
+  revalidateLocalizedPath("/radmin/homepage-sections");
 
   return {
     ok: true,
@@ -306,7 +306,7 @@ export async function reorderHomepageSectionsAction(
   );
 
   revalidateLocalizedPath("/");
-  revalidateLocalizedPath("/admin/homepage-sections");
+  revalidateLocalizedPath("/radmin/homepage-sections");
 
   return {
     ok: true,
@@ -373,7 +373,7 @@ export async function updateNavigationItemAction(
   }
 
   revalidateLocalizedPath("/", "layout");
-  revalidateLocalizedPath("/admin/menus");
+  revalidateLocalizedPath("/radmin/menus");
 
   return {
     ok: true,
@@ -451,7 +451,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
   });
 
   revalidateLocalizedPath("/");
-  revalidateLocalizedPath("/admin/themes");
+  revalidateLocalizedPath("/radmin/themes");
 
   return {
     ok: true,
@@ -500,7 +500,7 @@ export async function updateThemeDraftAction(
     };
   }
 
-  revalidateLocalizedPath("/admin/themes");
+  revalidateLocalizedPath("/radmin/themes");
 
   return {
     ok: true,
@@ -585,7 +585,7 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  revalidateLocalizedPath("/admin/media");
+  revalidateLocalizedPath("/radmin/media");
 
   return {
     ok: true,
@@ -625,7 +625,7 @@ export async function deleteMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  revalidateLocalizedPath("/admin/media");
+  revalidateLocalizedPath("/radmin/media");
 
   return {
     ok: true,
@@ -696,7 +696,7 @@ export async function updatePanelSettingsAction(
 
   revalidateLocalizedPath("/", "layout");
   revalidateLocalizedPath(
-    kind === "store" ? "/admin/store-panel-management" : "/admin/user-panel-management",
+    kind === "store" ? "/radmin/store-panel-management" : "/radmin/user-panel-management",
   );
   revalidateLocalizedPath(kind === "store" ? "/store/dashboard" : "/dashboard", "layout");
 
@@ -758,8 +758,8 @@ export async function updateStoreManagementAction(
     };
   }
 
-  revalidatePath("/admin/stores");
-  revalidatePath(`/admin/stores/${storeId}`);
+  revalidatePath("/radmin/stores");
+  revalidatePath(`/radmin/stores/${storeId}`);
 
   return {
     ok: true,
@@ -801,7 +801,7 @@ export async function createAnnouncementAction(
     };
   }
 
-  revalidatePath("/admin/announcements");
+  revalidatePath("/radmin/announcements");
 
   return {
     ok: true,

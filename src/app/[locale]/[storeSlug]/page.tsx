@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
+import { trackActivityEvent } from "@/lib/activity/events";
+import { getSiteSettings } from "@/lib/cms/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getDepositSettings } from "@/lib/settings/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -77,7 +80,10 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const categories = await getCategoryOptions();
+  const [categories, siteSettings] = await Promise.all([
+    getCategoryOptions(),
+    getSiteSettings(),
+  ]);
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
@@ -94,6 +100,19 @@ export default async function StorePage({ params, searchParams }: StorePageProps
     notFound();
   }
 
+  after(() => {
+    void trackActivityEvent({
+      eventType: "store_view",
+      storeId: store.id,
+      metadata: {
+        title: "Mağaza açıldı",
+        description: store.name,
+        store_name: store.name,
+        store_slug: store.slug,
+      },
+    });
+  });
+
   return (
     <Storefront
       store={store}
@@ -105,6 +124,15 @@ export default async function StorePage({ params, searchParams }: StorePageProps
       )}
       selectedCategoryId={selectedCategory?.id}
       depositEnabled={depositSettings.enabled}
+      footer={{
+        siteName: siteSettings.shortName || siteSettings.siteName,
+        description: siteSettings.defaultMetaDescription,
+        socialLinks: {
+          instagram: siteSettings.socialLinks.instagram,
+          tiktok: siteSettings.socialLinks.tiktok,
+          whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+        },
+      }}
       labels={{
         title: t("title"),
         description: t("description"),

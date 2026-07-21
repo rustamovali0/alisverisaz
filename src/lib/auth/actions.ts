@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
@@ -119,12 +120,23 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
+  await trackActivityEvent({
+    eventType: "user_register",
+    actorId: data.user.id,
+    metadata: {
+      title: "Yeni qeydiyyat",
+      description: `${fullName} (${role})`,
+      email,
+      role,
+    },
+  });
+
   return {
     ok: true,
     message: data.session
       ? "Qeydiyyat tamamlandi."
       : "Qeydiyyat tamamlandi. Email tesdiqi aktivdirse, girisden once emailinizi yoxlayin.",
-    redirectTo: data.session ? getDashboardPath(role) : "/login",
+    redirectTo: data.session ? getDashboardPath(role) : "/admin",
   };
 }
 
@@ -219,6 +231,17 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     }
   }
 
+  await trackActivityEvent({
+    eventType: "user_login",
+    actorId: data.user.id,
+    metadata: {
+      title: "Login",
+      description: `${data.user.email ?? email} (${role})`,
+      email: data.user.email ?? email,
+      role,
+    },
+  });
+
   return {
     ok: true,
     message: "Giris ugurludur.",
@@ -228,6 +251,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
 export async function logoutAction(): Promise<AuthResult> {
   const supabase = await createSupabaseServerClient();
+  const { data } = await supabase.auth.getUser();
   const { error } = await supabase.auth.signOut();
 
   if (error) {
@@ -237,17 +261,27 @@ export async function logoutAction(): Promise<AuthResult> {
     };
   }
 
+  await trackActivityEvent({
+    eventType: "user_logout",
+    actorId: data.user?.id ?? null,
+    metadata: {
+      title: "Logout",
+      description: data.user?.email ?? "Hesabdan çıxış edildi",
+      email: data.user?.email,
+    },
+  });
+
   return {
     ok: true,
     message: "Hesabdan cixis edildi.",
-    redirectTo: "/login",
+    redirectTo: "/admin",
   };
 }
 
 export async function updateUserRoleAction(
   formData: FormData,
 ): Promise<{ ok: true; message: string } | { ok: false; message: string }> {
-  const current = await requireRole(["admin"], "/admin/users");
+  const current = await requireRole(["admin"], "/radmin/users");
   const userId = readString(formData, "userId");
   const role = readString(formData, "role");
 
@@ -293,7 +327,7 @@ export async function updateUserRoleAction(
     };
   }
 
-  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
 
   return {
     ok: true,

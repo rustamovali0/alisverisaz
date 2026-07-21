@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
 
@@ -212,13 +213,14 @@ export async function createCheckoutOrdersAction(
         (total, item) => total + getUnitPrice(item.product) * item.quantity,
         0,
       );
+      const orderNumber = createOrderNumber();
       const { data: order, error: orderError } = await (supabaseAdmin as any)
         .from("orders")
         .insert({
           store_id: storeId,
           customer_id: customerId,
           user_id: current.user.id,
-          order_number: createOrderNumber(),
+          order_number: orderNumber,
           status: "pending",
           payment_status: "pending",
           subtotal_amount: subtotal,
@@ -261,6 +263,20 @@ export async function createCheckoutOrdersAction(
       if (itemError) {
         throw new Error(itemError.message);
       }
+
+      await trackActivityEvent({
+        eventType: "order_created",
+        actorId: current.user.id,
+        storeId,
+        metadata: {
+          title: "Yeni sifariş",
+          description: orderNumber,
+          order_id: order.id,
+          order_number: orderNumber,
+          total_amount: subtotal,
+          item_count: storeItems.length,
+        },
+      });
     }
   } catch (error) {
     return {
@@ -271,7 +287,8 @@ export async function createCheckoutOrdersAction(
 
   revalidatePath("/dashboard/orders");
   revalidatePath("/store/dashboard/orders");
-  revalidatePath("/admin/orders");
+  revalidatePath("/radmin/orders");
+  revalidatePath("/radmin/activity");
 
   return {
     ok: true,

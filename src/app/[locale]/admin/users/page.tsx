@@ -4,8 +4,10 @@ import { ResourcePage } from "@/components/dashboard/resource-page";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminResource, getAdminUsers } from "@/lib/dashboard/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminUsersPage() {
-  await requireRole(["admin"], "/admin/users");
+  await requireRole(["admin"], "/radmin/users");
   const [resource, users] = await Promise.all([
     getAdminResource("users"),
     getAdminUsers(),

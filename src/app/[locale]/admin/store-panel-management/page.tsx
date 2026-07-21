@@ -3,8 +3,10 @@ import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 import { getPanelSettings } from "@/lib/cms/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminStorePanelManagementPage() {
-  await requireRole(["admin"], "/admin/store-panel-management");
+  await requireRole(["admin"], "/radmin/store-panel-management");
   const settings = await getPanelSettings("store");
 
   return (

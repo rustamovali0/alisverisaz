@@ -21,7 +21,7 @@ export function getLoginPath(next?: string) {
 
   const query = params.toString();
 
-  return query ? `/login?${query}` : "/login";
+  return query ? `/admin?${query}` : "/admin";
 }
 
 export function getAdminLoginPath(next?: string) {

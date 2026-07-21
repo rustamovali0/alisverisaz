@@ -2,6 +2,8 @@ import { ResourcePage } from "@/components/dashboard/resource-page";
 import { requireRole } from "@/lib/auth/session";
 import { getCustomerResource } from "@/lib/dashboard/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function CustomerPaymentsPage() {
   const current = await requireRole(["customer"], "/dashboard/payments");
   const resource = await getCustomerResource(current.user.id, "payments");

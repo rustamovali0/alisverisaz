@@ -3,8 +3,10 @@ import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 import { getNavigationMenus } from "@/lib/cms/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMenusPage() {
-  await requireRole(["admin"], "/admin/menus");
+  await requireRole(["admin"], "/radmin/menus");
   const menus = await getNavigationMenus();
 
   return (

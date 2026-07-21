@@ -97,6 +97,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "users",
     },
     {
+      title: "Mesajlar",
+      href: "/store/dashboard/messages",
+      icon: "sparkles",
+    },
+    {
       title: "Analitika",
       titleKey: "analytics",
       href: "/store/dashboard/analytics",
@@ -163,6 +168,21 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       titleKey: "payments",
       href: "/radmin/payments",
       icon: "creditCard",
+    },
+    {
+      title: "Mesajlar",
+      href: "/radmin/messages",
+      icon: "sparkles",
+    },
+    {
+      title: "Rəylər",
+      href: "/radmin/reviews",
+      icon: "heart",
+    },
+    {
+      title: "Fəaliyyətlər",
+      href: "/radmin/activity",
+      icon: "barChart",
     },
     {
       title: "Kateqoriyalar",

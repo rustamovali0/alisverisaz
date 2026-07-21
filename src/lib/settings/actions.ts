@@ -18,7 +18,7 @@ export type SettingsActionResult =
 export async function updateDepositSettingsAction(
   formData: FormData,
 ): Promise<SettingsActionResult> {
-  await requireRole(["admin"], "/admin/settings");
+  await requireRole(["admin"], "/radmin/settings");
   const enabled = formData.get("enabled") === "on";
   const supabase = await createSupabaseServerClient();
   const { error } = await (supabase as any).from("platform_settings").upsert({
@@ -35,7 +35,7 @@ export async function updateDepositSettingsAction(
     };
   }
 
-  revalidatePath("/admin/settings");
+  revalidatePath("/radmin/settings");
   revalidatePath("/products");
 
   return {

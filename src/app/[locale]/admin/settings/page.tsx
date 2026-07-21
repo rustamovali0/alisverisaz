@@ -3,8 +3,10 @@ import { DepositSettingsForm } from "@/components/settings/deposit-settings-form
 import { requireRole } from "@/lib/auth/session";
 import { getDepositSettings } from "@/lib/settings/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSettingsPage() {
-  await requireRole(["admin"], "/admin/settings");
+  await requireRole(["admin"], "/radmin/settings");
   const depositSettings = await getDepositSettings();
 
   return (

@@ -8,7 +8,7 @@ import { clientEnv } from "@/lib/config/env.client";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
-const authRoutes = ["/login", "/register", "/radmin/login"];
+const authRoutes = ["/admin", "/login", "/register", "/radmin/login"];
 type CookiesToSet = Array<{
   name: string;
   value: string;
@@ -120,10 +120,11 @@ export async function updateSession(
   const isAdminLogin =
     matchesPath(pathname, "/radmin/login") ||
     matchesPath(localizedPathname, "/radmin/login");
-  const route = isAdminLogin
+  const isPublicAdminEntry = pathname === "/admin";
+  const route = isAdminLogin || isPublicAdminEntry
     ? undefined
     : protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
-  const localizedRoute = isAdminLogin
+  const localizedRoute = isAdminLogin || isPublicAdminEntry
     ? undefined
     : protectedRoutes.find((item) => matchesPath(localizedPathname, item.prefix));
 
@@ -155,7 +156,7 @@ export async function updateSession(
 
   if (
     authRoutes.some(
-      (path) => matchesPath(pathname, path) || matchesPath(localizedPathname, path),
+      (path) => pathname === path || localizedPathname === path,
     )
   ) {
     return createRedirectResponse(

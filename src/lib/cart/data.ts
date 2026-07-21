@@ -1,9 +1,14 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
+import type {
+  CartProduct,
+  MarketplaceProductDetail,
+  MarketplaceStore,
+} from "@/lib/cart/types";
 
 type ProductRow = {
   id: string;
   store_id: string;
+  slug?: string;
   name: string;
   description: string | null;
   name_translations?: Record<string, string> | null;
@@ -225,6 +230,49 @@ export async function getMarketplaceStoreBySlug(input: {
       ),
     ),
   } satisfies MarketplaceStore;
+}
+
+export async function getMarketplaceProductById(input: {
+  productId: string;
+  locale?: string;
+}): Promise<MarketplaceProductDetail | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await (supabase as any)
+    .from("products")
+    .select(
+      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary),stores(id,name,slug,description,logo_url,cover_url,settings)",
+    )
+    .eq("id", input.productId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (!data || !data.stores) {
+    return null;
+  }
+
+  const row = data as ProductRow & {
+    stores: StoreRow;
+  };
+
+  return {
+    product: {
+      ...toCartProduct(row, input.locale ?? "az"),
+      slug: row.slug ?? row.id,
+    },
+    store: {
+      id: row.stores.id,
+      name: row.stores.name,
+      slug: row.stores.slug,
+      description: row.stores.description,
+      address: readSetting(row.stores.settings, "address"),
+      phone: readSetting(row.stores.settings, "phone"),
+      logoUrl: row.stores.logo_url,
+      coverUrl: row.stores.cover_url,
+      productCount: 0,
+      sampleProducts: [],
+      categoryIds: row.category_id ? [row.category_id] : [],
+    },
+  };
 }
 
 export async function getCartProducts(productIds: string[], locale = "az") {

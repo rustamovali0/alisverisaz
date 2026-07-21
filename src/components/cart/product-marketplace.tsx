@@ -3,6 +3,7 @@
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
@@ -33,6 +34,7 @@ type ProductMarketplaceProps = {
   stores: MarketplaceStore[];
   categories: CategoryOption[];
   selectedCategoryId?: string;
+  footer?: FooterProps;
   labels: MarketplaceLabels;
 };
 
@@ -41,7 +43,18 @@ type StorefrontProps = {
   categories: CategoryOption[];
   selectedCategoryId?: string;
   depositEnabled: boolean;
+  footer?: FooterProps;
   labels: MarketplaceLabels;
+};
+
+type FooterProps = {
+  siteName?: string;
+  description?: string;
+  socialLinks?: {
+    instagram?: string;
+    tiktok?: string;
+    whatsapp?: string;
+  };
 };
 
 function formatMoney(product: CartProduct) {
@@ -75,14 +88,26 @@ function MarketplaceHeader({ cartLabel }: { cartLabel: string }) {
             />
           </label>
         </form>
-        <Button asChild size="icon" variant="ghost" aria-label="Favorilər">
+        <Button
+          asChild
+          size="icon"
+          variant="ghost"
+          className="size-11 rounded-lg border bg-background"
+          aria-label="Favorilər"
+        >
           <Link href="/dashboard/favorites">
-            <Heart className="size-5" aria-hidden="true" />
+            <Heart className="size-6" aria-hidden="true" />
           </Link>
+        </Button>
+        <Button asChild variant="ghost" className="hidden md:inline-flex">
+          <Link href="/admin">Daxil ol</Link>
+        </Button>
+        <Button asChild variant="outline" className="hidden md:inline-flex">
+          <Link href="/register">Qeydiyyatdan keç</Link>
         </Button>
         <Button asChild>
           <Link href="/cart">
-            <ShoppingCart className="mr-2 size-4" aria-hidden="true" />
+            <ShoppingCart className="mr-2 size-5" aria-hidden="true" />
             {cartLabel}
           </Link>
         </Button>
@@ -208,10 +233,12 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
 export function ProductGrid({
   products,
   depositEnabled,
+  storeSlug,
   labels,
 }: {
   products: CartProduct[];
   depositEnabled: boolean;
+  storeSlug: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
   if (products.length === 0) {
@@ -231,23 +258,27 @@ export function ProductGrid({
           key={product.id}
           className="group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
         >
-          <div className="aspect-[4/3] overflow-hidden bg-muted">
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.name}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                <PackageSearch className="size-8" aria-hidden="true" />
-              </div>
-            )}
-          </div>
+          <Link href={`/${storeSlug}/products/${product.id}`} className="block">
+            <div className="aspect-[4/3] overflow-hidden bg-muted">
+              {product.imageUrl ? (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-muted-foreground">
+                  <PackageSearch className="size-8" aria-hidden="true" />
+                </div>
+              )}
+            </div>
+          </Link>
           <div className="flex flex-1 flex-col p-3">
-            <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-normal">
-              {product.name}
-            </h2>
+            <Link href={`/${storeSlug}/products/${product.id}`}>
+              <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-normal hover:text-primary">
+                {product.name}
+              </h2>
+            </Link>
             <p className="mt-2 text-base font-bold">{formatMoney(product)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               {labels.stock}: {product.stockQuantity}
@@ -268,6 +299,7 @@ export function ProductMarketplace({
   stores,
   categories,
   selectedCategoryId,
+  footer,
   labels,
 }: ProductMarketplaceProps) {
   return (
@@ -309,6 +341,7 @@ export function ProductMarketplace({
           )}
         </div>
       </div>
+      <SiteFooter {...footer} />
     </main>
   );
 }
@@ -318,6 +351,7 @@ export function Storefront({
   categories,
   selectedCategoryId,
   depositEnabled,
+  footer,
   labels,
 }: StorefrontProps) {
   return (
@@ -374,7 +408,6 @@ export function Storefront({
               </div>
             </div>
             <div className="grid content-start gap-3">
-              <Button variant="secondary">İzləyici ol</Button>
               {store.phone ? (
                 <Button asChild>
                   <a href={`tel:${store.phone.replace(/\s/g, "")}`}>
@@ -404,11 +437,13 @@ export function Storefront({
             <ProductGrid
               products={store.sampleProducts}
               depositEnabled={depositEnabled}
+              storeSlug={store.slug}
               labels={{ stock: labels.stock }}
             />
           </div>
         </section>
       </div>
+      <SiteFooter {...footer} />
     </main>
   );
 }

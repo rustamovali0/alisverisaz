@@ -3,8 +3,10 @@ import { OrderList } from "@/components/orders/order-list";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminOrders } from "@/lib/orders/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminOrdersPage() {
-  await requireRole(["admin"], "/admin/orders");
+  await requireRole(["admin"], "/radmin/orders");
   const orders = await getAdminOrders();
 
   return (

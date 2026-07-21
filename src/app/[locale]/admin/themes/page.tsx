@@ -3,8 +3,10 @@ import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 import { getThemeSettings } from "@/lib/cms/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminThemesPage() {
-  await requireRole(["admin"], "/admin/themes");
+  await requireRole(["admin"], "/radmin/themes");
   const themes = await getThemeSettings(true);
 
   return (

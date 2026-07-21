@@ -4,8 +4,10 @@ import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 import { getSubscriptionPlans } from "@/lib/subscriptions/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSubscriptionsPage() {
-  await requireRole(["admin"], "/admin/subscriptions");
+  await requireRole(["admin"], "/radmin/subscriptions");
   const plans = await getSubscriptionPlans(true);
 
   return (

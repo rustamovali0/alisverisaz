@@ -3,8 +3,10 @@ import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 import { getMediaAssets } from "@/lib/cms/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminMediaPage() {
-  await requireRole(["admin"], "/admin/media");
+  await requireRole(["admin"], "/radmin/media");
   const assets = await getMediaAssets();
 
   return (

@@ -1,6 +1,8 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProfilePage() {
   const current = await requireRole(["customer"], "/dashboard/profile");
   const profile = current.profile;

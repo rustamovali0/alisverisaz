@@ -4,8 +4,10 @@ import { RecentList } from "@/components/dashboard/recent-list";
 import { requireRole } from "@/lib/auth/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminAnnouncementsPage() {
-  await requireRole(["admin"], "/admin/announcements");
+  await requireRole(["admin"], "/radmin/announcements");
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("announcements")

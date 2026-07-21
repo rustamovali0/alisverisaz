@@ -8,8 +8,10 @@ type AdminLayoutProps = {
   children: ReactNode;
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({ children }: AdminLayoutProps) {
-  const current = await requireRole(["admin"], "/admin");
+  const current = await requireRole(["admin"], "/radmin");
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Admin";
   const navItems = await getDashboardNavigationForRole("admin");
 

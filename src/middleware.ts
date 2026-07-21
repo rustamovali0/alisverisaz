@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     return updateSession(request);
   }
 
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+  if (pathname.startsWith("/admin/")) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.replace(/^\/admin/, "/radmin");
 
@@ -51,6 +51,8 @@ export async function middleware(request: NextRequest) {
     pathname !== "/radmin/login"
   ) {
     url.pathname = `/${routing.defaultLocale}${pathname.replace(/^\/radmin/, "/admin")}`;
+  } else if (pathname === "/admin") {
+    url.pathname = `/${routing.defaultLocale}/login`;
   } else {
     url.pathname =
       pathname === "/" ? `/${routing.defaultLocale}` : `/${routing.defaultLocale}${pathname}`;

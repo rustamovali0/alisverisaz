@@ -4,6 +4,8 @@ import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function ListingsPage() {
   const current = await requireRole(["customer"], "/dashboard/listings");
   const [categories, products] = await Promise.all([

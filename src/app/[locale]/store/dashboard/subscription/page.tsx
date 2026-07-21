@@ -7,6 +7,8 @@ import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getSellerSubscriptionOverview } from "@/lib/subscriptions/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoreSubscriptionPage() {
   const current = await requireRole(["seller"], "/store/dashboard/subscription");
   const enabled = await getSellerFeatureAccess(current.user.id, "subscription");

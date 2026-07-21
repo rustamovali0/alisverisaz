@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
 import { getMarketplaceStores } from "@/lib/cart/data";
+import { getSiteSettings } from "@/lib/cms/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -37,7 +38,10 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   setRequestLocale(locale);
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const categories = await getCategoryOptions();
+  const [categories, siteSettings] = await Promise.all([
+    getCategoryOptions(),
+    getSiteSettings(),
+  ]);
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
@@ -51,6 +55,15 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       stores={stores}
       categories={categories}
       selectedCategoryId={selectedCategory?.id}
+      footer={{
+        siteName: siteSettings.shortName || siteSettings.siteName,
+        description: siteSettings.defaultMetaDescription,
+        socialLinks: {
+          instagram: siteSettings.socialLinks.instagram,
+          tiktok: siteSettings.socialLinks.tiktok,
+          whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+        },
+      }}
       labels={{
         title: t("title"),
         description: t("description"),

@@ -3,8 +3,10 @@ import { SiteSettingsForm } from "@/components/admin/cms/site-settings-form";
 import { requireRole } from "@/lib/auth/session";
 import { getSiteSettings, getThemeSettings } from "@/lib/cms/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminSiteManagementPage() {
-  await requireRole(["admin"], "/admin/site-management");
+  await requireRole(["admin"], "/radmin/site-management");
   const [settings, themes] = await Promise.all([
     getSiteSettings(),
     getThemeSettings(true),

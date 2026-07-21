@@ -5,6 +5,8 @@ import { StatGrid } from "@/components/dashboard/stat-card";
 import { requireRole } from "@/lib/auth/session";
 import { getCustomerOverview } from "@/lib/dashboard/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const current = await requireRole(["customer"], "/dashboard");
   const overview = await getCustomerOverview(current.user.id);
