@@ -8,6 +8,8 @@ function readRequiredPublicEnv(name: string) {
   return value;
 }
 
+const fallbackSupabaseProjectId = "titvhysupzvhqrjmliye";
+
 function readSupabaseProjectId(supabaseUrl: string) {
   const explicitProjectId = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID;
 
@@ -26,9 +28,7 @@ function readSupabaseProjectId(supabaseUrl: string) {
     // The URL is validated by the Supabase client when it is used.
   }
 
-  throw new Error(
-    "Missing required environment variable: NEXT_PUBLIC_SUPABASE_PROJECT_ID",
-  );
+  return fallbackSupabaseProjectId;
 }
 
 const supabaseUrl = readRequiredPublicEnv("NEXT_PUBLIC_SUPABASE_URL");
