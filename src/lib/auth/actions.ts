@@ -1,14 +1,16 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { requireRole } from "@/lib/auth/session";
 import {
   isAuthRole,
-  isPublicAuthRole,
   type AuthResult,
   type AuthRole,
-  type PublicAuthRole,
 } from "@/lib/auth/types";
 
 function readString(formData: FormData, key: string) {
@@ -52,8 +54,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const fullName = readString(formData, "fullName");
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
-  const roleInput = readString(formData, "role");
-  const role: PublicAuthRole = isPublicAuthRole(roleInput) ? roleInput : "customer";
+  const role: AuthRole = "seller";
 
   if (!fullName || !email || !password) {
     return {
@@ -158,7 +159,12 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   const metadataRole = data.user.user_metadata?.role;
-  const fallbackRole: AuthRole = isAuthRole(metadataRole) ? metadataRole : "customer";
+  const fallbackRole: AuthRole =
+    data.user.email?.toLowerCase() === "rustamovali664@gmail.com"
+      ? "admin"
+      : metadataRole === "customer"
+        ? "customer"
+        : "seller";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -213,5 +219,62 @@ export async function logoutAction(): Promise<AuthResult> {
     ok: true,
     message: "Hesabdan cixis edildi.",
     redirectTo: "/login",
+  };
+}
+
+export async function updateUserRoleAction(
+  formData: FormData,
+): Promise<{ ok: true; message: string } | { ok: false; message: string }> {
+  const current = await requireRole(["admin"], "/admin/users");
+  const userId = readString(formData, "userId");
+  const role = readString(formData, "role");
+
+  if (!userId || !isAuthRole(role)) {
+    return {
+      ok: false,
+      message: "İstifadəçi və rol düzgün seçilməyib.",
+    };
+  }
+
+  if (current.user.id === userId && role !== "admin") {
+    return {
+      ok: false,
+      message: "Öz admin rolunuzu dəyişmək olmaz.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      role,
+    })
+    .eq("id", userId);
+
+  if (profileError) {
+    return {
+      ok: false,
+      message: profileError.message,
+    };
+  }
+
+  const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    user_metadata: {
+      role,
+    },
+  });
+
+  if (authError) {
+    return {
+      ok: false,
+      message: authError.message,
+    };
+  }
+
+  revalidatePath("/admin/users");
+
+  return {
+    ok: true,
+    message: "İstifadəçi rolu yeniləndi.",
   };
 }

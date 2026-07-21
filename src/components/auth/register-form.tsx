@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
-import { AuthField, AuthSelect } from "@/components/auth/auth-field";
+import { AuthField } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
@@ -31,7 +31,7 @@ export function RegisterForm() {
   return (
     <AuthCard
       title="Qeydiyyat"
-      description="Ferd istifadeci ve ya magaza sahibi kimi hesab yaradiriq."
+      description="Yeni hesablar mağaza sahibi kimi yaradılır."
       footer={
         <>
           Artıq hesabiniz var?{" "}
@@ -66,10 +66,6 @@ export function RegisterForm() {
           minLength={8}
           required
         />
-        <AuthSelect id="role" name="role" label="Hesab tipi" defaultValue="customer">
-          <option value="customer">Ferdi istifadeci</option>
-          <option value="seller">Magaza sahibi</option>
-        </AuthSelect>
         <Button type="submit" disabled={isPending}>
           {isPending ? "Yaradilir" : "Hesab yarat"}
         </Button>

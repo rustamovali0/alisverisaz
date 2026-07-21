@@ -748,3 +748,13 @@ export async function getAdminResource(
 }
 
 export type { ResourceItem };
+
+export async function getAdminUsers() {
+  return getRows<{
+    id: string;
+    email: string | null;
+    full_name: string | null;
+    role: string;
+    created_at: string;
+  }>("profiles", "id,email,full_name,role,created_at", [], 100);
+}

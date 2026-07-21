@@ -7,7 +7,7 @@ export async function ensureAuthProfile(input: {
   fullName?: string | null;
   role?: unknown;
 }) {
-  const role: AuthRole = isAuthRole(input.role) ? input.role : "customer";
+  const role: AuthRole = isAuthRole(input.role) ? input.role : "seller";
   const supabaseAdmin = createSupabaseAdminClient();
 
   const { error } = await supabaseAdmin.from("profiles").upsert(
