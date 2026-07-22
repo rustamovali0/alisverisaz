@@ -136,7 +136,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     message: data.session
       ? "Qeydiyyat tamamlandı."
       : "Qeydiyyat tamamlandı. Email təsdiqi aktivdirsə, girişdən öncə emailinizi yoxlayın.",
-    redirectTo: data.session ? getDashboardPath(role) : "/admin",
+    redirectTo: data.session ? getDashboardPath(role) : "/login",
   };
 }
 
@@ -274,7 +274,7 @@ export async function logoutAction(): Promise<AuthResult> {
   return {
     ok: true,
     message: "Hesabdan çıxış edildi.",
-    redirectTo: "/admin",
+    redirectTo: "/login",
   };
 }
 

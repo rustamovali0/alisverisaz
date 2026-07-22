@@ -35,10 +35,10 @@ export const defaultSiteSettings: SiteSettings = {
 };
 
 export const criticalSellerRoutes = new Set([
-  "/store/dashboard",
-  "/store/dashboard/products",
-  "/store/dashboard/orders",
-  "/store/dashboard/subscription",
+  "/admin",
+  "/admin/products",
+  "/admin/orders",
+  "/admin/subscription",
 ]);
 
 export const criticalCustomerRoutes = new Set([

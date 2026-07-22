@@ -45,7 +45,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
       }
       footer={
         mode === "admin" ? (
-          <Link className="font-medium text-primary hover:underline" href="/admin">
+          <Link className="font-medium text-primary hover:underline" href="/login">
             Sayt girişinə qayıt
           </Link>
         ) : (

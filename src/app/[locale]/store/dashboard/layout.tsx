@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { AppDashboardShell } from "@/components/dashboard/app-dashboard-shell";
-import { requireRole } from "@/lib/auth/session";
+import { SellerDashboardShell } from "@/components/seller/seller-dashboard-shell";
+import { requireSeller } from "@/lib/auth/seller-auth";
 import { getDashboardNavigationForRole } from "@/lib/cms/data";
 
 type StoreDashboardLayoutProps = {
@@ -13,18 +13,13 @@ export const dynamic = "force-dynamic";
 export default async function StoreDashboardLayout({
   children,
 }: StoreDashboardLayoutProps) {
-  const current = await requireRole(["seller"], "/store/dashboard");
+  const current = await requireSeller();
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Mağaza sahibi";
   const navItems = await getDashboardNavigationForRole("seller");
 
   return (
-    <AppDashboardShell
-      title="Mağaza paneli"
-      description="Məhsullar, sifarişlər, müştərilər və abunəlik"
-      userLabel={userLabel}
-      navItems={navItems}
-    >
+    <SellerDashboardShell userLabel={userLabel} navItems={navItems}>
       {children}
-    </AppDashboardShell>
+    </SellerDashboardShell>
   );
 }

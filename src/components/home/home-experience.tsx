@@ -191,7 +191,7 @@ export function HomeExperience({
             </Button>
           </div>
           <Button asChild className="ml-auto md:hidden" size="sm">
-            <Link href="/admin">Daxil ol</Link>
+            <Link href="/login">Daxil ol</Link>
           </Button>
         </div>
       </header>

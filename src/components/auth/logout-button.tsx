@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { clearHeaderAccountCache } from "@/components/auth/header-account-actions";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
 import { logoutAction } from "@/lib/auth/actions";
@@ -22,6 +23,7 @@ export function LogoutButton() {
       }
 
       await appAlert.success("Çıxış edildi", result.message);
+      clearHeaderAccountCache();
       router.replace(result.redirectTo);
       router.refresh();
     });

@@ -7,6 +7,7 @@ import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
+import { getCartProducts } from "@/lib/cart/data";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
 
 const MAX_CHECKOUT_ITEMS = 50;
@@ -67,6 +68,15 @@ function getUnitPrice(product: CheckoutProduct) {
 
 function createOrderNumber() {
   return `AZ-${Date.now()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+}
+
+export async function getCartProductsAction(productIds: string[], locale = "az") {
+  await requireRole(["customer"], "/cart");
+  const uniqueProductIds = Array.from(
+    new Set(productIds.filter((productId) => Boolean(productId))),
+  ).slice(0, MAX_CHECKOUT_ITEMS);
+
+  return getCartProducts(uniqueProductIds, locale);
 }
 
 async function ensureCustomer(input: {

@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CategoryOption, ManagedProduct, ProductStatus } from "@/lib/products/types";
 
@@ -96,28 +99,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
   };
 }
 
-export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
-  const supabase = await createSupabaseServerClient();
-  let query = (supabase as any)
-    .from("categories")
-    .select("id,name,slug,parent_id")
-    .eq("is_active", true)
-    .order("sort_order", {
-      ascending: true,
-    });
-
-  if (options?.rootOnly) {
-    query = query.is("parent_id", null);
-  }
-
-  const { data } = await query;
-
-  const categories = (data ?? []) as CategoryOption[];
-
-  if (!options?.rootOnly) {
-    return categories;
-  }
-
+function sortPublicRootCategories(categories: CategoryOption[]) {
   const order = new Map(
     publicRootCategorySlugs.map((slug, index) => [slug, index]),
   );
@@ -125,6 +107,44 @@ export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
   return categories
     .filter((category) => order.has(category.slug))
     .sort((a, b) => Number(order.get(a.slug)) - Number(order.get(b.slug)));
+}
+
+const getRootCategoryOptionsCached = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAdminClient();
+    const { data } = await (supabase as any)
+      .from("categories")
+      .select("id,name,slug,parent_id")
+      .eq("is_active", true)
+      .is("parent_id", null)
+      .order("sort_order", {
+        ascending: true,
+      });
+
+    return sortPublicRootCategories((data ?? []) as CategoryOption[]);
+  },
+  ["public-root-categories-v2"],
+  {
+    revalidate: 300,
+    tags: ["public-categories"],
+  },
+);
+
+export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
+  if (options?.rootOnly) {
+    return getRootCategoryOptionsCached();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data } = await (supabase as any)
+    .from("categories")
+    .select("id,name,slug,parent_id")
+    .eq("is_active", true)
+    .order("sort_order", {
+      ascending: true,
+    });
+
+  return (data ?? []) as CategoryOption[];
 }
 
 export async function getManagedProducts(filters: {

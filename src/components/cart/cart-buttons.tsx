@@ -86,7 +86,7 @@ export function BuyNowButton({ product }: { product: CartProduct }) {
         description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
         variant: "info",
       });
-      router.push("/admin?next=/cart");
+      router.push("/login?next=/cart");
       return;
     }
 

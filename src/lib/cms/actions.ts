@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
@@ -763,6 +763,9 @@ export async function updateStoreManagementAction(
 
   revalidatePath("/radmin/stores");
   revalidatePath(`/radmin/stores/${storeId}`);
+  revalidateTag("public-marketplace");
+  revalidateLocalizedPath("/");
+  revalidateLocalizedPath("/products");
 
   return {
     ok: true,

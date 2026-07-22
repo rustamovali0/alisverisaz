@@ -226,6 +226,10 @@ function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: str
     return href.replace(/^\/admin/, "/radmin");
   }
 
+  if (role === "seller" && (href === "/store/dashboard" || href.startsWith("/store/dashboard/"))) {
+    return href.replace(/^\/store\/dashboard/, "/admin");
+  }
+
   return href;
 }
 
@@ -313,11 +317,11 @@ export async function getPanelSettings(kind: "store" | "user") {
     kind === "store"
       ? (supabase as any)
           .from("store_panel_settings")
-          .select("*")
+          .select("title,features,sidebar_items,settings")
           .is("store_id", null)
       : (supabase as any)
           .from("user_panel_settings")
-          .select("*")
+          .select("title,features,sidebar_items,settings")
           .eq("key", "global");
   const { data } = await query.limit(1).maybeSingle();
 
@@ -347,7 +351,7 @@ export async function getAdminStoreDetail(storeId: string) {
         .eq("store_id", storeId),
       (supabase as any)
         .from("store_panel_settings")
-        .select("*")
+        .select("id,store_id,title,features,sidebar_items,settings,is_enabled")
         .eq("store_id", storeId)
         .maybeSingle(),
     ]);

@@ -27,6 +27,7 @@ function needsSessionCheck(pathname: string) {
   return (
     pathname === "/admin" ||
     pathname === "/login" ||
+    pathname === "/register" ||
     pathname.startsWith("/admin/") ||
     pathname.startsWith("/radmin") ||
     pathname.startsWith("/dashboard") ||
@@ -43,7 +44,9 @@ function createLocalizedRewrite(request: NextRequest, pathname: string) {
   ) {
     url.pathname = `/${routing.defaultLocale}${pathname.replace(/^\/radmin/, "/admin")}`;
   } else if (pathname === "/admin") {
-    url.pathname = `/${routing.defaultLocale}/login`;
+    url.pathname = `/${routing.defaultLocale}/store/dashboard`;
+  } else if (pathname.startsWith("/admin/")) {
+    url.pathname = `/${routing.defaultLocale}${pathname.replace(/^\/admin/, "/store/dashboard")}`;
   } else {
     url.pathname =
       pathname === "/" ? `/${routing.defaultLocale}` : `/${routing.defaultLocale}${pathname}`;
@@ -93,7 +96,17 @@ export async function middleware(request: NextRequest) {
 
   if (visiblePathname !== pathname) {
     if (visiblePathname === "/admin") {
-      return createLocalizedRewrite(request, visiblePathname);
+      return mergeSessionIntoRewrite(
+        request,
+        createLocalizedRewrite(request, visiblePathname),
+      );
+    }
+
+    if (visiblePathname.startsWith("/admin/")) {
+      return mergeSessionIntoRewrite(
+        request,
+        createLocalizedRewrite(request, visiblePathname),
+      );
     }
 
     return needsSessionCheck(visiblePathname)
@@ -104,10 +117,6 @@ export async function middleware(request: NextRequest) {
   const rewriteResponse = createLocalizedRewrite(request, pathname);
 
   if (!needsSessionCheck(pathname)) {
-    return rewriteResponse;
-  }
-
-  if (pathname === "/admin") {
     return rewriteResponse;
   }
 

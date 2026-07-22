@@ -6,7 +6,7 @@ export function getDashboardPath(role: AuthRole) {
   }
 
   if (role === "seller") {
-    return "/store/dashboard";
+    return "/admin";
   }
 
   return "/dashboard";
@@ -21,7 +21,7 @@ export function getLoginPath(next?: string) {
 
   const query = params.toString();
 
-  return query ? `/admin?${query}` : "/admin";
+  return query ? `/login?${query}` : "/login";
 }
 
 export function getAdminLoginPath(next?: string) {

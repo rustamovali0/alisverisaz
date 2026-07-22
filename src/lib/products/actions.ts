@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
@@ -16,6 +16,12 @@ import type {
 } from "@/lib/products/types";
 
 const PRODUCT_IMAGE_BUCKET = "product-images";
+
+function revalidateMarketplaceSurfaces() {
+  revalidateTag("public-marketplace");
+  revalidatePath("/");
+  revalidatePath("/products");
+}
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -324,6 +330,7 @@ export async function createStoreProductAction(
   }
 
   revalidatePath("/store/dashboard/products");
+  revalidateMarketplaceSurfaces();
 
   return {
     ok: true,
@@ -444,6 +451,7 @@ export async function updateProductAction(
   revalidatePath("/dashboard/listings");
   revalidatePath("/radmin/products");
   revalidatePath("/radmin/stores");
+  revalidateMarketplaceSurfaces();
 
   return {
     ok: true,
@@ -495,6 +503,7 @@ export async function deleteProductAction(
   revalidatePath("/dashboard/listings");
   revalidatePath("/radmin/products");
   revalidatePath("/radmin/stores");
+  revalidateMarketplaceSurfaces();
 
   return {
     ok: true,
@@ -680,6 +689,7 @@ export async function createPersonalListingAction(
   }
 
   revalidatePath("/dashboard/listings");
+  revalidateMarketplaceSurfaces();
 
   return {
     ok: true,
@@ -759,6 +769,7 @@ export async function confirmPersonalListingPaymentAction(
   }
 
   revalidatePath("/dashboard/listings");
+  revalidateMarketplaceSurfaces();
 
   return {
     ok: true,

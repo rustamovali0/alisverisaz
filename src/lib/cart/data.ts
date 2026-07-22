@@ -1,3 +1,6 @@
+import { unstable_cache } from "next/cache";
+
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   CartProduct,
@@ -39,6 +42,8 @@ type StoreRow = {
   cover_url: string | null;
   settings?: Record<string, unknown> | null;
 };
+
+const PUBLIC_MARKETPLACE_REVALIDATE_SECONDS = 30;
 
 function readLocalizedText(
   fallback: string | null,
@@ -134,13 +139,13 @@ export async function getMarketplaceProducts(locale = "az") {
   return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row, locale));
 }
 
-export async function getMarketplaceStores(input: {
-  locale?: string;
-  categoryId?: string;
-  searchQuery?: string;
-  limit?: number;
-} = {}) {
-  const supabase = await createSupabaseServerClient();
+async function getMarketplaceStoresUncached(
+  locale: string,
+  categoryId: string,
+  searchQuery: string,
+  limit: number,
+) {
+  const supabase = createSupabaseAdminClient();
   const { data: stores } = await (supabase as any)
     .from("stores")
     .select("id,name,slug,description,logo_url,cover_url,settings")
@@ -148,7 +153,7 @@ export async function getMarketplaceStores(input: {
     .order("created_at", {
       ascending: false,
     })
-    .limit(input.limit ?? 60);
+    .limit(limit);
   const storeRows = (stores ?? []) as StoreRow[];
   const storeIds = storeRows.map((store) => store.id);
 
@@ -167,11 +172,15 @@ export async function getMarketplaceStores(input: {
       ascending: false,
     });
 
-  if (input.categoryId) {
-    productQuery = productQuery.eq("category_id", input.categoryId);
+  if (categoryId) {
+    productQuery = productQuery.eq("category_id", categoryId);
   }
 
-  const { data: products } = await productQuery.limit(300);
+  const productLimit = Math.min(
+    Math.max(storeRows.length * (categoryId || searchQuery ? 8 : 4), 24),
+    categoryId || searchQuery ? 120 : 80,
+  );
+  const { data: products } = await productQuery.limit(productLimit);
   const productRows = (products ?? []) as ProductRow[];
   const productsByStore = new Map<string, ProductRow[]>();
 
@@ -181,7 +190,7 @@ export async function getMarketplaceStores(input: {
     productsByStore.set(product.store_id, current);
   });
 
-  const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
+  const normalizedSearch = normalizeSearchValue(searchQuery);
 
   return storeRows
     .map((store): MarketplaceStore => {
@@ -199,7 +208,7 @@ export async function getMarketplaceStores(input: {
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
-          .map((product) => toCartProduct(product, input.locale ?? "az")),
+          .map((product) => toCartProduct(product, locale)),
         categoryIds: Array.from(
           new Set(
             storeProducts
@@ -235,12 +244,35 @@ export async function getMarketplaceStores(input: {
     });
 }
 
+const getMarketplaceStoresCached = unstable_cache(
+  getMarketplaceStoresUncached,
+  ["marketplace-stores-v3"],
+  {
+    revalidate: PUBLIC_MARKETPLACE_REVALIDATE_SECONDS,
+    tags: ["public-marketplace"],
+  },
+);
+
+export async function getMarketplaceStores(input: {
+  locale?: string;
+  categoryId?: string;
+  searchQuery?: string;
+  limit?: number;
+} = {}) {
+  return getMarketplaceStoresCached(
+    input.locale ?? "az",
+    input.categoryId ?? "",
+    input.searchQuery ?? "",
+    input.limit ?? 60,
+  );
+}
+
 export async function getMarketplaceStoreBySlug(input: {
   slug: string;
   locale?: string;
   categoryId?: string;
 }) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data: store } = await (supabase as any)
     .from("stores")
     .select("id,name,slug,description,logo_url,cover_url,settings")
@@ -267,7 +299,7 @@ export async function getMarketplaceStoreBySlug(input: {
     productQuery = productQuery.eq("category_id", input.categoryId);
   }
 
-  const { data: products } = await productQuery.limit(200);
+  const { data: products } = await productQuery.limit(72);
   const productRows = (products ?? []) as ProductRow[];
 
   return {

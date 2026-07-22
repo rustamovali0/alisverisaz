@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/swal";
-import { createCheckoutOrdersAction } from "@/lib/cart/actions";
+import { createCheckoutOrdersAction, getCartProductsAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
 
 const CART_KEY = "alisveris_cart";
 
 type CartCheckoutProps = {
-  products: CartProduct[];
+  products?: CartProduct[];
   defaultFullName?: string;
+  locale?: string;
 };
 
 function readCart() {
@@ -38,10 +39,14 @@ function formatMoney(value: number) {
 }
 
 export function CartCheckout({
-  products,
+  products: initialProducts = [],
   defaultFullName = "",
+  locale = "az",
 }: CartCheckoutProps) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [products, setProducts] = useState<CartProduct[]>(initialProducts);
+  const [hasLoadedCart, setHasLoadedCart] = useState(false);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isPending, startTransition] = useTransition();
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
@@ -70,8 +75,36 @@ export function CartCheckout({
       : "/products";
 
   useEffect(() => {
-    setItems(readCart());
-  }, []);
+    let isMounted = true;
+    const cartItems = readCart();
+    const productIds = cartItems.map((item) => item.productId);
+
+    setItems(cartItems);
+    setHasLoadedCart(true);
+
+    if (initialProducts.length > 0 || productIds.length === 0) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    setIsLoadingProducts(true);
+    getCartProductsAction(productIds, locale)
+      .then((nextProducts) => {
+        if (isMounted) {
+          setProducts(nextProducts);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingProducts(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [initialProducts.length, locale]);
 
   function updateItems(nextItems: CartItem[]) {
     setItems(nextItems);
@@ -108,7 +141,20 @@ export function CartCheckout({
             <h1 className="text-2xl font-semibold tracking-normal">Səbət</h1>
           </div>
           <div className="mt-6 divide-y">
-            {visibleItems.length === 0 ? (
+            {!hasLoadedCart || isLoadingProducts ? (
+              <div className="space-y-4 py-4">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-4">
+                    <div className="size-20 rounded-md bg-muted" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-48 max-w-full rounded bg-muted" />
+                      <div className="h-3 w-28 rounded bg-muted" />
+                    </div>
+                    <div className="hidden h-10 w-28 rounded bg-muted sm:block" />
+                  </div>
+                ))}
+              </div>
+            ) : visibleItems.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 Səbət boşdur.
               </p>
@@ -240,7 +286,7 @@ export function CartCheckout({
           <Button
             type="submit"
             className="mt-4 w-full"
-            disabled={visibleItems.length === 0 || isPending}
+            disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}
           </Button>

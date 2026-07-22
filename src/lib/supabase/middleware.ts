@@ -25,7 +25,7 @@ const protectedRoutes: Array<{
   },
   {
     prefix: "/admin",
-    roles: ["admin"],
+    roles: ["seller"],
   },
   {
     prefix: "/store/dashboard",
@@ -116,11 +116,10 @@ export async function updateSession(
   const isAdminLogin =
     matchesPath(pathname, "/radmin/login") ||
     matchesPath(localizedPathname, "/radmin/login");
-  const isPublicAdminEntry = pathname === "/admin" || localizedPathname === "/admin";
-  const route = isAdminLogin || isPublicAdminEntry
+  const route = isAdminLogin
     ? undefined
     : protectedRoutes.find((item) => matchesPath(pathname, item.prefix));
-  const localizedRoute = isAdminLogin || isPublicAdminEntry
+  const localizedRoute = isAdminLogin
     ? undefined
     : protectedRoutes.find((item) => matchesPath(localizedPathname, item.prefix));
 
@@ -162,9 +161,7 @@ export async function updateSession(
         locale,
         matchedAuthRoute === "/radmin/login"
           ? getDashboardPath(role)
-          : role === "admin"
-            ? "/admin"
-            : getDashboardPath(role),
+          : getDashboardPath(role),
       ),
     );
   }

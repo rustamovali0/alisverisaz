@@ -12,10 +12,18 @@ type HeaderAccountActionsProps = {
   className?: string;
 };
 
+let cachedHeaderRole: AuthRole | null | undefined;
+let cachedHeaderRolePromise: Promise<AuthRole | null> | null = null;
+
+export function clearHeaderAccountCache() {
+  cachedHeaderRole = undefined;
+  cachedHeaderRolePromise = null;
+}
+
 function getPanelPath(role: AuthRole) {
   if (role === "seller") {
     return {
-      href: "/store/dashboard",
+      href: "/admin",
       label: "Panelə keç",
       icon: Store,
     };
@@ -28,6 +36,44 @@ function getPanelPath(role: AuthRole) {
   };
 }
 
+async function loadHeaderRole() {
+  if (cachedHeaderRole !== undefined) {
+    return cachedHeaderRole;
+  }
+
+  if (cachedHeaderRolePromise) {
+    return cachedHeaderRolePromise;
+  }
+
+  cachedHeaderRolePromise = (async () => {
+    const supabase = createSupabaseBrowserClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      cachedHeaderRole = null;
+      return cachedHeaderRole;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .returns<{ role: AuthRole }[]>()
+      .maybeSingle();
+
+    cachedHeaderRole = profile?.role === "seller" ? "seller" : "customer";
+    return cachedHeaderRole;
+  })();
+
+  try {
+    return await cachedHeaderRolePromise;
+  } finally {
+    cachedHeaderRolePromise = null;
+  }
+}
+
 export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
   const [role, setRole] = useState<AuthRole | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -36,30 +82,12 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
     let isMounted = true;
 
     async function loadSession() {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const nextRole = await loadHeaderRole();
       if (!isMounted) {
         return;
       }
 
-      if (!user) {
-        setRole(null);
-        setIsChecked(true);
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .returns<{ role: AuthRole }[]>()
-        .maybeSingle();
-      const profileRole = profile?.role;
-
-      setRole(profileRole === "seller" ? "seller" : "customer");
+      setRole(nextRole);
       setIsChecked(true);
     }
 
@@ -91,7 +119,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
   return (
     <>
       <Button asChild variant="ghost" className={className}>
-        <Link href="/admin">Daxil ol</Link>
+        <Link href="/login">Daxil ol</Link>
       </Button>
       <Button asChild variant="outline" className={className}>
         <Link href="/register">Qeydiyyatdan keç</Link>
