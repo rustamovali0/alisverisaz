@@ -8,6 +8,16 @@ function SkeletonBlock({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
 }
 
+function LoadingSpinner() {
+  return (
+    <div
+      aria-label="Səhifə yüklənir"
+      role="status"
+      className="size-11 animate-spin rounded-full border-4 border-muted border-t-primary"
+    />
+  );
+}
+
 export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
   if (variant === "account") {
     return (
@@ -68,8 +78,8 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
         </div>
       </header>
       <div className="container flex min-h-[420px] items-center justify-center py-10">
-        <div className="rounded-lg border bg-card px-5 py-4 text-sm font-medium text-muted-foreground shadow-sm">
-          Yüklənir...
+        <div className="grid size-20 place-items-center rounded-full border bg-card shadow-sm">
+          <LoadingSpinner />
         </div>
       </div>
     </main>
