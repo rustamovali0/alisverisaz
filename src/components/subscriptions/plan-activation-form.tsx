@@ -4,7 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { activatePlanPlaceholderAction } from "@/lib/subscriptions/actions";
 import type { SubscriptionPlan } from "@/lib/subscriptions/types";
 
@@ -26,11 +26,11 @@ export function PlanActivationForm({
       const result = await activatePlanPlaceholderAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Abunəlik aktiv olmadı");
+        void appAlert.error(result.message, "Abunəlik aktiv olmadı");
         return;
       }
 
-      await appAlert.success("Abunəlik aktivdir", result.message);
+      void appAlert.success("Abunəlik aktivdir", result.message);
     });
   }
 

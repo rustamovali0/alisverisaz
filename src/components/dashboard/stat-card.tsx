@@ -1,11 +1,14 @@
+import { Link } from "@/i18n/navigation";
+
 type StatCardProps = {
   label: string;
   value: number | string;
   description?: string;
+  href?: string;
 };
 
-export function StatCard({ label, value, description }: StatCardProps) {
-  return (
+export function StatCard({ label, value, description, href }: StatCardProps) {
+  const content = (
     <article className="premium-card p-4">
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p className="mt-2 text-3xl font-semibold tracking-normal text-foreground">
@@ -18,6 +21,16 @@ export function StatCard({ label, value, description }: StatCardProps) {
       ) : null}
     </article>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block transition hover:-translate-y-0.5">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }
 
 type StatGridProps = {

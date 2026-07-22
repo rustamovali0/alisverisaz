@@ -4,7 +4,7 @@ import { useState, useTransition, type FormEvent } from "react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import {
   createPersonalListingAction,
   createStoreProductAction,
@@ -77,11 +77,11 @@ export function ProductForm({
             : await updateProductAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Əməliyyat alınmadı");
+        void appAlert.error(result.message, "Əməliyyat alınmadı");
         return;
       }
 
-      await appAlert.success("Uğurludur", result.message);
+      void appAlert.success("Uğurludur", result.message);
       setImageFiles([]);
     });
   }
@@ -139,9 +139,34 @@ export function ProductForm({
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <label className="grid gap-2 text-sm font-medium">
-          Qiymət
+          Stok sayı
+          <input
+            name="stockQuantity"
+            type="number"
+            min="0"
+            step="1"
+            defaultValue={product?.stockQuantity ?? 0}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+            disabled={disabled}
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Maya dəyəri
+          <input
+            name="costAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={product?.costAmount ?? 0}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            disabled={disabled}
+          />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Əsas qiymət
           <input
             name="priceAmount"
             type="number"
@@ -154,27 +179,18 @@ export function ProductForm({
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Endirim
+          Endirimli qiymət
           <input
-            name="discountAmount"
+            name="discountedPriceAmount"
             type="number"
             min="0"
             step="0.01"
-            defaultValue={product?.discountAmount ?? 0}
+            defaultValue={
+              product
+                ? Math.max(product.priceAmount - product.discountAmount, 0)
+                : undefined
+            }
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Stok
-          <input
-            name="stockQuantity"
-            type="number"
-            min="0"
-            step="1"
-            defaultValue={product?.stockQuantity ?? 0}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
             disabled={disabled}
           />
         </label>

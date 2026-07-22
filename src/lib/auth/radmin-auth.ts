@@ -1,5 +1,13 @@
-import { requireRole } from "@/lib/auth/session";
+import { redirect } from "next/navigation";
 
-export function requireRadmin(nextPath = "/radmin") {
-  return requireRole(["admin"], nextPath);
+import { getCurrentUserProfile } from "@/lib/auth/session";
+
+export async function requireRadmin() {
+  const current = await getCurrentUserProfile();
+
+  if (!current || current.role !== "admin") {
+    redirect("/radmin/login");
+  }
+
+  return current;
 }

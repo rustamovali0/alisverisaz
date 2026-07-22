@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import {
   replyProductMessageAction,
   updateProductMessageStatusAction,
@@ -38,11 +38,11 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
       setPendingId(null);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Mesaj yenilənmədi");
+        void appAlert.error(result.message, "Mesaj yenilənmədi");
         return;
       }
 
-      await appAlert.success("Mesaj yeniləndi", result.message);
+      void appAlert.success("Mesaj yeniləndi", result.message);
     });
   }
 
@@ -55,11 +55,11 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
       setPendingId(null);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Cavab göndərilmədi");
+        void appAlert.error(result.message, "Cavab göndərilmədi");
         return;
       }
 
-      await appAlert.success("Cavab göndərildi", result.message);
+      void appAlert.success("Cavab göndərildi", result.message);
     });
   }
 

@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { updatePlanAction } from "@/lib/subscriptions/actions";
 import type { SubscriptionPlan } from "@/lib/subscriptions/types";
 
@@ -19,11 +19,11 @@ export function AdminPlanForm({ plan }: AdminPlanFormProps) {
       const result = await updatePlanAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Plan yenilənmədi");
+        void appAlert.error(result.message, "Plan yenilənmədi");
         return;
       }
 
-      await appAlert.success("Plan yeniləndi", result.message);
+      void appAlert.success("Plan yeniləndi", result.message);
     });
   }
 

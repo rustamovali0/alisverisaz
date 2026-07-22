@@ -34,6 +34,11 @@ export type ManagedOrder = {
     id: string;
     productName: string;
     productId: string | null;
+    productSlug: string | null;
+    storeSlug: string | null;
+    description: string | null;
+    imageUrl: string | null;
+    unitPrice: number;
     quantity: number;
     totalAmount: number;
   }>;

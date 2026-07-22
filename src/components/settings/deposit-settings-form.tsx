@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { updateDepositSettingsAction } from "@/lib/settings/actions";
 
 type DepositSettingsFormProps = {
@@ -18,11 +18,11 @@ export function DepositSettingsForm({ enabled }: DepositSettingsFormProps) {
       const result = await updateDepositSettingsAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Ayar yenilənmədi");
+        void appAlert.error(result.message, "Ayar yenilənmədi");
         return;
       }
 
-      await appAlert.success("Ayar yeniləndi", result.message);
+      void appAlert.success("Ayar yeniləndi", result.message);
     });
   }
 

@@ -91,8 +91,10 @@ export async function updateOrderStatusAction(
   }
 
   revalidatePath("/store/dashboard/orders");
+  revalidatePath("/admin/orders");
   revalidatePath("/radmin/orders");
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard");
 
   return {
     ok: true,

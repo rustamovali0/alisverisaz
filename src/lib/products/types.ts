@@ -23,6 +23,7 @@ export type ManagedProduct = {
   name: string;
   nameTranslations: Record<string, string>;
   categoryId: string | null;
+  costAmount: number;
   priceAmount: number;
   discountAmount: number;
   stockQuantity: number;

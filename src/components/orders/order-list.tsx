@@ -1,10 +1,12 @@
 "use client";
 
 import { useTransition } from "react";
+import { PackageSearch } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { Link, useRouter } from "@/i18n/navigation";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { updateOrderStatusAction } from "@/lib/orders/actions";
 import {
   orderStatusLabels,
@@ -26,17 +28,19 @@ function formatMoney(value: number, currency: string) {
 
 function OrderStatusForm({ order }: { order: ManagedOrder }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       const result = await updateOrderStatusAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Status yenilənmədi");
+        void appAlert.error(result.message, "Status yenilənmədi");
         return;
       }
 
-      await appAlert.success("Status yeniləndi", result.message);
+      void appAlert.success("Status yeniləndi", result.message);
+      router.refresh();
     });
   }
 
@@ -81,9 +85,6 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
         >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h3 className="text-base font-semibold tracking-normal">
-                {order.orderNumber}
-              </h3>
               <p className="mt-1 text-sm font-medium text-foreground">
                 Mağaza: {order.storeName}
               </p>
@@ -112,21 +113,74 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
           </p>
           <div className="mt-4 divide-y rounded-md border bg-background">
             {order.items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
-              >
-                <span className="min-w-0 truncate">
-                  {item.productName} x {item.quantity}
-                </span>
-                <span className="shrink-0 font-medium">
-                  {formatMoney(item.totalAmount, order.currency)}
-                </span>
-              </div>
+              <OrderProductItem key={item.id} item={item} currency={order.currency} />
             ))}
           </div>
         </article>
       ))}
+    </div>
+  );
+}
+
+function OrderProductItem({
+  item,
+  currency,
+}: {
+  item: ManagedOrder["items"][number];
+  currency: string;
+}) {
+  const href =
+    item.storeSlug && item.productSlug
+      ? `/${item.storeSlug}/products/${item.productSlug}`
+      : null;
+  const content = (
+    <>
+      <div className="size-20 shrink-0 overflow-hidden rounded-md border bg-muted">
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt={item.productName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center text-muted-foreground">
+            <PackageSearch className="size-7" aria-hidden="true" />
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {item.productName}
+        </p>
+        {item.description ? (
+          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+            {item.description}
+          </p>
+        ) : null}
+        <p className="mt-2 text-xs font-medium text-muted-foreground">
+          Miqdar: {item.quantity} · Bir məhsul: {formatMoney(item.unitPrice, currency)}
+        </p>
+      </div>
+      <span className="shrink-0 text-sm font-semibold">
+        {formatMoney(item.totalAmount, currency)}
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="flex flex-col gap-3 px-3 py-3 transition hover:bg-muted/60 sm:flex-row sm:items-center"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center">
+      {content}
     </div>
   );
 }

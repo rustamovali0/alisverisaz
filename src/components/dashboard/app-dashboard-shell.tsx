@@ -36,6 +36,10 @@ export function AppDashboardShell({
   const [isOpen, setIsOpen] = useState(false);
 
   function isActive(href: string) {
+    if (href === "/admin" || href === "/radmin" || href === "/dashboard") {
+      return pathname === href;
+    }
+
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 

@@ -176,8 +176,13 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "name_ru"),
   };
   const categoryId = readString(formData, "categoryId");
+  const costAmount = readNumber(formData, "costAmount");
   const priceAmount = readNumber(formData, "priceAmount");
-  const discountAmount = readNumber(formData, "discountAmount");
+  const discountedPriceRaw = readString(formData, "discountedPriceAmount");
+  const discountAmount =
+    discountedPriceRaw.length > 0
+      ? Math.max(priceAmount - readNumber(formData, "discountedPriceAmount"), 0)
+      : readNumber(formData, "discountAmount");
   const stockQuantity = Math.max(Math.trunc(readNumber(formData, "stockQuantity")), 0);
   const description = readString(formData, "description");
   const descriptionTranslations = {
@@ -204,6 +209,7 @@ function readProductPayload(formData: FormData) {
     name,
     nameTranslations,
     categoryId: categoryId || null,
+    costAmount,
     priceAmount,
     discountAmount,
     stockQuantity,
@@ -224,8 +230,8 @@ function validatePayload(payload: ReturnType<typeof readProductPayload>) {
     return "Ad mütləqdir.";
   }
 
-  if (payload.priceAmount < 0 || payload.discountAmount < 0) {
-    return "Qiymət və endirim mənfi ola bilməz.";
+  if (payload.costAmount < 0 || payload.priceAmount < 0 || payload.discountAmount < 0) {
+    return "Maya dəyəri, qiymət və endirim mənfi ola bilməz.";
   }
 
   if (payload.depositValue < 0) {
@@ -292,6 +298,7 @@ export async function createStoreProductAction(
       description_translations: payload.descriptionTranslations,
       seo_title_translations: payload.seoTitleTranslations,
       seo_description_translations: payload.seoDescriptionTranslations,
+      cost_amount: payload.costAmount,
       price_amount: payload.priceAmount,
       discount_amount: payload.discountAmount,
       stock_quantity: payload.stockQuantity,
@@ -414,6 +421,7 @@ export async function updateProductAction(
       description_translations: payload.descriptionTranslations,
       seo_title_translations: payload.seoTitleTranslations,
       seo_description_translations: payload.seoDescriptionTranslations,
+      cost_amount: payload.costAmount,
       price_amount: payload.priceAmount,
       discount_amount: payload.discountAmount,
       stock_quantity: payload.stockQuantity,
@@ -652,6 +660,7 @@ export async function createPersonalListingAction(
         description_translations: payload.descriptionTranslations,
         seo_title_translations: payload.seoTitleTranslations,
         seo_description_translations: payload.seoDescriptionTranslations,
+        cost_amount: payload.costAmount,
         price_amount: payload.priceAmount,
         discount_amount: payload.discountAmount,
         stock_quantity: payload.stockQuantity,

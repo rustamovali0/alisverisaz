@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { updateUserRoleAction } from "@/lib/auth/actions";
 type AssignableRole = "customer" | "seller" | "admin";
 
@@ -29,11 +29,11 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
       const result = await updateUserRoleAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Rol dəyişmədi");
+        void appAlert.error(result.message, "Rol dəyişmədi");
         return;
       }
 
-      await appAlert.success("Rol yeniləndi", result.message);
+      void appAlert.success("Rol yeniləndi", result.message);
     });
   }
 

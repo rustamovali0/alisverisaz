@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSiteSettingsAction } from "@/lib/cms/actions";
 import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { cn } from "@/lib/utils";
 
 type SiteSettingsFormProps = {
@@ -116,7 +116,7 @@ function LogoUploadField({
 
       setSelectedName(converted.name);
     } catch (error) {
-      await appAlert.error(
+      void appAlert.error(
         error instanceof Error ? error.message : "Logo seçilmədi.",
         "Logo yüklənmədi",
       );
@@ -209,11 +209,11 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
       const result = await updateSiteSettingsAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Ayarlar saxlanmadı");
+        void appAlert.error(result.message, "Ayarlar saxlanmadı");
         return;
       }
 
-      await appAlert.success("Ayarlar saxlandı", result.message);
+      void appAlert.success("Ayarlar saxlandı", result.message);
     });
   }
 

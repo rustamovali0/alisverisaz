@@ -108,6 +108,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "barChart",
     },
     {
+      title: "Qazanclar",
+      href: "/admin/earnings",
+      icon: "receipt",
+    },
+    {
       title: "Abunəlik",
       titleKey: "subscription",
       href: "/admin/subscription",

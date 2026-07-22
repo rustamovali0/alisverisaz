@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { publishThemeAction } from "@/lib/cms/actions";
 import type { ThemeSetting } from "@/lib/cms/types";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 type ThemeManagerProps = {
   themes: ThemeSetting[];
@@ -19,11 +19,11 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
       const result = await publishThemeAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Tema aktiv olmadı");
+        void appAlert.error(result.message, "Tema aktiv olmadı");
         return;
       }
 
-      await appAlert.success("Tema aktivdir", result.message);
+      void appAlert.success("Tema aktivdir", result.message);
     });
   }
 

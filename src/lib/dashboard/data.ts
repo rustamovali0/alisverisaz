@@ -323,21 +323,25 @@ export async function getStoreOverview(userId: string) {
         label: "Məhsullar",
         value: productCount,
         description: "Mağazalarınıza bağlı məhsullar",
+        href: "/admin/products",
       },
       {
         label: "Sifarişlər",
         value: orderCount,
         description: "Mağaza sifarişləri",
+        href: "/admin/orders",
       },
       {
         label: "Müştərilər",
         value: customerCount,
         description: "Mağaza müştəriləri",
+        href: "/admin/customers",
       },
       {
         label: "Abunəliklər",
         value: subscriptionCount,
         description: "Mağaza abunəlikləri",
+        href: "/admin/subscription",
       },
     ],
     recentOrders: recentOrders.map((order) => ({
@@ -345,6 +349,7 @@ export async function getStoreOverview(userId: string) {
       title: order.order_number,
       description: order.status,
       value: formatMoney(order.total_amount, order.currency),
+      href: "/admin/orders",
     })),
   };
 }
@@ -517,6 +522,79 @@ export async function getStoreAnalytics(userId: string) {
       title: order.status,
       description: "Sifariş",
       value: formatMoney(order.total_amount, order.currency),
+    })),
+  };
+}
+
+export async function getStoreEarnings(userId: string) {
+  const storeIds = (await getOwnedStores(userId)).map((store) => store.id);
+  const orders = await getRows<{
+    id: string;
+    status: string;
+    total_amount: string | number;
+    currency: string;
+    created_at: string;
+  }>(
+    "orders",
+    "id,status,total_amount,currency,created_at",
+    [{ column: "store_id", value: storeIds, op: "in" }],
+    100,
+  );
+  const revenueOrders = orders.filter((order) => order.status !== "canceled");
+  const orderIds = revenueOrders.map((order) => order.id);
+  const supabase = await createSupabaseServerClient();
+  const { data: itemRows } =
+    orderIds.length > 0
+      ? await (supabase as any)
+          .from("order_items")
+          .select("id,order_id,quantity,total_amount,products(name,cost_amount)")
+          .in("order_id", orderIds)
+      : { data: [] };
+  const items = (itemRows ?? []) as Array<{
+    id: string;
+    order_id: string;
+    quantity: number;
+    total_amount: string | number;
+    products?: { name: string; cost_amount: string | number | null } | null;
+  }>;
+  const grossRevenue = revenueOrders.reduce(
+    (total, order) => total + Number(order.total_amount ?? 0),
+    0,
+  );
+  const totalCost = items.reduce(
+    (total, item) => total + Number(item.products?.cost_amount ?? 0) * item.quantity,
+    0,
+  );
+  const currency = revenueOrders[0]?.currency ?? "AZN";
+
+  return {
+    stats: [
+      {
+        label: "Ümumi gəlir",
+        value: formatMoney(grossRevenue, currency),
+        description: "Ləğv edilməmiş sifarişlərin toplamı",
+      },
+      {
+        label: "Maya dəyəri",
+        value: formatMoney(totalCost, currency),
+        description: "Məhsullara yazılan maya dəyərləri",
+      },
+      {
+        label: "Xalis gəlir",
+        value: formatMoney(grossRevenue - totalCost, currency),
+        description: "Ümumi gəlir - maya dəyəri",
+      },
+      {
+        label: "Sifariş sayı",
+        value: revenueOrders.length,
+        description: "Gəlir hesabına daxil edilən sifarişlər",
+      },
+    ],
+    items: items.slice(0, 20).map((item) => ({
+      id: item.id,
+      title: item.products?.name ?? "Məhsul",
+      description: `Miqdar: ${item.quantity}`,
+      value: formatMoney(item.total_amount, currency),
     })),
   };
 }

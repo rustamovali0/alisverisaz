@@ -10,6 +10,7 @@ type ProductRow = {
   name: string;
   name_translations: Record<string, string> | null;
   category_id: string | null;
+  cost_amount: string | number | null;
   price_amount: string | number;
   discount_amount: string | number;
   stock_quantity: number;
@@ -66,6 +67,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     name: row.name,
     nameTranslations: row.name_translations ?? {},
     categoryId: row.category_id,
+    costAmount: Number(row.cost_amount ?? 0),
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.stock_quantity,
@@ -156,7 +158,7 @@ export async function getManagedProducts(filters: {
   let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,name_translations,category_id,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_variants(name,value,price_delta_amount,stock_quantity)",
+      "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_variants(name,value,price_delta_amount,stock_quantity)",
     )
     .order("created_at", {
       ascending: false,

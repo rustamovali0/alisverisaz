@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Link } from "@/i18n/navigation";
-import { appAlert } from "@/lib/alerts/swal";
+import { Link, useRouter } from "@/i18n/navigation";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { createCheckoutOrdersAction, getCartProductsAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
 
@@ -43,6 +43,7 @@ export function CartCheckout({
   defaultFullName = "",
   locale = "az",
 }: CartCheckoutProps) {
+  const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<CartProduct[]>(initialProducts);
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
@@ -118,12 +119,14 @@ export function CartCheckout({
       const result = await createCheckoutOrdersAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Sifariş alınmadı");
+        void appAlert.error(result.message, "Sifariş alınmadı");
         return;
       }
 
       updateItems([]);
-      await appAlert.success("Sifariş yaradıldı", result.message);
+      void appAlert.success("Sifariş yaradıldı", result.message);
+      router.replace("/dashboard");
+      router.refresh();
     });
   }
 
@@ -134,7 +137,7 @@ export function CartCheckout({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button asChild variant="outline" size="sm">
               <Link href={returnHref}>
-                <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
+                <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
                 Geri
               </Link>
             </Button>
@@ -186,6 +189,7 @@ export function CartCheckout({
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="size-14"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -199,13 +203,16 @@ export function CartCheckout({
                         );
                       }}
                     >
-                      <Minus className="size-4" aria-hidden="true" />
+                      <Minus className="size-5" aria-hidden="true" />
                     </Button>
-                    <span className="w-8 text-center text-sm">{item.quantity}</span>
+                    <span className="w-10 text-center text-base font-semibold">
+                      {item.quantity}
+                    </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="size-14"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -222,19 +229,20 @@ export function CartCheckout({
                         );
                       }}
                     >
-                      <Plus className="size-4" aria-hidden="true" />
+                      <Plus className="size-5" aria-hidden="true" />
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="size-14 text-destructive hover:text-destructive"
                       onClick={() => {
                         updateItems(
                           items.filter((nextItem) => nextItem.productId !== product.id),
                         );
                       }}
                     >
-                      <Trash2 className="size-4" aria-hidden="true" />
+                      <Trash2 className="size-5" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

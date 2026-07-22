@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ProductForm } from "@/components/products/product-form";
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import {
   confirmPersonalListingPaymentAction,
   deleteProductAction,
@@ -47,11 +47,11 @@ function DeleteProductButton({ productId }: { productId: string }) {
       const result = await deleteProductAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Silinmədi");
+        void appAlert.error(result.message, "Silinmədi");
         return;
       }
 
-      await appAlert.success("Silindi", result.message);
+      void appAlert.success("Silindi", result.message);
     });
   }
 
@@ -79,11 +79,11 @@ function PaymentActivationButton({ productId }: { productId: string }) {
       const result = await confirmPersonalListingPaymentAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Ödəniş alınmadı");
+        void appAlert.error(result.message, "Ödəniş alınmadı");
         return;
       }
 
-      await appAlert.success("Elan aktivdir", result.message);
+      void appAlert.success("Elan aktivdir", result.message);
     });
   }
 

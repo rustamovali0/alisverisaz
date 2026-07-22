@@ -4,7 +4,7 @@ import { Star } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { upsertProductReviewAction } from "@/lib/reviews/actions";
 import { cn } from "@/lib/utils";
 
@@ -22,11 +22,11 @@ export function ProductReviewForm({ productId, storeSlug }: ProductReviewFormPro
       const result = await upsertProductReviewAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Rəy saxlanmadı");
+        void appAlert.error(result.message, "Rəy saxlanmadı");
         return;
       }
 
-      await appAlert.success("Rəy saxlandı", result.message);
+      void appAlert.success("Rəy saxlandı", result.message);
     });
   }
 

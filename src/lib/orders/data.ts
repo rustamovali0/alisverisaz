@@ -31,7 +31,45 @@ type OrderRow = {
   }>;
 };
 
-function toManagedOrder(row: OrderRow): ManagedOrder {
+type ProductLookupRow = {
+  id: string;
+  name: string;
+  slug: string | null;
+  description: string | null;
+  price_amount: string | number;
+  discount_amount: string | number | null;
+  stores?: {
+    slug: string | null;
+  } | null;
+  product_images?: Array<{
+    url: string;
+    is_primary: boolean;
+    sort_order: number | null;
+  }>;
+};
+
+function getPrimaryImage(product: ProductLookupRow | null) {
+  return [...(product?.product_images ?? [])].sort((a, b) => {
+    if (a.is_primary !== b.is_primary) {
+      return a.is_primary ? -1 : 1;
+    }
+
+    return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+  })[0]?.url ?? null;
+}
+
+function getUnitPrice(product: ProductLookupRow | null) {
+  if (!product) {
+    return 0;
+  }
+
+  return Math.max(Number(product.price_amount) - Number(product.discount_amount ?? 0), 0);
+}
+
+function toManagedOrder(
+  row: OrderRow,
+  productMap: Map<string, ProductLookupRow>,
+): ManagedOrder {
   return {
     id: row.id,
     orderNumber: row.order_number,
@@ -49,7 +87,12 @@ function toManagedOrder(row: OrderRow): ManagedOrder {
     items: (row.order_items ?? []).map((item) => ({
       id: item.id,
       productId: item.product_id,
-      productName: item.product_name,
+      productName: productMap.get(item.product_id ?? "")?.name ?? item.product_name,
+      productSlug: productMap.get(item.product_id ?? "")?.slug ?? null,
+      storeSlug: productMap.get(item.product_id ?? "")?.stores?.slug ?? row.stores?.slug ?? null,
+      description: productMap.get(item.product_id ?? "")?.description ?? null,
+      imageUrl: getPrimaryImage(productMap.get(item.product_id ?? "") ?? null),
+      unitPrice: getUnitPrice(productMap.get(item.product_id ?? "") ?? null),
       quantity: item.quantity,
       totalAmount: Number(item.total_amount),
     })),
@@ -84,8 +127,31 @@ async function getOrders(filters: {
   }
 
   const { data } = await query;
+  const rows = (data ?? []) as OrderRow[];
+  const productIds = Array.from(
+    new Set(
+      rows
+        .flatMap((row) => row.order_items ?? [])
+        .map((item) => item.product_id)
+        .filter((productId): productId is string => Boolean(productId)),
+    ),
+  );
+  let productMap = new Map<string, ProductLookupRow>();
 
-  return ((data ?? []) as OrderRow[]).map(toManagedOrder);
+  if (productIds.length > 0) {
+    const { data: products } = await (supabaseAdmin as any)
+      .from("products")
+      .select(
+        "id,name,slug,description,price_amount,discount_amount,stores(slug),product_images(url,is_primary,sort_order)",
+      )
+      .in("id", productIds);
+
+    productMap = new Map(
+      ((products ?? []) as ProductLookupRow[]).map((product) => [product.id, product]),
+    );
+  }
+
+  return rows.map((row) => toManagedOrder(row, productMap));
 }
 
 export async function getCustomerOrders(userId: string) {

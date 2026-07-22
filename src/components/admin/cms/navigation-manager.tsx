@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { updateNavigationItemAction } from "@/lib/cms/actions";
 import type { ManagedNavigationMenu } from "@/lib/cms/types";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 type NavigationManagerProps = {
   menus: ManagedNavigationMenu[];
@@ -19,11 +19,11 @@ export function NavigationManager({ menus }: NavigationManagerProps) {
       const result = await updateNavigationItemAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Menyu saxlanmadı");
+        void appAlert.error(result.message, "Menyu saxlanmadı");
         return;
       }
 
-      await appAlert.success("Menyu saxlandı", result.message);
+      void appAlert.success("Menyu saxlandı", result.message);
     });
   }
 

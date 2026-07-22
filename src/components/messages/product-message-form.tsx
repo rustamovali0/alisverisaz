@@ -5,7 +5,7 @@ import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { createProductMessageAction } from "@/lib/messages/actions";
 
 type ProductMessageFormProps = {
@@ -26,11 +26,11 @@ export function ProductMessageForm({
       const result = await createProductMessageAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Mesaj göndərilmədi");
+        void appAlert.error(result.message, "Mesaj göndərilmədi");
         return;
       }
 
-      await appAlert.success("Mesaj göndərildi", result.message);
+      void appAlert.success("Mesaj göndərildi", result.message);
     });
   }
 

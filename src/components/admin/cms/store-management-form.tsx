@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { updateStoreManagementAction } from "@/lib/cms/actions";
 
 type StoreManagementFormProps = {
@@ -33,11 +33,11 @@ export function StoreManagementForm({
       const result = await updateStoreManagementAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Mağaza ayarı saxlanmadı");
+        void appAlert.error(result.message, "Mağaza ayarı saxlanmadı");
         return;
       }
 
-      await appAlert.success("Mağaza ayarı saxlandı", result.message);
+      void appAlert.success("Mağaza ayarı saxlandı", result.message);
     });
   }
 

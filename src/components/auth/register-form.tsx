@@ -6,7 +6,7 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { AuthField, AuthSelect } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { registerAction } from "@/lib/auth/actions";
 
 export function RegisterForm() {
@@ -18,11 +18,11 @@ export function RegisterForm() {
       const result = await registerAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Qeydiyyat alınmadı");
+        void appAlert.error(result.message, "Qeydiyyat alınmadı");
         return;
       }
 
-      await appAlert.success("Qeydiyyat uğurludur", result.message);
+      void appAlert.success("Qeydiyyat uğurludur", result.message);
       router.replace(result.redirectTo);
       router.refresh();
     });

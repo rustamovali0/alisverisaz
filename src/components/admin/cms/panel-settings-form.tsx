@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { updatePanelSettingsAction } from "@/lib/cms/actions";
 import type { PanelFeatureSettings } from "@/lib/cms/types";
 import { dashboardNavigation } from "@/lib/dashboard/navigation";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 type PanelSettingsFormProps = {
   kind: "store" | "user";
@@ -98,11 +98,11 @@ export function PanelSettingsForm({ kind, settings }: PanelSettingsFormProps) {
       const result = await updatePanelSettingsAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Panel ayarı saxlanmadı");
+        void appAlert.error(result.message, "Panel ayarı saxlanmadı");
         return;
       }
 
-      await appAlert.success("Panel ayarı saxlandı", result.message);
+      void appAlert.success("Panel ayarı saxlandı", result.message);
     });
   }
 

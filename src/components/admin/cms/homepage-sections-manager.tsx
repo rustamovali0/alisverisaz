@@ -9,7 +9,7 @@ import {
   updateHomepageSectionAction,
 } from "@/lib/cms/actions";
 import type { HomepageSection } from "@/lib/cms/types";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 type HomepageSectionsManagerProps = {
   sections: HomepageSection[];
@@ -38,11 +38,11 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
       const result = await reorderHomepageSectionsAction(items.map((item) => item.id));
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Sıra saxlanmadı");
+        void appAlert.error(result.message, "Sıra saxlanmadı");
         return;
       }
 
-      await appAlert.success("Sıra saxlandı", result.message);
+      void appAlert.success("Sıra saxlandı", result.message);
     });
   }
 
@@ -51,11 +51,11 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
       const result = await updateHomepageSectionAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Bölmə saxlanmadı");
+        void appAlert.error(result.message, "Bölmə saxlanmadı");
         return;
       }
 
-      await appAlert.success("Bölmə saxlandı", result.message);
+      void appAlert.success("Bölmə saxlandı", result.message);
     });
   }
 

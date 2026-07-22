@@ -297,7 +297,9 @@ export async function createCheckoutOrdersAction(
   }
 
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard");
   revalidatePath("/store/dashboard/orders");
+  revalidatePath("/admin/orders");
   revalidatePath("/radmin/orders");
   revalidatePath("/radmin/activity");
 

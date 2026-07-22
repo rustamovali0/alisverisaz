@@ -19,24 +19,27 @@ export default async function StoreSubscriptionPage() {
 
   const overview = await getSellerSubscriptionOverview(current.user.id);
   const selectedStore = overview.storeSubscriptions[0];
+  const hasActivePlans = overview.plans.length > 0;
 
   return (
     <div className="space-y-6">
-      {selectedStore ? (
-        <SubscriptionStatusCard subscription={selectedStore.subscription} />
-      ) : (
-        <EmptyState
-          className="rounded-md border bg-card p-8 shadow-sm"
-          title="Mağaza yoxdur"
-          description="Plan aktiv etmək üçün əvvəl mağaza yaradılmalıdır."
-        />
-      )}
+      {hasActivePlans ? (
+        selectedStore ? (
+          <SubscriptionStatusCard subscription={selectedStore.subscription} />
+        ) : (
+          <EmptyState
+            className="rounded-md border bg-card p-8 shadow-sm"
+            title="Mağaza yoxdur"
+            description="Plan aktiv etmək üçün əvvəl mağaza yaradılmalıdır."
+          />
+        )
+      ) : null}
 
       <DashboardPanel
         title="Planlar"
         description="Real ödəniş qoşulmayıb; aktivləşdirmə placeholder olaraq 1 aylıq subscription yaradır."
       >
-        {overview.plans.length === 0 ? (
+        {!hasActivePlans ? (
           <EmptyState
             className="min-h-56"
             title="Plan yoxdur"

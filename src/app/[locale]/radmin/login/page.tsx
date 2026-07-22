@@ -2,14 +2,13 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { LoginForm } from "@/components/auth/login-form";
-import { getDashboardPath } from "@/lib/auth/redirects";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export default async function AdminLoginPage() {
   const current = await getCurrentUserProfile();
 
-  if (current) {
-    redirect(getDashboardPath(current.role));
+  if (current?.role === "admin") {
+    redirect("/radmin");
   }
 
   return (

@@ -7,7 +7,7 @@ import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
 import { deleteMediaAction, uploadMediaAction } from "@/lib/cms/actions";
 import type { MediaAsset } from "@/lib/cms/types";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 type MediaLibraryProps = {
   assets: MediaAsset[];
@@ -29,12 +29,12 @@ export function MediaLibrary({ assets }: MediaLibraryProps) {
       const result = await uploadMediaAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Media yüklənmədi");
+        void appAlert.error(result.message, "Media yüklənmədi");
         return;
       }
 
       setFiles([]);
-      await appAlert.success("Media yükləndi", result.message);
+      void appAlert.success("Media yükləndi", result.message);
     });
   }
 
@@ -43,11 +43,11 @@ export function MediaLibrary({ assets }: MediaLibraryProps) {
       const result = await deleteMediaAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Media silinmədi");
+        void appAlert.error(result.message, "Media silinmədi");
         return;
       }
 
-      await appAlert.success("Media silindi", result.message);
+      void appAlert.success("Media silindi", result.message);
     });
   }
 

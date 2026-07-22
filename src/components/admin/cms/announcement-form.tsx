@@ -4,7 +4,7 @@ import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { createAnnouncementAction } from "@/lib/cms/actions";
-import { appAlert } from "@/lib/alerts/swal";
+import { appAlert } from "@/lib/alerts/app-alert";
 
 export function AnnouncementForm() {
   const [isPending, startTransition] = useTransition();
@@ -14,11 +14,11 @@ export function AnnouncementForm() {
       const result = await createAnnouncementAction(formData);
 
       if (!result.ok) {
-        await appAlert.error(result.message, "Announcement saxlanmadı");
+        void appAlert.error(result.message, "Announcement saxlanmadı");
         return;
       }
 
-      await appAlert.success("Announcement saxlandı", result.message);
+      void appAlert.success("Announcement saxlandı", result.message);
     });
   }
 

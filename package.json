@@ -20,7 +20,6 @@
     "next-intl": "^4.13.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "sweetalert2": "^11.14.5",
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
