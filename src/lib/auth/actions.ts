@@ -80,22 +80,24 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signUp({
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    options: {
-      data: {
-        full_name: fullName,
-        role,
-      },
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      role,
     },
   });
 
   if (error) {
     return {
       ok: false,
-      message: error.message,
+      message:
+        error.message.toLowerCase().includes("already")
+          ? "Bu email ilə hesab artıq mövcuddur."
+          : error.message,
     };
   }
 
@@ -133,10 +135,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
 
   return {
     ok: true,
-    message: data.session
-      ? "Qeydiyyat tamamlandı."
-      : "Qeydiyyat tamamlandı. Email təsdiqi aktivdirsə, girişdən öncə emailinizi yoxlayın.",
-    redirectTo: data.session ? getDashboardPath(role) : "/login",
+    message: "Qeydiyyat tamamlandı. Hesabınıza giriş edə bilərsiniz.",
+    redirectTo: "/login",
   };
 }
 
@@ -205,7 +205,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
     return {
       ok: false,
-      message: "Admin girişi üçün /radmin/login səhifəsindən istifadə edin.",
+      message: "Email və ya şifrə səhvdir.",
     };
   }
 

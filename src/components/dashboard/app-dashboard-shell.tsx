@@ -17,6 +17,8 @@ type AppDashboardShellProps = {
   description: string;
   userLabel: string;
   navItems: DashboardNavItem[];
+  returnHref?: string;
+  returnLabel?: string;
   children: ReactNode;
 };
 
@@ -25,6 +27,8 @@ export function AppDashboardShell({
   description,
   userLabel,
   navItems,
+  returnHref,
+  returnLabel = "Sayta qayıt",
   children,
 }: AppDashboardShellProps) {
   const pathname = usePathname();
@@ -124,6 +128,11 @@ export function AppDashboardShell({
                 {description}
               </p>
             </div>
+            {returnHref ? (
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href={returnHref}>{returnLabel}</Link>
+              </Button>
+            ) : null}
           </div>
         </header>
         <m.main

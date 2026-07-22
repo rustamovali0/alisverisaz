@@ -1,10 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/swal";
-import { updateProductMessageStatusAction } from "@/lib/messages/actions";
+import {
+  replyProductMessageAction,
+  updateProductMessageStatusAction,
+} from "@/lib/messages/actions";
 import type { ProductMessage } from "@/lib/messages/data";
 
 type ProductMessageListProps = {
@@ -22,6 +25,7 @@ function formatDate(value: string) {
 
 export function ProductMessageList({ messages }: ProductMessageListProps) {
   const [isPending, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   function updateStatus(messageId: string, status: string) {
     const formData = new FormData();
@@ -29,7 +33,9 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
     formData.set("status", status);
 
     startTransition(async () => {
+      setPendingId(messageId);
       const result = await updateProductMessageStatusAction(formData);
+      setPendingId(null);
 
       if (!result.ok) {
         await appAlert.error(result.message, "Mesaj yenilənmədi");
@@ -37,6 +43,23 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
       }
 
       await appAlert.success("Mesaj yeniləndi", result.message);
+    });
+  }
+
+  function replyToMessage(formData: FormData) {
+    const messageId = String(formData.get("messageId") ?? "");
+
+    startTransition(async () => {
+      setPendingId(messageId);
+      const result = await replyProductMessageAction(formData);
+      setPendingId(null);
+
+      if (!result.ok) {
+        await appAlert.error(result.message, "Cavab göndərilmədi");
+        return;
+      }
+
+      await appAlert.success("Cavab göndərildi", result.message);
     });
   }
 
@@ -67,29 +90,66 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
               {formatDate(item.createdAt)} · {item.status}
             </div>
           </div>
-          <div className="mt-4 rounded-lg bg-card p-3 text-sm leading-6">
-            {item.message}
+          <div className="mt-4 space-y-3">
+            <div className="max-w-3xl rounded-lg bg-card p-3 text-sm leading-6">
+              <p className="mb-1 text-xs font-semibold text-muted-foreground">
+                Müştəri mesajı
+              </p>
+              {item.message}
+            </div>
+            {item.replyMessage ? (
+              <div className="ml-auto max-w-3xl rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground">
+                <p className="mb-1 text-xs font-semibold text-primary-foreground/75">
+                  Cavab
+                  {item.replyAt
+                    ? ` · ${formatDate(item.replyAt)}`
+                    : ""}
+                </p>
+                {item.replyMessage}
+              </div>
+            ) : null}
           </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isPending || item.status === "read"}
-              onClick={() => updateStatus(item.id, "read")}
-            >
-              Oxundu
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isPending || item.status === "archived"}
-              onClick={() => updateStatus(item.id, "archived")}
-            >
-              Arxivlə
-            </Button>
-          </div>
+          <form action={replyToMessage} className="mt-3 grid gap-2">
+            <input type="hidden" name="messageId" value={item.id} />
+            <textarea
+              className="premium-input min-h-20 resize-y py-3 text-sm"
+              name="replyMessage"
+              defaultValue={item.replyMessage ?? ""}
+              placeholder="Cavab yazın"
+              required
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isPending && pendingId === item.id}
+              >
+                {isPending && pendingId === item.id ? "Göndərilir" : "Cavab ver"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={
+                  (isPending && pendingId === item.id) || item.status === "read"
+                }
+                onClick={() => updateStatus(item.id, "read")}
+              >
+                Oxundu
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={
+                  (isPending && pendingId === item.id) || item.status === "archived"
+                }
+                onClick={() => updateStatus(item.id, "archived")}
+              >
+                Arxivlə
+              </Button>
+            </div>
+          </form>
         </article>
       ))}
     </div>

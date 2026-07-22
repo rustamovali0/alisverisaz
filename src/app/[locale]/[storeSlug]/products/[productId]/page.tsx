@@ -209,16 +209,27 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 </p>
               ) : (
                 messages.map((item) => (
-                  <article key={item.id} className="rounded-lg border bg-background p-3">
+                  <article key={item.id} className="space-y-3 rounded-lg border bg-background p-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-semibold">{item.senderName}</p>
                       <span className="text-xs text-muted-foreground">
                         {new Date(item.createdAt).toLocaleString("az-AZ")}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    <div className="rounded-lg bg-card p-3 text-sm leading-6 text-muted-foreground">
                       {item.message}
-                    </p>
+                    </div>
+                    {item.replyMessage ? (
+                      <div className="ml-auto rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground sm:max-w-[85%]">
+                        <p className="mb-1 text-xs font-semibold text-primary-foreground/75">
+                          Satıcının cavabı
+                          {item.replyAt
+                            ? ` · ${new Date(item.replyAt).toLocaleString("az-AZ")}`
+                            : ""}
+                        </p>
+                        {item.replyMessage}
+                      </div>
+                    ) : null}
                   </article>
                 ))
               )}

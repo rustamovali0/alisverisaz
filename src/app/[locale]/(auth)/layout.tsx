@@ -15,7 +15,7 @@ export default async function AuthLayout({ children, params }: AuthLayoutProps) 
   await params;
   const current = await getCurrentUserProfile();
 
-  if (current) {
+  if (current && current.role !== "admin") {
     redirect(getDashboardPath(current.role));
   }
 

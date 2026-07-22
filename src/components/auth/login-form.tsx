@@ -45,16 +45,28 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
       }
       footer={
         mode === "admin" ? (
-          <Link className="font-medium text-primary hover:underline" href="/login">
-            Sayt girişinə qayıt
-          </Link>
-        ) : (
-          <>
-            Hesabınız yoxdur?{" "}
-            <Link className="font-medium text-primary hover:underline" href="/register">
-              Qeydiyyat
+          <div className="space-y-3">
+            <Link className="font-medium text-primary hover:underline" href="/login">
+              Sayt girişinə qayıt
             </Link>
-          </>
+            <div>
+              <Link className="font-medium text-primary hover:underline" href="/">
+                Ana səhifəyə qayıt
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p>
+              Hesabınız yoxdur?{" "}
+              <Link className="font-medium text-primary hover:underline" href="/register">
+                Qeydiyyat
+              </Link>
+            </p>
+            <Link className="font-medium text-primary hover:underline" href="/">
+              Ana səhifəyə qayıt
+            </Link>
+          </div>
         )
       }
     >

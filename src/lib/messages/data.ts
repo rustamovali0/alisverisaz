@@ -11,6 +11,8 @@ export type ProductMessage = {
   senderName: string;
   senderPhone: string | null;
   message: string;
+  replyMessage: string | null;
+  replyAt: string | null;
   status: string;
   createdAt: string;
 };
@@ -22,6 +24,8 @@ type MessageRow = {
   sender_name: string;
   sender_phone: string | null;
   message: string;
+  reply_message?: string | null;
+  reply_at?: string | null;
   status: string;
   created_at: string;
   products?: {
@@ -42,6 +46,8 @@ function mapMessage(row: MessageRow): ProductMessage {
     senderName: row.sender_name,
     senderPhone: row.sender_phone,
     message: row.message,
+    replyMessage: row.reply_message ?? null,
+    replyAt: row.reply_at ?? null,
     status: row.status,
     createdAt: row.created_at,
   };
@@ -57,7 +63,7 @@ export async function getProductMessagesForProduct(productId: string) {
   const supabase = createSupabaseAdminClient();
   const { data } = await (supabase as any)
     .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,status,created_at,products(name),stores(name)")
+    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name),stores(name)")
     .eq("product_id", productId)
     .eq("sender_id", current.user.id)
     .order("created_at", {
@@ -79,7 +85,7 @@ export async function getSellerProductMessages(storeIds: string[]) {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,status,created_at,products(name),stores(name)")
+    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name),stores(name)")
     .in("store_id", storeIds)
     .order("created_at", {
       ascending: false,
@@ -93,7 +99,7 @@ export async function getAdminProductMessages() {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,status,created_at,products(name),stores(name)")
+    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name),stores(name)")
     .order("created_at", {
       ascending: false,
     })

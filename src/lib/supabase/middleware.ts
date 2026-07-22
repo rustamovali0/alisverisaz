@@ -154,6 +154,10 @@ export async function updateSession(
   );
 
   if (matchedAuthRoute) {
+    if (matchedAuthRoute === "/login" && role === "admin") {
+      return response;
+    }
+
     return createRedirectResponse(
       request,
       response,
@@ -167,6 +171,14 @@ export async function updateSession(
   }
 
   if (localizedRoute && !localizedRoute.roles.includes(role)) {
+    if (role === "admin" && !localizedRoute.roles.includes("admin")) {
+      return createRedirectResponse(
+        request,
+        response,
+        getLocalizedPath(locale, getLoginPath(`${pathname}${request.nextUrl.search}`)),
+      );
+    }
+
     return createRedirectResponse(
       request,
       response,

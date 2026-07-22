@@ -24,6 +24,41 @@ function readString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+async function canManageMessage(input: {
+  messageId: string;
+  role: string;
+  userId: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data: messageRow } = await (supabase as any)
+    .from("product_messages")
+    .select("id,store_id,product_id,stores(slug)")
+    .eq("id", input.messageId)
+    .maybeSingle();
+
+  if (!messageRow) {
+    return {
+      ok: false as const,
+      message: null,
+    };
+  }
+
+  if (input.role === "admin") {
+    return {
+      ok: true as const,
+      message: messageRow,
+    };
+  }
+
+  const stores = await getOwnedStores(input.userId);
+  const storeIds = stores.map((store) => store.id);
+
+  return {
+    ok: storeIds.includes(messageRow.store_id),
+    message: messageRow,
+  };
+}
+
 export async function createProductMessageAction(
   formData: FormData,
 ): Promise<ActionResult> {
@@ -124,21 +159,13 @@ export async function updateProductMessageStatusAction(
 
   const supabase = createSupabaseAdminClient();
   if (current.role === "seller") {
-    const stores = await getOwnedStores(current.user.id);
-    const storeIds = stores.map((store) => store.id);
-    const { data: messageRow } = await (supabase as any)
-      .from("product_messages")
-      .select("id")
-      .eq("id", messageId)
-      .in(
-        "store_id",
-        storeIds.length > 0
-          ? storeIds
-          : ["00000000-0000-0000-0000-000000000000"],
-      )
-      .maybeSingle();
+    const access = await canManageMessage({
+      messageId,
+      role: current.role,
+      userId: current.user.id,
+    });
 
-    if (!messageRow) {
+    if (!access.ok) {
       return {
         ok: false,
         message: "Bu mesaj üzərində icazəniz yoxdur.",
@@ -164,5 +191,70 @@ export async function updateProductMessageStatusAction(
   return {
     ok: true,
     message: "Mesaj statusu yeniləndi.",
+  };
+}
+
+export async function replyProductMessageAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const current = await requireRole(["admin", "seller"], "/store/dashboard/messages");
+  const messageId = readString(formData, "messageId");
+  const replyMessage = readString(formData, "replyMessage");
+
+  if (!messageId || !replyMessage) {
+    return {
+      ok: false,
+      message: "Cavab mətni mütləqdir.",
+    };
+  }
+
+  const access = await canManageMessage({
+    messageId,
+    role: current.role,
+    userId: current.user.id,
+  });
+
+  if (!access.ok || !access.message) {
+    return {
+      ok: false,
+      message: "Bu mesaj üzərində icazəniz yoxdur.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await (supabase as any)
+    .from("product_messages")
+    .update({
+      reply_message: replyMessage,
+      reply_by: current.user.id,
+      reply_at: new Date().toISOString(),
+      status: "read",
+    })
+    .eq("id", messageId);
+
+  if (error) {
+    return {
+      ok: false,
+      message:
+        error.code === "PGRST204" || error.message.includes("reply_message")
+          ? "Mesaj cavabı üçün Supabase migration işlədilməyib."
+          : error.message,
+    };
+  }
+
+  const store = Array.isArray(access.message.stores)
+    ? access.message.stores[0]
+    : access.message.stores;
+
+  if (typeof store?.slug === "string" && store.slug) {
+    revalidatePath(`/${store.slug}/products/${access.message.product_id}`);
+  }
+
+  revalidatePath("/store/dashboard/messages");
+  revalidatePath("/radmin/messages");
+
+  return {
+    ok: true,
+    message: "Cavab göndərildi.",
   };
 }

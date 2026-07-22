@@ -33,12 +33,17 @@ export function RegisterForm() {
       title="Qeydiyyat"
       description="Müştəri hesabı sifariş üçün, mağaza hesabı satış paneli üçün yaradılır."
       footer={
-        <>
-          Artıq hesabınız var?{" "}
-          <Link className="font-medium text-primary hover:underline" href="/login">
-            Giriş
+        <div className="space-y-3">
+          <p>
+            Artıq hesabınız var?{" "}
+            <Link className="font-medium text-primary hover:underline" href="/login">
+              Giriş
+            </Link>
+          </p>
+          <Link className="font-medium text-primary hover:underline" href="/">
+            Ana səhifəyə qayıt
           </Link>
-        </>
+        </div>
       }
     >
       <form action={handleSubmit} className="grid gap-4">
