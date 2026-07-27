@@ -35,6 +35,7 @@ export default async function StoreProductsPage() {
         title="Yeni məhsul"
         description="Mağazanıza yeni məhsul əlavə edin."
       >
+        <div id="create-product" className="scroll-mt-24" />
         <div className="mb-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">
           {firstStore
             ? limit?.allowed

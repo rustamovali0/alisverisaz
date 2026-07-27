@@ -51,15 +51,15 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${store.name} | alisveris.az`,
+    title: `${store.name} | Alışveriş`,
     description:
       store.description ||
-      `${store.name} mağazasının yeni məhsulları alisveris.az-da.`,
+      `${store.name} mağazasının yeni məhsulları Alışveriş-də.`,
     alternates: {
       canonical: `/${store.slug}`,
     },
     openGraph: {
-      title: `${store.name} | alisveris.az`,
+      title: `${store.name} | Alışveriş`,
       description:
         store.description ||
         `${store.name} mağazasının aktiv yeni məhsulları.`,

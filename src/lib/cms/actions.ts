@@ -166,7 +166,7 @@ export async function updateSiteSettingsAction(
         file: logoFile,
         currentUserId: current.user.id,
         folder: "site-logo",
-        altText: readString(formData, "siteName") || "alisveris.az logo",
+        altText: readString(formData, "siteName") || "Alışveriş logo",
       });
     }
 
@@ -175,7 +175,7 @@ export async function updateSiteSettingsAction(
         file: darkLogoFile,
         currentUserId: current.user.id,
         folder: "site-logo-dark",
-        altText: `${readString(formData, "siteName") || "alisveris.az"} dark logo`,
+        altText: `${readString(formData, "siteName") || "Alışveriş"} dark logo`,
       });
     }
 
@@ -184,7 +184,7 @@ export async function updateSiteSettingsAction(
         file: faviconFile,
         currentUserId: current.user.id,
         folder: "site-favicon",
-        altText: `${readString(formData, "siteName") || "alisveris.az"} favicon`,
+        altText: `${readString(formData, "siteName") || "Alışveriş"} favicon`,
       });
     }
   } catch (error) {
@@ -229,6 +229,7 @@ export async function updateSiteSettingsAction(
     };
   }
 
+  revalidateTag("site-settings");
   revalidateLocalizedPath("/", "layout");
 
   return {
@@ -280,6 +281,7 @@ export async function updateHomepageSectionAction(
     };
   }
 
+  revalidateTag("homepage-sections");
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/radmin/homepage-sections");
 
@@ -375,6 +377,7 @@ export async function updateNavigationItemAction(
     };
   }
 
+  revalidateTag("navigation-menus");
   revalidateLocalizedPath("/", "layout");
   revalidateLocalizedPath("/radmin/menus");
 
@@ -453,6 +456,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
     },
   });
 
+  revalidateTag("theme-settings");
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/radmin/themes");
 
@@ -503,6 +507,7 @@ export async function updateThemeDraftAction(
     };
   }
 
+  revalidateTag("theme-settings");
   revalidateLocalizedPath("/radmin/themes");
 
   return {

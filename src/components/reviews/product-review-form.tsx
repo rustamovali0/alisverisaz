@@ -5,19 +5,33 @@ import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
+import type { AuthRole } from "@/lib/auth/types";
 import { upsertProductReviewAction } from "@/lib/reviews/actions";
 import { cn } from "@/lib/utils";
 
 type ProductReviewFormProps = {
   productId: string;
   storeSlug: string;
+  viewerRole?: AuthRole | null;
 };
 
-export function ProductReviewForm({ productId, storeSlug }: ProductReviewFormProps) {
+export function ProductReviewForm({
+  productId,
+  storeSlug,
+  viewerRole,
+}: ProductReviewFormProps) {
   const [rating, setRating] = useState(1);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
+    if (viewerRole !== "customer") {
+      void appAlert.info(
+        "İstifadəçi hesabı lazımdır",
+        "Rəy yazmaq üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
+      );
+      return;
+    }
+
     startTransition(async () => {
       const result = await upsertProductReviewAction(formData);
 

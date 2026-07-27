@@ -58,12 +58,6 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       href: "/dashboard/payments",
       icon: "creditCard",
     },
-    {
-      title: "Profil",
-      titleKey: "profile",
-      href: "/dashboard/profile",
-      icon: "user",
-    },
   ],
   seller: [
     {

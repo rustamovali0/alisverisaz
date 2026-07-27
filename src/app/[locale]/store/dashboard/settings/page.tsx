@@ -1,8 +1,8 @@
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
-import { ResourcePage } from "@/components/dashboard/resource-page";
+import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
-import { getStoreResource } from "@/lib/dashboard/data";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,15 +14,18 @@ export default async function StoreSettingsPage() {
     return <FeatureBlocked title="Ayarlar" />;
   }
 
-  const resource = await getStoreResource(current.user.id, "settings");
+  const supabase = await createSupabaseServerClient();
+  const { data: store } = await (supabase as any)
+    .from("stores")
+    .select("id,name,logo_url,cover_url")
+    .eq("owner_id", current.user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
-  return (
-    <ResourcePage
-      title="Ayarlar"
-      description="Mağaza ayarları üçün stores cədvəlindən oxunan real qeydlər"
-      totalLabel="Mağaza sayı"
-      total={resource.total}
-      items={resource.items}
-    />
-  );
+  if (!store) {
+    return <FeatureBlocked title="Mağaza tapılmadı" description="Mağaza yaradıldıqda ayarlar burada görünəcək." />;
+  }
+
+  return <StoreSettingsForm store={store} />;
 }

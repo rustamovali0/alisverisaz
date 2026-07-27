@@ -152,8 +152,8 @@ export function ImageDropzone({
       />
       {files.length > 0 ? (
         <div className="grid gap-3">
-          <div className="overflow-hidden rounded-lg border bg-card">
-            <div className="relative aspect-[16/9] bg-muted">
+          <div className="max-w-md overflow-hidden rounded-lg border bg-card">
+            <div className="relative aspect-[4/3] max-h-56 bg-muted">
               <FilePreview file={files[0]} alt="Əsas şəkil" />
               <span className="absolute left-3 top-3 rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">
                 Əsas şəkil
@@ -174,7 +174,7 @@ export function ImageDropzone({
             </p>
           </div>
           {files.length > 1 ? (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            <div className="grid max-w-md grid-cols-4 gap-2 sm:grid-cols-6">
               {files.slice(1).map((file, index) => {
                 const realIndex = index + 1;
 

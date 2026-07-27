@@ -200,7 +200,7 @@ export function HomeExperience({
         >
           <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
             <Sparkles className="size-4 text-primary" aria-hidden="true" />
-            alisveris.az marketplace
+            Alışveriş marketplace
           </span>
           <h1 className="mt-6 max-w-2xl text-4xl font-black leading-tight tracking-normal text-foreground sm:text-5xl lg:text-6xl">
             {heroTitle}

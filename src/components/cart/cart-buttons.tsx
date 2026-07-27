@@ -6,9 +6,11 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
+import type { AuthRole } from "@/lib/auth/types";
 import type { CartProduct } from "@/lib/cart/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 const CART_KEY = "alisveris_cart";
 
@@ -28,10 +30,35 @@ function writeCart(items: Array<{ productId: string; quantity: number }>) {
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
-export function AddToCartButton({ product }: { product: CartProduct }) {
+function requireCustomerRole(viewerRole?: AuthRole | null) {
+  if (viewerRole && viewerRole !== "customer") {
+    showToast({
+      title: "İstifadəçi hesabı lazımdır",
+      description: "Bu əməliyyat üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
+      variant: "info",
+    });
+    return false;
+  }
+
+  return true;
+}
+
+export function AddToCartButton({
+  product,
+  viewerRole,
+  className,
+}: {
+  product: CartProduct;
+  viewerRole?: AuthRole | null;
+  className?: string;
+}) {
   const t = useTranslations("marketplace");
 
   function handleAdd() {
+    if (!requireCustomerRole(viewerRole)) {
+      return;
+    }
+
     const items = readCart();
     const existing = items.find((item) => item.productId === product.id);
 
@@ -53,20 +80,37 @@ export function AddToCartButton({ product }: { product: CartProduct }) {
   }
 
   return (
-    <Button type="button" variant="outline" onClick={handleAdd}>
-      <ShoppingCart className="mr-2 size-4" aria-hidden="true" />
-      {t("addToCart")}
+    <Button
+      type="button"
+      variant="outline"
+      onClick={handleAdd}
+      className={cn("min-w-0", className)}
+    >
+      <ShoppingCart className="mr-2 size-4 shrink-0" aria-hidden="true" />
+      <span className="truncate">{t("addToCart")}</span>
     </Button>
   );
 }
 
-export function BuyNowButton({ product }: { product: CartProduct }) {
+export function BuyNowButton({
+  product,
+  viewerRole,
+  className,
+}: {
+  product: CartProduct;
+  viewerRole?: AuthRole | null;
+  className?: string;
+}) {
   const t = useTranslations("marketplace");
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
   const checkoutPath = "/cart?mode=checkout";
 
   async function handleBuyNow() {
+    if (!requireCustomerRole(viewerRole)) {
+      return;
+    }
+
     writeCart([
       {
         productId: product.id,
@@ -95,9 +139,14 @@ export function BuyNowButton({ product }: { product: CartProduct }) {
   }
 
   return (
-    <Button type="button" onClick={handleBuyNow} disabled={isChecking}>
-      <Zap className="mr-2 size-4" aria-hidden="true" />
-      {isChecking ? "Yoxlanılır" : t("buyNow")}
+    <Button
+      type="button"
+      onClick={handleBuyNow}
+      disabled={isChecking}
+      className={cn("min-w-0", className)}
+    >
+      <Zap className="mr-2 size-4 shrink-0" aria-hidden="true" />
+      <span className="truncate">{isChecking ? "Yönləndirilir" : t("buyNow")}</span>
     </Button>
   );
 }

@@ -7,24 +7,35 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
+import type { AuthRole } from "@/lib/auth/types";
 import { createProductMessageAction } from "@/lib/messages/actions";
 
 type ProductMessageFormProps = {
   productId: string;
   storeId: string;
   storeSlug: string;
+  viewerRole?: AuthRole | null;
 };
 
 export function ProductMessageForm({
   productId,
   storeId,
   storeSlug,
+  viewerRole,
 }: ProductMessageFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
+    if (viewerRole !== "customer") {
+      void appAlert.info(
+        "İstifadəçi hesabı lazımdır",
+        "Mesaj göndərmək üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
+      );
+      return;
+    }
+
     startTransition(async () => {
       const result = await createProductMessageAction(formData);
 
@@ -34,8 +45,8 @@ export function ProductMessageForm({
       }
 
       void appAlert.success("Mesaj göndərildi", result.message);
-      formRef.current?.reset();
       router.refresh();
+      formRef.current?.reset();
     });
   }
 

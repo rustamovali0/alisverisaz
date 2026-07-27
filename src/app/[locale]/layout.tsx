@@ -40,7 +40,6 @@ export async function generateMetadata({
     },
     description: t("description"),
     keywords: [
-      "alisveris.az",
       "alışveriş Azərbaycan",
       "online mağaza",
       "marketplace",

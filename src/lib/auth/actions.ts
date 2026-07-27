@@ -307,6 +307,73 @@ export async function logoutAction(): Promise<AuthResult> {
   };
 }
 
+export async function updateCustomerProfileAction(formData: FormData): Promise<AuthResult> {
+  const current = await requireRole(["customer"], "/dashboard/profile");
+  const fullName = readString(formData, "fullName");
+  const email = readString(formData, "email").toLowerCase();
+  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+
+  if (!fullName || !email || !phone) {
+    return {
+      ok: false,
+      message: "Ad soyad, email və telefon mütləqdir.",
+    };
+  }
+
+  if (!isValidEmail(email)) {
+    return {
+      ok: false,
+      message: "Düzgün email daxil edin.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+    current.user.id,
+    {
+      email,
+      user_metadata: {
+        ...(current.user.user_metadata ?? {}),
+        full_name: fullName,
+        phone,
+      },
+    },
+  );
+
+  if (authError) {
+    return {
+      ok: false,
+      message: authError.message,
+    };
+  }
+
+  const { error } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      full_name: fullName,
+      email,
+      phone,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", current.user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/profile", "page");
+
+  return {
+    ok: true,
+    message: "Profil məlumatları yeniləndi.",
+    redirectTo: "/dashboard/profile",
+  };
+}
+
 export async function updateUserRoleAction(
   formData: FormData,
 ): Promise<{ ok: true; message: string } | { ok: false; message: string }> {

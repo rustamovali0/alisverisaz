@@ -1,7 +1,7 @@
 import { clientEnv } from "@/lib/config/env.client";
 
 export const siteConfig = {
-  name: "alisveris.az",
+  name: "Alışveriş",
   description:
     "Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə və sifarişlər üçün marketplace platforması.",
   url: clientEnv.appUrl,

@@ -47,7 +47,7 @@ export function AppDashboardShell({
     <aside className="glass-panel flex h-full w-72 flex-col border-r">
       <div className="border-b px-5 py-5">
         <Link href="/" className="block text-lg font-semibold tracking-normal text-foreground">
-          alisveris.az
+          Alışveriş
         </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{userLabel}</p>
       </div>

@@ -1,38 +1,40 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState } from "react";
 
 import { loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthField } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 type LoginFormProps = {
   mode?: "public" | "admin";
 };
 
 export function LoginForm({ mode = "public" }: LoginFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const next = searchParams.get("next") ?? "";
 
-  function handleSubmit(formData: FormData) {
-    startTransition(async () => {
-      const result = await loginAction(formData);
+  async function handleSubmit(formData: FormData) {
+    if (isPending) {
+      return;
+    }
 
-      if (!result.ok) {
-        void appAlert.error(result.message, "Giriş alınmadı");
-        return;
-      }
+    setIsPending(true);
+    const result = await loginAction(formData);
 
-      void appAlert.success("Xoş gəldiniz", result.message);
-      router.replace(result.redirectTo);
-      router.refresh();
-    });
+    if (!result.ok) {
+      setIsPending(false);
+      void appAlert.error(result.message, "Giriş alınmadı");
+      return;
+    }
+
+    void appAlert.success("Xoş gəldiniz", result.message);
+    window.location.assign(result.redirectTo);
   }
 
   return (
@@ -90,7 +92,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
           required
         />
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Yoxlanılır" : "Daxil ol"}
+          {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>
       </form>
     </AuthCard>

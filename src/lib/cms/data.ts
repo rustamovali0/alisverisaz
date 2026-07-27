@@ -1,3 +1,5 @@
+import { unstable_cache } from "next/cache";
+
 import { defaultSiteSettings, navItemKey } from "@/lib/cms/defaults";
 import type {
   HomepageSection,
@@ -9,6 +11,7 @@ import type {
   ThemeSetting,
 } from "@/lib/cms/types";
 import { dashboardNavigation, type DashboardNavItem } from "@/lib/dashboard/navigation";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function readString(value: unknown, fallback = "") {
@@ -73,15 +76,25 @@ function normalizeSiteSettings(value: any): SiteSettings {
   };
 }
 
-export async function getSiteSettings() {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
-    .from("platform_settings")
-    .select("value")
-    .eq("key", "site")
-    .maybeSingle();
+const getCachedSiteSettings = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAdminClient();
+    const { data } = await (supabase as any)
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "site")
+      .maybeSingle();
 
-  return normalizeSiteSettings(data?.value);
+    return normalizeSiteSettings(data?.value);
+  },
+  ["site-settings"],
+  {
+    tags: ["site-settings"],
+  },
+);
+
+export async function getSiteSettings() {
+  return getCachedSiteSettings();
 }
 
 function readHomepageSection(row: any): HomepageSection {
@@ -104,8 +117,35 @@ function readHomepageSection(row: any): HomepageSection {
   };
 }
 
+const getCachedHomepageSections = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAdminClient();
+    const { data } = await (supabase as any)
+      .from("homepage_sections")
+      .select(
+        "id,key,title,description,image_url,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
+      )
+      .eq("is_active", true)
+      .eq("status", "published")
+      .order("sort_order", {
+        ascending: true,
+      });
+
+    return ((data ?? []) as any[]).map(readHomepageSection);
+  },
+  ["homepage-sections"],
+  {
+    tags: ["homepage-sections"],
+  },
+);
+
 export async function getHomepageSections(includeDrafts = false) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
+
+  if (!includeDrafts) {
+    return getCachedHomepageSections();
+  }
+
   let query = (supabase as any)
     .from("homepage_sections")
     .select(
@@ -139,8 +179,34 @@ function readTheme(row: any): ThemeSetting {
   };
 }
 
+const getCachedThemeSettings = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAdminClient();
+    const { data } = await (supabase as any)
+      .from("theme_settings")
+      .select(
+        "id,theme_key,name,status,is_active,preview_image_url,hero_variant,product_card_variant,section_order,config",
+      )
+      .eq("status", "published")
+      .order("created_at", {
+        ascending: true,
+      });
+
+    return ((data ?? []) as any[]).map(readTheme);
+  },
+  ["theme-settings"],
+  {
+    tags: ["theme-settings"],
+  },
+);
+
 export async function getThemeSettings(includeDrafts = false) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
+
+  if (!includeDrafts) {
+    return getCachedThemeSettings();
+  }
+
   let query = (supabase as any)
     .from("theme_settings")
     .select(
@@ -189,36 +255,46 @@ function readNavigationItem(row: any): ManagedNavigationItem {
   };
 }
 
-export async function getNavigationMenus() {
-  const supabase = await createSupabaseServerClient();
-  const { data: menus } = await (supabase as any)
-    .from("navigation_menus")
-    .select("id,key,title,location,is_active,is_system")
-    .order("created_at", {
-      ascending: true,
-    });
-  const { data: items } = await (supabase as any)
-    .from("navigation_items")
-    .select(
-      "id,menu_id,title,href,icon_name,sort_order,is_active,is_system,is_external,open_in_new_tab,show_mobile,show_desktop,required_role,required_feature,badge_text",
-    )
-    .order("sort_order", {
-      ascending: true,
-    });
+const getCachedNavigationMenus = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAdminClient();
+    const { data: menus } = await (supabase as any)
+      .from("navigation_menus")
+      .select("id,key,title,location,is_active,is_system")
+      .order("created_at", {
+        ascending: true,
+      });
+    const { data: items } = await (supabase as any)
+      .from("navigation_items")
+      .select(
+        "id,menu_id,title,href,icon_name,sort_order,is_active,is_system,is_external,open_in_new_tab,show_mobile,show_desktop,required_role,required_feature,badge_text",
+      )
+      .order("sort_order", {
+        ascending: true,
+      });
 
-  return ((menus ?? []) as any[]).map(
-    (menu): ManagedNavigationMenu => ({
-      id: menu.id,
-      key: menu.key,
-      title: menu.title,
-      location: menu.location,
-      isActive: Boolean(menu.is_active),
-      isSystem: Boolean(menu.is_system),
-      items: ((items ?? []) as any[])
-        .filter((item) => item.menu_id === menu.id)
-        .map(readNavigationItem),
-    }),
-  );
+    return ((menus ?? []) as any[]).map(
+      (menu): ManagedNavigationMenu => ({
+        id: menu.id,
+        key: menu.key,
+        title: menu.title,
+        location: menu.location,
+        isActive: Boolean(menu.is_active),
+        isSystem: Boolean(menu.is_system),
+        items: ((items ?? []) as any[])
+          .filter((item) => item.menu_id === menu.id)
+          .map(readNavigationItem),
+      }),
+    );
+  },
+  ["navigation-menus"],
+  {
+    tags: ["navigation-menus"],
+  },
+);
+
+export async function getNavigationMenus() {
+  return getCachedNavigationMenus();
 }
 
 function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: string) {

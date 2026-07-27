@@ -5,6 +5,7 @@ import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -85,7 +86,7 @@ function MarketplaceHeader({
           <span className="grid size-10 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
             a
           </span>
-          <span className="text-xl font-black tracking-normal">alisveris.az</span>
+          <span className="text-xl font-black tracking-normal">Alışveriş</span>
         </Link>
         <MarketplaceSearch
           stores={stores}
@@ -105,13 +106,14 @@ function MarketplaceHeader({
           </Link>
         </Button>
         <HeaderAccountActions className="hidden md:inline-flex" />
-        <Button asChild>
+        <Button asChild className="hidden sm:inline-flex">
           <Link href="/cart">
             <ShoppingCart className="mr-2 size-6" aria-hidden="true" />
             {cartLabel}
           </Link>
         </Button>
       </div>
+      <MobileBottomNav />
     </header>
   );
 }
@@ -254,7 +256,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 md:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => (
         <article
           key={product.id}
@@ -287,8 +289,8 @@ export function ProductGrid({
             </p>
             <div className="mt-4 grid gap-2">
               <DepositModal product={product} enabled={depositEnabled} />
-              <BuyNowButton product={product} />
-              <AddToCartButton product={product} />
+              <BuyNowButton product={product} className="w-full px-2 text-xs sm:text-sm" />
+              <AddToCartButton product={product} className="w-full px-2 text-xs sm:text-sm" />
             </div>
           </div>
         </article>

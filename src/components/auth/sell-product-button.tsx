@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,45 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 export function SellProductButton() {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const [role, setRole] = useState<AuthRole | null>(null);
+  const [isChecked, setIsChecked] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadRole() {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        if (isMounted) {
+          setRole(null);
+          setIsChecked(true);
+        }
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .returns<Array<{ role: AuthRole }>>()
+        .maybeSingle();
+
+      if (isMounted) {
+        setRole(profile?.role === "seller" ? "seller" : "customer");
+        setIsChecked(true);
+      }
+    }
+
+    void loadRole();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   async function handleClick() {
     if (isPending) {
@@ -39,7 +78,7 @@ export function SellProductButton() {
         .maybeSingle();
 
       if (profile?.role === "seller") {
-        router.push("/admin/products");
+        router.push("/admin/products#create-product");
         return;
       }
 
@@ -47,10 +86,13 @@ export function SellProductButton() {
         "Satıcı qeydiyyatı lazımdır",
         "Məhsul satmaq üçün zəhmət olmasa satıcı kimi qeydiyyatdan keçin.",
       );
-      router.push("/register?role=seller");
     } finally {
       setIsPending(false);
     }
+  }
+
+  if (!isChecked || role === "customer") {
+    return null;
   }
 
   return (

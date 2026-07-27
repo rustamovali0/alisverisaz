@@ -17,11 +17,10 @@ export const metadata: Metadata = {
   applicationName: siteConfig.name,
   generator: "Next.js",
   referrer: "origin-when-cross-origin",
-  creator: "alisveris.az",
-  publisher: "alisveris.az",
+  creator: "Alışveriş",
+  publisher: "Alışveriş",
   category: "marketplace",
   keywords: [
-    "alisveris.az",
     "alışveriş",
     "online alışveriş",
     "marketplace Azərbaycan",

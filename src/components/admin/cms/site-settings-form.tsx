@@ -288,7 +288,7 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
           <input
             name="socialInstagram"
             defaultValue={settings.socialLinks.instagram ?? ""}
-            placeholder="https://instagram.com/alisveris.az"
+            placeholder="https://instagram.com/alışveriş"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
@@ -300,7 +300,7 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
           <input
             name="socialTiktok"
             defaultValue={settings.socialLinks.tiktok ?? ""}
-            placeholder="https://tiktok.com/@alisveris.az"
+            placeholder="https://tiktok.com/@alışveriş"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>

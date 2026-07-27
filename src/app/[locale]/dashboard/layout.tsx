@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Heart, ShoppingCart, UserRound } from "lucide-react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -14,6 +15,14 @@ type CustomerDashboardLayoutProps = {
 
 export const dynamic = "force-dynamic";
 
+function formatBrandName(value?: string) {
+  if (!value || value.toLocaleLowerCase("az-AZ").includes("alisveris")) {
+    return "Alışveriş";
+  }
+
+  return value;
+}
+
 export default async function CustomerDashboardLayout({
   children,
 }: CustomerDashboardLayoutProps) {
@@ -22,6 +31,7 @@ export default async function CustomerDashboardLayout({
     getSiteSettings(),
   ]);
   const userLabel = current.profile?.full_name ?? current.user.email ?? "İstifadəçi";
+  const displaySiteName = formatBrandName(siteSettings.shortName || siteSettings.siteName);
 
   return (
     <main className="min-h-screen bg-background">
@@ -32,7 +42,7 @@ export default async function CustomerDashboardLayout({
               a
             </span>
             <span className="truncate text-xl font-black tracking-normal">
-              {siteSettings.shortName || "Alisveris"}
+              {displaySiteName}
             </span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
@@ -41,9 +51,6 @@ export default async function CustomerDashboardLayout({
             </Button>
             <Button asChild variant="ghost">
               <Link href="/dashboard">Sifarişlərim</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/dashboard/profile">Profil</Link>
             </Button>
           </nav>
           <div className="ml-auto flex items-center gap-2">
@@ -78,6 +85,7 @@ export default async function CustomerDashboardLayout({
           </div>
         </div>
       </header>
+      <MobileBottomNav />
       <section className="border-b bg-card">
         <div className="container flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div>

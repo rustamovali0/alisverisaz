@@ -27,7 +27,7 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
             <div className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
               a
             </div>
-            <div className="text-xl font-black tracking-normal">alisveris.az</div>
+            <div className="text-xl font-black tracking-normal">Alışveriş</div>
             <div className="ml-auto hidden items-center gap-2 sm:flex">
               <SkeletonBlock className="h-10 w-24" />
               <SkeletonBlock className="size-11" />
@@ -72,7 +72,7 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
           <div className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
             a
           </div>
-          <div className="text-xl font-black tracking-normal">alisveris.az</div>
+          <div className="text-xl font-black tracking-normal">Alışveriş</div>
           <SkeletonBlock className="hidden h-11 flex-1 md:block" />
           <SkeletonBlock className="h-11 w-24" />
         </div>

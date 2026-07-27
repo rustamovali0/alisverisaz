@@ -10,22 +10,22 @@ export const homeThemeKeys = [
 ] as const;
 
 export const defaultSiteSettings: SiteSettings = {
-  siteName: "alisveris.az",
-  shortName: "Alisveris",
+  siteName: "Alışveriş",
+  shortName: "Alışveriş",
   logoUrl: "",
   darkLogoUrl: "",
   faviconUrl: "",
-  defaultSeoTitle: "alisveris.az - Marketplace, mağaza və elan platforması",
+  defaultSeoTitle: "Alışveriş - Marketplace, mağaza və elan platforması",
   defaultMetaDescription:
     "Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə və sifarişlər üçün marketplace platforması.",
   defaultSeoKeywords:
-    "alisveris.az, alışveriş, marketplace, məhsul satışı, elan, mağaza",
+    "alışveriş, marketplace, məhsul satışı, elan, mağaza",
   contactEmail: "",
   phone: "",
   whatsapp: "",
   address: "",
   socialLinks: {},
-  copyrightText: "© alisveris.az",
+  copyrightText: "© Alışveriş",
   maintenanceMode: false,
   userRegistrationEnabled: true,
   storeRegistrationEnabled: true,

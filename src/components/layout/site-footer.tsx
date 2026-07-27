@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Instagram, MessageCircle, Music2 } from "lucide-react";
 
 import { Link } from "@/i18n/navigation";
+import type { AuthRole } from "@/lib/auth/types";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SiteFooterProps = {
   siteName?: string;
@@ -36,11 +39,30 @@ function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value = 
     : `https://tiktok.com/@${cleanValue}`;
 }
 
+function getAccountHref(role: AuthRole | null) {
+  if (role === "seller") {
+    return "/admin";
+  }
+
+  return "/dashboard";
+}
+
+function formatBrandName(value?: string) {
+  if (!value || value.toLocaleLowerCase("az-AZ").includes("alisveris")) {
+    return "Alışveriş";
+  }
+
+  return value;
+}
+
 export function SiteFooter({
-  siteName = "alisveris.az",
+  siteName = "Alışveriş",
   description = "Azərbaycanda mağazaların yeni məhsullarını bir yerdə toplayan e-ticarət marketplace platforması.",
   socialLinks,
 }: SiteFooterProps) {
+  const displaySiteName = formatBrandName(siteName);
+  const [role, setRole] = useState<AuthRole | null>(null);
+  const [isChecked, setIsChecked] = useState(false);
   const socials = [
     {
       key: "instagram" as const,
@@ -62,6 +84,43 @@ export function SiteFooter({
     },
   ].filter((item) => item.href);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSession() {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        if (isMounted) {
+          setRole(null);
+          setIsChecked(true);
+        }
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .returns<Array<{ role: AuthRole }>>()
+        .maybeSingle();
+
+      if (isMounted) {
+        setRole(profile?.role === "seller" ? "seller" : "customer");
+        setIsChecked(true);
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <footer className="border-t bg-card/95">
       <div className="container grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
@@ -70,7 +129,7 @@ export function SiteFooter({
             <span className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
               a
             </span>
-            <span className="text-xl font-black tracking-normal">{siteName}</span>
+            <span className="text-xl font-black tracking-normal">{displaySiteName}</span>
           </Link>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
             {description}
@@ -117,12 +176,20 @@ export function SiteFooter({
             Hesab
           </h2>
           <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
-            <Link href="/admin" className="hover:text-primary">
-              Daxil ol
-            </Link>
-            <Link href="/register" className="hover:text-primary">
-              Qeydiyyatdan keç
-            </Link>
+            {isChecked && role ? (
+              <Link href={getAccountHref(role)} className="hover:text-primary">
+                {role === "seller" ? "Panelə keç" : "Hesabım"}
+              </Link>
+            ) : isChecked ? (
+              <>
+                <Link href="/login" className="hover:text-primary">
+                  Daxil ol
+                </Link>
+                <Link href="/register" className="hover:text-primary">
+                  Qeydiyyatdan keç
+                </Link>
+              </>
+            ) : null}
             <Link href="/cart" className="hover:text-primary">
               Səbət
             </Link>
@@ -131,7 +198,7 @@ export function SiteFooter({
       </div>
       <div className="border-t">
         <div className="container flex flex-col gap-2 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} {siteName}</span>
+          <span>© {new Date().getFullYear()} {displaySiteName}</span>
           <span>Yeni məhsullar üçün e-ticarət marketplace</span>
         </div>
       </div>

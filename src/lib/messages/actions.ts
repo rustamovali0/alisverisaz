@@ -113,6 +113,13 @@ export async function createProductMessageAction(
   const message = readString(formData, "message");
   const current = await getCurrentUserProfile();
 
+  if (!current || current.role !== "customer") {
+    return {
+      ok: false,
+      message: "Mesaj göndərmək üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
+    };
+  }
+
   if (!productId || !senderName || !message) {
     return {
       ok: false,
@@ -143,7 +150,7 @@ export async function createProductMessageAction(
   const { error } = await (supabase as any).from("product_messages").insert({
     product_id: productId,
     store_id: resolvedStoreId,
-    sender_id: current?.user.id ?? null,
+    sender_id: current.user.id,
     sender_name: senderName,
     sender_phone: senderPhone || null,
     message,

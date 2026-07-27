@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { DepositModal } from "@/components/deposits/deposit-modal";
+import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
 import {
@@ -16,6 +17,7 @@ import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
@@ -61,7 +63,7 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { locale, storeSlug, productId } = await params;
   setRequestLocale(locale);
-  const [detail, depositSettings, siteSettings] = await Promise.all([
+  const [detail, depositSettings, siteSettings, current] = await Promise.all([
     getMarketplaceProductById({
       productId,
       locale,
@@ -69,6 +71,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     }),
     getDepositSettings(),
     getSiteSettings(),
+    getCurrentUserProfile(),
   ]);
 
   if (!detail || detail.store.slug !== storeSlug) {
@@ -95,9 +98,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   });
 
   const reviewSummary = getReviewSummary(reviews);
+  const canBuy = detail.product.stockQuantity > 0;
+  const viewerRole = current?.role ?? null;
 
   return (
     <main className="min-h-screen bg-muted/40">
+      <MarketplaceHeader siteName={siteSettings.shortName || siteSettings.siteName} />
       <ViewTracker productId={detail.product.id} />
       <div className="container py-8">
         <nav className="mb-5 text-sm text-muted-foreground">
@@ -161,8 +167,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             ) : null}
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <DepositModal product={detail.product} enabled={depositSettings.enabled} />
-              <BuyNowButton product={detail.product} />
-              <AddToCartButton product={detail.product} />
+              {canBuy ? (
+                <>
+                  <BuyNowButton product={detail.product} viewerRole={viewerRole} />
+                  <AddToCartButton product={detail.product} viewerRole={viewerRole} />
+                </>
+              ) : (
+                <Button type="button" disabled className="sm:col-span-2">
+                  Stokda yoxdur
+                </Button>
+              )}
             </div>
             <div className="mt-5 rounded-lg border bg-background p-4">
               <div className="flex items-center gap-3">
@@ -203,6 +217,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               productId={detail.product.id}
               storeId={detail.store.id}
               storeSlug={detail.store.slug}
+              viewerRole={viewerRole}
             />
             <div className="mt-6 space-y-3">
               {messages.length === 0 ? (
@@ -243,7 +258,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
               <h2 className="text-xl font-black tracking-normal">Dəyərləndirmə və rəylər</h2>
             </div>
-            <ProductReviewForm productId={detail.product.id} storeSlug={detail.store.slug} />
+            <ProductReviewForm
+              productId={detail.product.id}
+              storeSlug={detail.store.slug}
+              viewerRole={viewerRole}
+            />
             <div className="mt-6 space-y-3">
               {reviews.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
