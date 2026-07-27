@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type Filter =
   | {
@@ -530,13 +531,14 @@ export async function getStoreEarnings(userId: string) {
   const storeIds = (await getOwnedStores(userId)).map((store) => store.id);
   const orders = await getRows<{
     id: string;
+    order_number: string | null;
     status: string;
     total_amount: string | number;
     currency: string;
     created_at: string;
   }>(
     "orders",
-    "id,status,total_amount,currency,created_at",
+    "id,order_number,status,total_amount,currency,created_at",
     [{ column: "store_id", value: storeIds, op: "in" }],
     100,
   );
@@ -590,11 +592,11 @@ export async function getStoreEarnings(userId: string) {
         description: "Gəlir hesabına daxil edilən sifarişlər",
       },
     ],
-    items: items.slice(0, 20).map((item) => ({
-      id: item.id,
-      title: item.products?.name ?? "Məhsul",
-      description: `Miqdar: ${item.quantity}`,
-      value: formatMoney(item.total_amount, currency),
+    items: revenueOrders.slice(0, 20).map((order) => ({
+      id: order.id,
+      title: order.order_number ?? "Sifariş",
+      description: order.status,
+      value: formatMoney(order.total_amount, currency),
     })),
   };
 }
@@ -828,11 +830,35 @@ export async function getAdminResource(
 export type { ResourceItem };
 
 export async function getAdminUsers() {
-  return getRows<{
+  const users = await getRows<{
     id: string;
     email: string | null;
     full_name: string | null;
     role: string;
     created_at: string;
   }>("profiles", "id,email,full_name,role,created_at", [], 100);
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await supabaseAdmin.auth.admin.listUsers({
+    page: 1,
+    perPage: 100,
+  });
+  const authMetaById = new Map(
+    (data.users ?? []).map((user) => [user.id, user.user_metadata ?? {}]),
+  );
+
+  return users.map((user) => {
+    const metadata = authMetaById.get(user.id);
+
+    return {
+      ...user,
+      requested_role:
+        typeof metadata?.requested_role === "string"
+          ? metadata.requested_role
+          : null,
+      seller_application_status:
+        typeof metadata?.seller_application_status === "string"
+          ? metadata.seller_application_status
+          : null,
+    };
+  });
 }

@@ -1,17 +1,21 @@
 "use client";
 
 import { useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthField, AuthSelect } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { registerAction } from "@/lib/auth/actions";
 
 export function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const defaultRole = searchParams.get("role") === "seller" ? "seller" : "customer";
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -62,6 +66,10 @@ export function RegisterForm() {
           autoComplete="email"
           required
         />
+        <label className="grid gap-2 text-sm font-medium">
+          Telefon
+          <PhoneInput name="phone" required />
+        </label>
         <AuthField
           id="password"
           name="password"
@@ -71,10 +79,24 @@ export function RegisterForm() {
           minLength={8}
           required
         />
-        <AuthSelect id="role" name="role" label="Hesab tipi" defaultValue="customer">
+        <AuthSelect id="role" name="role" label="Hesab tipi" defaultValue={defaultRole}>
           <option value="customer">İstifadəçi / Müştəri</option>
           <option value="seller">Mağaza sahibi</option>
         </AuthSelect>
+        <AuthField
+          id="avatarUrl"
+          name="avatarUrl"
+          label="Profil şəkli URL"
+          type="url"
+          placeholder="https://..."
+        />
+        <AuthField
+          id="bannerUrl"
+          name="bannerUrl"
+          label="Banner şəkli URL"
+          type="url"
+          placeholder="https://..."
+        />
         <Button type="submit" disabled={isPending}>
           {isPending ? "Yaradılır" : "Hesab yarat"}
         </Button>

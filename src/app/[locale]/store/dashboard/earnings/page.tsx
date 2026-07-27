@@ -1,5 +1,5 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { RecentList } from "@/components/dashboard/recent-list";
+import { EarningsList } from "@/components/dashboard/earnings-list";
 import { StatGrid } from "@/components/dashboard/stat-card";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
@@ -25,7 +25,7 @@ export default async function StoreEarningsPage() {
         title="Məhsul üzrə gəlir"
         description="Sifariş edilmiş məhsullar üzrə real satış məbləğləri"
       >
-        <RecentList
+        <EarningsList
           items={earnings.items}
           emptyTitle="Gəlir yoxdur"
           emptyDescription="Sifariş yarandıqda məhsul üzrə gəlirlər burada görünəcək."

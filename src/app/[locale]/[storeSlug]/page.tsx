@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
+import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
@@ -114,33 +115,36 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   });
 
   return (
-    <Storefront
-      store={store}
-      categories={categories.filter(
-        (category) =>
-          !store.categoryIds.length ||
-          store.categoryIds.includes(category.id) ||
-          selectedCategory?.id === category.id,
-      )}
-      selectedCategoryId={selectedCategory?.id}
-      depositEnabled={depositSettings.enabled}
-      footer={{
-        siteName: siteSettings.shortName || siteSettings.siteName,
-        description: siteSettings.defaultMetaDescription,
-        socialLinks: {
-          instagram: siteSettings.socialLinks.instagram,
-          tiktok: siteSettings.socialLinks.tiktok,
-          whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
-        },
-      }}
-      labels={{
-        title: t("title"),
-        description: t("description"),
-        emptyTitle: t("emptyTitle"),
-        emptyDescription: t("emptyDescription"),
-        stock: t("stock"),
-        cart: common("cart"),
-      }}
-    />
+    <>
+      <ViewTracker storeId={store.id} />
+      <Storefront
+        store={store}
+        categories={categories.filter(
+          (category) =>
+            !store.categoryIds.length ||
+            store.categoryIds.includes(category.id) ||
+            selectedCategory?.id === category.id,
+        )}
+        selectedCategoryId={selectedCategory?.id}
+        depositEnabled={depositSettings.enabled}
+        footer={{
+          siteName: siteSettings.shortName || siteSettings.siteName,
+          description: siteSettings.defaultMetaDescription,
+          socialLinks: {
+            instagram: siteSettings.socialLinks.instagram,
+            tiktok: siteSettings.socialLinks.tiktok,
+            whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+          },
+        }}
+        labels={{
+          title: t("title"),
+          description: t("description"),
+          emptyTitle: t("emptyTitle"),
+          emptyDescription: t("emptyDescription"),
+          stock: t("stock"),
+          cart: common("cart"),
+        }}
+      />
+    </>
   );
 }

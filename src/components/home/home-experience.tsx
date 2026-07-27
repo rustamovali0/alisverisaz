@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Heart,
   PackageSearch,
-  Plus,
   ShieldCheck,
   ShoppingCart,
   Sparkles,
@@ -15,6 +14,7 @@ import { m } from "framer-motion";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
+import { SellProductButton } from "@/components/auth/sell-product-button";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -183,12 +183,7 @@ export function HomeExperience({
                 <ShoppingCart className="size-7" aria-hidden="true" />
               </Link>
             </Button>
-            <Button asChild>
-              <Link href="/admin">
-                <Plus className="mr-2 size-4" aria-hidden="true" />
-                Məhsul sat
-              </Link>
-            </Button>
+            <SellProductButton />
           </div>
           <Button asChild className="ml-auto md:hidden" size="sm">
             <Link href="/login">Daxil ol</Link>

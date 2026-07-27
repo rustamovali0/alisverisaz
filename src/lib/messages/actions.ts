@@ -32,7 +32,7 @@ async function canManageMessage(input: {
   const supabase = createSupabaseAdminClient();
   const { data: messageRow } = await (supabase as any)
     .from("product_messages")
-    .select("id,store_id,product_id,stores(slug)")
+    .select("id,store_id,product_id,sender_id,stores(slug,name),products(name,slug)")
     .eq("id", input.messageId)
     .maybeSingle();
 
@@ -59,6 +59,50 @@ async function canManageMessage(input: {
   };
 }
 
+async function getManageableMessageIds(input: {
+  role: string;
+  userId: string;
+  messageId?: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+
+  if (input.role === "admin") {
+    if (!input.messageId) {
+      const { data } = await (supabase as any).from("product_messages").select("id");
+
+      return ((data ?? []) as Array<{ id: string }>).map((item) => item.id);
+    }
+
+    const { data } = await (supabase as any)
+      .from("product_messages")
+      .select("id")
+      .eq("id", input.messageId)
+      .maybeSingle();
+
+    return data ? [data.id as string] : [];
+  }
+
+  const stores = await getOwnedStores(input.userId);
+  const storeIds = stores.map((store) => store.id);
+
+  if (storeIds.length === 0) {
+    return [];
+  }
+
+  let query = (supabase as any)
+    .from("product_messages")
+    .select("id")
+    .in("store_id", storeIds);
+
+  if (input.messageId) {
+    query = query.eq("id", input.messageId);
+  }
+
+  const { data } = await query;
+
+  return ((data ?? []) as Array<{ id: string }>).map((item) => item.id);
+}
+
 export async function createProductMessageAction(
   formData: FormData,
 ): Promise<ActionResult> {
@@ -79,7 +123,7 @@ export async function createProductMessageAction(
   const supabase = createSupabaseAdminClient();
   const { data: product, error: productError } = await (supabase as any)
     .from("products")
-    .select("id,store_id,name,stores(slug,name)")
+    .select("id,store_id,name,slug,stores(slug,name)")
     .eq("id", productId)
     .eq("status", "active")
     .maybeSingle();
@@ -131,6 +175,9 @@ export async function createProductMessageAction(
 
   if (resolvedStoreSlug) {
     revalidatePath(`/${resolvedStoreSlug}/products/${productId}`);
+    if (typeof product.slug === "string" && product.slug) {
+      revalidatePath(`/${resolvedStoreSlug}/products/${product.slug}`);
+    }
   }
 
   revalidatePath("/store/dashboard/messages");
@@ -242,12 +289,39 @@ export async function replyProductMessageAction(
     };
   }
 
+  if (access.message.sender_id) {
+    const product = Array.isArray(access.message.products)
+      ? access.message.products[0]
+      : access.message.products;
+    const storeForNotification = Array.isArray(access.message.stores)
+      ? access.message.stores[0]
+      : access.message.stores;
+
+    await (supabase as any).from("notifications").insert({
+      user_id: access.message.sender_id,
+      type: "message_reply",
+      title: "Mesajınıza cavab gəldi",
+      body: `${product?.name ?? "Məhsul"} üzrə satıcı cavab yazdı.`,
+      data: {
+        message_id: messageId,
+        product_id: access.message.product_id,
+        store_slug: storeForNotification?.slug ?? null,
+      },
+    });
+  }
+
   const store = Array.isArray(access.message.stores)
     ? access.message.stores[0]
     : access.message.stores;
 
   if (typeof store?.slug === "string" && store.slug) {
     revalidatePath(`/${store.slug}/products/${access.message.product_id}`);
+    const product = Array.isArray(access.message.products)
+      ? access.message.products[0]
+      : access.message.products;
+    if (typeof product?.slug === "string" && product.slug) {
+      revalidatePath(`/${store.slug}/products/${product.slug}`);
+    }
   }
 
   revalidatePath("/store/dashboard/messages");
@@ -256,5 +330,91 @@ export async function replyProductMessageAction(
   return {
     ok: true,
     message: "Cavab göndərildi.",
+  };
+}
+
+export async function deleteProductMessageAction(
+  formData: FormData,
+): Promise<ActionResult> {
+  const current = await requireRole(["admin", "seller"], "/store/dashboard/messages");
+  const messageId = readString(formData, "messageId");
+
+  if (!messageId) {
+    return {
+      ok: false,
+      message: "Silinəcək mesaj seçilməyib.",
+    };
+  }
+
+  const manageableIds = await getManageableMessageIds({
+    role: current.role,
+    userId: current.user.id,
+    messageId,
+  });
+
+  if (manageableIds.length === 0) {
+    return {
+      ok: false,
+      message: "Bu mesaj üzərində icazəniz yoxdur.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await (supabase as any)
+    .from("product_messages")
+    .delete()
+    .in("id", manageableIds);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/store/dashboard/messages");
+  revalidatePath("/radmin/messages");
+  revalidatePath("/radmin/activity");
+
+  return {
+    ok: true,
+    message: "Mesaj silindi.",
+  };
+}
+
+export async function deleteAllProductMessagesAction(): Promise<ActionResult> {
+  const current = await requireRole(["admin", "seller"], "/store/dashboard/messages");
+  const manageableIds = await getManageableMessageIds({
+    role: current.role,
+    userId: current.user.id,
+  });
+
+  if (manageableIds.length === 0) {
+    return {
+      ok: false,
+      message: "Silinəcək mesaj tapılmadı.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await (supabase as any)
+    .from("product_messages")
+    .delete()
+    .in("id", manageableIds);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/store/dashboard/messages");
+  revalidatePath("/radmin/messages");
+  revalidatePath("/radmin/activity");
+
+  return {
+    ok: true,
+    message: "Bütün mesajlar silindi.",
   };
 }

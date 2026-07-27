@@ -147,7 +147,17 @@ export async function getSellerSubscriptionOverview(userId: string) {
 }
 
 export async function canCreateListing(storeId: string) {
-  const subscription = await getActiveStoreSubscription(storeId);
+  const [plans, subscription] = await Promise.all([
+    getSubscriptionPlans(false),
+    getActiveStoreSubscription(storeId),
+  ]);
+
+  if (plans.length === 0) {
+    return {
+      allowed: true,
+      subscription: null,
+    };
+  }
 
   return {
     allowed: Boolean(subscription && subscription.remainingListings > 0),

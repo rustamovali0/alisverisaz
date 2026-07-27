@@ -33,12 +33,14 @@ export default async function StoreProductsPage() {
     <div className="space-y-6">
       <DashboardPanel
         title="Yeni məhsul"
-        description="Məhsul əlavə etmək üçün aktiv subscription və boş elan limiti lazımdır."
+        description="Mağazanıza yeni məhsul əlavə edin."
       >
         <div className="mb-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">
           {firstStore
             ? limit?.allowed
-              ? `Qalan elan limiti: ${limit.subscription?.remainingListings ?? 0}`
+              ? limit.subscription
+                ? `Qalan elan limiti: ${limit.subscription.remainingListings}`
+                : "Paket sistemi deaktivdir, məhsul əlavə edə bilərsiniz."
               : "Aktiv plan yoxdur və ya elan limiti bitib."
             : "Məhsul əlavə etmək üçün əvvəl mağaza yaradılmalıdır."}
         </div>
@@ -61,7 +63,7 @@ export default async function StoreProductsPage() {
           emptyDescription={
             limit?.allowed
               ? "Yeni məhsul əlavə etdikcə burada görünəcək."
-              : "Məhsul yaratmaq üçün aktiv plan və elan limiti lazımdır."
+              : "Məhsul yaratmaq üçün elan limiti lazımdır."
           }
         />
       </DashboardPanel>

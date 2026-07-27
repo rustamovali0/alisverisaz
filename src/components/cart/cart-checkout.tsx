@@ -16,6 +16,7 @@ type CartCheckoutProps = {
   products?: CartProduct[];
   defaultFullName?: string;
   locale?: string;
+  checkoutOnly?: boolean;
 };
 
 function readCart() {
@@ -42,6 +43,7 @@ export function CartCheckout({
   products: initialProducts = [],
   defaultFullName = "",
   locale = "az",
+  checkoutOnly = false,
 }: CartCheckoutProps) {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -132,7 +134,14 @@ export function CartCheckout({
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="container grid gap-6 py-8 lg:grid-cols-[1fr_420px]">
+      <div
+        className={
+          checkoutOnly
+            ? "container flex justify-center py-8"
+            : "container grid gap-6 py-8 lg:grid-cols-[1fr_420px]"
+        }
+      >
+        {!checkoutOnly ? (
         <section className="rounded-md border bg-card p-4 text-card-foreground shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Button asChild variant="outline" size="sm">
@@ -250,11 +259,24 @@ export function CartCheckout({
             )}
           </div>
         </section>
+        ) : null}
 
         <form
           action={handleSubmit}
-          className="h-fit rounded-md border bg-card p-4 text-card-foreground shadow-sm"
+          className={
+            checkoutOnly
+              ? "h-fit w-full max-w-xl rounded-md border bg-card p-4 text-card-foreground shadow-sm"
+              : "h-fit rounded-md border bg-card p-4 text-card-foreground shadow-sm"
+          }
         >
+          {checkoutOnly ? (
+            <Button asChild variant="outline" size="sm" className="mb-4">
+              <Link href={returnHref}>
+                <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
+                Məhsula qayıt
+              </Link>
+            </Button>
+          ) : null}
           <h2 className="text-lg font-semibold tracking-normal">Sifarişi təsdiqlə</h2>
           <input type="hidden" name="items" value="" />
           <div className="mt-4 grid gap-4">

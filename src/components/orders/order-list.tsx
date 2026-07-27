@@ -1,13 +1,17 @@
 "use client";
 
 import { useTransition } from "react";
-import { PackageSearch } from "lucide-react";
+import { PackageSearch, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { updateOrderStatusAction } from "@/lib/orders/actions";
+import {
+  deleteAllOrdersAction,
+  deleteOrderAction,
+  updateOrderStatusAction,
+} from "@/lib/orders/actions";
 import {
   orderStatusLabels,
   orderStatusOptions,
@@ -17,6 +21,7 @@ import {
 type OrderListProps = {
   orders: ManagedOrder[];
   canUpdateStatus?: boolean;
+  canDelete?: boolean;
 };
 
 function formatMoney(value: number, currency: string) {
@@ -65,7 +70,68 @@ function OrderStatusForm({ order }: { order: ManagedOrder }) {
   );
 }
 
-export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
+export function OrderList({
+  orders,
+  canUpdateStatus = false,
+  canDelete = false,
+}: OrderListProps) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function deleteOrder(orderId: string) {
+    startTransition(async () => {
+      const confirmed = await appAlert.confirm({
+        title: "Sifariş silinsin?",
+        message: "Bu sifariş paneldən silinəcək.",
+        confirmText: "Sil",
+        cancelText: "Bağla",
+        variant: "danger",
+      });
+
+      if (!confirmed.isConfirmed) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.set("orderId", orderId);
+      const result = await deleteOrderAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Sifariş silinmədi");
+        return;
+      }
+
+      void appAlert.success("Sifariş silindi", result.message);
+      router.refresh();
+    });
+  }
+
+  function deleteAllOrders() {
+    startTransition(async () => {
+      const confirmed = await appAlert.confirm({
+        title: "Bütün sifarişlər silinsin?",
+        message: "Sizə bağlı bütün sifariş qeydləri silinəcək.",
+        confirmText: "Hamısını sil",
+        cancelText: "Bağla",
+        variant: "danger",
+      });
+
+      if (!confirmed.isConfirmed) {
+        return;
+      }
+
+      const result = await deleteAllOrdersAction();
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Sifarişlər silinmədi");
+        return;
+      }
+
+      void appAlert.success("Sifarişlər silindi", result.message);
+      router.refresh();
+    });
+  }
+
   if (orders.length === 0) {
     return (
       <EmptyState
@@ -78,6 +144,21 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
 
   return (
     <div className="space-y-4">
+      {canDelete ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            disabled={isPending}
+            onClick={deleteAllOrders}
+          >
+            <Trash2 className="mr-2 size-4" aria-hidden="true" />
+            Hamısını sil
+          </Button>
+        </div>
+      ) : null}
       {orders.map((order) => (
         <article
           key={order.id}
@@ -106,6 +187,19 @@ export function OrderList({ orders, canUpdateStatus = false }: OrderListProps) {
                 Status: {orderStatusLabels[order.status]}
               </p>
               {canUpdateStatus ? <OrderStatusForm order={order} /> : null}
+              {canDelete ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  disabled={isPending}
+                  onClick={() => deleteOrder(order.id)}
+                >
+                  <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                  Sil
+                </Button>
+              ) : null}
             </div>
           </div>
           <p className="mt-4 text-xs font-bold uppercase text-muted-foreground">

@@ -23,6 +23,7 @@ function createAlert(input: {
   text?: string;
   confirmText?: string;
   cancelText?: string;
+  autoCloseMs?: number;
 }) {
   return new Promise<ConfirmResult>((resolve) => {
     const root = document.createElement("div");
@@ -81,7 +82,20 @@ function createAlert(input: {
       </section>
     `;
 
+    let timeoutId: number | undefined;
+    let didClose = false;
+
     function cleanup(result: ConfirmResult) {
+      if (didClose) {
+        return;
+      }
+
+      didClose = true;
+
+      if (typeof timeoutId === "number") {
+        window.clearTimeout(timeoutId);
+      }
+
       document.removeEventListener("keydown", handleKeyDown);
       root.remove();
       resolve(result);
@@ -117,6 +131,14 @@ function createAlert(input: {
 
     document.addEventListener("keydown", handleKeyDown);
     document.body.appendChild(root);
+
+    if (!isConfirm && input.autoCloseMs) {
+      timeoutId = window.setTimeout(() => {
+        cleanup({
+          isConfirmed: true,
+        });
+      }, input.autoCloseMs);
+    }
   });
 }
 
@@ -127,6 +149,7 @@ export const appAlert = {
       title,
       text,
       confirmText: "Oldu",
+      autoCloseMs: 2000,
     });
   },
   error(error: unknown, title = "Xəta") {
@@ -135,12 +158,43 @@ export const appAlert = {
       title,
       text: getErrorMessage(error),
       confirmText: "Bağla",
+      autoCloseMs: 2000,
     });
   },
-  confirm(title: string, text?: string) {
+  info(title: string, text?: string) {
+    return createAlert({
+      kind: "info",
+      title,
+      text,
+      confirmText: "Oldu",
+      autoCloseMs: 2000,
+    });
+  },
+  confirm(
+    input:
+      | string
+      | {
+          title: string;
+          message?: string;
+          confirmText?: string;
+          cancelText?: string;
+          variant?: "default" | "danger";
+        },
+    text?: string,
+  ) {
+    if (typeof input === "object") {
+      return createAlert({
+        kind: "confirm",
+        title: input.title,
+        text: input.message,
+        confirmText: input.confirmText ?? "Təsdiqlə",
+        cancelText: input.cancelText ?? "Ləğv et",
+      });
+    }
+
     return createAlert({
       kind: "confirm",
-      title,
+      title: input,
       text,
       confirmText: "Təsdiqlə",
       cancelText: "Ləğv et",

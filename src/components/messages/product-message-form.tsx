@@ -1,10 +1,11 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { createProductMessageAction } from "@/lib/messages/actions";
 
@@ -20,6 +21,8 @@ export function ProductMessageForm({
   storeSlug,
 }: ProductMessageFormProps) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -31,11 +34,13 @@ export function ProductMessageForm({
       }
 
       void appAlert.success("Mesaj göndərildi", result.message);
+      formRef.current?.reset();
+      router.refresh();
     });
   }
 
   return (
-    <form action={handleSubmit} className="grid gap-3">
+    <form ref={formRef} action={handleSubmit} className="grid gap-3">
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="storeId" value={storeId} />
       <input type="hidden" name="storeSlug" value={storeSlug} />

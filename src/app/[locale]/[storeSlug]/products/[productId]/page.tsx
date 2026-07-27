@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 
+import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -97,6 +98,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   return (
     <main className="min-h-screen bg-muted/40">
+      <ViewTracker productId={detail.product.id} />
       <div className="container py-8">
         <nav className="mb-5 text-sm text-muted-foreground">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

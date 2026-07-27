@@ -28,6 +28,66 @@ function readOrderStatus(value: string): OrderStatus | null {
   return null;
 }
 
+async function getManageableOrderIds(input: {
+  role: string;
+  userId: string;
+  orderId?: string;
+}) {
+  const supabaseAdmin = createSupabaseAdminClient();
+
+  if (input.role === "admin") {
+    if (!input.orderId) {
+      const { data } = await (supabaseAdmin as any).from("orders").select("id");
+
+      return ((data ?? []) as Array<{ id: string }>).map((order) => order.id);
+    }
+
+    const { data } = await (supabaseAdmin as any)
+      .from("orders")
+      .select("id")
+      .eq("id", input.orderId)
+      .maybeSingle();
+
+    return data ? [data.id as string] : [];
+  }
+
+  const featureEnabled = await getSellerFeatureAccess(input.userId, "orders");
+
+  if (!featureEnabled) {
+    return [];
+  }
+
+  const stores = await getOwnedStores(input.userId);
+  const storeIds = stores.map((store) => store.id);
+
+  if (storeIds.length === 0) {
+    return [];
+  }
+
+  let query = (supabaseAdmin as any)
+    .from("orders")
+    .select("id")
+    .in("store_id", storeIds);
+
+  if (input.orderId) {
+    query = query.eq("id", input.orderId);
+  }
+
+  const { data } = await query;
+
+  return ((data ?? []) as Array<{ id: string }>).map((order) => order.id);
+}
+
+function revalidateOrderPaths() {
+  revalidatePath("/store/dashboard/orders");
+  revalidatePath("/store/dashboard/earnings");
+  revalidatePath("/admin/orders");
+  revalidatePath("/admin/earnings");
+  revalidatePath("/radmin/orders");
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard");
+}
+
 export async function updateOrderStatusAction(
   formData: FormData,
 ): Promise<OrderActionResult> {
@@ -90,14 +150,92 @@ export async function updateOrderStatusAction(
     };
   }
 
-  revalidatePath("/store/dashboard/orders");
-  revalidatePath("/admin/orders");
-  revalidatePath("/radmin/orders");
-  revalidatePath("/dashboard/orders");
-  revalidatePath("/dashboard");
+  revalidateOrderPaths();
 
   return {
     ok: true,
     message: "Sifariş statusu yeniləndi.",
+  };
+}
+
+export async function deleteOrderAction(
+  formData: FormData,
+): Promise<OrderActionResult> {
+  const current = await requireRole(["seller", "admin"], "/store/dashboard/orders");
+  const orderId = readString(formData, "orderId");
+
+  if (!orderId) {
+    return {
+      ok: false,
+      message: "Silinəcək sifariş seçilməyib.",
+    };
+  }
+
+  const orderIds = await getManageableOrderIds({
+    role: current.role,
+    userId: current.user.id,
+    orderId,
+  });
+
+  if (orderIds.length === 0) {
+    return {
+      ok: false,
+      message: "Bu sifariş üzərində icazəniz yoxdur.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await (supabaseAdmin as any)
+    .from("orders")
+    .delete()
+    .in("id", orderIds);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidateOrderPaths();
+
+  return {
+    ok: true,
+    message: "Sifariş silindi.",
+  };
+}
+
+export async function deleteAllOrdersAction(): Promise<OrderActionResult> {
+  const current = await requireRole(["seller", "admin"], "/store/dashboard/orders");
+  const orderIds = await getManageableOrderIds({
+    role: current.role,
+    userId: current.user.id,
+  });
+
+  if (orderIds.length === 0) {
+    return {
+      ok: false,
+      message: "Silinəcək sifariş tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await (supabaseAdmin as any)
+    .from("orders")
+    .delete()
+    .in("id", orderIds);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidateOrderPaths();
+
+  return {
+    ok: true,
+    message: "Bütün sifarişlər silindi.",
   };
 }

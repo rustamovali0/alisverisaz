@@ -13,6 +13,8 @@ type AdminUserRow = {
   full_name: string | null;
   role: string;
   created_at: string;
+  requested_role?: string | null;
+  seller_application_status?: string | null;
 };
 
 const roleLabels: Record<AssignableRole, string> = {
@@ -61,30 +63,64 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
             <p className="mt-1 truncate text-xs text-muted-foreground">
               {user.email ?? user.id}
             </p>
+            {user.requested_role === "seller" &&
+            user.seller_application_status === "pending" ? (
+              <p className="mt-2 inline-flex rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700">
+                Satıcı müraciəti gözləyir
+              </p>
+            ) : null}
           </div>
           <label className="grid gap-1 text-xs font-medium text-muted-foreground">
             Rol
             <select
               name="role"
               defaultValue={
-                user.role === "admin"
-                  ? "admin"
-                  : user.role === "seller"
-                    ? "seller"
-                    : "customer"
+                user.requested_role === "seller" &&
+                user.seller_application_status === "pending"
+                  ? "seller"
+                  : user.role === "admin"
+                    ? "admin"
+                    : user.role === "seller"
+                      ? "seller"
+                      : "customer"
               }
               className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {(["customer", "seller", "admin"] as AssignableRole[]).map((role) => (
-                <option key={role} value={role}>
-                  {roleLabels[role]}
-                </option>
-              ))}
-            </select>
+              >
+                {(["customer", "seller", "admin"] as AssignableRole[]).map((role) => (
+                  <option key={role} value={role}>
+                    {roleLabels[role]}
+                  </option>
+                ))}
+              </select>
           </label>
-          <Button type="submit" disabled={isPending}>
-            Saxla
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {user.requested_role === "seller" &&
+            user.seller_application_status === "pending" ? (
+              <>
+                <Button
+                  type="submit"
+                  name="applicationAction"
+                  value="approve"
+                  disabled={isPending}
+                >
+                  Təsdiqlə
+                </Button>
+                <Button
+                  type="submit"
+                  name="applicationAction"
+                  value="reject"
+                  variant="outline"
+                  disabled={isPending}
+                >
+                  İmtina et
+                </Button>
+              </>
+            ) : (
+              <Button type="submit" disabled={isPending}>
+                Saxla
+              </Button>
+            )}
+          </div>
         </form>
       ))}
     </div>

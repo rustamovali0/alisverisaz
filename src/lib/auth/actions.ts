@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
 import {
   isAuthRole,
@@ -37,6 +38,8 @@ async function upsertProfile(input: {
   id: string;
   email: string | null;
   fullName: string | null;
+  phone?: string | null;
+  avatarUrl?: string | null;
   role: AuthRole;
 }) {
   try {
@@ -57,12 +60,16 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
   const requestedRole = readString(formData, "role");
+  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+  const avatarUrl = readString(formData, "avatarUrl") || null;
+  const bannerUrl = readString(formData, "bannerUrl") || null;
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
+  const accountRole: AuthRole = role === "seller" ? "customer" : role;
 
-  if (!fullName || !email || !password) {
+  if (!fullName || !email || !password || !phone) {
     return {
       ok: false,
-      message: "Ad, email və şifrə mütləqdir.",
+      message: "Ad, email, telefon və şifrə mütləqdir.",
     };
   }
 
@@ -87,7 +94,12 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     email_confirm: true,
     user_metadata: {
       full_name: fullName,
-      role,
+      phone,
+      avatar_url: avatarUrl,
+      banner_url: bannerUrl,
+      role: accountRole,
+      requested_role: role,
+      seller_application_status: role === "seller" ? "pending" : "active",
     },
   });
 
@@ -112,7 +124,9 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     id: data.user.id,
     email: data.user.email ?? email,
     fullName,
-    role,
+    phone,
+    avatarUrl,
+    role: accountRole,
   });
 
   if (profileError) {
@@ -127,15 +141,22 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     actorId: data.user.id,
     metadata: {
       title: "Yeni qeydiyyat",
-      description: `${fullName} (${role})`,
+      description:
+        role === "seller"
+          ? `${fullName} (${role}) · admin təsdiqi gözlənilir`
+          : `${fullName} (${role})`,
       email,
-      role,
+      role: accountRole,
+      requestedRole: role,
     },
   });
 
   return {
     ok: true,
-    message: "Qeydiyyat tamamlandı. Hesabınıza giriş edə bilərsiniz.",
+    message:
+      role === "seller"
+        ? "Satıcı müraciətiniz göndərildi. Əsas admin təsdiqləyəndən sonra hesab aktiv olacaq."
+        : "Qeydiyyat tamamlandı. Hesabınıza giriş edə bilərsiniz.",
     redirectTo: "/login",
   };
 }
@@ -218,6 +239,14 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
           typeof data.user.user_metadata?.full_name === "string"
             ? data.user.user_metadata.full_name
             : null,
+        phone:
+          typeof data.user.user_metadata?.phone === "string"
+            ? data.user.user_metadata.phone
+            : null,
+        avatarUrl:
+          typeof data.user.user_metadata?.avatar_url === "string"
+            ? data.user.user_metadata.avatar_url
+            : null,
         role,
       });
     } catch (profileError) {
@@ -283,7 +312,9 @@ export async function updateUserRoleAction(
 ): Promise<{ ok: true; message: string } | { ok: false; message: string }> {
   const current = await requireRole(["admin"], "/radmin/users");
   const userId = readString(formData, "userId");
-  const role = readString(formData, "role");
+  const action = readString(formData, "applicationAction");
+  const selectedRole = readString(formData, "role");
+  const role = action === "reject" ? "customer" : selectedRole;
 
   if (!userId || !isAuthRole(role)) {
     return {
@@ -300,6 +331,23 @@ export async function updateUserRoleAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+  const existingMeta = existingUser.user?.user_metadata ?? {};
+  const mergedMetadata = {
+    ...existingMeta,
+    role,
+    seller_application_status:
+      action === "reject"
+        ? "rejected"
+        : role === "seller"
+          ? "approved"
+          : existingMeta.seller_application_status ?? "active",
+    requested_role:
+      action === "reject" && existingMeta.requested_role === "seller"
+        ? "seller"
+        : existingMeta.requested_role ?? null,
+  };
+
   const { error: profileError } = await supabaseAdmin
     .from("profiles")
     .update({
@@ -315,9 +363,7 @@ export async function updateUserRoleAction(
   }
 
   const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-    user_metadata: {
-      role,
-    },
+    user_metadata: mergedMetadata,
   });
 
   if (authError) {

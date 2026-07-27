@@ -64,6 +64,7 @@ export function BuyNowButton({ product }: { product: CartProduct }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
+  const checkoutPath = "/cart?mode=checkout";
 
   async function handleBuyNow() {
     writeCart([
@@ -86,11 +87,11 @@ export function BuyNowButton({ product }: { product: CartProduct }) {
         description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
         variant: "info",
       });
-      router.push("/login?next=/cart");
+      router.push(`/login?next=${encodeURIComponent(checkoutPath)}`);
       return;
     }
 
-    router.push("/cart");
+    router.push(checkoutPath);
   }
 
   return (

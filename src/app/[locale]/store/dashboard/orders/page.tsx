@@ -22,7 +22,7 @@ export default async function StoreOrdersPage() {
       title="Sifarişlər"
       description="Müştərilərdən gələn real sifarişlər və status idarəsi"
     >
-      <OrderList orders={orders} canUpdateStatus />
+      <OrderList orders={orders} canUpdateStatus canDelete />
     </DashboardPanel>
   );
 }
