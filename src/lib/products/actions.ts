@@ -18,7 +18,7 @@ import type {
 const PRODUCT_IMAGE_BUCKET = "product-images";
 
 function revalidateMarketplaceSurfaces() {
-  revalidateTag("public-marketplace");
+  revalidateTag("public-marketplace", "max");
   revalidatePath("/");
   revalidatePath("/products");
 }
@@ -632,12 +632,13 @@ export async function createPersonalListingAction(
       .insert({
         store_id: storeId,
         customer_id: customerId,
-        provider: "placeholder_personal_listing",
+        provider: "manual_personal_listing",
         amount: 1,
         currency: "AZN",
         status: "pending",
         metadata: {
           purpose: "personal_listing_activation",
+          payment_mode: "manual_pending",
         },
       })
       .select("id")
@@ -702,14 +703,14 @@ export async function createPersonalListingAction(
 
   return {
     ok: true,
-    message: "Elan yaradıldı. Aktivləşdirmək üçün 1 AZN placeholder ödənişi təsdiqləyin.",
+    message: "Elan yaradıldı. Aktivləşməsi üçün 1 AZN ödəniş təsdiqi gözlənilir.",
   };
 }
 
 export async function confirmPersonalListingPaymentAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
-  const current = await requireRole(["customer"], "/dashboard/listings");
+  await requireRole(["admin"], "/radmin/products");
   const productId = readString(formData, "productId");
 
   if (!productId) {
@@ -724,7 +725,6 @@ export async function confirmPersonalListingPaymentAction(
     .from("products")
     .select("id,activation_payment_id,metadata")
     .eq("id", productId)
-    .eq("owner_id", current.user.id)
     .eq("listing_type", "personal")
     .maybeSingle();
 
@@ -744,7 +744,7 @@ export async function confirmPersonalListingPaymentAction(
       paid_at: now,
       metadata: {
         purpose: "personal_listing_activation",
-        payment_mode: "placeholder",
+        payment_mode: "manual_admin_confirmed",
       },
     })
     .eq("id", product.activation_payment_id)
@@ -768,7 +768,7 @@ export async function confirmPersonalListingPaymentAction(
       },
     })
     .eq("id", productId)
-    .eq("owner_id", current.user.id);
+    .eq("listing_type", "personal");
 
   if (productError) {
     return {
@@ -782,6 +782,6 @@ export async function confirmPersonalListingPaymentAction(
 
   return {
     ok: true,
-    message: "1 AZN placeholder ödəniş təsdiqləndi və elan aktivləşdi.",
+    message: "1 AZN ödəniş admin tərəfindən təsdiqləndi və elan aktivləşdi.",
   };
 }

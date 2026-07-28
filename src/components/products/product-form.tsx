@@ -300,8 +300,8 @@ export function ProductForm({
 
       {mode === "personal-create" ? (
         <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          Fərdi elan yaradıldıqdan sonra 1 AZN placeholder ödəniş tələb olunur.
-          Ödəniş təsdiqlənəndən sonra elan aktivləşir.
+          Fərdi elan yaradıldıqdan sonra 1 AZN ödəniş tələb olunur.
+          Real ödəniş təsdiqlənəndən sonra elan aktivləşir.
         </p>
       ) : null}
 

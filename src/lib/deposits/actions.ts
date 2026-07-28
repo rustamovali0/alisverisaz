@@ -197,10 +197,10 @@ export async function createDepositAction(
         remaining_amount: remainingAmount,
         currency: "AZN",
         status: "pending",
-        method: "placeholder",
+        method: "manual_pending",
         metadata: {
           product_name: product.name,
-          payment_mode: "placeholder",
+          payment_mode: "manual_pending",
         },
       })
       .select("id")

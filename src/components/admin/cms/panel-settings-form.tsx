@@ -19,6 +19,7 @@ const storeFeatures = [
   ["deposits", "Beh sifarişləri"],
   ["customers", "Müştərilər"],
   ["analytics", "Analitika"],
+  ["earnings", "Qazanclar"],
   ["subscription", "Abunəlik"],
   ["settings", "Ayarlar"],
 ] as const;

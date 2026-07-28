@@ -41,7 +41,11 @@ export function PlanCard({ plan, storeId, activeSubscription }: PlanCardProps) {
       <ul className="mt-5 flex-1 space-y-2 text-sm text-muted-foreground">
         <li>Elan limiti: {plan.listingLimit}</li>
         <li>Bitmə tarixi abunəlik aktivləşəndə saxlanılır</li>
-        <li>Real ödəniş sistemi üçün placeholder</li>
+        <li>
+          {plan.priceAmount > 0
+            ? "Pullu plan üçün real ödəniş provayderi tələb olunur"
+            : "Pulsuz plan birbaşa aktivləşir"}
+        </li>
       </ul>
       {storeId ? (
         <div className="mt-5">

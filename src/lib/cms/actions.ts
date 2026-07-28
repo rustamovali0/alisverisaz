@@ -229,7 +229,7 @@ export async function updateSiteSettingsAction(
     };
   }
 
-  revalidateTag("site-settings");
+  revalidateTag("site-settings", "max");
   revalidateLocalizedPath("/", "layout");
 
   return {
@@ -281,7 +281,7 @@ export async function updateHomepageSectionAction(
     };
   }
 
-  revalidateTag("homepage-sections");
+  revalidateTag("homepage-sections", "max");
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/radmin/homepage-sections");
 
@@ -377,7 +377,7 @@ export async function updateNavigationItemAction(
     };
   }
 
-  revalidateTag("navigation-menus");
+  revalidateTag("navigation-menus", "max");
   revalidateLocalizedPath("/", "layout");
   revalidateLocalizedPath("/radmin/menus");
 
@@ -456,7 +456,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
     },
   });
 
-  revalidateTag("theme-settings");
+  revalidateTag("theme-settings", "max");
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/radmin/themes");
 
@@ -507,7 +507,7 @@ export async function updateThemeDraftAction(
     };
   }
 
-  revalidateTag("theme-settings");
+  revalidateTag("theme-settings", "max");
   revalidateLocalizedPath("/radmin/themes");
 
   return {
@@ -768,7 +768,7 @@ export async function updateStoreManagementAction(
 
   revalidatePath("/radmin/stores");
   revalidatePath(`/radmin/stores/${storeId}`);
-  revalidateTag("public-marketplace");
+  revalidateTag("public-marketplace", "max");
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/products");
 

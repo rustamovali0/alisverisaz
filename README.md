@@ -10,7 +10,7 @@ Marketplace SaaS platformasi ucun Next.js 15 App Router skeleti.
 - shadcn/ui strukturu
 - Supabase
 - Framer Motion
-- SweetAlert2
+- Custom alert/toast UI
 
 ## Baslamaq
 
@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Supabase deyerleri `.env.local` faylinda qurulub. Yeni muhitlerde `.env.example` faylini esas goturun ve real key-leri lokal/hosting environment-larina elave edin.
+Supabase deyerleri `.env.local` faylinda qurulub. Yeni muhitlerde `.env.example` faylini esas goturun ve real key-leri lokal/hosting environment-larina elave edin. Admin emeliyyatlari ucun `SUPABASE_SECRET_KEY` ve ya `SUPABASE_SERVICE_ROLE_KEY` mutleqdir.
 
 ## Struktur
 

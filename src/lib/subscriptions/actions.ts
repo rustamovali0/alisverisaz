@@ -26,7 +26,7 @@ function addOneMonth(date: Date) {
   return next;
 }
 
-export async function activatePlanPlaceholderAction(
+export async function activateFreePlanAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
   const current = await requireRole(["seller"], "/store/dashboard/subscription");
@@ -56,6 +56,27 @@ export async function activatePlanPlaceholderAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  const { data: plan } = await (supabaseAdmin as any)
+    .from("subscription_plans")
+    .select("price_amount")
+    .eq("id", planId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!plan) {
+    return {
+      ok: false,
+      message: "Aktiv plan tapılmadı.",
+    };
+  }
+
+  if (Number(plan.price_amount ?? 0) > 0) {
+    return {
+      ok: false,
+      message: "Pullu planlar üçün real ödəniş provayderi qoşulmalıdır.",
+    };
+  }
+
   const now = new Date();
   const endsAt = addOneMonth(now);
 
@@ -75,8 +96,8 @@ export async function activatePlanPlaceholderAction(
     starts_at: now.toISOString(),
     ends_at: endsAt.toISOString(),
     metadata: {
-      payment_mode: "placeholder",
-      note: "Real payment integration is not enabled yet.",
+      payment_mode: "free",
+      note: "Free plan activation.",
     },
   });
 
@@ -92,7 +113,7 @@ export async function activatePlanPlaceholderAction(
 
   return {
     ok: true,
-    message: "Placeholder abunəlik aktiv edildi.",
+    message: "Pulsuz abunəlik aktiv edildi.",
   };
 }
 

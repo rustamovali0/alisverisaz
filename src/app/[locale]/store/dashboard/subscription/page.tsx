@@ -37,7 +37,7 @@ export default async function StoreSubscriptionPage() {
 
       <DashboardPanel
         title="Planlar"
-        description="Real ödəniş qoşulmayıb; aktivləşdirmə placeholder olaraq 1 aylıq subscription yaradır."
+        description="Pulsuz planlar birbaşa aktivləşir; pullu planlar üçün real ödəniş provayderi lazımdır."
       >
         {!hasActivePlans ? (
           <EmptyState

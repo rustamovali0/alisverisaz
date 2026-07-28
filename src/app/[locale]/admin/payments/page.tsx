@@ -11,7 +11,7 @@ export default async function AdminPaymentsPage() {
   return (
     <ResourcePage
       title="Ödənişlər"
-      description="payments cədvəlindən oxunan placeholder və gələcək ödənişlər"
+      description="payments cədvəlindən oxunan manual və gələcək provider ödənişləri"
       totalLabel="Ödəniş sayı"
       total={resource.total}
       items={resource.items}

@@ -24,7 +24,7 @@ export default async function DepositPaymentPage({
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-muted-foreground">
-                Placeholder ödəniş strukturu
+                Manual ödəniş strukturu
               </p>
               <h1 className="mt-1 text-2xl font-bold tracking-normal">
                 Beh ödənişi hazırlanır

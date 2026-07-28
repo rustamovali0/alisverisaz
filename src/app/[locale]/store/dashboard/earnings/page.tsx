@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function StoreEarningsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/earnings");
-  const enabled = await getSellerFeatureAccess(current.user.id, "analytics");
+  const enabled = await getSellerFeatureAccess(current.user.id, "earnings");
 
   if (!enabled) {
     return <FeatureBlocked title="Qazanclar" />;

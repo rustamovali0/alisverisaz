@@ -5,7 +5,7 @@ import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { activatePlanPlaceholderAction } from "@/lib/subscriptions/actions";
+import { activateFreePlanAction } from "@/lib/subscriptions/actions";
 import type { SubscriptionPlan } from "@/lib/subscriptions/types";
 
 type PlanActivationFormProps = {
@@ -20,10 +20,11 @@ export function PlanActivationForm({
   isCurrent = false,
 }: PlanActivationFormProps) {
   const [isPending, startTransition] = useTransition();
+  const requiresPayment = plan.priceAmount > 0;
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await activatePlanPlaceholderAction(formData);
+      const result = await activateFreePlanAction(formData);
 
       if (!result.ok) {
         void appAlert.error(result.message, "Abunəlik aktiv olmadı");
@@ -42,7 +43,7 @@ export function PlanActivationForm({
         type="submit"
         className="w-full"
         variant={isCurrent ? "secondary" : "default"}
-        disabled={isPending || isCurrent}
+        disabled={isPending || isCurrent || requiresPayment}
       >
         {isCurrent ? (
           <>
@@ -51,8 +52,10 @@ export function PlanActivationForm({
           </>
         ) : isPending ? (
           "Aktiv edilir"
+        ) : requiresPayment ? (
+          "Ödəniş provayderi lazımdır"
         ) : (
-          "Placeholder aktiv et"
+          "Pulsuz aktiv et"
         )}
       </Button>
     </form>

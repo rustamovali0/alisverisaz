@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/common/empty-state";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
+import { getSiteSettings } from "@/lib/cms/data";
 import { siteConfig } from "@/lib/config/site";
 
 type LocaleLayoutProps = {
@@ -22,6 +25,28 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({
     locale,
   }));
+}
+
+function normalizeVisiblePath(pathname: string) {
+  const localePrefix = `/${routing.defaultLocale}`;
+
+  if (pathname === localePrefix) {
+    return "/";
+  }
+
+  if (pathname.startsWith(`${localePrefix}/`)) {
+    return pathname.slice(localePrefix.length);
+  }
+
+  return pathname || "/";
+}
+
+function canBypassMaintenance(pathname: string) {
+  return (
+    pathname === "/radmin/login" ||
+    pathname === "/logout" ||
+    pathname.startsWith("/radmin")
+  );
 }
 
 export async function generateMetadata({
@@ -82,9 +107,18 @@ export default async function LocaleLayout({
   }
 
   setRequestLocale(locale);
-  const messages = await getMessages({
-    locale,
-  });
+  const [messages, siteSettings, requestHeaders] = await Promise.all([
+    getMessages({
+      locale,
+    }),
+    getSiteSettings(),
+    headers(),
+  ]);
+  const visiblePathname = normalizeVisiblePath(
+    requestHeaders.get("x-current-path") ?? `/${locale}`,
+  );
+  const isMaintenanceBlocked =
+    siteSettings.maintenanceMode && !canBypassMaintenance(visiblePathname);
 
   return (
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
@@ -94,7 +128,17 @@ export default async function LocaleLayout({
       </div>
       <ToastViewport />
       <StructuredData />
-      {children}
+      {isMaintenanceBlocked ? (
+        <main className="grid min-h-screen place-items-center bg-background px-4">
+          <EmptyState
+            className="rounded-md border bg-card p-8 shadow-sm"
+            title="Texniki rejim"
+            description="Saytda texniki işlər aparılır. Zəhmət olmasa bir az sonra yenidən yoxlayın."
+          />
+        </main>
+      ) : (
+        children
+      )}
     </NextIntlClientProvider>
   );
 }

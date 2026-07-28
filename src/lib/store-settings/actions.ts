@@ -159,7 +159,7 @@ export async function updateSellerStoreSettingsAction(
   revalidatePath("/admin/settings");
   revalidatePath("/");
   revalidatePath("/products");
-  revalidateTag("public-marketplace");
+  revalidateTag("public-marketplace", "max");
 
   return {
     ok: true,

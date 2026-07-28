@@ -9,6 +9,7 @@ import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
+import { getSiteSettings } from "@/lib/cms/data";
 import {
   isAuthRole,
   isPublicAuthRole,
@@ -65,6 +66,21 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const bannerUrl = readString(formData, "bannerUrl") || null;
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
+  const siteSettings = await getSiteSettings();
+
+  if (role === "customer" && !siteSettings.userRegistrationEnabled) {
+    return {
+      ok: false,
+      message: "İstifadəçi qeydiyyatı hazırda bağlıdır.",
+    };
+  }
+
+  if (role === "seller" && !siteSettings.storeRegistrationEnabled) {
+    return {
+      ok: false,
+      message: "Mağaza qeydiyyatı hazırda bağlıdır.",
+    };
+  }
 
   if (!fullName || !email || !password || !phone) {
     return {

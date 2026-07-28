@@ -1,16 +1,13 @@
 "use client";
 
-import { CreditCard, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { useTransition } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { ProductForm } from "@/components/products/product-form";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
-import {
-  confirmPersonalListingPaymentAction,
-  deleteProductAction,
-} from "@/lib/products/actions";
+import { deleteProductAction } from "@/lib/products/actions";
 import type { CategoryOption, ManagedProduct } from "@/lib/products/types";
 
 type ProductListProps = {
@@ -65,37 +62,6 @@ function DeleteProductButton({ productId }: { productId: string }) {
     >
       <Trash2 className="mr-2 size-4" aria-hidden="true" />
       Sil
-    </Button>
-  );
-}
-
-function PaymentActivationButton({ productId }: { productId: string }) {
-  const [isPending, startTransition] = useTransition();
-
-  function handleActivation() {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("productId", productId);
-      const result = await confirmPersonalListingPaymentAction(formData);
-
-      if (!result.ok) {
-        void appAlert.error(result.message, "Ödəniş alınmadı");
-        return;
-      }
-
-      void appAlert.success("Elan aktivdir", result.message);
-    });
-  }
-
-  return (
-    <Button
-      type="button"
-      size="sm"
-      onClick={handleActivation}
-      disabled={isPending}
-    >
-      <CreditCard className="mr-2 size-4" aria-hidden="true" />
-      1 AZN ödənişi təsdiqlə
     </Button>
   );
 }
@@ -155,7 +121,9 @@ export function ProductList({
               {allowPaymentActivation &&
               product.listingType === "personal" &&
               product.paymentStatus !== "paid" ? (
-                <PaymentActivationButton productId={product.id} />
+                <span className="inline-flex h-9 items-center rounded-md border border-input bg-muted px-3 text-sm font-medium text-muted-foreground">
+                  Ödəniş gözlənilir
+                </span>
               ) : null}
               <DeleteProductButton productId={product.id} />
             </div>

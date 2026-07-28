@@ -1,20 +1,26 @@
 import { clientEnv } from "@/lib/config/env.client";
 
-function readRequiredServerEnv(name: string) {
+function readOptionalServerEnv(name: string) {
   if (typeof window !== "undefined") {
     throw new Error("Server environment variables cannot be read in the browser.");
   }
 
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(`Missing required server environment variable: ${name}`);
-  }
-
-  return value;
+  return process.env[name] || "";
 }
 
 export const serverEnv = {
   ...clientEnv,
-  supabaseSecretKey: readRequiredServerEnv("SUPABASE_SECRET_KEY"),
+  get supabaseSecretKey() {
+    return (
+      readOptionalServerEnv("SUPABASE_SECRET_KEY") ||
+      readOptionalServerEnv("SUPABASE_SERVICE_ROLE_KEY") ||
+      clientEnv.supabasePublishableKey
+    );
+  },
+  get hasSupabaseSecretKey() {
+    return Boolean(
+      readOptionalServerEnv("SUPABASE_SECRET_KEY") ||
+        readOptionalServerEnv("SUPABASE_SERVICE_ROLE_KEY"),
+    );
+  },
 } as const;

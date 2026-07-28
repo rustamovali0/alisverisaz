@@ -497,4 +497,17 @@ export async function getSellerFeatureAccess(userId: string, featureKey: string)
   });
 }
 
+export async function getCustomerFeatureAccess(featureKey: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await (supabase as any)
+    .from("user_panel_settings")
+    .select("features")
+    .eq("key", "global")
+    .limit(1)
+    .maybeSingle();
+  const globalValue = (data?.features ?? {})[featureKey];
+
+  return globalValue !== false;
+}
+
 export { navItemKey };

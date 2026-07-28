@@ -54,6 +54,7 @@ function createLocalizedRewrite(request: NextRequest, pathname: string) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("X-NEXT-INTL-LOCALE", routing.defaultLocale);
+  requestHeaders.set("x-current-path", pathname);
 
   const response = NextResponse.rewrite(url, {
     request: {
@@ -68,8 +69,14 @@ function createLocalizedRewrite(request: NextRequest, pathname: string) {
   return response;
 }
 
-function createLocalizedNextResponse() {
-  const response = NextResponse.next();
+function createLocalizedNextResponse(request: NextRequest, pathname: string) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-current-path", pathname);
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   response.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
     path: "/",
     sameSite: "lax",
@@ -90,7 +97,7 @@ async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: Ne
   return rewriteResponse;
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const visiblePathname = stripLocalePath(pathname);
 
@@ -110,8 +117,8 @@ export async function middleware(request: NextRequest) {
     }
 
     return needsSessionCheck(visiblePathname)
-      ? updateSession(request)
-      : createLocalizedNextResponse();
+      ? updateSession(request, createLocalizedNextResponse(request, visiblePathname))
+      : createLocalizedNextResponse(request, visiblePathname);
   }
 
   const rewriteResponse = createLocalizedRewrite(request, pathname);

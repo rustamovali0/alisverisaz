@@ -1,11 +1,19 @@
+import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { ResourcePage } from "@/components/dashboard/resource-page";
 import { requireRole } from "@/lib/auth/session";
+import { getCustomerFeatureAccess } from "@/lib/cms/data";
 import { getCustomerResource } from "@/lib/dashboard/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerPaymentsPage() {
   const current = await requireRole(["customer"], "/dashboard/payments");
+  const enabled = await getCustomerFeatureAccess("payments");
+
+  if (!enabled) {
+    return <FeatureBlocked title="Ödənişlər" />;
+  }
+
   const resource = await getCustomerResource(current.user.id, "payments");
 
   return (

@@ -1,12 +1,20 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { OrderList } from "@/components/orders/order-list";
 import { requireRole } from "@/lib/auth/session";
+import { getCustomerFeatureAccess } from "@/lib/cms/data";
 import { getCustomerOrders } from "@/lib/orders/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomerOrdersPage() {
   const current = await requireRole(["customer"], "/dashboard/orders");
+  const enabled = await getCustomerFeatureAccess("orders");
+
+  if (!enabled) {
+    return <FeatureBlocked title="Sifarişlər" />;
+  }
+
   const orders = await getCustomerOrders(current.user.id);
 
   return (
