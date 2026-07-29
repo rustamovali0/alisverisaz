@@ -86,7 +86,12 @@ export function MarketplaceHeader({
   const AccountIcon = getAccountIcon(profile.status === "authenticated" ? profile.role : null);
   const mobileAccount = useMemo(() => {
     if (profile.status === "loading") {
-      return null;
+      return (
+        <div
+          className="size-11 animate-pulse rounded-md border bg-muted/70"
+          aria-hidden="true"
+        />
+      );
     }
 
     if (profile.status === "guest") {

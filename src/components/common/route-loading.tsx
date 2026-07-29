@@ -8,16 +8,6 @@ function SkeletonBlock({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-md bg-muted", className)} />;
 }
 
-function LoadingSpinner() {
-  return (
-    <div
-      aria-label="Səhifə yüklənir"
-      role="status"
-      className="size-9 animate-spin rounded-full border-4 border-muted border-t-primary"
-    />
-  );
-}
-
 export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
   if (variant === "account") {
     return (
@@ -66,7 +56,6 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
           </aside>
           <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8">
             <SkeletonBlock className="h-7 w-44" />
-            <SkeletonBlock className="mt-2 h-4 w-72 max-w-full" />
             <div className="mt-6 grid gap-4 md:grid-cols-3">
               {Array.from({ length: 3 }).map((_, index) => (
                 <SkeletonBlock key={index} className="h-28" />
@@ -95,20 +84,16 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.7fr)]">
           <section className="min-w-0">
             <SkeletonBlock className="h-10 w-56" />
-            <SkeletonBlock className="mt-4 h-5 w-96 max-w-full" />
             <SkeletonBlock className="mt-8 h-14 w-full max-w-2xl" />
             <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <SkeletonBlock key={index} className="h-64" />
+              {Array.from({ length: 3 }).map((_, index) => (
+                <SkeletonBlock key={index} className="h-44" />
               ))}
             </div>
           </section>
           <aside className="hidden min-w-0 lg:block">
-            <SkeletonBlock className="h-96" />
+            <SkeletonBlock className="h-64" />
           </aside>
-        </div>
-        <div className="sr-only">
-          <LoadingSpinner />
         </div>
       </div>
     </main>

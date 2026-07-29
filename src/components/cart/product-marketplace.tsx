@@ -1,12 +1,14 @@
 "use client";
 
+import type { MouseEvent } from "react";
+
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import type { CategoryOption } from "@/lib/products/types";
@@ -152,11 +154,6 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             </div>
             <ArrowRight className="mt-1 size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
           </div>
-          {store.description ? (
-            <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-              {store.description}
-            </p>
-          ) : null}
           {store.address ? (
             <p className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
@@ -192,6 +189,8 @@ export function ProductGrid({
   storeSlug: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
+  const router = useRouter();
+
   if (products.length === 0) {
     return (
       <EmptyState
@@ -206,18 +205,37 @@ export function ProductGrid({
     <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
+        const detailHref = `/${storeSlug}/products/${product.slug}`;
+
+        function openDetail(event: MouseEvent<HTMLElement>) {
+          const target = event.target as HTMLElement;
+
+          if (target.closest("a,button,input,textarea,select,[role='button']")) {
+            return;
+          }
+
+          router.push(detailHref);
+        }
 
         return (
         <article
           key={product.id}
-          className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
+          role="link"
+          tabIndex={0}
+          onClick={openDetail}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              router.push(detailHref);
+            }
+          }}
+          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Link
-            href={`/${storeSlug}/products/${product.slug}`}
-            className="absolute inset-0 z-0"
+            href={detailHref}
+            className="block"
             aria-label={`${product.name} məhsul detalına keç`}
-          />
-          <div className="relative z-0">
+          >
             <div className="aspect-[4/3] overflow-hidden bg-muted">
               {product.imageUrl ? (
                 <img
@@ -231,7 +249,7 @@ export function ProductGrid({
                 </div>
               )}
             </div>
-          </div>
+          </Link>
           <div className="relative z-0 flex min-w-0 flex-1 flex-col p-3">
             <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal group-hover:text-primary">
               {product.name}

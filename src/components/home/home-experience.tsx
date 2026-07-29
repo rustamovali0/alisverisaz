@@ -92,11 +92,6 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
             </div>
             <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
           </div>
-          {store.description ? (
-            <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-              {store.description}
-            </p>
-          ) : null}
         </div>
       </Link>
     </m.article>
@@ -156,9 +151,6 @@ export function HomeExperience({
           <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
             {heroTitle}
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
-            {heroDescription}
-          </p>
           <MarketplaceSearch
             stores={stores}
             categories={categories}
@@ -186,12 +178,6 @@ export function HomeExperience({
           transition={{ duration: 0.38, ease: "easeOut" }}
           className="relative hidden lg:block"
         >
-          <div className="absolute -left-3 top-6 z-10 rounded-lg bg-card p-3 shadow-xl">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
-              Təsdiqlənmiş satıcılar
-            </div>
-          </div>
           <div className="overflow-hidden rounded-lg border bg-card shadow-2xl shadow-slate-900/12">
             <div className="aspect-[4/3] bg-muted">
               {hero?.imageUrl ? (
@@ -223,12 +209,6 @@ export function HomeExperience({
                       )}
                     </div>
                   ))}
-                  {featuredStores.length === 0 ? (
-                    <div className="col-span-2 flex h-full items-center justify-center rounded-lg border bg-background text-muted-foreground">
-                      <PackageSearch className="mr-2 size-5" />
-                      Mağazalar hazır olduqda burada görünəcək
-                    </div>
-                  ) : null}
                 </div>
               )}
             </div>
@@ -247,9 +227,6 @@ export function HomeExperience({
               <h2 className="text-2xl font-black">
                 {categorySection?.title || "Kateqoriyalar"}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {categorySection?.description || "Axtardığın məhsula daha tez çat."}
-              </p>
             </div>
             <Button asChild variant="outline">
               <Link href="/products">{productsLabel}</Link>
@@ -284,9 +261,6 @@ export function HomeExperience({
               <h2 className="text-2xl font-black">
                 {featuredSection?.title || "Seçilmiş mağazalar"}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {featuredSection?.description || "Platformadakı aktiv mağazalar."}
-              </p>
             </div>
             <Button asChild variant="outline">
               <Link href="/products">Hamısı</Link>
@@ -307,9 +281,6 @@ export function HomeExperience({
               <h2 className="text-2xl font-black">
                 {newSection?.title || "Yeni mağazalar"}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {newSection?.description || "Ən son əlavə olunan aktiv mağazalar."}
-              </p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
@@ -324,19 +295,13 @@ export function HomeExperience({
         <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              ["Təhlükəsiz struktur", "Supabase Auth və RLS ilə qorunan data."],
-              ["Mağaza paneli", "Məhsul, sifariş, müştəri və abunəlik idarəsi."],
-              [
-                benefitsSection?.title || "Sürətli alış",
-                benefitsSection?.description || "Səbət, indi al və beh strukturu hazırdır.",
-              ],
-            ].map(([itemTitle, itemDescription]) => (
+              "Təhlükəsiz struktur",
+              "Mağaza paneli",
+              benefitsSection?.title || "Sürətli alış",
+            ].map((itemTitle) => (
               <div key={itemTitle} className="rounded-lg border bg-background/70 p-4">
                 <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
                 <h3 className="mt-3 text-sm font-bold">{itemTitle}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  {itemDescription}
-                </p>
               </div>
             ))}
           </div>

@@ -441,15 +441,21 @@ export async function getAdminStoreDetail(storeId: string) {
 
 export async function getSellerFeatureAccess(userId: string, featureKey: string) {
   const supabase = await createSupabaseServerClient();
-  const [{ data: stores }, { data: globalSettings }] = await Promise.all([
-    (supabase as any).from("stores").select("id").eq("owner_id", userId),
-    (supabase as any)
-      .from("store_panel_settings")
-      .select("features")
-      .is("store_id", null)
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: stores } = await (supabase as any)
+    .from("stores")
+    .select("id")
+    .eq("owner_id", userId);
+  const { data: globalSettings, error: globalSettingsError } = await (supabase as any)
+    .from("store_panel_settings")
+    .select("features")
+    .is("store_id", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (globalSettingsError?.code === "42P01" || globalSettingsError?.code === "PGRST205") {
+    return true;
+  }
+
   const storeIds = ((stores ?? []) as Array<{ id: string }>).map((store) => store.id);
   const globalValue = (globalSettings?.features ?? {})[featureKey];
 
@@ -461,17 +467,27 @@ export async function getSellerFeatureAccess(userId: string, featureKey: string)
     return globalValue !== false;
   }
 
-  const [{ data: panelRows }, { data: overrides }] = await Promise.all([
-    (supabase as any)
-      .from("store_panel_settings")
-      .select("store_id,features")
-      .in("store_id", storeIds),
-    (supabase as any)
-      .from("store_feature_overrides")
-      .select("store_id,is_enabled")
-      .eq("feature_key", featureKey)
-      .in("store_id", storeIds),
-  ]);
+  const [{ data: panelRows, error: panelRowsError }, { data: overrides, error: overridesError }] =
+    await Promise.all([
+      (supabase as any)
+        .from("store_panel_settings")
+        .select("store_id,features")
+        .in("store_id", storeIds),
+      (supabase as any)
+        .from("store_feature_overrides")
+        .select("store_id,is_enabled")
+        .eq("feature_key", featureKey)
+        .in("store_id", storeIds),
+    ]);
+
+  if (
+    panelRowsError?.code === "42P01" ||
+    panelRowsError?.code === "PGRST205" ||
+    overridesError?.code === "42P01" ||
+    overridesError?.code === "PGRST205"
+  ) {
+    return true;
+  }
 
   const overrideMap = new Map(
     ((overrides ?? []) as Array<{ store_id: string; is_enabled: boolean }>).map(

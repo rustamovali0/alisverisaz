@@ -22,6 +22,7 @@ export type ClientAuthProfile =
     };
 
 const AUTH_PROFILE_RESET_EVENT = "alisveris-auth-profile-reset";
+const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v1";
 
 const emptyProfile: ClientAuthProfile = {
   status: "loading",
@@ -30,6 +31,45 @@ const emptyProfile: ClientAuthProfile = {
   fullName: null,
   avatarUrl: null,
 };
+
+type CachedClientAuthProfile = ClientAuthProfile;
+
+function readCachedProfile(): CachedClientAuthProfile | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(AUTH_PROFILE_CACHE_KEY);
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw) as CachedClientAuthProfile;
+    if (
+      parsed &&
+      (parsed.status === "guest" || parsed.status === "loading" || parsed.status === "authenticated")
+    ) {
+      return parsed;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function writeCachedProfile(profile: ClientAuthProfile) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(AUTH_PROFILE_CACHE_KEY, JSON.stringify(profile));
+  } catch {
+    // ignore storage failures
+  }
+}
 
 function normalizeRole(email: string | null | undefined, role: unknown): AuthRole {
   if (email?.toLowerCase() === "rustamovali664@gmail.com" || role === "admin") {
@@ -88,12 +128,17 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
 
 export function clearClientAuthProfileCache() {
   if (typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
+    } catch {
+      // ignore storage failures
+    }
     window.dispatchEvent(new Event(AUTH_PROFILE_RESET_EVENT));
   }
 }
 
 export function useClientAuthProfile() {
-  const [profile, setProfile] = useState<ClientAuthProfile>(emptyProfile);
+  const [profile, setProfile] = useState<ClientAuthProfile>(() => readCachedProfile() ?? emptyProfile);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,6 +149,7 @@ export function useClientAuthProfile() {
 
       if (isMounted) {
         setProfile(nextProfile);
+        writeCachedProfile(nextProfile);
       }
     }
 

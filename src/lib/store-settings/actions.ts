@@ -94,7 +94,7 @@ async function uploadStoreMedia(input: {
 
   const { data } = supabaseAdmin.storage.from(STORE_MEDIA_BUCKET).getPublicUrl(path);
 
-  await (supabaseAdmin as any).from("media_assets").insert({
+  const { error: mediaAssetError } = await (supabaseAdmin as any).from("media_assets").insert({
     bucket: STORE_MEDIA_BUCKET,
     path,
     url: data.publicUrl,
@@ -105,6 +105,13 @@ async function uploadStoreMedia(input: {
     created_by: input.userId,
     updated_by: input.userId,
   });
+
+  if (
+    mediaAssetError &&
+    !["42P01", "PGRST205"].includes(mediaAssetError.code ?? "")
+  ) {
+    throw new Error(mediaAssetError.message);
+  }
 
   return data.publicUrl;
 }

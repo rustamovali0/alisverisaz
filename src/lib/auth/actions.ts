@@ -714,6 +714,7 @@ export async function updateUserRoleAction(
     };
   }
 
+  revalidatePath("/admin/users");
   revalidatePath("/radmin/users");
 
   return {

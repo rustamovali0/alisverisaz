@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { updateUserRoleAction } from "@/lib/auth/actions";
 type AssignableRole = "customer" | "seller" | "admin";
@@ -24,11 +25,39 @@ const roleLabels: Record<AssignableRole, string> = {
 };
 
 export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [draftRoles, setDraftRoles] = useState<Record<string, AssignableRole>>({});
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const initialRoles = useMemo(
+    () =>
+      Object.fromEntries(
+        users.map((user) => [
+          user.id,
+          user.requested_role === "seller" &&
+          user.seller_application_status === "pending"
+            ? "seller"
+            : user.role === "admin"
+              ? "admin"
+              : user.role === "seller"
+                ? "seller"
+                : "customer",
+        ]),
+      ) as Record<string, AssignableRole>,
+    [users],
+  );
+
+  useEffect(() => {
+    setDraftRoles(initialRoles);
+  }, [initialRoles]);
 
   function handleSubmit(formData: FormData) {
+    const userId = String(formData.get("userId") ?? "");
+
     startTransition(async () => {
+      setPendingUserId(userId);
       const result = await updateUserRoleAction(formData);
+      setPendingUserId(null);
 
       if (!result.ok) {
         void appAlert.error(result.message, "Rol dəyişmədi");
@@ -36,6 +65,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
       }
 
       void appAlert.success("Rol yeniləndi", result.message);
+      router.refresh();
     });
   }
 
@@ -74,15 +104,12 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
             Rol
             <select
               name="role"
-              defaultValue={
-                user.requested_role === "seller" &&
-                user.seller_application_status === "pending"
-                  ? "seller"
-                  : user.role === "admin"
-                    ? "admin"
-                    : user.role === "seller"
-                      ? "seller"
-                      : "customer"
+              value={draftRoles[user.id] ?? initialRoles[user.id] ?? "customer"}
+              onChange={(event) =>
+                setDraftRoles((current) => ({
+                  ...current,
+                  [user.id]: event.target.value as AssignableRole,
+                }))
               }
               className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
@@ -101,7 +128,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                   type="submit"
                   name="applicationAction"
                   value="approve"
-                  disabled={isPending}
+                  disabled={isPending && pendingUserId === user.id}
                 >
                   Təsdiqlə
                 </Button>
@@ -110,13 +137,13 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                   name="applicationAction"
                   value="reject"
                   variant="outline"
-                  disabled={isPending}
+                  disabled={isPending && pendingUserId === user.id}
                 >
                   İmtina et
                 </Button>
               </>
             ) : (
-              <Button type="submit" disabled={isPending}>
+              <Button type="submit" disabled={isPending && pendingUserId === user.id}>
                 Saxla
               </Button>
             )}

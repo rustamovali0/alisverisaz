@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export type ProductMessage = {
   id: string;
@@ -96,9 +95,15 @@ async function loadImageMap(productIds: string[]) {
   }, new Map<string, ProductImageRow[]>());
 }
 
-async function mapRows(rows: MessageRow[], hideSenderPhone = false) {
+async function mapRows(
+  rows: MessageRow[],
+  hideSenderPhone = false,
+  includeProductImages = true,
+) {
   const productIds = Array.from(new Set(rows.map((row) => row.product_id)));
-  const imageMap = await loadImageMap(productIds);
+  const imageMap = includeProductImages
+    ? await loadImageMap(productIds)
+    : new Map<string, ProductImageRow[]>();
 
   return rows.map((row) => ({
     ...mapMessage(row, imageMap),
@@ -107,24 +112,17 @@ async function mapRows(rows: MessageRow[], hideSenderPhone = false) {
 }
 
 export async function getProductMessagesForProduct(productId: string) {
-  const current = await getCurrentUserProfile();
-
-  if (!current) {
-    return [];
-  }
-
   const supabase = createSupabaseAdminClient();
   const { data } = await (supabase as any)
     .from("product_messages")
     .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name,slug),stores(name,slug)")
     .eq("product_id", productId)
-    .eq("sender_id", current.user.id)
     .order("created_at", {
       ascending: true,
     })
     .limit(100);
 
-  return mapRows((data ?? []) as MessageRow[], true);
+  return mapRows((data ?? []) as MessageRow[], true, false);
 }
 
 export async function getSellerProductMessages(storeIds: string[]) {

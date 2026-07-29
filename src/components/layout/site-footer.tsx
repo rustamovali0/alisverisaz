@@ -58,7 +58,6 @@ function formatBrandName(value?: string) {
 
 export function SiteFooter({
   siteName = "Alışveriş",
-  description = "Azərbaycan üçün müasir e-ticarət platforması.",
   socialLinks,
 }: SiteFooterProps) {
   const displaySiteName = formatBrandName(siteName);
@@ -134,9 +133,6 @@ export function SiteFooter({
               {displaySiteName}
             </span>
           </Link>
-          <p className="mt-4 max-w-md break-words text-sm leading-6 text-muted-foreground">
-            {description}
-          </p>
           {socials.length > 0 ? (
             <div className="mt-5 flex items-center gap-3">
               {socials.map((item) => {
@@ -227,7 +223,6 @@ export function SiteFooter({
       <div className="border-t">
         <div className="container flex max-w-full flex-col gap-2 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:pb-4">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
-          <span className="break-words">Azərbaycan üçün müasir e-ticarət platforması.</span>
         </div>
       </div>
     </footer>
