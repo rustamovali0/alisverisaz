@@ -9,27 +9,24 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { createDepositAction } from "@/lib/deposits/actions";
 import type { CartProduct } from "@/lib/cart/types";
+import { formatAznPrice } from "@/lib/format";
 import { showToast } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 type DepositModalProps = {
   product: CartProduct;
   enabled: boolean;
+  className?: string;
 };
 
-function formatMoney(value: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
-}
-
-export function DepositModal({ product, enabled }: DepositModalProps) {
+export function DepositModal({ product, enabled, className }: DepositModalProps) {
   const t = useTranslations("marketplace");
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState("5");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const canUseDeposit = enabled && product.depositEnabled && product.depositAmount > 0;
+  const canUseDeposit =
+    enabled && product.depositEnabled && product.depositAmount > 0 && product.stockQuantity > 0;
 
   function addAmount(value: number) {
     const current = Number(amount.replace(",", ".")) || 0;
@@ -133,7 +130,7 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
                     ))}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Tövsiyə olunan beh: {formatMoney(product.depositAmount)}.
+                    Tövsiyə olunan beh: {formatAznPrice(product.depositAmount)}.
                   </p>
                 </div>
                 <div className="mt-5 flex gap-2">
@@ -159,9 +156,14 @@ export function DepositModal({ product, enabled }: DepositModalProps) {
 
   return (
     <>
-      <Button type="button" variant="secondary" onClick={() => setIsOpen(true)}>
-        <HandCoins className="mr-2 size-4" aria-hidden="true" />
-        {t("sendDeposit")}
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => setIsOpen(true)}
+        className={cn("min-w-0", className)}
+      >
+        <HandCoins className="mr-2 size-4 shrink-0" aria-hidden="true" />
+        <span className="truncate">{t("sendDeposit")}</span>
       </Button>
       {modal}
     </>

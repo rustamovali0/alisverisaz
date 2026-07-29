@@ -122,7 +122,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-3 z-50 flex flex-col items-center gap-2 md:bottom-4 md:right-4 md:flex-row">
         <ThemeToggle />
         <LanguageSwitcher />
       </div>

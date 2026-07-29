@@ -47,14 +47,25 @@ export function AddToCartButton({
   product,
   viewerRole,
   className,
+  disabled = false,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
   className?: string;
+  disabled?: boolean;
 }) {
   const t = useTranslations("marketplace");
+  const isUnavailable = disabled || product.stockQuantity <= 0;
 
   function handleAdd() {
+    if (isUnavailable) {
+      showToast({
+        title: "Bu məhsul hazırda stokda yoxdur.",
+        variant: "warning",
+      });
+      return;
+    }
+
     if (!requireCustomerRole(viewerRole)) {
       return;
     }
@@ -63,6 +74,15 @@ export function AddToCartButton({
     const existing = items.find((item) => item.productId === product.id);
 
     if (existing) {
+      if (existing.quantity >= product.stockQuantity) {
+        showToast({
+          title: "Stok limiti keçilə bilməz.",
+          description: "Səbətdəki say hazırkı stok miqdarına bərabərdir.",
+          variant: "warning",
+        });
+        return;
+      }
+
       existing.quantity = Math.min(existing.quantity + 1, product.stockQuantity);
     } else {
       items.push({
@@ -84,6 +104,7 @@ export function AddToCartButton({
       type="button"
       variant="outline"
       onClick={handleAdd}
+      disabled={isUnavailable}
       className={cn("min-w-0", className)}
     >
       <ShoppingCart className="mr-2 size-4 shrink-0" aria-hidden="true" />
@@ -96,17 +117,28 @@ export function BuyNowButton({
   product,
   viewerRole,
   className,
+  disabled = false,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
   className?: string;
+  disabled?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(false);
   const checkoutPath = "/cart?mode=checkout";
+  const isUnavailable = disabled || product.stockQuantity <= 0;
 
   async function handleBuyNow() {
+    if (isUnavailable) {
+      showToast({
+        title: "Bu məhsul hazırda stokda yoxdur.",
+        variant: "warning",
+      });
+      return;
+    }
+
     if (!requireCustomerRole(viewerRole)) {
       return;
     }
@@ -142,7 +174,7 @@ export function BuyNowButton({
     <Button
       type="button"
       onClick={handleBuyNow}
-      disabled={isChecking}
+      disabled={isChecking || isUnavailable}
       className={cn("min-w-0", className)}
     >
       <Zap className="mr-2 size-4 shrink-0" aria-hidden="true" />

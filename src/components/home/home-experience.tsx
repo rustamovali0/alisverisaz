@@ -2,19 +2,16 @@
 
 import {
   ArrowRight,
-  Heart,
   PackageSearch,
   ShieldCheck,
-  ShoppingCart,
   Sparkles,
   Store,
 } from "lucide-react";
 import { m } from "framer-motion";
 
 import { SiteFooter } from "@/components/layout/site-footer";
+import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
-import { HeaderAccountActions } from "@/components/auth/header-account-actions";
-import { SellProductButton } from "@/components/auth/sell-product-button";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -56,9 +53,9 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.28 }}
-      className="group overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
+      className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
     >
-      <Link href={`/${store.slug}`} className="block">
+      <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
           <div className="h-32 overflow-hidden">
             {store.coverUrl ? (
@@ -85,8 +82,10 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
         </div>
         <div className="p-4 pt-10">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-black tracking-normal">{store.name}</h3>
+            <div className="min-w-0">
+              <h3 className="line-clamp-2 break-words text-lg font-black tracking-normal">
+                {store.name}
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {store.productCount} məhsul
               </p>
@@ -130,82 +129,33 @@ export function HomeExperience({
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
 
   return (
-    <main className={cn("min-h-screen overflow-hidden bg-gradient-to-br", themeClass)}>
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
-        <div className="container flex h-16 items-center gap-3">
-          <Link href="/" className="flex min-w-0 items-center gap-2">
-            {siteSettings.logoUrl ? (
-              <img
-                src={siteSettings.logoUrl}
-                alt={siteSettings.siteName}
-                className="size-10 rounded-lg object-cover"
-              />
-            ) : (
-              <span className="grid size-10 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-                a
-              </span>
-            )}
-            <span className="truncate text-xl font-black tracking-normal">
-              {siteSettings.shortName || siteSettings.siteName}
-            </span>
-          </Link>
-          <nav className="hidden items-center gap-1 lg:flex">
-            <Button asChild variant="ghost">
-              <Link href="/products">Məhsullar</Link>
-            </Button>
-            <HeaderAccountActions />
-          </nav>
-          <MarketplaceSearch
-            stores={stores}
-            categories={categories}
-            className="hidden flex-1 md:flex"
-          />
-          <div className="ml-auto hidden items-center gap-1 md:flex">
-            <Button
-              asChild
-              size="icon"
-              variant="ghost"
-              className="size-[52px] rounded-lg border bg-background"
-              aria-label="Favorilər"
-            >
-              <Link href="/favorites">
-                <Heart className="size-7" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="icon"
-              variant="ghost"
-              className="size-[52px] rounded-lg border bg-background"
-              aria-label="Səbət"
-            >
-              <Link href="/cart">
-                <ShoppingCart className="size-7" aria-hidden="true" />
-              </Link>
-            </Button>
-            <SellProductButton />
-          </div>
-          <Button asChild className="ml-auto md:hidden" size="sm">
-            <Link href="/login">Daxil ol</Link>
-          </Button>
-        </div>
-      </header>
+    <main
+      className={cn(
+        "min-h-screen w-full max-w-full overflow-x-clip bg-gradient-to-br pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0",
+        themeClass,
+      )}
+    >
+      <MarketplaceHeader
+        siteName={siteSettings.shortName || siteSettings.siteName}
+        stores={stores}
+        categories={categories}
+      />
 
-      <section className="container grid min-h-[560px] items-center gap-10 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
+      <section className="container grid items-center gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
         <m.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="max-w-2xl"
+          className="min-w-0 max-w-2xl"
         >
           <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
             <Sparkles className="size-4 text-primary" aria-hidden="true" />
             Alışveriş marketplace
           </span>
-          <h1 className="mt-6 max-w-2xl text-4xl font-black leading-tight tracking-normal text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
             {heroTitle}
           </h1>
-          <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
+          <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
             {heroDescription}
           </p>
           <MarketplaceSearch
@@ -214,13 +164,14 @@ export function HomeExperience({
             className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10 md:grid md:grid-cols-[1fr_auto]"
             inputClassName="h-12 border-transparent bg-background"
             buttonSize="lg"
+            stackOnMobile
           />
           <div className="mt-5 flex flex-wrap gap-2">
             {activeCategories.slice(0, 6).map((category) => (
               <Link
                 key={category.id}
                 href={`/products?category=${category.slug}`}
-                className="rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+                className="max-w-full rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
               >
                 {category.name}
               </Link>
@@ -232,7 +183,7 @@ export function HomeExperience({
           initial={{ opacity: 0, scale: 0.96, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.38, ease: "easeOut" }}
-          className="relative"
+          className="relative hidden lg:block"
         >
           <div className="absolute -left-3 top-6 z-10 rounded-lg bg-card p-3 shadow-xl">
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -303,7 +254,7 @@ export function HomeExperience({
               <Link href="/products">{productsLabel}</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
             {activeCategories.map((category, index) => (
               <m.div
                 key={category.id}
@@ -340,7 +291,7 @@ export function HomeExperience({
               <Link href="/products">Hamısı</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {featuredStores.map((store, index) => (
               <HomeStoreCard key={store.id} store={store} index={index} />
             ))}
@@ -360,7 +311,7 @@ export function HomeExperience({
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
             {newStores.map((store, index) => (
               <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
             ))}

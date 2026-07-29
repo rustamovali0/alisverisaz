@@ -1,24 +1,21 @@
 "use client";
 
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
-import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
+import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
+import { formatAznDiscountedPrice } from "@/lib/format";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
-  Heart,
   MapPin,
   PackageSearch,
   Phone,
-  ShoppingCart,
   Store,
 } from "lucide-react";
 
@@ -59,65 +56,6 @@ type FooterProps = {
   };
 };
 
-function formatMoney(product: CartProduct) {
-  const value = Math.max(product.priceAmount - product.discountAmount, 0);
-
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
-}
-
-function MarketplaceHeader({
-  stores,
-  categories,
-  cartLabel,
-  searchQuery,
-}: {
-  stores: MarketplaceStore[];
-  categories: CategoryOption[];
-  cartLabel: string;
-  searchQuery?: string;
-}) {
-  return (
-    <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
-      <div className="container flex h-16 items-center gap-3">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid size-10 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-            a
-          </span>
-          <span className="text-xl font-black tracking-normal">Alışveriş</span>
-        </Link>
-        <MarketplaceSearch
-          stores={stores}
-          categories={categories}
-          defaultValue={searchQuery}
-          className="hidden flex-1 md:flex"
-        />
-        <Button
-          asChild
-          size="icon"
-          variant="ghost"
-          className="size-[52px] rounded-lg border bg-background"
-          aria-label="Favorilər"
-        >
-          <Link href="/favorites">
-            <Heart className="size-7" aria-hidden="true" />
-          </Link>
-        </Button>
-        <HeaderAccountActions className="hidden md:inline-flex" />
-        <Button asChild className="hidden sm:inline-flex">
-          <Link href="/cart">
-            <ShoppingCart className="mr-2 size-6" aria-hidden="true" />
-            {cartLabel}
-          </Link>
-        </Button>
-      </div>
-      <MobileBottomNav />
-    </header>
-  );
-}
-
 function StoreLogo({ store, className }: { store: MarketplaceStore; className?: string }) {
   return store.logoUrl ? (
     <img
@@ -151,8 +89,13 @@ function CategoryFilters({
   }
 
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 lg:block lg:space-y-2 lg:overflow-visible lg:pb-0">
-      <Button asChild variant={!selectedCategoryId ? "default" : "outline"}>
+    <div className="max-w-full min-w-0 overflow-x-auto pb-2 lg:overflow-visible lg:pb-0">
+      <div className="flex w-max min-w-full gap-2 lg:grid lg:w-full lg:min-w-0 lg:gap-2">
+      <Button
+        asChild
+        variant={!selectedCategoryId ? "default" : "outline"}
+        className="shrink-0 justify-start lg:w-full"
+      >
         <Link href={baseHref}>Bütün kateqoriyalar</Link>
       </Button>
       {categories.map((category) => (
@@ -160,10 +103,12 @@ function CategoryFilters({
           key={category.id}
           asChild
           variant={selectedCategoryId === category.id ? "default" : "outline"}
+          className="shrink-0 justify-start lg:w-full"
         >
           <Link href={`${baseHref}?category=${category.slug}`}>{category.name}</Link>
         </Button>
       ))}
+      </div>
     </div>
   );
 }
@@ -175,8 +120,8 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
     .slice(0, 3);
 
   return (
-    <article className="group overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10">
-      <Link href={`/${store.slug}`} className="block">
+    <article className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10">
+      <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
           <div className="h-32 overflow-hidden">
             {store.coverUrl ? (
@@ -197,13 +142,15 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
         </div>
         <div className="p-4 pt-10">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-lg font-black tracking-normal">{store.name}</h2>
+            <div className="min-w-0">
+              <h2 className="line-clamp-2 break-words text-lg font-black tracking-normal">
+                {store.name}
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {store.productCount} məhsul
               </p>
             </div>
-            <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+            <ArrowRight className="mt-1 size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
           </div>
           {store.description ? (
             <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -211,9 +158,9 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             </p>
           ) : null}
           {store.address ? (
-            <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="size-4 text-primary" aria-hidden="true" />
-              <span className="line-clamp-1">{store.address}</span>
+            <p className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
+              <span className="line-clamp-1 min-w-0">{store.address}</span>
             </p>
           ) : null}
           {previewImages.length > 0 ? (
@@ -256,13 +203,16 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 md:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
+    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {products.map((product) => {
+        const isOutOfStock = product.stockQuantity <= 0;
+
+        return (
         <article
           key={product.id}
-          className="group flex flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
+          className="group flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
         >
-          <Link href={`/${storeSlug}/products/${product.slug}`} className="block">
+          <Link href={`/${storeSlug}/products/${product.slug}`} className="block min-w-0">
             <div className="aspect-[4/3] overflow-hidden bg-muted">
               {product.imageUrl ? (
                 <img
@@ -277,24 +227,48 @@ export function ProductGrid({
               )}
             </div>
           </Link>
-          <div className="flex flex-1 flex-col p-3">
-            <Link href={`/${storeSlug}/products/${product.slug}`}>
-              <h2 className="line-clamp-2 min-h-10 text-sm font-semibold leading-5 tracking-normal hover:text-primary">
+          <div className="flex min-w-0 flex-1 flex-col p-3">
+            <Link href={`/${storeSlug}/products/${product.slug}`} className="min-w-0">
+              <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal hover:text-primary">
                 {product.name}
               </h2>
             </Link>
-            <p className="mt-2 text-base font-bold">{formatMoney(product)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {labels.stock}: {product.stockQuantity}
+            <p className="mt-2 truncate text-base font-bold">
+              {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
+            </p>
+            <p
+              className={cn(
+                "mt-1 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium",
+                isOutOfStock
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
+              <span className="truncate">
+                {isOutOfStock ? "Stokda yoxdur" : `${labels.stock}: ${product.stockQuantity}`}
+              </span>
             </p>
             <div className="mt-4 grid gap-2">
-              <DepositModal product={product} enabled={depositEnabled} />
-              <BuyNowButton product={product} className="w-full px-2 text-xs sm:text-sm" />
-              <AddToCartButton product={product} className="w-full px-2 text-xs sm:text-sm" />
+              <DepositModal
+                product={product}
+                enabled={depositEnabled && !isOutOfStock}
+                className="w-full px-2 text-xs sm:text-sm"
+              />
+              <BuyNowButton
+                product={product}
+                disabled={isOutOfStock}
+                className="w-full px-2 text-xs sm:text-sm"
+              />
+              <AddToCartButton
+                product={product}
+                disabled={isOutOfStock}
+                className="w-full px-2 text-xs sm:text-sm"
+              />
             </div>
           </div>
         </article>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -308,16 +282,17 @@ export function ProductMarketplace({
   labels,
 }: ProductMarketplaceProps) {
   return (
-    <main className="min-h-screen bg-muted/40">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <MarketplaceHeader
+        siteName={footer?.siteName}
         stores={stores}
         categories={categories}
-        cartLabel={labels.cart}
-        searchQuery={searchQuery}
+        searchDefaultValue={searchQuery}
+        showMobileSearch
       />
-      <div className="container py-8">
-        <header className="mb-6 flex flex-col gap-4 rounded-lg border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
+      <div className="container max-w-full py-6 md:py-8">
+        <header className="mb-6 flex min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:p-5">
+          <div className="min-w-0">
             <h1 className="text-2xl font-black tracking-normal">Mağazalar</h1>
           </div>
           <span className="rounded-md border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground">
@@ -325,8 +300,8 @@ export function ProductMarketplace({
           </span>
         </header>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[240px_1fr]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+          <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <CategoryFilters
               categories={categories}
               selectedCategoryId={selectedCategoryId}
@@ -340,7 +315,7 @@ export function ProductMarketplace({
               description={labels.emptyDescription}
             />
           ) : (
-            <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {stores.map((store) => (
                 <StoreCard key={store.id} store={store} />
               ))}
@@ -362,64 +337,73 @@ export function Storefront({
   labels,
 }: StorefrontProps) {
   return (
-    <main className="min-h-screen bg-muted/40">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <MarketplaceHeader
+        siteName={footer?.siteName}
         stores={[store]}
         categories={categories}
-        cartLabel={labels.cart}
       />
-      <div className="container py-6">
-        <nav className="mb-5 text-sm text-muted-foreground">
+      <div className="container max-w-full py-5 md:py-6">
+        <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
           <Link href="/products" className="hover:text-primary">
             Mağazalar
           </Link>
           <span className="mx-2">·</span>
-          <span className="font-medium text-foreground">{store.name}</span>
+          <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
         </nav>
 
-        <section className="overflow-hidden rounded-lg bg-card shadow-sm">
-          <div className="flex min-h-56 items-center justify-center bg-background">
+        <section className="min-w-0 overflow-hidden rounded-lg bg-card shadow-sm">
+          <div className="relative aspect-[16/6] min-h-28 overflow-hidden bg-primary/10 sm:aspect-[4/1]">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
                 alt={store.name}
-                className="h-56 w-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="grid h-56 w-full place-items-center">
-                <StoreLogo store={store} className="size-28" />
+              <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--accent)/0.18))] text-primary">
+                <div className="flex items-center gap-3 rounded-lg border border-primary/15 bg-background/75 px-4 py-3 shadow-sm backdrop-blur">
+                  <Store className="size-5" aria-hidden="true" />
+                  <span className="max-w-[220px] truncate text-sm font-semibold">
+                    {store.name}
+                  </span>
+                </div>
               </div>
             )}
+            <div className="absolute bottom-0 left-4 translate-y-1/2 md:left-8">
+              <StoreLogo store={store} className="size-20 shadow-sm sm:size-24" />
+            </div>
           </div>
-          <div className="grid gap-6 p-5 md:grid-cols-[1fr_260px] md:p-8">
-            <div className="flex gap-4">
-              <StoreLogo store={store} className="size-24 shrink-0" />
+          <div className="grid min-w-0 gap-6 p-4 pt-12 md:grid-cols-[minmax(0,1fr)_260px] md:p-8 md:pt-14">
+            <div className="flex min-w-0 gap-4">
               <div className="min-w-0">
-                <h1 className="text-2xl font-black tracking-normal">{store.name}</h1>
+                <h1 className="line-clamp-2 break-words text-2xl font-black tracking-normal md:text-3xl">
+                  {store.name}
+                </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {store.productCount} məhsul
                 </p>
                 {store.description ? (
-                  <p className="mt-5 max-w-2xl text-sm leading-6 text-foreground">
+                  <p className="mt-4 max-w-2xl break-words text-sm leading-6 text-foreground">
                     {store.description}
                   </p>
                 ) : null}
-                <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="mt-4 flex min-w-0 flex-wrap gap-4 text-sm text-muted-foreground">
                   {store.address ? (
-                    <span className="inline-flex items-center gap-2">
-                      <MapPin className="size-4 text-primary" aria-hidden="true" />
-                      {store.address}
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">{store.address}</span>
                     </span>
                   ) : null}
                 </div>
               </div>
             </div>
-            <div className="grid content-start gap-3">
+            <div className="grid min-w-0 content-start gap-3">
               {store.phone ? (
-                <Button asChild>
+                <Button asChild className="w-full min-w-0">
                   <a href={`tel:${store.phone.replace(/\s/g, "")}`}>
-                    <Phone className="mr-2 size-4" aria-hidden="true" />
-                    Nömrəni göstər
+                    <Phone className="mr-2 size-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Nömrəni göstər</span>
                   </a>
                 </Button>
               ) : null}
@@ -427,14 +411,14 @@ export function Storefront({
           </div>
         </section>
 
-        <section className="mt-6 rounded-lg bg-card p-5 shadow-sm md:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-normal">
+        <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
+          <div className="mb-6 min-w-0">
+            <h2 className="break-words text-xl font-black tracking-normal">
               {store.name} təklifləri ({store.productCount})
             </h2>
           </div>
-          <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-            <aside className="lg:sticky lg:top-24 lg:self-start">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+            <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
               <CategoryFilters
                 categories={categories}
                 selectedCategoryId={selectedCategoryId}

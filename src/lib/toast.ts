@@ -1,7 +1,7 @@
 type ToastInput = {
   title: string;
   description?: string;
-  variant?: "success" | "info";
+  variant?: "success" | "error" | "warning" | "info";
 };
 
 export function showToast(input: ToastInput) {

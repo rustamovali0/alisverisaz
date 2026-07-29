@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Maximize2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
@@ -48,14 +48,30 @@ export function ProductDetailGallery({
   const [isOpen, setIsOpen] = useState(false);
   const activeImage = galleryImages[activeIndex];
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
   return (
     <>
-      <div className="overflow-hidden rounded-lg border bg-card">
+      <div className="min-w-0 overflow-hidden rounded-lg border bg-card">
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-square w-full bg-muted text-left"
+          className="group relative block aspect-square w-full max-h-[72vh] bg-muted text-left"
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
@@ -76,7 +92,7 @@ export function ProductDetailGallery({
           ) : null}
         </button>
         {galleryImages.length > 1 ? (
-          <div className="grid grid-cols-5 gap-2 border-t bg-background p-3">
+          <div className="grid grid-cols-4 gap-2 border-t bg-background p-3 sm:grid-cols-5">
             {galleryImages.map((image, index) => (
               <button
                 key={`${image.url}-${index}`}
@@ -100,7 +116,13 @@ export function ProductDetailGallery({
       </div>
 
       {isOpen && activeImage ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${productName} şəkli`}
+          onClick={() => setIsOpen(false)}
+        >
           <button
             type="button"
             className="absolute right-4 top-4 inline-flex size-11 items-center justify-center rounded-lg border bg-card"
@@ -113,6 +135,7 @@ export function ProductDetailGallery({
             src={activeImage.url}
             alt={productName}
             className="max-h-[86vh] max-w-[94vw] rounded-lg object-contain shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
           />
         </div>
       ) : null}

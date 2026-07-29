@@ -52,11 +52,25 @@
     @apply border-border;
   }
 
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     background:
       linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.72) 42%, hsl(var(--background)) 100%),
       hsl(var(--background));
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
   }
 
   ::selection {

@@ -81,12 +81,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-2xl shadow-slate-950/15 backdrop-blur md:hidden",
+        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t bg-background/95 px-1.5 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-2xl shadow-slate-950/15 backdrop-blur sm:px-2 md:hidden",
         className,
       )}
       aria-label="Mobil naviqasiya"
     >
-      <div className="grid grid-cols-5 items-center text-center">
+      <div className="grid w-full min-w-0 grid-cols-5 items-center text-center">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -99,20 +99,20 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "grid min-h-14 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground",
+                "grid min-h-14 min-w-0 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground min-[390px]:text-[11px]",
                 isActive && "bg-primary/10 text-primary",
               )}
               aria-current={isActive ? "page" : undefined}
             >
               <Icon className="mx-auto size-6" aria-hidden="true" />
-              <span className="leading-none">{item.label}</span>
+              <span className="max-w-full truncate leading-none">{item.label}</span>
             </Link>
           );
         })}
         <Link
           href={accountPath(role)}
           className={cn(
-            "grid min-h-14 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground",
+            "grid min-h-14 min-w-0 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground min-[390px]:text-[11px]",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/radmin")) &&
@@ -127,7 +127,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
           }
         >
           <AccountIcon role={role} />
-          <span className="leading-none">{accountLabel(role)}</span>
+          <span className="max-w-full truncate leading-none">{accountLabel(role)}</span>
         </Link>
       </div>
     </nav>

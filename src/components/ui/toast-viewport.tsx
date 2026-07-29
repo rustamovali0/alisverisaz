@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Info, X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ type AppToast = {
   id: string;
   title: string;
   description?: string;
-  variant?: "success" | "info";
+  variant?: "success" | "error" | "warning" | "info";
 };
 
 type ToastEvent = CustomEvent<Omit<AppToast, "id">>;
@@ -24,9 +24,11 @@ export function ToastViewport() {
       const id = crypto.randomUUID();
 
       setToasts((current) => [...current, { id, ...detail }].slice(-3));
+      const timeout = detail.variant === "error" ? 7000 : detail.variant === "warning" ? 5600 : 3800;
+
       window.setTimeout(() => {
         setToasts((current) => current.filter((toast) => toast.id !== id));
-      }, 3800);
+      }, timeout);
     }
 
     window.addEventListener("alisveris-toast", handleToast);
@@ -39,31 +41,42 @@ export function ToastViewport() {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-[80] grid w-[min(360px,calc(100vw-2rem))] gap-2">
-      {toasts.map((toast) => (
+    <div
+      className="fixed left-3 right-3 top-4 z-[80] grid max-w-full gap-2 md:left-auto md:right-4 md:w-full md:max-w-[360px]"
+      aria-live="polite"
+      aria-relevant="additions removals"
+    >
+      {toasts.map((toast) => {
+        const Icon =
+          toast.variant === "success"
+            ? CheckCircle2
+            : toast.variant === "error"
+              ? XCircle
+              : toast.variant === "warning"
+                ? AlertTriangle
+                : Info;
+
+        return (
         <div
           key={toast.id}
-          className="flex items-start gap-3 rounded-lg border bg-card/95 p-3 text-card-foreground shadow-xl shadow-slate-900/12 backdrop-blur"
-          role="status"
+          className="flex min-w-0 items-start gap-3 rounded-lg border bg-card/95 p-3 text-card-foreground shadow-xl shadow-slate-900/12 backdrop-blur"
+          role={toast.variant === "error" ? "alert" : "status"}
         >
           <span
             className={cn(
               "mt-0.5 grid size-8 shrink-0 place-items-center rounded-md",
-              toast.variant === "success"
-                ? "bg-emerald-500/10 text-emerald-600"
-                : "bg-primary/10 text-primary",
+              toast.variant === "success" && "bg-emerald-500/10 text-emerald-600",
+              toast.variant === "error" && "bg-destructive/10 text-destructive",
+              toast.variant === "warning" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+              (!toast.variant || toast.variant === "info") && "bg-primary/10 text-primary",
             )}
           >
-            {toast.variant === "success" ? (
-              <CheckCircle2 className="size-5" aria-hidden="true" />
-            ) : (
-              <Info className="size-5" aria-hidden="true" />
-            )}
+            <Icon className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold">{toast.title}</p>
+            <p className="break-words text-sm font-bold">{toast.title}</p>
             {toast.description ? (
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
                 {toast.description}
               </p>
             ) : null}
@@ -81,7 +94,8 @@ export function ToastViewport() {
             <X className="size-4" aria-hidden="true" />
           </Button>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

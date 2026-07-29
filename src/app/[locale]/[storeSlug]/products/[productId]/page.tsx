@@ -20,6 +20,7 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
+import { formatAznDiscountedPrice } from "@/lib/format";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
 import { getProductReviews, getReviewSummary } from "@/lib/reviews/data";
 import { getDepositSettings } from "@/lib/settings/data";
@@ -32,13 +33,6 @@ type ProductDetailPageProps = {
     productId: string;
   }>;
 };
-
-function formatMoney(priceAmount: number, discountAmount: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(Math.max(priceAmount - discountAmount, 0));
-}
 
 export async function generateMetadata({
   params,
@@ -102,84 +96,99 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const viewerRole = current?.role ?? null;
 
   return (
-    <main className="min-h-screen bg-muted/40">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <MarketplaceHeader siteName={siteSettings.shortName || siteSettings.siteName} />
       <ViewTracker productId={detail.product.id} />
-      <div className="container py-8">
-        <nav className="mb-5 text-sm text-muted-foreground">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="container max-w-full py-5 md:py-8">
+        <nav className="mb-5 min-w-0 text-sm text-muted-foreground">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
             <ProductBackButton />
-            <div>
+            <div className="flex min-w-0 items-center overflow-hidden">
               <Link href="/products" className="hover:text-primary">
                 Mağazalar
               </Link>
               <span className="mx-2">·</span>
-              <Link href={`/${detail.store.slug}`} className="hover:text-primary">
+              <Link href={`/${detail.store.slug}`} className="min-w-0 truncate hover:text-primary">
                 {detail.store.name}
               </Link>
               <span className="mx-2">·</span>
-              <span className="font-medium text-foreground">{detail.product.name}</span>
+              <span className="min-w-0 truncate font-medium text-foreground">
+                {detail.product.name}
+              </span>
             </div>
           </div>
         </nav>
 
-        <section className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
+        <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <ProductDetailGallery
             images={detail.product.images}
             fallbackImageUrl={detail.product.imageUrl}
             productName={detail.product.name}
           />
-          <div className="rounded-lg border bg-card p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">{detail.store.name}</p>
-            <h1 className="mt-2 text-3xl font-black tracking-normal">
+          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
+            <p className="truncate text-sm text-muted-foreground">{detail.store.name}</p>
+            <h1 className="mt-2 break-words text-2xl font-black tracking-normal md:text-3xl">
               {detail.product.name}
             </h1>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((value) => (
-                  <Star
-                    key={value}
-                    className={
-                      value <= Math.round(reviewSummary.average)
-                        ? "size-5 fill-amber-400 text-amber-400"
-                        : "size-5 text-muted-foreground"
-                    }
-                    aria-hidden="true"
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-muted-foreground">
-                {reviewSummary.count
-                  ? `${reviewSummary.average} / 5 (${reviewSummary.count} rəy)`
-                  : "Hələ rəy yoxdur"}
-              </span>
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+              {reviewSummary.count ? (
+                <>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <Star
+                        key={value}
+                        className={
+                          value <= Math.round(reviewSummary.average)
+                            ? "size-5 fill-amber-400 text-amber-400"
+                            : "size-5 text-muted-foreground"
+                        }
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {reviewSummary.average} / 5 ({reviewSummary.count} rəy)
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm text-muted-foreground">Hələ rəy yoxdur</span>
+              )}
             </div>
-            <p className="mt-5 text-3xl font-black">
-              {formatMoney(detail.product.priceAmount, detail.product.discountAmount)}
+            <p className="mt-5 break-words text-3xl font-black">
+              {formatAznDiscountedPrice(
+                detail.product.priceAmount,
+                detail.product.discountAmount,
+              )}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Stok: {detail.product.stockQuantity}
+            <p className={canBuy ? "mt-2 text-sm text-muted-foreground" : "mt-2 text-sm font-semibold text-destructive"}>
+              {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p>
             {detail.product.description ? (
-              <p className="mt-5 leading-7 text-muted-foreground">
+              <p className="mt-5 break-words leading-7 text-muted-foreground">
                 {detail.product.description}
               </p>
             ) : null}
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <DepositModal product={detail.product} enabled={depositSettings.enabled} />
-              {canBuy ? (
-                <>
-                  <BuyNowButton product={detail.product} viewerRole={viewerRole} />
-                  <AddToCartButton product={detail.product} viewerRole={viewerRole} />
-                </>
-              ) : (
-                <Button type="button" disabled className="sm:col-span-2">
-                  Stokda yoxdur
-                </Button>
-              )}
+            <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
+              <DepositModal
+                product={detail.product}
+                enabled={depositSettings.enabled && canBuy}
+                className="w-full"
+              />
+              <BuyNowButton
+                product={detail.product}
+                viewerRole={viewerRole}
+                disabled={!canBuy}
+                className="w-full"
+              />
+              <AddToCartButton
+                product={detail.product}
+                viewerRole={viewerRole}
+                disabled={!canBuy}
+                className="w-full"
+              />
             </div>
-            <div className="mt-5 rounded-lg border bg-background p-4">
-              <div className="flex items-center gap-3">
+            <div className="mt-5 min-w-0 rounded-lg border bg-background p-4">
+              <div className="flex min-w-0 items-center gap-3">
                 <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
                   {detail.store.logoUrl ? (
                     <img
@@ -207,8 +216,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         </section>
 
-        <section className="mt-6 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-          <div className="rounded-lg border bg-card p-5 shadow-sm">
+        <section className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <MessageCircle className="size-5 text-primary" aria-hidden="true" />
               <h2 className="text-xl font-black tracking-normal">Mesaj / Chat</h2>
@@ -226,18 +235,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 </p>
               ) : (
                 messages.map((item) => (
-                  <article key={item.id} className="space-y-3 rounded-lg border bg-background p-3">
+                  <article key={item.id} className="min-w-0 space-y-3 rounded-lg border bg-background p-3">
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-semibold">{item.senderName}</p>
                       <span className="text-xs text-muted-foreground">
                         {new Date(item.createdAt).toLocaleString("az-AZ")}
                       </span>
                     </div>
-                    <div className="rounded-lg bg-card p-3 text-sm leading-6 text-muted-foreground">
+                    <div className="break-words rounded-lg bg-card p-3 text-sm leading-6 text-muted-foreground">
                       {item.message}
                     </div>
                     {item.replyMessage ? (
-                      <div className="ml-auto rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground sm:max-w-[85%]">
+                      <div className="ml-auto break-words rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground sm:max-w-[85%]">
                         <p className="mb-1 text-xs font-semibold text-primary-foreground/75">
                           Satıcının cavabı
                           {item.replyAt
@@ -253,7 +262,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
           </div>
 
-          <div className="rounded-lg border bg-card p-5 shadow-sm">
+          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
               <h2 className="text-xl font-black tracking-normal">Dəyərləndirmə və rəylər</h2>
@@ -270,7 +279,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 </p>
               ) : (
                 reviews.map((review) => (
-                  <article key={review.id} className="rounded-lg border bg-background p-3">
+                  <article key={review.id} className="min-w-0 rounded-lg border bg-background p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-semibold">{review.userName}</p>
@@ -293,7 +302,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                       </span>
                     </div>
                     {review.comment ? (
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      <p className="mt-2 break-words text-sm leading-6 text-muted-foreground">
                         {review.comment}
                       </p>
                     ) : null}

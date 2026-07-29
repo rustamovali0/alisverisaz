@@ -17,6 +17,7 @@ type MarketplaceSearchProps = {
   inputClassName?: string;
   buttonSize?: "default" | "lg";
   buttonLabel?: string;
+  stackOnMobile?: boolean;
 };
 
 type SearchSuggestion = {
@@ -55,6 +56,7 @@ export function MarketplaceSearch({
   inputClassName,
   buttonSize = "default",
   buttonLabel = "Axtar",
+  stackOnMobile = false,
 }: MarketplaceSearchProps) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
@@ -126,37 +128,45 @@ export function MarketplaceSearch({
         event.preventDefault();
         submitSearch(query.trim());
       }}
-      className={cn("relative flex items-center gap-2", className)}
+      className={cn(
+        "relative flex w-full min-w-0 items-center gap-2",
+        stackOnMobile ? "flex-col sm:flex-row" : "flex-row",
+        className,
+      )}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           setIsFocused(false);
         }
       }}
     >
-      <label className="relative flex-1">
+      <label className="relative min-w-0 flex-1">
         <span className="sr-only">Axtarış</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
           autoComplete="new-password"
           autoCorrect="off"
           spellCheck={false}
-          className={cn("premium-input h-11 w-full pl-9 pr-3 text-sm", inputClassName)}
+          className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
           name="q"
-          placeholder="Mağaza, məhsul və kateqoriya axtar"
+          placeholder="Məhsul, mağaza və ya kateqoriya axtar"
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
         />
       </label>
-      <Button type="submit" size={buttonSize}>
+      <Button
+        type="submit"
+        size={buttonSize}
+        className={cn(stackOnMobile && "w-full sm:w-auto")}
+      >
         {buttonLabel}
         {buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
       {isFocused && suggestions.length > 0 ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {suggestions.map((suggestion) => (
             <Link
               key={suggestion.key}

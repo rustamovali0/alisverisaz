@@ -58,7 +58,7 @@ function formatBrandName(value?: string) {
 
 export function SiteFooter({
   siteName = "Alışveriş",
-  description = "Azərbaycanda mağazaların yeni məhsullarını bir yerdə toplayan e-ticarət marketplace platforması.",
+  description = "Azərbaycan üçün müasir e-ticarət platforması.",
   socialLinks,
 }: SiteFooterProps) {
   const displaySiteName = formatBrandName(siteName);
@@ -123,16 +123,18 @@ export function SiteFooter({
   }, []);
 
   return (
-    <footer className="border-t bg-card/95">
-      <div className="container grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2">
+    <footer className="w-full max-w-full overflow-x-clip border-t bg-card/95">
+      <div className="container grid max-w-full grid-cols-1 gap-6 py-6 md:grid-cols-2 md:py-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+        <div className="min-w-0">
+          <Link href="/" className="inline-flex min-w-0 items-center gap-2">
             <span className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
               a
             </span>
-            <span className="text-xl font-black tracking-normal">{displaySiteName}</span>
+            <span className="min-w-0 truncate text-xl font-black tracking-normal">
+              {displaySiteName}
+            </span>
           </Link>
-          <p className="mt-4 max-w-md text-sm leading-6 text-muted-foreground">
+          <p className="mt-4 max-w-md break-words text-sm leading-6 text-muted-foreground">
             {description}
           </p>
           {socials.length > 0 ? (
@@ -156,7 +158,7 @@ export function SiteFooter({
             </div>
           ) : null}
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
             Platforma
           </h2>
@@ -172,7 +174,7 @@ export function SiteFooter({
             </Link>
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
             Hesab
           </h2>
@@ -196,7 +198,7 @@ export function SiteFooter({
             </Link>
           </div>
         </div>
-        <div>
+        <div className="min-w-0">
           <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
             Dəstək
           </h2>
@@ -223,9 +225,9 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t">
-        <div className="container flex flex-col gap-2 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="container flex max-w-full flex-col gap-2 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:pb-4">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
-          <span>Yeni məhsullar üçün e-ticarət marketplace</span>
+          <span className="break-words">Azərbaycan üçün müasir e-ticarət platforması.</span>
         </div>
       </div>
     </footer>
