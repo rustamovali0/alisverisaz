@@ -42,7 +42,7 @@ export function ToastViewport() {
 
   return (
     <div
-      className="fixed left-3 right-3 top-4 z-[80] grid max-w-full gap-2 md:left-auto md:right-4 md:w-full md:max-w-[360px]"
+      className="fixed left-3 right-3 top-4 z-[80] grid max-w-full gap-2 md:left-auto md:right-4 md:w-full md:max-w-[380px]"
       aria-live="polite"
       aria-relevant="additions removals"
     >
@@ -59,16 +59,22 @@ export function ToastViewport() {
         return (
         <div
           key={toast.id}
-          className="flex min-w-0 items-start gap-3 rounded-lg border bg-card/95 p-3 text-card-foreground shadow-xl shadow-slate-900/12 backdrop-blur"
+          className={cn(
+            "flex min-w-0 items-start gap-3 rounded-xl border bg-card/95 p-3 text-card-foreground shadow-2xl shadow-slate-900/12 backdrop-blur",
+            toast.variant === "success" && "border-emerald-500/25",
+            toast.variant === "error" && "border-destructive/25",
+            toast.variant === "warning" && "border-amber-500/25",
+            (!toast.variant || toast.variant === "info") && "border-primary/20",
+          )}
           role={toast.variant === "error" ? "alert" : "status"}
         >
           <span
             className={cn(
-              "mt-0.5 grid size-8 shrink-0 place-items-center rounded-md",
-              toast.variant === "success" && "bg-emerald-500/10 text-emerald-600",
+              "mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border",
+              toast.variant === "success" && "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
               toast.variant === "error" && "bg-destructive/10 text-destructive",
-              toast.variant === "warning" && "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-              (!toast.variant || toast.variant === "info") && "bg-primary/10 text-primary",
+              toast.variant === "warning" && "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+              (!toast.variant || toast.variant === "info") && "border-primary/20 bg-primary/10 text-primary",
             )}
           >
             <Icon className="size-5" aria-hidden="true" />
@@ -85,7 +91,7 @@ export function ToastViewport() {
             type="button"
             size="icon"
             variant="ghost"
-            className="size-7 shrink-0"
+            className="size-8 shrink-0 rounded-lg"
             onClick={() =>
               setToasts((current) => current.filter((item) => item.id !== toast.id))
             }

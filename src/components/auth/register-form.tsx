@@ -275,7 +275,7 @@ export function RegisterForm({
         </div>
       ) : null}
       {canRegister ? (
-        <form action={handleSubmit} className="grid gap-4">
+        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-4">
           <AuthErrorAlert message={serverError} />
           <div className="grid gap-4 sm:grid-cols-2">
             <AuthField

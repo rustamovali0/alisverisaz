@@ -20,16 +20,18 @@ export function AuthErrorAlert({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive",
+        "flex items-start gap-3 rounded-xl border border-destructive/20 bg-card px-4 py-3 text-sm text-foreground shadow-sm",
         className,
       )}
       role="alert"
       aria-live="polite"
     >
-      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-      <div className="space-y-0.5">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg border border-destructive/20 bg-destructive/10 text-destructive">
+        <AlertCircle className="size-4" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 space-y-0.5">
         <p className="font-semibold">{title}</p>
-        <p className="leading-6">{message}</p>
+        <p className="break-words leading-6 text-muted-foreground">{message}</p>
       </div>
     </div>
   );

@@ -374,15 +374,17 @@ export function Storefront({
         </nav>
 
         <section className="min-w-0 overflow-hidden rounded-lg bg-card shadow-sm">
-          <div className="relative h-36 overflow-hidden bg-primary/10 sm:h-44 lg:h-56">
+          <div className="relative h-36 bg-primary/10 sm:h-44 lg:h-56">
             {store.coverUrl ? (
-              <img
-                src={store.coverUrl}
-                alt={store.name}
-                className="h-full w-full object-cover"
-              />
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={store.coverUrl}
+                  alt={store.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
             ) : (
-              <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--accent)/0.18))] text-primary">
+              <div className="absolute inset-0 grid h-full w-full place-items-center overflow-hidden bg-[linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--accent)/0.18))] text-primary">
                 <div className="flex items-center gap-3 rounded-lg border border-primary/15 bg-background/75 px-4 py-3 shadow-sm backdrop-blur">
                   <Store className="size-5" aria-hidden="true" />
                   <span className="max-w-[220px] truncate text-sm font-semibold">
@@ -391,7 +393,7 @@ export function Storefront({
                 </div>
               </div>
             )}
-            <div className="absolute bottom-0 left-4 translate-y-1/2 md:left-8">
+            <div className="absolute bottom-0 left-4 z-20 translate-y-1/2 md:left-8">
               <StoreLogo store={store} className="size-20 shadow-sm sm:size-24" />
             </div>
           </div>

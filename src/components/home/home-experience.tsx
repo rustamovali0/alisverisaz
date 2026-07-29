@@ -187,28 +187,18 @@ export function HomeExperience({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="grid h-full grid-cols-2 gap-3 p-4">
-                  {featuredStores.slice(0, 4).map((store, index) => (
-                    <div
-                      key={store.id}
-                      className={cn(
-                        "overflow-hidden rounded-lg border bg-background",
-                        index === 0 ? "col-span-2" : "",
-                      )}
-                    >
-                      {store.coverUrl || store.logoUrl ? (
-                        <img
-                          src={store.coverUrl || store.logoUrl || ""}
-                          alt={store.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Store className="size-8 text-muted-foreground" />
-                        </div>
-                      )}
+                <div className="grid h-full place-items-center bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--accent)/0.12))] p-8 text-center">
+                  <div className="max-w-sm">
+                    <div className="mx-auto grid size-16 place-items-center rounded-lg border border-primary/20 bg-background/80 text-primary shadow-sm">
+                      <Store className="size-8" aria-hidden="true" />
                     </div>
-                  ))}
+                    <h2 className="mt-5 text-2xl font-black tracking-normal">
+                      {heroTitle}
+                    </h2>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                      {heroDescription}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

@@ -28,7 +28,7 @@ function createAlert(input: {
   return new Promise<ConfirmResult>((resolve) => {
     const root = document.createElement("div");
     root.className =
-      "fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm";
+      "fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 px-4 py-6 backdrop-blur-md";
 
     const isConfirm = input.kind === "confirm";
     const safeTitle = escapeHtml(input.title);
@@ -38,35 +38,41 @@ function createAlert(input: {
     const tone =
       input.kind === "success"
         ? {
-            badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+            accent: "border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/35 dark:text-emerald-300",
+            button: "bg-emerald-600 text-white hover:bg-emerald-700",
             symbol: "✓",
           }
         : input.kind === "error"
           ? {
-              badge: "bg-red-500/10 text-red-600 border-red-500/20",
+              accent: "border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-300",
+              button: "bg-red-600 text-white hover:bg-red-700",
               symbol: "!",
             }
           : input.kind === "confirm"
             ? {
-                badge: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+                accent: "border-amber-500/35 bg-amber-50 text-amber-700 dark:bg-amber-950/35 dark:text-amber-300",
+                button: "bg-primary text-primary-foreground hover:bg-primary/90",
                 symbol: "?",
               }
             : {
-                badge: "bg-primary/10 text-primary border-primary/20",
+                accent: "border-primary/25 bg-primary/10 text-primary",
+                button: "bg-primary text-primary-foreground hover:bg-primary/90",
                 symbol: "i",
               };
 
     root.innerHTML = `
-      <section class="w-full max-w-md rounded-lg border bg-card p-5 text-card-foreground shadow-2xl shadow-slate-950/20">
+      <section role="dialog" aria-modal="true" class="w-full max-w-[440px] overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-2xl shadow-slate-950/25">
+        <div class="h-1 bg-primary"></div>
+        <div class="p-5 sm:p-6">
         <div class="flex items-start gap-4">
-          <div class="grid size-12 shrink-0 place-items-center rounded-lg border text-xl font-black ${tone.badge}">
+          <div class="grid size-11 shrink-0 place-items-center rounded-xl border text-lg font-black ${tone.accent}">
             ${tone.symbol}
           </div>
           <div class="min-w-0 flex-1">
-            <h2 class="text-xl font-black tracking-normal">${safeTitle}</h2>
+            <h2 class="break-words text-lg font-black tracking-normal sm:text-xl">${safeTitle}</h2>
             ${
               safeText
-                ? `<p class="mt-2 text-sm leading-6 text-muted-foreground">${safeText}</p>`
+                ? `<p class="mt-2 break-words text-sm leading-6 text-muted-foreground">${safeText}</p>`
                 : ""
             }
           </div>
@@ -74,10 +80,11 @@ function createAlert(input: {
         <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           ${
             isConfirm
-              ? `<button type="button" data-alert-cancel class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground">${safeCancelText}</button>`
+              ? `<button type="button" data-alert-cancel class="inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">${safeCancelText}</button>`
               : ""
           }
-          <button type="button" data-alert-confirm class="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">${safeConfirmText}</button>
+          <button type="button" data-alert-confirm class="inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tone.button}">${safeConfirmText}</button>
+        </div>
         </div>
       </section>
     `;
@@ -158,7 +165,7 @@ export const appAlert = {
       title,
       text: getErrorMessage(error),
       confirmText: "Bağla",
-      autoCloseMs: 2000,
+      autoCloseMs: 6000,
     });
   },
   info(title: string, text?: string) {
@@ -167,7 +174,7 @@ export const appAlert = {
       title,
       text,
       confirmText: "Oldu",
-      autoCloseMs: 2000,
+      autoCloseMs: 3500,
     });
   },
   confirm(
