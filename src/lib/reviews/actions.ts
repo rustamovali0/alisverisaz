@@ -78,23 +78,28 @@ export async function upsertProductReviewAction(
   const resolvedStoreSlug =
     typeof store?.slug === "string" && store.slug ? store.slug : storeSlug;
 
-  const { error } = await (supabase as any).from("reviews").upsert(
-    {
-      product_id: productId,
-      user_id: current.user.id,
-      rating,
-      comment: comment.slice(0, 2000) || null,
-      status: "approved",
-    },
-    {
-      onConflict: "product_id,user_id",
-    },
-  );
+  const { error } = await (supabase as any)
+    .from("reviews")
+    .upsert(
+      {
+        product_id: productId,
+        user_id: current.user.id,
+        rating,
+        comment: comment.slice(0, 2000) || null,
+        status: "approved",
+      },
+      {
+        onConflict: "product_id,user_id",
+      },
+    );
 
   if (error) {
     return {
       ok: false,
-      message: error.message,
+      message:
+        error.code === "23505"
+          ? "Rəy cədvəlində təkrar rəy məhdudiyyəti hələ silinməyib. Reviews SQL migration işlədin."
+          : error.message,
     };
   }
 
@@ -110,5 +115,67 @@ export async function upsertProductReviewAction(
   return {
     ok: true,
     message: "Dəyərləndirmə saxlandı.",
+  };
+}
+
+export async function deleteProductReviewAction(
+  reviewId: string,
+  productId: string,
+  storeSlug: string,
+): Promise<ActionResult> {
+  const current = await getCurrentUserProfile();
+
+  if (!current) {
+    return {
+      ok: false,
+      message: "Rəy silmək üçün əvvəlcə daxil olun.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { data: review } = await (supabase as any)
+    .from("reviews")
+    .select("id,user_id,products(id,slug,stores(slug))")
+    .eq("id", reviewId)
+    .eq("product_id", productId)
+    .maybeSingle();
+
+  if (!review || review.user_id !== current.user.id) {
+    return {
+      ok: false,
+      message: "Bu rəy üzərində icazəniz yoxdur.",
+    };
+  }
+
+  const { error } = await (supabase as any)
+    .from("reviews")
+    .delete()
+    .eq("id", reviewId)
+    .eq("user_id", current.user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  const product = Array.isArray(review.products) ? review.products[0] : review.products;
+  const store = Array.isArray(product?.stores) ? product?.stores[0] : product?.stores;
+  const resolvedStoreSlug =
+    typeof store?.slug === "string" && store.slug ? store.slug : storeSlug;
+
+  if (resolvedStoreSlug) {
+    revalidatePath(`/${resolvedStoreSlug}/products/${productId}`);
+    if (typeof product?.slug === "string" && product.slug) {
+      revalidatePath(`/${resolvedStoreSlug}/products/${product.slug}`);
+    }
+  }
+
+  revalidatePath("/radmin/reviews");
+
+  return {
+    ok: true,
+    message: "Rəy silindi.",
   };
 }

@@ -15,6 +15,8 @@ type ProductMessageFormProps = {
   storeId: string;
   storeSlug: string;
   viewerRole?: AuthRole | null;
+  defaultSenderName?: string;
+  defaultSenderPhone?: string;
 };
 
 export function ProductMessageForm({
@@ -22,6 +24,8 @@ export function ProductMessageForm({
   storeId,
   storeSlug,
   viewerRole,
+  defaultSenderName = "",
+  defaultSenderPhone = "",
 }: ProductMessageFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -61,13 +65,13 @@ export function ProductMessageForm({
           <input
             className="premium-input h-11"
             name="senderName"
+            defaultValue={defaultSenderName}
             placeholder="Adınızı yazın"
-            required
           />
         </label>
         <label className="grid gap-1 text-sm font-medium">
           Telefon
-          <PhoneInput name="senderPhone" className="h-11" />
+          <PhoneInput name="senderPhone" defaultValue={defaultSenderPhone} className="h-11" />
         </label>
       </div>
       <label className="grid gap-1 text-sm font-medium">

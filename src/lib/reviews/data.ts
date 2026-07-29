@@ -4,6 +4,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 export type ProductReview = {
   id: string;
   productId: string;
+  userId: string;
   productName: string;
   storeName: string;
   userName: string;
@@ -16,6 +17,7 @@ export type ProductReview = {
 type ReviewRow = {
   id: string;
   product_id: string;
+  user_id: string;
   rating: number;
   comment: string | null;
   status: string;
@@ -36,6 +38,7 @@ function mapReview(row: ReviewRow): ProductReview {
   return {
     id: row.id,
     productId: row.product_id,
+    userId: row.user_id,
     productName: row.products?.name ?? row.product_id,
     storeName: row.products?.stores?.name ?? "",
     userName: row.profiles?.full_name || row.profiles?.email || "İstifadəçi",
@@ -50,7 +53,7 @@ export async function getProductReviews(productId: string) {
   const supabase = createSupabaseAdminClient();
   const { data } = await (supabase as any)
     .from("reviews")
-    .select("id,product_id,rating,comment,status,created_at,profiles(full_name,email),products(name,stores(name))")
+    .select("id,product_id,user_id,rating,comment,status,created_at,profiles(full_name,email),products(name,stores(name))")
     .eq("product_id", productId)
     .eq("status", "approved")
     .order("created_at", {
@@ -65,7 +68,7 @@ export async function getAdminProductReviews() {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("reviews")
-    .select("id,product_id,rating,comment,status,created_at,profiles(full_name,email),products(name,stores(name))")
+    .select("id,product_id,user_id,rating,comment,status,created_at,profiles(full_name,email),products(name,stores(name))")
     .order("created_at", {
       ascending: false,
     })

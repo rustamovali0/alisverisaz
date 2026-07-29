@@ -98,6 +98,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const reviewSummary = getReviewSummary(reviews);
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
+  const currentReview =
+    current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -231,6 +233,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               storeId={detail.store.id}
               storeSlug={detail.store.slug}
               viewerRole={viewerRole}
+              defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
+              defaultSenderPhone={current?.profile?.phone ?? ""}
             />
             <ProductMessageThread messages={messages} />
           </div>
@@ -244,6 +248,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               productId={detail.product.id}
               storeSlug={detail.store.slug}
               viewerRole={viewerRole}
+              reviewId={currentReview?.id ?? null}
+              initialRating={currentReview?.rating ?? 0}
+              initialComment={currentReview?.comment ?? ""}
             />
             <ProductReviewList reviews={reviews} />
           </div>

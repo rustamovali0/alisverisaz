@@ -116,7 +116,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   }
 
   return (
-    <form action={handleSubmit} className="premium-card grid gap-5 p-5">
+    <form action={handleSubmit} encType="multipart/form-data" className="premium-card grid gap-5 p-5">
       <input type="hidden" name="storeId" value={store.id} />
       <div>
         <h2 className="text-xl font-black tracking-normal">Əsas ayarlar</h2>

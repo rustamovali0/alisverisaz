@@ -108,7 +108,7 @@ export async function createProductMessageAction(
 ): Promise<ActionResult> {
   const productId = readString(formData, "productId");
   const storeSlug = readString(formData, "storeSlug");
-  const senderName = readString(formData, "senderName");
+  const senderNameInput = readString(formData, "senderName");
   const senderPhone = normalizeAzerbaijanPhone(readString(formData, "senderPhone"));
   const message = readString(formData, "message");
   const current = await getCurrentUserProfile();
@@ -120,10 +120,16 @@ export async function createProductMessageAction(
     };
   }
 
-  if (!productId || !senderName || !message) {
+  const senderName =
+    senderNameInput ||
+    current.profile?.full_name ||
+    current.user.email ||
+    "İstifadəçi";
+
+  if (!productId || !message) {
     return {
       ok: false,
-      message: "Ad və mesaj mütləqdir.",
+      message: "Mesaj mətni mütləqdir.",
     };
   }
 
