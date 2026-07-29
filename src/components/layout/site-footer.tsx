@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Instagram, MessageCircle, Music2 } from "lucide-react";
+import { Instagram } from "lucide-react";
 
+import { TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 import { Link } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -74,13 +75,13 @@ export function SiteFooter({
       key: "tiktok" as const,
       label: "TikTok",
       href: normalizeSocialHref("tiktok", socialLinks?.tiktok),
-      icon: Music2,
+      icon: TikTokIcon,
     },
     {
       key: "whatsapp" as const,
       label: "WhatsApp",
       href: normalizeSocialHref("whatsapp", socialLinks?.whatsapp),
-      icon: MessageCircle,
+      icon: WhatsAppIcon,
     },
   ].filter((item) => item.href);
 

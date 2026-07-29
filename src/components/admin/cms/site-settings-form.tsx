@@ -1,9 +1,10 @@
 "use client";
 
-import { ImagePlus, Instagram, MessageCircle, Music2, X } from "lucide-react";
+import { ImagePlus, Instagram, X } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSiteSettingsAction } from "@/lib/cms/actions";
 import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
@@ -294,7 +295,7 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           <span className="inline-flex items-center gap-2">
-            <Music2 className="size-4" aria-hidden="true" />
+            <TikTokIcon className="size-4" />
             TikTok
           </span>
           <input
@@ -306,7 +307,7 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
         </label>
         <label className="grid gap-2 text-sm font-medium">
           <span className="inline-flex items-center gap-2">
-            <MessageCircle className="size-4" aria-hidden="true" />
+            <WhatsAppIcon className="size-4" />
             WhatsApp
           </span>
           <PhoneInput
