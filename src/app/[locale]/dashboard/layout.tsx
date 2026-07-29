@@ -49,9 +49,12 @@ export default async function CustomerDashboardLayout({
             <Button asChild variant="ghost">
               <Link href="/products">Məhsullar</Link>
             </Button>
-            <Button asChild variant="ghost">
-              <Link href="/dashboard">Sifarişlərim</Link>
-            </Button>
+          <Button asChild variant="ghost">
+            <Link href="/dashboard">Sifarişlərim</Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href="/dashboard/messages">Mesajlar</Link>
+          </Button>
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -100,6 +103,9 @@ export default async function CustomerDashboardLayout({
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard/profile">Profil</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/messages">Mesajlar</Link>
           </Button>
         </div>
       </section>

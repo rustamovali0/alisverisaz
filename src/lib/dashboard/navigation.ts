@@ -47,6 +47,12 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "shoppingCart",
     },
     {
+      title: "Mesajlar",
+      titleKey: "messages",
+      href: "/dashboard/messages",
+      icon: "sparkles",
+    },
+    {
       title: "Favorilər",
       titleKey: "favorites",
       href: "/dashboard/favorites",

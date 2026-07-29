@@ -1,30 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Store, UserRound } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import {
+  ChevronDown,
+  Heart,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  Package,
+  ShieldCheck,
+  Store,
+  UserPlus,
+  UserRound,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { appAlert } from "@/lib/alerts/app-alert";
+import { logoutAction } from "@/lib/auth/actions";
 import type { AuthRole } from "@/lib/auth/types";
+import {
+  clearClientAuthProfileCache,
+  useClientAuthProfile,
+} from "@/lib/auth/use-client-auth-profile";
+import { cn } from "@/lib/utils";
 
 type HeaderAccountActionsProps = {
   className?: string;
 };
 
-let cachedHeaderRole: AuthRole | null | undefined;
-let cachedHeaderRolePromise: Promise<AuthRole | null> | null = null;
-
-export function clearHeaderAccountCache() {
-  cachedHeaderRole = undefined;
-  cachedHeaderRolePromise = null;
-}
-
 function getPanelPath(role: AuthRole) {
+  if (role === "admin") {
+    return {
+      href: "/radmin",
+      label: "RAdmin panel",
+      icon: ShieldCheck,
+    };
+  }
+
   if (role === "seller") {
     return {
       href: "/admin",
-      label: "Panelə keç",
+      label: "Satıcı paneli",
       icon: Store,
     };
   }
@@ -36,94 +53,207 @@ function getPanelPath(role: AuthRole) {
   };
 }
 
-async function loadHeaderRole() {
-  if (cachedHeaderRole !== undefined) {
-    return cachedHeaderRole;
+function getRoleLabel(role: AuthRole) {
+  if (role === "admin") {
+    return "Əsas admin";
   }
 
-  if (cachedHeaderRolePromise) {
-    return cachedHeaderRolePromise;
+  if (role === "seller") {
+    return "Satıcı";
   }
 
-  cachedHeaderRolePromise = (async () => {
-    const supabase = createSupabaseBrowserClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  return "İstifadəçi";
+}
 
-    if (!user) {
-      cachedHeaderRole = null;
-      return cachedHeaderRole;
-    }
+function createNextHref(pathname: string, target: "/login" | "/register") {
+  const nextPath = pathname === "/login" || pathname === "/register" ? "/" : pathname;
+  const params = new URLSearchParams({ next: nextPath });
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .returns<{ role: AuthRole }[]>()
-      .maybeSingle();
+  return `${target}?${params.toString()}`;
+}
 
-    cachedHeaderRole = profile?.role === "seller" ? "seller" : "customer";
-    return cachedHeaderRole;
-  })();
-
-  try {
-    return await cachedHeaderRolePromise;
-  } finally {
-    cachedHeaderRolePromise = null;
-  }
+export function clearHeaderAccountCache() {
+  clearClientAuthProfileCache();
 }
 
 export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
-  const [role, setRole] = useState<AuthRole | null>(null);
-  const [isChecked, setIsChecked] = useState(false);
+  const profile = useClientAuthProfile();
+  const pathname = usePathname();
+  const router = useRouter();
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadSession() {
-      const nextRole = await loadHeaderRole();
-      if (!isMounted) {
-        return;
+    function handlePointerDown(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
       }
-
-      setRole(nextRole);
-      setIsChecked(true);
     }
 
-    void loadSession();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      isMounted = false;
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
-  if (!isChecked) {
-    return null;
+  function handleLogout() {
+    startTransition(async () => {
+      const result = await logoutAction();
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Çıxış alınmadı");
+        return;
+      }
+
+      clearHeaderAccountCache();
+      setIsOpen(false);
+      void appAlert.success("Çıxış edildi", result.message);
+      router.replace("/");
+      router.refresh();
+    });
   }
 
-  if (role) {
-    const action = getPanelPath(role);
-    const Icon = action.icon;
-
+  if (profile.status === "loading") {
     return (
-      <Button asChild variant="outline" className={className}>
-        <Link href={action.href}>
-          <Icon className="mr-2 size-4" aria-hidden="true" />
-          {action.label}
-        </Link>
-      </Button>
+      <div
+        className={cn(
+          "h-11 w-36 animate-pulse rounded-md border bg-muted/70",
+          className,
+        )}
+        aria-hidden="true"
+      />
     );
   }
 
+  if (profile.status === "guest") {
+    return (
+      <div className={cn("items-center gap-2", className)}>
+        <Button asChild variant="ghost">
+          <Link href={createNextHref(pathname, "/login")}>
+            <LogIn className="mr-2 size-4" aria-hidden="true" />
+            Daxil ol
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={createNextHref(pathname, "/register")}>
+            <UserPlus className="mr-2 size-4" aria-hidden="true" />
+            Qeydiyyat
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  const role = profile.role;
+
+  if (!role) {
+    return null;
+  }
+
+  const panel = getPanelPath(role);
+  const PanelIcon = panel.icon;
+  const initials =
+    profile.fullName
+      ?.split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toLocaleUpperCase("az-AZ") || "A";
+
   return (
-    <>
-      <Button asChild variant="ghost" className={className}>
-        <Link href="/login">Daxil ol</Link>
+    <div ref={menuRef} className={cn("relative", className)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11 gap-2 pl-2 pr-3"
+        onClick={() => setIsOpen((value) => !value)}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+      >
+        <span className="grid size-8 place-items-center rounded-md bg-primary/10 text-xs font-black text-primary">
+          {initials}
+        </span>
+        <span className="hidden max-w-28 truncate text-left xl:inline">
+          {profile.fullName ?? profile.email ?? getRoleLabel(role)}
+        </span>
+        <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
       </Button>
-      <Button asChild variant="outline" className={className}>
-        <Link href="/register">Qeydiyyatdan keç</Link>
-      </Button>
-    </>
+
+      {isOpen ? (
+        <div
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-72 rounded-md border bg-popover p-2 text-popover-foreground shadow-xl"
+          role="menu"
+        >
+          <div className="border-b px-3 py-2">
+            <p className="truncate text-sm font-semibold">
+              {profile.fullName ?? profile.email ?? "Hesab"}
+            </p>
+            <p className="text-xs text-muted-foreground">{getRoleLabel(role)}</p>
+          </div>
+          <Link
+            href={panel.href}
+            className="mt-2 flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+            role="menuitem"
+            onClick={() => setIsOpen(false)}
+          >
+            <PanelIcon className="size-4" aria-hidden="true" />
+            {panel.label}
+          </Link>
+          {role === "customer" ? (
+            <>
+              <Link
+                href="/dashboard/favorites"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                role="menuitem"
+                onClick={() => setIsOpen(false)}
+              >
+                <Heart className="size-4" aria-hidden="true" />
+                Sevimlilər
+              </Link>
+              <Link
+                href="/dashboard/orders"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                role="menuitem"
+                onClick={() => setIsOpen(false)}
+              >
+                <Package className="size-4" aria-hidden="true" />
+                Sifarişlər
+              </Link>
+            </>
+          ) : null}
+          {role === "seller" ? (
+            <Link
+              href="/admin/products"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+              role="menuitem"
+              onClick={() => setIsOpen(false)}
+            >
+              <LayoutDashboard className="size-4" aria-hidden="true" />
+              Məhsullar
+            </Link>
+          ) : null}
+          <button
+            type="button"
+            className="mt-2 flex w-full items-center gap-3 rounded-md border-t px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+            onClick={handleLogout}
+            disabled={isPending}
+            role="menuitem"
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            {isPending ? "Çıxılır" : "Çıxış"}
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }

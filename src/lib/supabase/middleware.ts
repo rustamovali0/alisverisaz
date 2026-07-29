@@ -175,7 +175,7 @@ export async function updateSession(
       return createRedirectResponse(
         request,
         response,
-        getLocalizedPath(locale, getLoginPath(`${pathname}${request.nextUrl.search}`)),
+        getLocalizedPath(locale, getDashboardPath(role)),
       );
     }
 

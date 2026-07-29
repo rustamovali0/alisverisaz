@@ -59,7 +59,7 @@ export async function requireRole(allowedRoles: AuthRole[], nextPath?: string) {
 
   if (!allowedRoles.includes(current.role)) {
     if (current.role === "admin") {
-      redirect(getLoginPath(nextPath));
+      redirect(getDashboardPath(current.role));
     }
 
     redirect(getDashboardPath(current.role));

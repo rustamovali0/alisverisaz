@@ -290,7 +290,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   return {
     ok: true,
     message: "Giriş uğurludur.",
-    redirectTo: nextPath || getDashboardPath(role),
+    redirectTo: nextPath || (mode === "admin" ? getDashboardPath(role) : "/"),
   };
 }
 

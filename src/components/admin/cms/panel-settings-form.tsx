@@ -18,6 +18,7 @@ const storeFeatures = [
   ["orders", "Sifarişlər"],
   ["deposits", "Beh sifarişləri"],
   ["customers", "Müştərilər"],
+  ["messages", "Mesajlar"],
   ["analytics", "Analitika"],
   ["earnings", "Qazanclar"],
   ["subscription", "Abunəlik"],
@@ -27,6 +28,7 @@ const storeFeatures = [
 const userFeatures = [
   ["listings", "Elanlarım"],
   ["orders", "Sifarişlər"],
+  ["messages", "Mesajlar"],
   ["favorites", "Favorilər"],
   ["payments", "Ödənişlər"],
   ["profile", "Profil"],

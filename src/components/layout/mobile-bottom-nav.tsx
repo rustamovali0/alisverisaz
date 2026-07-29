@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Heart, Home, LogIn, ShoppingCart, Store, UserRound } from "lucide-react";
+import {
+  Grid2X2,
+  Home,
+  MessageCircle,
+  ShoppingCart,
+  ShieldCheck,
+  Store,
+  UserRound,
+} from "lucide-react";
 
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { cn } from "@/lib/utils";
 
 type MobileBottomNavProps = {
@@ -13,57 +20,63 @@ type MobileBottomNavProps = {
 };
 
 function accountPath(role: AuthRole | null) {
+  if (role === "admin") {
+    return "/radmin";
+  }
+
   if (role === "seller") {
     return "/admin";
   }
 
-  return "/dashboard";
+  return role ? "/dashboard" : "/login?next=/dashboard";
+}
+
+function messagesPath(role: AuthRole | null) {
+  if (role === "admin") {
+    return "/radmin/messages";
+  }
+
+  if (role === "seller") {
+    return "/admin/messages";
+  }
+
+  return role ? "/dashboard/messages" : "/login?next=/dashboard/messages";
+}
+
+function accountLabel(role: AuthRole | null) {
+  if (role === "admin") {
+    return "Admin";
+  }
+
+  if (role === "seller") {
+    return "Panel";
+  }
+
+  return role ? "Hesabım" : "Giriş";
+}
+
+function AccountIcon({ role }: { role: AuthRole | null }) {
+  if (role === "admin") {
+    return <ShieldCheck className="mx-auto size-6" aria-hidden="true" />;
+  }
+
+  if (role === "seller") {
+    return <Store className="mx-auto size-6" aria-hidden="true" />;
+  }
+
+  return <UserRound className="mx-auto size-6" aria-hidden="true" />;
 }
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
-  const [role, setRole] = useState<AuthRole | null>(null);
-  const [isChecked, setIsChecked] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadRole() {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        if (mounted) {
-          setRole(null);
-          setIsChecked(true);
-        }
-        return;
-      }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .returns<Array<{ role: AuthRole }>>()
-        .maybeSingle();
-
-      if (mounted) {
-        setRole(data?.role === "seller" ? "seller" : "customer");
-        setIsChecked(true);
-      }
-    }
-
-    void loadRole();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const centerHref = isChecked && role ? accountPath(role) : "/login";
-  const centerLabel = isChecked && role ? (role === "seller" ? "Panel" : "Hesabım") : "Giriş et";
-  const AccountIcon = role === "seller" ? Store : UserRound;
+  const profile = useClientAuthProfile();
+  const pathname = usePathname();
+  const role = profile.status === "authenticated" ? profile.role : null;
+  const items = [
+    { href: "/", label: "Ana", icon: Home },
+    { href: "/products", label: "Məhsullar", icon: Grid2X2 },
+    { href: "/cart", label: "Səbət", icon: ShoppingCart },
+    { href: messagesPath(role), label: "Mesajlar", icon: MessageCircle },
+  ];
 
   return (
     <nav
@@ -73,35 +86,48 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
       )}
       aria-label="Mobil naviqasiya"
     >
-      <div className="grid grid-cols-5 items-end text-center">
-        <Link href="/" className="grid gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
-          <Home className="mx-auto size-7" aria-hidden="true" />
-          Əsas
-        </Link>
-        <Link href="/dashboard/favorites" className="grid gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
-          <Heart className="mx-auto size-7" aria-hidden="true" />
-          Seçilmişlər
-        </Link>
+      <div className="grid grid-cols-5 items-center text-center">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "grid min-h-14 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground",
+                isActive && "bg-primary/10 text-primary",
+              )}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon className="mx-auto size-6" aria-hidden="true" />
+              <span className="leading-none">{item.label}</span>
+            </Link>
+          );
+        })}
         <Link
-          href={centerHref}
-          className="-mt-8 grid justify-items-center gap-1 text-[10px] font-bold uppercase text-primary"
+          href={accountPath(role)}
+          className={cn(
+            "grid min-h-14 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground",
+            (pathname.startsWith("/dashboard") ||
+              pathname.startsWith("/admin") ||
+              pathname.startsWith("/radmin")) &&
+              "bg-primary/10 text-primary",
+          )}
+          aria-current={
+            pathname.startsWith("/dashboard") ||
+            pathname.startsWith("/admin") ||
+            pathname.startsWith("/radmin")
+              ? "page"
+              : undefined
+          }
         >
-          <span className="grid size-16 place-items-center rounded-full bg-orange-500 text-white shadow-xl shadow-orange-500/35">
-            {isChecked && role ? (
-              <AccountIcon className="size-8" aria-hidden="true" />
-            ) : (
-              <LogIn className="size-8" aria-hidden="true" />
-            )}
-          </span>
-          {centerLabel}
-        </Link>
-        <Link href="/cart" className="grid gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
-          <ShoppingCart className="mx-auto size-7" aria-hidden="true" />
-          Səbət
-        </Link>
-        <Link href={accountPath(role)} className="grid gap-1 text-[10px] font-semibold uppercase text-muted-foreground">
-          <UserRound className="mx-auto size-7" aria-hidden="true" />
-          Kabinet
+          <AccountIcon role={role} />
+          <span className="leading-none">{accountLabel(role)}</span>
         </Link>
       </div>
     </nav>
