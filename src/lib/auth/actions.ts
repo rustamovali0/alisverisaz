@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
-import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { ensureAuthProfile, ensureSellerStore } from "@/lib/auth/profiles";
 import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
@@ -440,6 +440,23 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     }
   }
 
+  if (role === "seller") {
+    try {
+      await ensureSellerStore({
+        userId: data.user.id,
+        name: profile?.full_name ?? data.user.user_metadata?.full_name ?? data.user.email,
+      });
+    } catch (storeError) {
+      return {
+        ok: false,
+        message:
+          storeError instanceof Error
+            ? storeError.message
+            : "Mağaza profili yaradıla bilmədi.",
+      };
+    }
+  }
+
   await trackActivityEvent({
     eventType: "user_login",
     actorId: data.user.id,
@@ -714,8 +731,31 @@ export async function updateUserRoleAction(
     };
   }
 
+  if (role === "seller") {
+    try {
+      const fullName =
+        typeof existingMeta.full_name === "string" && existingMeta.full_name.trim()
+          ? existingMeta.full_name
+          : existingUser?.user?.email ?? "Yeni mağaza";
+
+      await ensureSellerStore({
+        userId,
+        name: fullName,
+      });
+    } catch (storeError) {
+      return {
+        ok: false,
+        message:
+          storeError instanceof Error
+            ? storeError.message
+            : "Satıcı mağazası yaradıla bilmədi.",
+      };
+    }
+  }
+
   revalidatePath("/admin/users");
   revalidatePath("/radmin/users");
+  revalidatePath("/store/dashboard", "layout");
 
   return {
     ok: true,

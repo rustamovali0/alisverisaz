@@ -122,10 +122,10 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
     .slice(0, 3);
 
   return (
-    <article className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10">
+    <article className="group min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-24 overflow-hidden sm:h-28">
+          <div className="h-20 overflow-hidden sm:h-24">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -138,30 +138,30 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
               </div>
             )}
           </div>
-          <div className="absolute -bottom-7 left-4 z-10">
-            <StoreLogo store={store} className="size-16 shadow-sm" />
+          <div className="absolute -bottom-5 left-3 z-10">
+            <StoreLogo store={store} className="size-12 shadow-sm sm:size-14" />
           </div>
         </div>
-        <div className="p-3 pt-9 sm:p-4 sm:pt-10">
+        <div className="p-3 pt-7 sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="line-clamp-2 break-words text-base font-black tracking-normal sm:text-lg">
+              <h2 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
                 {store.name}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                 {store.productCount} məhsul
               </p>
             </div>
-            <ArrowRight className="mt-1 size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+            <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:size-5" />
           </div>
           {store.address ? (
-            <p className="mt-3 flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
+            <p className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm">
+              <MapPin className="size-3.5 shrink-0 text-primary sm:size-4" aria-hidden="true" />
               <span className="line-clamp-1 min-w-0">{store.address}</span>
             </p>
           ) : null}
           {previewImages.length > 0 ? (
-            <div className="mt-3 grid grid-cols-3 gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-2 sm:mt-3">
               {previewImages.map((imageUrl, index) => (
                 <div
                   key={`${store.id}-${imageUrl}-${index}`}

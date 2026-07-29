@@ -38,8 +38,8 @@ export function ProductReviewForm({
   function handleSubmit(formData: FormData) {
     if (viewerRole !== "customer") {
       void appAlert.info(
-        "İstifadəçi hesabı lazımdır",
-        "Rəy yazmaq üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
+        "Rəy yazmaq üçün giriş edin",
+        "Rəy yazmaq üçün zəhmət olmasa giriş edin.",
       );
       return;
     }

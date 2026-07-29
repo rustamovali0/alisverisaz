@@ -45,3 +45,42 @@ export async function ensureAuthProfile(input: {
     throw new Error(error.message);
   }
 }
+
+export async function ensureSellerStore(input: {
+  userId: string;
+  name?: string | null;
+  description?: string | null;
+}) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingStore, error: existingError } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id")
+    .eq("owner_id", input.userId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  if (existingStore) {
+    return existingStore.id as string;
+  }
+
+  const storeName = (input.name ?? "").trim() || "Yeni mağaza";
+  const { data: store, error } = await (supabaseAdmin as any)
+    .from("stores")
+    .insert({
+      owner_id: input.userId,
+      name: storeName,
+      description: input.description ?? "Satıcı mağazası",
+      status: "active",
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return store.id as string;
+}

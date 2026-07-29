@@ -47,7 +47,11 @@ export function SellProductButton() {
     }
   }
 
-  if (profile.status === "loading" || profile.role === "admin") {
+  if (
+    profile.status === "loading" ||
+    profile.role === "admin" ||
+    profile.role === "customer"
+  ) {
     return null;
   }
 

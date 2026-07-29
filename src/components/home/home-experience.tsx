@@ -53,11 +53,11 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.28 }}
-      className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
+      className="group min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10"
     >
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-24 overflow-hidden sm:h-28">
+          <div className="h-20 overflow-hidden sm:h-24">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -70,27 +70,27 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
               </div>
             )}
           </div>
-          <div className="absolute -bottom-7 left-4 z-10 grid size-16 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm">
+          <div className="absolute -bottom-5 left-3 z-10 grid size-12 place-items-center overflow-hidden rounded-md border bg-background shadow-sm sm:size-14">
             {store.logoUrl ? (
               <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-xl font-black text-primary">
+              <span className="text-base font-black text-primary">
                 {store.name.slice(0, 1).toUpperCase()}
               </span>
             )}
           </div>
         </div>
-        <div className="p-3 pt-9 sm:p-4 sm:pt-10">
+        <div className="p-3 pt-7 sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 break-words text-base font-black tracking-normal sm:text-lg">
+              <h3 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
                 {store.name}
               </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                 {store.productCount} məhsul
               </p>
             </div>
-            <ArrowRight className="mt-1 size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+            <ArrowRight className="mt-1 size-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:size-5" />
           </div>
         </div>
       </Link>

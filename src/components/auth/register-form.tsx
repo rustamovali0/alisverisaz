@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ImagePlus, ShieldCheck, Sparkles, Store, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, ImagePlus, Store, UserRound } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -465,20 +465,6 @@ export function RegisterForm({
 
       <AuthDivider />
 
-      <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2 font-medium text-foreground">
-          <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-          Təhlükəsiz qeydiyyat
-        </div>
-        <p className="mt-2 leading-6">
-          Duplicate email və telefon nömrələri aydın xəta mesajı ilə göstərilir, satıcı
-          müraciətləri isə admin təsdiqi ilə aktivləşir.
-        </p>
-        <div className="mt-4 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          <Sparkles className="size-3.5" aria-hidden="true" />
-          Verification axını qorunur
-        </div>
-      </div>
     </AuthCard>
   );
 }
