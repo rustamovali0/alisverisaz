@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import type { AuthRole } from "@/lib/auth/types";
 import { upsertProductReviewAction } from "@/lib/reviews/actions";
@@ -20,7 +21,8 @@ export function ProductReviewForm({
   storeSlug,
   viewerRole,
 }: ProductReviewFormProps) {
-  const [rating, setRating] = useState(1);
+  const router = useRouter();
+  const [rating, setRating] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
@@ -41,6 +43,7 @@ export function ProductReviewForm({
       }
 
       void appAlert.success("Rəy saxlandı", result.message);
+      router.refresh();
     });
   }
 
@@ -54,9 +57,15 @@ export function ProductReviewForm({
           <button
             key={value}
             type="button"
-            className="rounded-md p-1 transition hover:scale-105"
+            className="rounded-md p-1 transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onClick={() => setRating(value)}
+            onKeyDown={(event) => {
+              if (event.key >= "1" && event.key <= "5") {
+                setRating(Number(event.key));
+              }
+            }}
             aria-label={`${value} ulduz`}
+            aria-pressed={value <= rating}
           >
             <Star
               className={cn(
@@ -78,7 +87,7 @@ export function ProductReviewForm({
           placeholder="Məhsul haqqında fikrinizi yazın"
         />
       </label>
-      <Button type="submit" disabled={isPending} className="w-fit">
+      <Button type="submit" disabled={isPending || rating === 0} className="w-fit">
         {isPending ? "Saxlanılır" : "Dəyərləndirmə yaz"}
       </Button>
     </form>

@@ -10,6 +10,10 @@ import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
 import {
+  ProductMessageThread,
+  ProductReviewList,
+} from "@/components/products/product-feedback-lists";
+import {
   ProductBackButton,
   ProductDetailGallery,
 } from "@/components/products/product-detail-gallery";
@@ -228,38 +232,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               storeSlug={detail.store.slug}
               viewerRole={viewerRole}
             />
-            <div className="mt-6 space-y-3">
-              {messages.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Mesaj tarixçəniz yoxdur.
-                </p>
-              ) : (
-                messages.map((item) => (
-                  <article key={item.id} className="min-w-0 space-y-3 rounded-lg border bg-background p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold">{item.senderName}</p>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(item.createdAt).toLocaleString("az-AZ")}
-                      </span>
-                    </div>
-                    <div className="break-words rounded-lg bg-card p-3 text-sm leading-6 text-muted-foreground">
-                      {item.message}
-                    </div>
-                    {item.replyMessage ? (
-                      <div className="ml-auto break-words rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground sm:max-w-[85%]">
-                        <p className="mb-1 text-xs font-semibold text-primary-foreground/75">
-                          Satıcının cavabı
-                          {item.replyAt
-                            ? ` · ${new Date(item.replyAt).toLocaleString("az-AZ")}`
-                            : ""}
-                        </p>
-                        {item.replyMessage}
-                      </div>
-                    ) : null}
-                  </article>
-                ))
-              )}
-            </div>
+            <ProductMessageThread messages={messages} />
           </div>
 
           <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
@@ -272,44 +245,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               storeSlug={detail.store.slug}
               viewerRole={viewerRole}
             />
-            <div className="mt-6 space-y-3">
-              {reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Bu məhsula hələ rəy yazılmayıb.
-                </p>
-              ) : (
-                reviews.map((review) => (
-                  <article key={review.id} className="min-w-0 rounded-lg border bg-background p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{review.userName}</p>
-                        <div className="mt-1 flex">
-                          {[1, 2, 3, 4, 5].map((value) => (
-                            <Star
-                              key={value}
-                              className={
-                                value <= review.rating
-                                  ? "size-4 fill-amber-400 text-amber-400"
-                                  : "size-4 text-muted-foreground"
-                              }
-                              aria-hidden="true"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleDateString("az-AZ")}
-                      </span>
-                    </div>
-                    {review.comment ? (
-                      <p className="mt-2 break-words text-sm leading-6 text-muted-foreground">
-                        {review.comment}
-                      </p>
-                    ) : null}
-                  </article>
-                ))
-              )}
-            </div>
+            <ProductReviewList reviews={reviews} />
           </div>
         </section>
       </div>

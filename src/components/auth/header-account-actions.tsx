@@ -40,7 +40,7 @@ function getPanelPath(role: AuthRole) {
 
   if (role === "seller") {
     return {
-      href: "/admin",
+      href: "/store/dashboard",
       label: "Satıcı paneli",
       icon: Store,
     };
@@ -233,7 +233,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
           ) : null}
           {role === "seller" ? (
             <Link
-              href="/admin/products"
+              href="/store/dashboard/products"
               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
               role="menuitem"
               onClick={() => setIsOpen(false)}

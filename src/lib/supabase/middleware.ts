@@ -158,19 +158,32 @@ export async function updateSession(
       return response;
     }
 
+    if (matchedAuthRoute === "/radmin/login") {
+      return role === "admin"
+        ? createRedirectResponse(
+            request,
+            response,
+            getLocalizedPath(locale, getDashboardPath(role)),
+          )
+        : response;
+    }
+
     return createRedirectResponse(
       request,
       response,
-      getLocalizedPath(
-        locale,
-        matchedAuthRoute === "/radmin/login"
-          ? getDashboardPath(role)
-          : getDashboardPath(role),
-      ),
+      getLocalizedPath(locale, getDashboardPath(role)),
     );
   }
 
   if (localizedRoute && !localizedRoute.roles.includes(role)) {
+    if (localizedRoute.roles.includes("admin")) {
+      return createRedirectResponse(
+        request,
+        response,
+        getLocalizedPath(locale, getAdminLoginPath(`${pathname}${request.nextUrl.search}`)),
+      );
+    }
+
     if (role === "admin" && !localizedRoute.roles.includes("admin")) {
       return createRedirectResponse(
         request,

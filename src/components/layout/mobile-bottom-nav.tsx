@@ -25,7 +25,7 @@ function accountPath(role: AuthRole | null) {
   }
 
   if (role === "seller") {
-    return "/admin";
+    return "/store/dashboard";
   }
 
   return role ? "/dashboard" : "/login?next=/dashboard";
@@ -37,7 +37,7 @@ function messagesPath(role: AuthRole | null) {
   }
 
   if (role === "seller") {
-    return "/admin/messages";
+    return "/store/dashboard/messages";
   }
 
   return role ? "/dashboard/messages" : "/login?next=/dashboard/messages";
@@ -57,14 +57,14 @@ function accountLabel(role: AuthRole | null) {
 
 function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "admin") {
-    return <ShieldCheck className="mx-auto size-6" aria-hidden="true" />;
+    return <ShieldCheck className="mx-auto size-[26px]" aria-hidden="true" />;
   }
 
   if (role === "seller") {
-    return <Store className="mx-auto size-6" aria-hidden="true" />;
+    return <Store className="mx-auto size-[26px]" aria-hidden="true" />;
   }
 
-  return <UserRound className="mx-auto size-6" aria-hidden="true" />;
+  return <UserRound className="mx-auto size-[26px]" aria-hidden="true" />;
 }
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
@@ -73,7 +73,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   const role = profile.status === "authenticated" ? profile.role : null;
   const items = [
     { href: "/", label: "Ana", icon: Home },
-    { href: "/products", label: "Məhsullar", icon: Grid2X2 },
+    { href: "/products", label: "Məhsul", icon: Grid2X2 },
     { href: "/cart", label: "Səbət", icon: ShoppingCart },
     { href: messagesPath(role), label: "Mesajlar", icon: MessageCircle },
   ];
@@ -104,7 +104,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               )}
               aria-current={isActive ? "page" : undefined}
             >
-              <Icon className="mx-auto size-6" aria-hidden="true" />
+              <Icon className="mx-auto size-[26px]" aria-hidden="true" />
               <span className="max-w-full truncate leading-none">{item.label}</span>
             </Link>
           );
@@ -115,12 +115,14 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
             "grid min-h-14 min-w-0 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground min-[390px]:text-[11px]",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
+              pathname.startsWith("/store/dashboard") ||
               pathname.startsWith("/radmin")) &&
               "bg-primary/10 text-primary",
           )}
           aria-current={
             pathname.startsWith("/dashboard") ||
             pathname.startsWith("/admin") ||
+            pathname.startsWith("/store/dashboard") ||
             pathname.startsWith("/radmin")
               ? "page"
               : undefined

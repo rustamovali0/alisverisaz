@@ -123,7 +123,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
     <article className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-32 overflow-hidden">
+          <div className="h-24 overflow-hidden sm:h-28">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -140,10 +140,10 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             <StoreLogo store={store} className="size-16 shadow-sm" />
           </div>
         </div>
-        <div className="p-4 pt-10">
+        <div className="p-3 pt-9 sm:p-4 sm:pt-10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="line-clamp-2 break-words text-lg font-black tracking-normal">
+              <h2 className="line-clamp-2 break-words text-base font-black tracking-normal sm:text-lg">
                 {store.name}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -153,7 +153,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             <ArrowRight className="mt-1 size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
           </div>
           {store.description ? (
-            <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
               {store.description}
             </p>
           ) : null}
@@ -164,7 +164,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             </p>
           ) : null}
           {previewImages.length > 0 ? (
-            <div className="mt-4 grid grid-cols-3 gap-2">
+            <div className="mt-3 grid grid-cols-3 gap-2">
               {previewImages.map((imageUrl, index) => (
                 <div
                   key={`${store.id}-${imageUrl}-${index}`}
@@ -210,9 +210,14 @@ export function ProductGrid({
         return (
         <article
           key={product.id}
-          className="group flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
+          className="group relative flex min-w-0 flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10"
         >
-          <Link href={`/${storeSlug}/products/${product.slug}`} className="block min-w-0">
+          <Link
+            href={`/${storeSlug}/products/${product.slug}`}
+            className="absolute inset-0 z-0"
+            aria-label={`${product.name} məhsul detalına keç`}
+          />
+          <div className="relative z-0">
             <div className="aspect-[4/3] overflow-hidden bg-muted">
               {product.imageUrl ? (
                 <img
@@ -226,13 +231,11 @@ export function ProductGrid({
                 </div>
               )}
             </div>
-          </Link>
-          <div className="flex min-w-0 flex-1 flex-col p-3">
-            <Link href={`/${storeSlug}/products/${product.slug}`} className="min-w-0">
-              <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal hover:text-primary">
-                {product.name}
-              </h2>
-            </Link>
+          </div>
+          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-3">
+            <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal group-hover:text-primary">
+              {product.name}
+            </h2>
             <p className="mt-2 truncate text-base font-bold">
               {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
             </p>
@@ -248,7 +251,7 @@ export function ProductGrid({
                 {isOutOfStock ? "Stokda yoxdur" : `${labels.stock}: ${product.stockQuantity}`}
               </span>
             </p>
-            <div className="mt-4 grid gap-2">
+            <div className="relative z-10 mt-4 grid gap-2">
               <DepositModal
                 product={product}
                 enabled={depositEnabled && !isOutOfStock}
@@ -353,7 +356,7 @@ export function Storefront({
         </nav>
 
         <section className="min-w-0 overflow-hidden rounded-lg bg-card shadow-sm">
-          <div className="relative aspect-[16/6] min-h-28 overflow-hidden bg-primary/10 sm:aspect-[4/1]">
+          <div className="relative h-36 overflow-hidden bg-primary/10 sm:h-44 lg:h-56">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}

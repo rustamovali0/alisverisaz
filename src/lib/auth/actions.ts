@@ -18,10 +18,95 @@ import {
   type AuthRole,
 } from "@/lib/auth/types";
 
+const AUTH_MEDIA_BUCKET = "cms-media";
+const MAX_AUTH_MEDIA_SIZE = 5 * 1024 * 1024;
+const ALLOWED_AUTH_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
 
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
+function sanitizeFileName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function ensureAuthMediaBucket() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: bucket } = await supabaseAdmin.storage.getBucket(AUTH_MEDIA_BUCKET);
+
+  if (bucket) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin.storage.createBucket(AUTH_MEDIA_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_AUTH_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_AUTH_MEDIA_TYPES,
+  });
+
+  if (error && !error.message.toLowerCase().includes("already")) {
+    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
+  }
+}
+
+async function uploadAuthMediaFile(input: {
+  file: File;
+  userId: string;
+  kind: "avatar" | "banner";
+}) {
+  if (input.file.size > MAX_AUTH_MEDIA_SIZE) {
+    throw new Error("Şəkil maksimum 5MB ola bilər.");
+  }
+
+  if (!ALLOWED_AUTH_MEDIA_TYPES.includes(input.file.type)) {
+    throw new Error("Yalnız JPG, PNG və WebP şəkillər qəbul edilir.");
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  await ensureAuthMediaBucket();
+
+  const fileName = sanitizeFileName(input.file.name) || `${input.kind}.webp`;
+  const path = `seller-applications/${input.userId}/${input.kind}/${crypto.randomUUID()}-${fileName}`;
+  const body = new Uint8Array(await input.file.arrayBuffer());
+  const { error } = await supabaseAdmin.storage.from(AUTH_MEDIA_BUCKET).upload(path, body, {
+    contentType: input.file.type,
+    upsert: false,
+  });
+
+  if (error) {
+    throw new Error(
+      error.message.toLowerCase().includes("bucket")
+        ? "Şəkil yükləmə yaddaşı tapılmadı. Supabase-də cms-media bucket yaradın."
+        : error.message,
+    );
+  }
+
+  const { data } = supabaseAdmin.storage.from(AUTH_MEDIA_BUCKET).getPublicUrl(path);
+
+  await (supabaseAdmin as any).from("media_assets").insert({
+    bucket: AUTH_MEDIA_BUCKET,
+    path,
+    url: data.publicUrl,
+    file_name: input.file.name,
+    mime_type: input.file.type,
+    size_bytes: input.file.size,
+    alt_text: input.kind === "avatar" ? "Satıcı profil şəkli" : "Satıcı banner şəkli",
+    created_by: input.userId,
+    updated_by: input.userId,
+  });
+
+  return data.publicUrl;
 }
 
 function isValidEmail(value: string) {
@@ -67,8 +152,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const confirmPassword = readString(formData, "confirmPassword");
   const requestedRole = readString(formData, "role");
   const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
-  const avatarUrl = readString(formData, "avatarUrl") || null;
-  const bannerUrl = readString(formData, "bannerUrl") || null;
+  const avatarFile = readFile(formData, "avatarFile");
+  const bannerFile = readFile(formData, "bannerFile");
   const agreedToTerms = formData.get("terms") === "on";
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
@@ -131,8 +216,6 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     user_metadata: {
       full_name: fullName,
       phone,
-      avatar_url: avatarUrl,
-      banner_url: bannerUrl,
       role: accountRole,
       requested_role: role,
       seller_application_status: role === "seller" ? "pending" : "active",
@@ -154,6 +237,44 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       ok: false,
       message: "İstifadəçi yaradılarkən xəta baş verdi.",
     };
+  }
+
+  let avatarUrl: string | null = null;
+  let bannerUrl: string | null = null;
+
+  if (role === "seller") {
+    try {
+      if (avatarFile) {
+        avatarUrl = await uploadAuthMediaFile({
+          file: avatarFile,
+          userId: data.user.id,
+          kind: "avatar",
+        });
+      }
+
+      if (bannerFile) {
+        bannerUrl = await uploadAuthMediaFile({
+          file: bannerFile,
+          userId: data.user.id,
+          kind: "banner",
+        });
+      }
+
+      if (avatarUrl || bannerUrl) {
+        await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
+          user_metadata: {
+            ...data.user.user_metadata,
+            avatar_url: avatarUrl,
+            banner_url: bannerUrl,
+          },
+        });
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "Şəkil yüklənmədi.",
+      };
+    }
   }
 
   const { error: profileError } = await upsertProfile({

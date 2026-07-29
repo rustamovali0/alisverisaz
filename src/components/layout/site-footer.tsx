@@ -42,7 +42,7 @@ function normalizeSocialHref(kind: "instagram" | "tiktok" | "whatsapp", value = 
 
 function getAccountHref(role: AuthRole | null) {
   if (role === "seller") {
-    return "/admin";
+    return "/store/dashboard";
   }
 
   return "/dashboard";

@@ -57,7 +57,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
     >
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-32 overflow-hidden">
+          <div className="h-24 overflow-hidden sm:h-28">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -80,10 +80,10 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
             )}
           </div>
         </div>
-        <div className="p-4 pt-10">
+        <div className="p-3 pt-9 sm:p-4 sm:pt-10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 break-words text-lg font-black tracking-normal">
+              <h3 className="line-clamp-2 break-words text-base font-black tracking-normal sm:text-lg">
                 {store.name}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -139,6 +139,7 @@ export function HomeExperience({
         siteName={siteSettings.shortName || siteSettings.siteName}
         stores={stores}
         categories={categories}
+        showMobileSearch
       />
 
       <section className="container grid items-center gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
@@ -265,7 +266,7 @@ export function HomeExperience({
               >
                 <Link
                   href={`/products?category=${category.slug}`}
-                  className="flex min-h-28 items-center justify-between rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
+                className="flex min-h-16 items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg sm:min-h-24 sm:p-4"
                 >
                   <span className="text-base font-bold">{category.name}</span>
                   <ArrowRight className="size-4 text-muted-foreground" />
@@ -320,7 +321,7 @@ export function HomeExperience({
       ) : null}
 
       <section className="container pb-24 pt-8 md:pb-12">
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
+        <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           <div className="grid gap-4 md:grid-cols-3">
             {[
               ["Təhlükəsiz struktur", "Supabase Auth və RLS ilə qorunan data."],

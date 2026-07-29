@@ -62,7 +62,7 @@ export async function upsertProductReviewAction(
   const supabase = createSupabaseAdminClient();
   const { data: product, error: productError } = await (supabase as any)
     .from("products")
-    .select("id,stores(slug)")
+    .select("id,slug,stores(slug)")
     .eq("id", productId)
     .eq("status", "active")
     .maybeSingle();
@@ -100,6 +100,9 @@ export async function upsertProductReviewAction(
 
   if (resolvedStoreSlug) {
     revalidatePath(`/${resolvedStoreSlug}/products/${productId}`);
+    if (typeof product.slug === "string" && product.slug) {
+      revalidatePath(`/${resolvedStoreSlug}/products/${product.slug}`);
+    }
   }
 
   revalidatePath("/radmin/reviews");

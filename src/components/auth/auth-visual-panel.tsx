@@ -27,7 +27,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   const copy = visualCopy[variant];
 
   return (
-    <aside className="relative hidden min-h-[760px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
+    <aside className="sticky top-6 hidden h-[min(680px,calc(100vh-3rem))] min-h-[520px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
       <Image
         src="/auth/auth-banner.png"
         alt="Alisveris marketplace auth banner"
@@ -37,18 +37,18 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
         className="object-cover object-center"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 p-8 text-white">
-        <div className="mb-4 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-white/80">
+      <div className="absolute inset-x-0 bottom-0 p-6 text-white xl:p-8">
+        <div className="mb-3 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.24em] text-white/80">
           <span className="h-px w-12 bg-primary/80" />
           Alisveris.az
         </div>
         <h2 className="max-w-lg text-[2rem] font-black leading-tight tracking-tight sm:text-[2.4rem]">
           {copy.title}
         </h2>
-        <p className="mt-4 max-w-xl text-sm leading-7 text-white/80">
+        <p className="mt-3 max-w-xl text-sm leading-7 text-white/80">
           {copy.description}
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium">
             <Store className="size-4" aria-hidden="true" />
             Satıcı paneli
@@ -62,7 +62,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
             Təhlükəsiz giriş
           </div>
         </div>
-        <div className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-white">
+        <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
           Davam et
           <ArrowRight className="size-4" aria-hidden="true" />
         </div>

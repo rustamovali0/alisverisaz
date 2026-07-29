@@ -302,8 +302,8 @@ function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: str
     return href.replace(/^\/admin/, "/radmin");
   }
 
-  if (role === "seller" && (href === "/store/dashboard" || href.startsWith("/store/dashboard/"))) {
-    return href.replace(/^\/store\/dashboard/, "/admin");
+  if (role === "seller" && (href === "/admin" || href.startsWith("/admin/"))) {
+    return href.replace(/^\/admin/, "/store/dashboard");
   }
 
   return href;

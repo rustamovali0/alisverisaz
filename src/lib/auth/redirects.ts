@@ -6,7 +6,7 @@ export function getDashboardPath(role: AuthRole) {
   }
 
   if (role === "seller") {
-    return "/admin";
+    return "/store/dashboard";
   }
 
   return "/dashboard";

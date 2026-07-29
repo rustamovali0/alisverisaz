@@ -124,6 +124,7 @@ export function MarketplaceSearch({
 
   return (
     <form
+      autoComplete="off"
       onSubmit={(event) => {
         event.preventDefault();
         submitSearch(query.trim());
@@ -143,13 +144,16 @@ export function MarketplaceSearch({
         <span className="sr-only">Axtarış</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <input
-          autoComplete="new-password"
+          autoComplete="off"
           autoCorrect="off"
+          autoCapitalize="none"
+          data-lpignore="true"
+          data-form-type="other"
           spellCheck={false}
           className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
-          name="q"
+          name="marketplace-search"
           placeholder="Məhsul, mağaza və ya kateqoriya axtar"
-          type="search"
+          type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}

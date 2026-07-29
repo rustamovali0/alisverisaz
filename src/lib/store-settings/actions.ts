@@ -38,6 +38,25 @@ function sanitizeFileName(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+async function ensureStoreMediaBucket() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: bucket } = await supabaseAdmin.storage.getBucket(STORE_MEDIA_BUCKET);
+
+  if (bucket) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin.storage.createBucket(STORE_MEDIA_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
+  });
+
+  if (error && !error.message.toLowerCase().includes("already")) {
+    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
+  }
+}
+
 async function uploadStoreMedia(input: {
   file: File;
   userId: string;
@@ -53,6 +72,8 @@ async function uploadStoreMedia(input: {
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  await ensureStoreMediaBucket();
+
   const fileName = sanitizeFileName(input.file.name) || `${input.kind}.webp`;
   const path = `stores/${input.storeId}/${input.kind}/${crypto.randomUUID()}-${fileName}`;
   const body = new Uint8Array(await input.file.arrayBuffer());
@@ -64,7 +85,11 @@ async function uploadStoreMedia(input: {
     });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error(
+      error.message.toLowerCase().includes("bucket")
+        ? "Şəkil yükləmə yaddaşı tapılmadı. Supabase-də cms-media bucket yaradın."
+        : error.message,
+    );
   }
 
   const { data } = supabaseAdmin.storage.from(STORE_MEDIA_BUCKET).getPublicUrl(path);

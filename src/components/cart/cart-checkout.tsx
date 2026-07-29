@@ -76,6 +76,8 @@ export function CartCheckout({
     firstProduct?.storeSlug && firstProduct?.slug
       ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
       : "/products";
+  const isCartReady = hasLoadedCart && !isLoadingProducts;
+  const isEmptyCart = isCartReady && visibleItems.length === 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -138,7 +140,9 @@ export function CartCheckout({
         className={
           checkoutOnly
             ? "container flex justify-center py-8"
-            : "container grid gap-6 py-8 lg:grid-cols-[1fr_420px]"
+            : isEmptyCart
+              ? "container py-8"
+              : "container grid gap-6 py-8 lg:grid-cols-[1fr_420px]"
         }
       >
         {!checkoutOnly ? (
@@ -261,6 +265,19 @@ export function CartCheckout({
         </section>
         ) : null}
 
+        {checkoutOnly && isEmptyCart ? (
+          <section className="w-full max-w-xl rounded-md border bg-card p-6 text-center text-card-foreground shadow-sm">
+            <h1 className="text-xl font-semibold tracking-normal">Səbət boşdur</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sifarişi təsdiqləmək üçün əvvəlcə məhsul əlavə edin.
+            </p>
+            <Button asChild className="mt-5">
+              <Link href="/products">Məhsullara bax</Link>
+            </Button>
+          </section>
+        ) : null}
+
+        {!isEmptyCart ? (
         <form
           action={handleSubmit}
           className={
@@ -324,6 +341,7 @@ export function CartCheckout({
             <Link href={returnHref}>Məhsula qayıt</Link>
           </Button>
         </form>
+        ) : null}
       </div>
     </main>
   );

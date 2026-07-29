@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { ArrowLeft, ArrowRight, ImagePlus, ShieldCheck, Sparkles, Store, UserRound } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthDivider } from "@/components/auth/auth-divider";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
-import { AuthField, AuthSelect } from "@/components/auth/auth-field";
+import { AuthField } from "@/components/auth/auth-field";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -30,7 +30,90 @@ type FieldErrors = {
   terms?: string;
 };
 
+function SellerImageDropzone({
+  name,
+  label,
+  ratioClassName,
+}: {
+  name: string;
+  label: string;
+  ratioClassName: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
+  function handleFiles(files: FileList | null) {
+    const file = files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const nextPreview = URL.createObjectURL(file);
+    setPreview((current) => {
+      if (current.startsWith("blob:")) {
+        URL.revokeObjectURL(current);
+      }
+
+      return nextPreview;
+    });
+  }
+
+  return (
+    <div className="grid min-w-0 gap-2">
+      <span className="text-sm font-medium">{label}</span>
+      <button
+        type="button"
+        className={`relative grid w-full min-w-0 place-items-center overflow-hidden rounded-xl border border-dashed bg-background p-3 text-center transition ${ratioClassName} ${
+          isDragging ? "border-primary bg-primary/5" : "border-input"
+        }`}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          handleFiles(event.dataTransfer.files);
+        }}
+      >
+        {preview ? (
+          <img src={preview} alt={label} className="h-full w-full rounded-lg object-cover" />
+        ) : (
+          <span className="grid place-items-center gap-2 text-sm text-muted-foreground">
+            <ImagePlus className="size-7" aria-hidden="true" />
+            Şəkli buraya sürüklə və ya seç
+          </span>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        name={name}
+        accept="image/png,image/jpeg,image/webp"
+        className="sr-only"
+        onChange={(event) => handleFiles(event.target.files)}
+      />
+    </div>
+  );
+}
+
 function getPasswordStrength(value: string) {
+  if (!value) {
+    return { label: "", className: "bg-muted" };
+  }
+
   const rules = [
     value.length >= 8,
     /[A-ZƏÜÖĞÇŞİ]/.test(value),
@@ -261,14 +344,16 @@ export function RegisterForm({
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
               <span>Şifrə gücü</span>
-              <span>{passwordStrength.label}</span>
+              <span>{passwordStrength.label || "Seçilməyib"}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full transition-all duration-200 ${passwordStrength.className}`}
                 style={{
                   width:
-                    passwordStrength.label === "Zəif"
+                    !password
+                      ? "0%"
+                      : passwordStrength.label === "Zəif"
                       ? "25%"
                       : passwordStrength.label === "Orta"
                         ? "60%"
@@ -291,34 +376,63 @@ export function RegisterForm({
             minLength={8}
             required
           />
-          <AuthSelect
-            id="role"
-            name="role"
-            label="Hesab tipi"
-            value={role}
-            onChange={(event) => setRole(event.target.value === "seller" ? "seller" : "customer")}
-          >
-            {userRegistrationEnabled ? (
-              <option value="customer">İstifadəçi / Müştəri</option>
-            ) : null}
-            {storeRegistrationEnabled ? (
-              <option value="seller">Mağaza sahibi</option>
-            ) : null}
-          </AuthSelect>
-          <AuthField
-            id="avatarUrl"
-            name="avatarUrl"
-            label="Profil şəkli URL"
-            type="url"
-            placeholder="https://"
-          />
-          <AuthField
-            id="bannerUrl"
-            name="bannerUrl"
-            label="Banner şəkli URL"
-            type="url"
-            placeholder="https://"
-          />
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium">Hesab tipi</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {userRegistrationEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => setRole("customer")}
+                  className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                    role === "customer"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-foreground hover:border-primary/50"
+                  }`}
+                  aria-pressed={role === "customer"}
+                >
+                  <UserRound className="size-4" aria-hidden="true" />
+                  İstifadəçi / Müştəri
+                </button>
+              ) : null}
+              {storeRegistrationEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => setRole("seller")}
+                  className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                    role === "seller"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-foreground hover:border-primary/50"
+                  }`}
+                  aria-pressed={role === "seller"}
+                >
+                  <Store className="size-4" aria-hidden="true" />
+                  Mağaza sahibi
+                </button>
+              ) : null}
+            </div>
+          </fieldset>
+          {role === "seller" ? (
+            <div className="grid gap-4 rounded-xl border bg-muted/20 p-4">
+              <div>
+                <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Logo və banneri URL ilə yox, şəkil faylı kimi əlavə edin.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+                <SellerImageDropzone
+                  name="avatarFile"
+                  label="Profil şəkli / Logo"
+                  ratioClassName="aspect-square"
+                />
+                <SellerImageDropzone
+                  name="bannerFile"
+                  label="Banner şəkli"
+                  ratioClassName="aspect-[16/7]"
+                />
+              </div>
+            </div>
+          ) : null}
           <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-4 text-sm">
             <input
               type="checkbox"

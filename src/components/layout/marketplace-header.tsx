@@ -45,7 +45,7 @@ function getAccountHref(role: AuthRole | null) {
   }
 
   if (role === "seller") {
-    return "/admin";
+    return "/store/dashboard";
   }
 
   return role ? "/dashboard" : "/login";
@@ -101,9 +101,9 @@ export function MarketplaceHeader({
     }
 
     return (
-      <Button asChild variant="outline" size="icon" className="size-10">
+      <Button asChild variant="outline" size="icon" className="size-11">
         <Link href={accountHref} aria-label="Hesabım">
-          <AccountIcon className="size-5" aria-hidden="true" />
+          <AccountIcon className="size-6" aria-hidden="true" />
         </Link>
       </Button>
     );
@@ -112,7 +112,7 @@ export function MarketplaceHeader({
   return (
     <>
       <header className="sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur">
-        <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3">
+        <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             <span className="grid size-10 place-items-center rounded-md bg-primary text-lg font-black text-primary-foreground shadow-sm">
               a
@@ -126,13 +126,10 @@ export function MarketplaceHeader({
               <Link href="/products">Məhsullar</Link>
             </Button>
             <Button asChild variant="ghost">
-              <Link href="/help">Kömək</Link>
-            </Button>
-            <Button asChild variant="ghost">
               <Link href="/about">Haqqında</Link>
             </Button>
           </nav>
-          <div className="ml-auto hidden min-w-0 flex-1 items-center gap-3 md:flex">
+          <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
             <MarketplaceSearch
               stores={stores}
               categories={categories}
@@ -163,7 +160,7 @@ export function MarketplaceHeader({
                 <ShoppingCart className="size-7" aria-hidden="true" />
               </Link>
             </Button>
-            <div className="hidden lg:block">
+            <div className="hidden min-w-[168px] lg:block">
               <HeaderAccountActions />
             </div>
             <div className="hidden md:block">
@@ -175,11 +172,11 @@ export function MarketplaceHeader({
               asChild
               variant="ghost"
               size="icon"
-              className="size-10 rounded-md border bg-background"
+              className="size-11 rounded-md border bg-background"
               aria-label="Səbət"
             >
               <Link href="/cart">
-                <ShoppingCart className="size-5" aria-hidden="true" />
+                <ShoppingCart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
             {mobileAccount}
