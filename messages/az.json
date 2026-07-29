@@ -41,7 +41,8 @@
     "deposits": "Beh sifarişləri",
     "users": "İstifadəçilər",
     "stores": "Mağazalar",
-    "systemSettings": "Sistem ayarları"
+    "systemSettings": "Sistem ayarları",
+    "messages": "Mesajlar"
   },
   "productFields": {
     "name": "Ad",

@@ -1,100 +1,213 @@
 "use client";
 
+import { ArrowLeft, ArrowRight, Chrome } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 
+import { AuthCard } from "@/components/auth/auth-card";
+import { AuthDivider } from "@/components/auth/auth-divider";
+import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
+import { AuthField } from "@/components/auth/auth-field";
+import { PasswordInput } from "@/components/auth/password-input";
+import { Button } from "@/components/ui/button";
 import { loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { AuthCard } from "@/components/auth/auth-card";
-import { AuthField } from "@/components/auth/auth-field";
-import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
 type LoginFormProps = {
   mode?: "public" | "admin";
 };
 
+type FieldErrors = {
+  identifier?: string;
+  password?: string;
+};
+
+function getInitialIdentifier(params: URLSearchParams) {
+  return params.get("email") ?? params.get("identifier") ?? "";
+}
+
 export function LoginForm({ mode = "public" }: LoginFormProps) {
   const searchParams = useSearchParams();
-  const [isPending, setIsPending] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [identifier, setIdentifier] = useState(() => getInitialIdentifier(searchParams));
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const next = searchParams.get("next") ?? "";
+
+  const visualLabel = useMemo(
+    () =>
+      mode === "admin"
+        ? "Admin panelinə giriş"
+        : "Hesabınıza daxil olmaq üçün məlumatlarınızı daxil edin.",
+    [mode],
+  );
+
+  function validate() {
+    const nextErrors: FieldErrors = {};
+
+    if (!identifier.trim()) {
+      nextErrors.identifier = "Email və ya telefon daxil edin.";
+    }
+
+    if (!password.trim()) {
+      nextErrors.password = "Şifrə daxil edin.";
+    }
+
+    setFieldErrors(nextErrors);
+
+    return Object.keys(nextErrors).length === 0;
+  }
 
   async function handleSubmit(formData: FormData) {
     if (isPending) {
       return;
     }
 
-    setIsPending(true);
-    const result = await loginAction(formData);
+    setServerError(null);
 
-    if (!result.ok) {
-      setIsPending(false);
-      void appAlert.error(result.message, "Giriş alınmadı");
+    if (!validate()) {
       return;
     }
 
-    void appAlert.success("Xoş gəldiniz", result.message);
-    window.location.assign(result.redirectTo);
+    formData.set("identifier", identifier.trim());
+    formData.set("password", password);
+    formData.set("rememberMe", rememberMe ? "on" : "");
+    formData.set("next", next);
+    formData.set("mode", mode);
+
+    startTransition(async () => {
+      const result = await loginAction(formData);
+
+      if (!result.ok) {
+        setServerError(result.message);
+        void appAlert.error(result.message, "Giriş alınmadı");
+        return;
+      }
+
+      void appAlert.success("Xoş gəldiniz", result.message);
+      window.location.assign(result.redirectTo);
+    });
   }
 
   return (
     <AuthCard
-      title={mode === "admin" ? "Admin girişi" : "Giriş"}
-      description={
-        mode === "admin"
-          ? "Admin panelinə yalnız admin rolu olan hesab daxil ola bilər."
-          : "Müştəri və ya mağaza hesabınıza daxil olun."
+      className="mx-auto max-w-[520px]"
+      topStart={
+        <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
+          <Link href="/">
+            <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
+            Geri
+          </Link>
+        </Button>
       }
-      footer={
+      topEnd={
         mode === "admin" ? (
-          <div className="space-y-3">
-            <Link className="font-medium text-primary hover:underline" href="/login">
-              Sayt girişinə qayıt
-            </Link>
-            <div>
-              <Link className="font-medium text-primary hover:underline" href="/">
-                Ana səhifəyə qayıt
-              </Link>
-            </div>
-          </div>
+          <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
+            <Link href="/login">Sayt girişi</Link>
+          </Button>
         ) : (
-          <div className="space-y-3">
+          <Button asChild variant="outline" size="sm" className="h-10 px-2 text-sm">
+            <Link href="/register">
+              Qeydiyyat
+              <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        )
+      }
+      title={mode === "admin" ? "RAdmin girişi" : "Giriş"}
+      description={visualLabel}
+      footer={
+        <div className="space-y-3">
+          {mode === "public" ? (
             <p>
               Hesabınız yoxdur?{" "}
               <Link className="font-medium text-primary hover:underline" href="/register">
                 Qeydiyyat
               </Link>
             </p>
-            <Link className="font-medium text-primary hover:underline" href="/">
-              Ana səhifəyə qayıt
-            </Link>
-          </div>
-        )
+          ) : (
+            <p>
+              Sayt girişinə keçmək üçün{" "}
+              <Link className="font-medium text-primary hover:underline" href="/login">
+                public login
+              </Link>{" "}
+              səhifəsindən istifadə edin.
+            </p>
+          )}
+          <Link className="font-medium text-primary hover:underline" href="/">
+            Ana səhifəyə qayıt
+          </Link>
+        </div>
       }
     >
       <form action={handleSubmit} className="grid gap-4">
         <input name="next" type="hidden" value={next} />
         <input name="mode" type="hidden" value={mode} />
+        <AuthErrorAlert message={serverError} />
         <AuthField
-          id="email"
-          name="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
+          id="identifier"
+          name="identifier"
+          label="Email və ya telefon"
+          type="text"
+          autoComplete="username"
+          inputMode="text"
+          value={identifier}
+          onChange={(event) => {
+            setIdentifier(event.target.value);
+            setFieldErrors((current) => ({ ...current, identifier: undefined }));
+          }}
+          hint="Hesabınıza bağlı email və ya telefon nömrəsi."
+          error={fieldErrors.identifier}
           required
         />
-        <AuthField
+        <PasswordInput
           id="password"
           name="password"
           label="Şifrə"
-          type="password"
           autoComplete="current-password"
+          value={password}
+          onValueChange={(value) => {
+            setPassword(value);
+            setFieldErrors((current) => ({ ...current, password: undefined }));
+          }}
+          error={fieldErrors.password}
           required
         />
-        <Button type="submit" disabled={isPending}>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <label className="flex items-center gap-2 font-medium text-foreground">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.target.checked)}
+              className="size-4 rounded border-input"
+            />
+            Məni xatırla
+          </label>
+          <Link className="font-medium text-primary hover:underline" href="/forgot-password">
+            Şifrəni unutmusunuz?
+          </Link>
+        </div>
+        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>
       </form>
+
+      <AuthDivider />
+
+      <div className="grid gap-3">
+        <Button type="button" variant="outline" className="h-12 w-full rounded-xl" disabled>
+          <Chrome className="mr-2 size-4" aria-hidden="true" />
+          Google ilə giriş tezliklə
+        </Button>
+        {mode === "public" ? (
+          <p className="text-center text-xs leading-6 text-muted-foreground">
+            Gələcək sosial girişlər burada aktiv ediləcək. Hazırda yalnız email və telefon girişi dəstəklənir.
+          </p>
+        ) : null}
+      </div>
     </AuthCard>
   );
 }

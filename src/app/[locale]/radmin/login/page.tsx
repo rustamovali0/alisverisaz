@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { AuthSplitScreen } from "@/components/auth/auth-split-screen";
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
@@ -12,11 +13,13 @@ export default async function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container flex min-h-screen items-center justify-center py-12">
+    <main className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--muted)/0.48),hsl(var(--background))_22%)]">
+      <div className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+        <AuthSplitScreen variant="admin">
         <Suspense fallback={null}>
           <LoginForm mode="admin" />
         </Suspense>
+        </AuthSplitScreen>
       </div>
     </main>
   );

@@ -123,7 +123,7 @@ export function SiteFooter({
 
   return (
     <footer className="border-t bg-card/95">
-      <div className="container grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
+      <div className="container grid gap-8 py-10 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div>
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
@@ -192,6 +192,31 @@ export function SiteFooter({
             ) : null}
             <Link href="/cart" className="hover:text-primary">
               Səbət
+            </Link>
+          </div>
+        </div>
+        <div>
+          <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
+            Dəstək
+          </h2>
+          <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+            <Link href="/help" className="hover:text-primary">
+              Kömək mərkəzi
+            </Link>
+            <Link href="/faq" className="hover:text-primary">
+              FAQ
+            </Link>
+            <Link href="/contact" className="hover:text-primary">
+              Əlaqə və dəstək
+            </Link>
+            <Link href="/terms" className="hover:text-primary">
+              İstifadəçi razılaşması
+            </Link>
+            <Link href="/privacy" className="hover:text-primary">
+              Məxfilik siyasəti
+            </Link>
+            <Link href="/rules" className="hover:text-primary">
+              Marketplace qaydaları
             </Link>
           </div>
         </div>

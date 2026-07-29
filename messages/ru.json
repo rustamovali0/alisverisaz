@@ -41,7 +41,8 @@
     "deposits": "Авансовые заказы",
     "users": "Пользователи",
     "stores": "Магазины",
-    "systemSettings": "Системные настройки"
+    "systemSettings": "Системные настройки",
+    "messages": "Сообщения"
   },
   "productFields": {
     "name": "Название",

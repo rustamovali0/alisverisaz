@@ -41,7 +41,8 @@
     "deposits": "Deposit orders",
     "users": "Users",
     "stores": "Stores",
-    "systemSettings": "System settings"
+    "systemSettings": "System settings",
+    "messages": "Messages"
   },
   "productFields": {
     "name": "Name",

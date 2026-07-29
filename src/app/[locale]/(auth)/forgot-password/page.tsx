@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 
-import { LoginForm } from "@/components/auth/login-form";
 import { AuthSplitScreen } from "@/components/auth/auth-split-screen";
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   return (
     <AuthSplitScreen variant="login">
       <Suspense fallback={null}>
-        <LoginForm />
+        <ForgotPasswordForm />
       </Suspense>
     </AuthSplitScreen>
   );

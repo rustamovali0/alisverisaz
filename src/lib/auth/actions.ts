@@ -7,6 +7,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
@@ -57,13 +58,18 @@ async function upsertProfile(input: {
 }
 
 export async function registerAction(formData: FormData): Promise<AuthResult> {
-  const fullName = readString(formData, "fullName");
+  const fullNameInput = readString(formData, "fullName");
+  const firstName = readString(formData, "firstName");
+  const lastName = readString(formData, "lastName");
+  const fullName = fullNameInput || [firstName, lastName].filter(Boolean).join(" ").trim();
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
+  const confirmPassword = readString(formData, "confirmPassword");
   const requestedRole = readString(formData, "role");
   const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
   const avatarUrl = readString(formData, "avatarUrl") || null;
   const bannerUrl = readString(formData, "bannerUrl") || null;
+  const agreedToTerms = formData.get("terms") === "on";
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
   const siteSettings = await getSiteSettings();
@@ -82,10 +88,10 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  if (!fullName || !email || !password || !phone) {
+  if (!fullName || !email || !password || !confirmPassword || !phone) {
     return {
       ok: false,
-      message: "Ad, email, telefon və şifrə mütləqdir.",
+      message: "Ad, email, telefon, şifrə və şifrənin təkrarı mütləqdir.",
     };
   }
 
@@ -96,10 +102,24 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
+  if (password !== confirmPassword) {
+    return {
+      ok: false,
+      message: "Şifrələr uyğun gəlmir.",
+    };
+  }
+
   if (password.length < 8) {
     return {
       ok: false,
       message: "Şifrə minimum 8 simvol olmalıdır.",
+    };
+  }
+
+  if (!agreedToTerms) {
+    return {
+      ok: false,
+      message: "Qeydiyyat üçün istifadəçi razılaşmasını təsdiqləyin.",
     };
   }
 
@@ -178,12 +198,12 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
 }
 
 export async function loginAction(formData: FormData): Promise<AuthResult> {
-  const email = readString(formData, "email").toLowerCase();
+  const identifier = readString(formData, "identifier").toLowerCase();
   const password = readString(formData, "password");
   const nextPath = normalizeNextPath(readString(formData, "next"));
   const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
 
-  if (!email || !password) {
+  if (!identifier || !password) {
     return {
       ok: false,
       message: "Email və şifrə mütləqdir.",
@@ -191,6 +211,29 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   const supabase = await createSupabaseServerClient();
+  let email = identifier;
+
+  if (!isValidEmail(identifier)) {
+    const normalizedPhone = normalizeAzerbaijanPhone(identifier);
+    const { data: profileByPhone } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("phone", normalizedPhone)
+      .returns<Array<{ email: string | null }>>()
+      .maybeSingle();
+
+    if (profileByPhone?.email) {
+      email = profileByPhone.email.toLowerCase();
+    }
+  }
+
+  if (!isValidEmail(email)) {
+    return {
+      ok: false,
+      message: "Düzgün email və ya telefon daxil edin.",
+    };
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -319,6 +362,100 @@ export async function logoutAction(): Promise<AuthResult> {
   return {
     ok: true,
     message: "Hesabdan çıxış edildi.",
+    redirectTo: "/login",
+  };
+}
+
+export async function requestPasswordResetAction(formData: FormData): Promise<AuthResult> {
+  const identifier = readString(formData, "identifier").toLowerCase();
+
+  if (!identifier) {
+    return {
+      ok: false,
+      message: "Email daxil edin.",
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  let email = identifier;
+
+  if (!isValidEmail(identifier)) {
+    const normalizedPhone = normalizeAzerbaijanPhone(identifier);
+    const { data: profileByPhone } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("phone", normalizedPhone)
+      .returns<Array<{ email: string | null }>>()
+      .maybeSingle();
+
+    if (profileByPhone?.email) {
+      email = profileByPhone.email.toLowerCase();
+    }
+  }
+
+  if (!isValidEmail(email)) {
+    return {
+      ok: false,
+      message: "Düzgün email və ya telefon daxil edin.",
+    };
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${clientEnv.appUrl}/reset-password`,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    message: "Şifrə bərpa linki email ünvanınıza göndərildi.",
+    redirectTo: "/login",
+  };
+}
+
+export async function updatePasswordAction(formData: FormData): Promise<AuthResult> {
+  const password = readString(formData, "password");
+  const confirmPassword = readString(formData, "confirmPassword");
+
+  if (!password || !confirmPassword) {
+    return {
+      ok: false,
+      message: "Şifrə və təkrar şifrə mütləqdir.",
+    };
+  }
+
+  if (password !== confirmPassword) {
+    return {
+      ok: false,
+      message: "Şifrələr uyğun gəlmir.",
+    };
+  }
+
+  if (password.length < 8) {
+    return {
+      ok: false,
+      message: "Şifrə minimum 8 simvol olmalıdır.",
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  return {
+    ok: true,
+    message: "Şifrə uğurla yeniləndi.",
     redirectTo: "/login",
   };
 }

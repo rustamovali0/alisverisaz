@@ -24,12 +24,20 @@ const reservedSlugs = new Set([
   "admin",
   "radmin",
   "api",
+  "about",
   "cart",
+  "contact",
   "dashboard",
+  "faq",
+  "guide",
+  "help",
   "login",
+  "privacy",
   "products",
   "register",
+  "rules",
   "store",
+  "terms",
 ]);
 
 export async function generateMetadata({

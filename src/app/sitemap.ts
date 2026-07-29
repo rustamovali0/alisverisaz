@@ -1,9 +1,23 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/config/site";
+import { helpArticles, helpNavigation } from "@/lib/help-center/content";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
+
+  const helpUrls = helpNavigation.map((item) => ({
+    url: `${siteConfig.url}${item.href}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: item.href === "/help" ? 0.7 : 0.5,
+  }));
+  const articleUrls = helpArticles.map((article) => ({
+    url: `${siteConfig.url}${article.href}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.35,
+  }));
 
   return [
     {
@@ -24,5 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.4,
     },
+    ...helpUrls,
+    ...articleUrls,
   ];
 }

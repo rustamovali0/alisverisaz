@@ -9,7 +9,11 @@ import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { logoutAction } from "@/lib/auth/actions";
 
-export function LogoutButton() {
+type LogoutButtonProps = {
+  compact?: boolean;
+};
+
+export function LogoutButton({ compact = false }: LogoutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -35,9 +39,12 @@ export function LogoutButton() {
       variant="outline"
       onClick={handleLogout}
       disabled={isPending}
+      size={compact ? "icon" : "default"}
+      className={compact ? "size-10 rounded-xl" : undefined}
+      aria-label={compact ? "Çıxış" : undefined}
     >
-      <LogOut className="mr-2 size-4" aria-hidden="true" />
-      {isPending ? "Çıxılır" : "Çıxış"}
+      <LogOut className={compact ? "size-4" : "mr-2 size-4"} aria-hidden="true" />
+      {compact ? null : isPending ? "Çıxılır" : "Çıxış"}
     </Button>
   );
 }

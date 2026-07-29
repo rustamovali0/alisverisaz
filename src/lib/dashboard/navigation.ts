@@ -24,6 +24,7 @@ export type DashboardNavItem = {
   titleKey?: string;
   href: string;
   icon: DashboardIcon;
+  badgeText?: string;
 };
 
 export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
