@@ -53,9 +53,9 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.28 }}
-      className="group min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10"
+      className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10"
     >
-      <Link href={`/${store.slug}`} className="block min-w-0">
+      <Link href={`/${store.slug}`} className="block h-full min-w-0">
         <div className="relative bg-muted">
           <div className="h-20 overflow-hidden sm:h-24">
             {store.coverUrl ? (
@@ -80,7 +80,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
             )}
           </div>
         </div>
-        <div className="p-3 pt-7 sm:p-4 sm:pt-8">
+        <div className="flex min-h-[118px] flex-col justify-between p-3 pt-7 sm:min-h-[132px] sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
@@ -273,7 +273,7 @@ export function HomeExperience({
               </h2>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {newStores.map((store, index) => (
               <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
             ))}

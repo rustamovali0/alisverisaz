@@ -58,6 +58,25 @@ function sanitizeFileName(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+async function ensureCmsMediaBucket() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: bucket } = await supabaseAdmin.storage.getBucket(CMS_MEDIA_BUCKET);
+
+  if (bucket) {
+    return;
+  }
+
+  const { error } = await supabaseAdmin.storage.createBucket(CMS_MEDIA_BUCKET, {
+    public: true,
+    fileSizeLimit: MAX_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
+  });
+
+  if (error && !error.message.toLowerCase().includes("already")) {
+    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
+  }
+}
+
 function normalizeSocialLinks(formData: FormData) {
   const previous = parseJson(readString(formData, "socialLinksJson"), {});
   const links =
@@ -94,6 +113,7 @@ async function uploadCmsMediaFile(input: {
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  await ensureCmsMediaBucket();
   const fileName = sanitizeFileName(input.file.name) || "image.webp";
   const path = `${input.folder}/${input.currentUserId}/${crypto.randomUUID()}-${fileName}`;
   const body = new Uint8Array(await input.file.arrayBuffer());
@@ -124,7 +144,7 @@ async function uploadCmsMediaFile(input: {
       updated_by: input.currentUserId,
     });
 
-  if (insertError) {
+  if (insertError && !["42P01", "PGRST205"].includes(insertError.code ?? "")) {
     throw new Error(insertError.message);
   }
 
@@ -540,6 +560,7 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
   const supabaseAdmin = createSupabaseAdminClient();
 
   try {
+    await ensureCmsMediaBucket();
     await Promise.all(
       files.map(async (file) => {
         if (file.size > MAX_MEDIA_SIZE) {
@@ -581,7 +602,7 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
             updated_by: current.user.id,
           });
 
-        if (insertError) {
+        if (insertError && !["42P01", "PGRST205"].includes(insertError.code ?? "")) {
           throw new Error(insertError.message);
         }
       }),

@@ -46,6 +46,11 @@ type ProductImageRow = {
   sort_order: number | null;
 };
 
+const productMessageSelect =
+  "id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name,slug),stores(name,slug)";
+const productMessageFallbackSelect =
+  "id,product_id,store_id,sender_name,sender_phone,message,status,created_at,products(name,slug),stores(name,slug)";
+
 function getPrimaryImage(productId: string, imageMap: Map<string, ProductImageRow[]>) {
   return [...(imageMap.get(productId) ?? [])].sort((a, b) => {
     if (a.is_primary !== b.is_primary) {
@@ -111,18 +116,64 @@ async function mapRows(
   }));
 }
 
+async function loadProductMessages(queryBuilder: any) {
+  const { data, error } = await queryBuilder;
+
+  if (!error) {
+    return (data ?? []) as MessageRow[];
+  }
+
+  const message = String(error.message ?? "");
+  const missingReplyColumns =
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    message.includes("reply_message") ||
+    message.includes("reply_at");
+
+  if (!missingReplyColumns) {
+    return [];
+  }
+
+  const fallbackQuery = queryBuilder.__fallbackQuery;
+
+  if (!fallbackQuery) {
+    return [];
+  }
+
+  const fallback = await fallbackQuery;
+
+  return ((fallback.data ?? []) as MessageRow[]).map((row) => ({
+    ...row,
+    reply_message: null,
+    reply_at: null,
+  }));
+}
+
+function buildProductMessagesQuery(supabase: any, includeReplies = true) {
+  return (supabase as any)
+    .from("product_messages")
+    .select(includeReplies ? productMessageSelect : productMessageFallbackSelect);
+}
+
 export async function getProductMessagesForProduct(productId: string) {
   const supabase = createSupabaseAdminClient();
-  const { data } = await (supabase as any)
-    .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name,slug),stores(name,slug)")
+  const query = buildProductMessagesQuery(supabase).eq("product_id", productId).order(
+    "created_at",
+    {
+      ascending: true,
+    },
+  ).limit(100);
+  const fallbackQuery = buildProductMessagesQuery(supabase, false)
     .eq("product_id", productId)
     .order("created_at", {
       ascending: true,
     })
     .limit(100);
 
-  return mapRows((data ?? []) as MessageRow[], true, false);
+  (query as any).__fallbackQuery = fallbackQuery;
+  const data = await loadProductMessages(query);
+
+  return mapRows(data, true, false);
 }
 
 export async function getSellerProductMessages(storeIds: string[]) {
@@ -131,27 +182,38 @@ export async function getSellerProductMessages(storeIds: string[]) {
   }
 
   const supabase = createSupabaseAdminClient();
-  const { data } = await (supabase as any)
-    .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name,slug),stores(name,slug)")
+  const query = buildProductMessagesQuery(supabase).in("store_id", storeIds).order(
+    "created_at",
+    {
+      ascending: false,
+    },
+  ).limit(200);
+  const fallbackQuery = buildProductMessagesQuery(supabase, false)
     .in("store_id", storeIds)
     .order("created_at", {
       ascending: false,
     })
     .limit(200);
 
-  return mapRows((data ?? []) as MessageRow[]);
+  (query as any).__fallbackQuery = fallbackQuery;
+  const data = await loadProductMessages(query);
+
+  return mapRows(data);
 }
 
 export async function getAdminProductMessages() {
   const supabase = createSupabaseAdminClient();
-  const { data } = await (supabase as any)
-    .from("product_messages")
-    .select("id,product_id,store_id,sender_name,sender_phone,message,reply_message,reply_at,status,created_at,products(name,slug),stores(name,slug)")
+  const query = buildProductMessagesQuery(supabase).order("created_at", {
+    ascending: false,
+  }).limit(300);
+  const fallbackQuery = buildProductMessagesQuery(supabase, false)
     .order("created_at", {
       ascending: false,
     })
     .limit(300);
 
-  return mapRows((data ?? []) as MessageRow[]);
+  (query as any).__fallbackQuery = fallbackQuery;
+  const data = await loadProductMessages(query);
+
+  return mapRows(data);
 }

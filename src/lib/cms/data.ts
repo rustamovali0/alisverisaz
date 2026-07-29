@@ -1,6 +1,11 @@
 import { unstable_cache } from "next/cache";
 
-import { defaultSiteSettings, navItemKey } from "@/lib/cms/defaults";
+import {
+  defaultHomepageSections,
+  defaultSiteSettings,
+  defaultThemeSettings,
+  navItemKey,
+} from "@/lib/cms/defaults";
 import type {
   HomepageSection,
   ManagedNavigationItem,
@@ -20,6 +25,13 @@ function readString(value: unknown, fallback = "") {
 
 function readBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function isMissingTableError(error: unknown) {
+  const value = error as { code?: string; message?: string } | null | undefined;
+  const message = String(value?.message ?? "");
+
+  return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
 }
 
 function normalizeSiteSettings(value: any): SiteSettings {
@@ -117,10 +129,29 @@ function readHomepageSection(row: any): HomepageSection {
   };
 }
 
+function fallbackHomepageSections() {
+  return defaultHomepageSections.map((section) =>
+    readHomepageSection({
+      id: section.key,
+      ...section,
+      image_url: section.imageUrl,
+      button_label: section.buttonLabel,
+      button_url: section.buttonUrl,
+      item_limit: section.itemLimit,
+      data_filter: section.dataFilter,
+      sort_order: section.sortOrder,
+      is_active: section.isActive,
+      show_mobile: section.showMobile,
+      show_desktop: section.showDesktop,
+      theme_variant: section.themeVariant,
+    }),
+  );
+}
+
 const getCachedHomepageSections = unstable_cache(
   async () => {
     const supabase = createSupabaseAdminClient();
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("homepage_sections")
       .select(
         "id,key,title,description,image_url,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
@@ -131,7 +162,13 @@ const getCachedHomepageSections = unstable_cache(
         ascending: true,
       });
 
-    return ((data ?? []) as any[]).map(readHomepageSection);
+    if (error && isMissingTableError(error)) {
+      return fallbackHomepageSections();
+    }
+
+    const sections = ((data ?? []) as any[]).map(readHomepageSection);
+
+    return sections.length ? sections : fallbackHomepageSections();
   },
   ["homepage-sections"],
   {
@@ -159,9 +196,15 @@ export async function getHomepageSections(includeDrafts = false) {
     query = query.eq("is_active", true).eq("status", "published");
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
 
-  return ((data ?? []) as any[]).map(readHomepageSection);
+  if (error && isMissingTableError(error)) {
+    return fallbackHomepageSections();
+  }
+
+  const sections = ((data ?? []) as any[]).map(readHomepageSection);
+
+  return sections.length ? sections : fallbackHomepageSections();
 }
 
 function readTheme(row: any): ThemeSetting {
@@ -179,10 +222,27 @@ function readTheme(row: any): ThemeSetting {
   };
 }
 
+function fallbackThemeSettings() {
+  return defaultThemeSettings.map((theme) =>
+    readTheme({
+      id: theme.themeKey,
+      theme_key: theme.themeKey,
+      name: theme.name,
+      status: theme.status,
+      is_active: theme.isActive,
+      preview_image_url: theme.previewImageUrl,
+      hero_variant: theme.heroVariant,
+      product_card_variant: theme.productCardVariant,
+      section_order: theme.sectionOrder,
+      config: theme.config,
+    }),
+  );
+}
+
 const getCachedThemeSettings = unstable_cache(
   async () => {
     const supabase = createSupabaseAdminClient();
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("theme_settings")
       .select(
         "id,theme_key,name,status,is_active,preview_image_url,hero_variant,product_card_variant,section_order,config",
@@ -192,7 +252,13 @@ const getCachedThemeSettings = unstable_cache(
         ascending: true,
       });
 
-    return ((data ?? []) as any[]).map(readTheme);
+    if (error && isMissingTableError(error)) {
+      return fallbackThemeSettings();
+    }
+
+    const themes = ((data ?? []) as any[]).map(readTheme);
+
+    return themes.length ? themes : fallbackThemeSettings();
   },
   ["theme-settings"],
   {
@@ -220,9 +286,15 @@ export async function getThemeSettings(includeDrafts = false) {
     query = query.eq("status", "published");
   }
 
-  const { data } = await query;
+  const { data, error } = await query;
 
-  return ((data ?? []) as any[]).map(readTheme);
+  if (error && isMissingTableError(error)) {
+    return fallbackThemeSettings();
+  }
+
+  const themes = ((data ?? []) as any[]).map(readTheme);
+
+  return themes.length ? themes : fallbackThemeSettings();
 }
 
 export async function getActiveHomeTheme() {
@@ -364,13 +436,17 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
 
 export async function getMediaAssets() {
   const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
+  const { data, error } = await (supabase as any)
     .from("media_assets")
     .select("id,url,path,file_name,mime_type,size_bytes,alt_text,usage_count,created_at")
     .order("created_at", {
       ascending: false,
     })
     .limit(100);
+
+  if (error && isMissingTableError(error)) {
+    return [];
+  }
 
   return ((data ?? []) as any[]).map(
     (row): MediaAsset => ({

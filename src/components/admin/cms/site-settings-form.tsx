@@ -1,7 +1,7 @@
 "use client";
 
 import { ImagePlus, Instagram, X } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
@@ -93,21 +93,40 @@ function LogoUploadField({
   fileName,
   urlName,
   defaultValue,
-}: {
+  }: {
   label: string;
   fileName: string;
   urlName: string;
   defaultValue?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const previewUrlRef = useRef<string | null>(defaultValue ?? null);
   const [selectedName, setSelectedName] = useState("");
+  const [previewUrl, setPreviewUrl] = useState(defaultValue ?? "");
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (previewUrlRef.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+    },
+    [],
+  );
 
   async function setFile(file: File) {
     setIsConverting(true);
     try {
       const converted = await convertToWebp(file);
+      const nextPreviewUrl = URL.createObjectURL(converted);
+
+      if (previewUrlRef.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
+
+      previewUrlRef.current = nextPreviewUrl;
+      setPreviewUrl(nextPreviewUrl);
       const transfer = new DataTransfer();
       transfer.items.add(converted);
 
@@ -129,6 +148,48 @@ function LogoUploadField({
   return (
     <div className="grid gap-2 text-sm font-medium">
       <span>{label}</span>
+      <div className="overflow-hidden rounded-xl border bg-muted/20 shadow-sm">
+        <div className="flex items-center justify-between gap-3 border-b bg-background/80 px-4 py-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Canlı önizləmə
+            </p>
+            <p className="text-sm font-semibold">{label}</p>
+          </div>
+          <span className="rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            {previewUrl ? "Hazır" : "Boşdur"}
+          </span>
+        </div>
+        <div className="grid gap-4 p-4 sm:grid-cols-[auto_1fr] sm:items-center">
+          <div className="grid size-20 place-items-center overflow-hidden rounded-xl border bg-background shadow-sm">
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt={label}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <ImagePlus className="size-8 text-muted-foreground" aria-hidden="true" />
+            )}
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">
+              {selectedName || (previewUrl ? "Cari şəkil göstərilir" : "Şəkil seçilməyib")}
+            </p>
+            <p className="text-xs leading-5 text-muted-foreground">
+              JPG, PNG və WebP qəbul edilir. Fayl seçdikdə buradakı önizləmə dərhal yenilənir.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                Drag & drop
+              </span>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                WebP
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -220,6 +281,107 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
 
   return (
     <form action={handleSubmit} className="grid gap-4">
+      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <section className="rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl border bg-background shadow-sm">
+                {settings.logoUrl ? (
+                  <img src={settings.logoUrl} alt={settings.siteName} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xl font-black text-primary">
+                    {settings.shortName.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                  Brend xülasəsi
+                </p>
+                <h3 className="truncate text-2xl font-black tracking-normal">
+                  {settings.siteName}
+                </h3>
+                <p className="truncate text-sm text-muted-foreground">{settings.defaultSeoTitle}</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+              Aktiv
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {[
+              ["Domain", settings.shortName || "Qısa ad yoxdur"],
+              ["Email", settings.contactEmail || "Təyin edilməyib"],
+              ["Telefon", settings.phone || "Təyin edilməyib"],
+              ["WhatsApp", settings.whatsapp || "Təyin edilməyib"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border bg-background p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  {label}
+                </p>
+                <p className="mt-2 truncate text-sm font-semibold">{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-xl border bg-muted/25 p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Canlı görünüş
+              </p>
+              <h3 className="mt-2 text-lg font-black tracking-normal">Logo və sosial hissə</h3>
+            </div>
+            <span className="rounded-full border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+              {themes.length} tema
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-xl border bg-background p-4 shadow-sm">
+              <p className="text-sm font-semibold">Header markası</p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="grid size-12 place-items-center overflow-hidden rounded-xl border bg-card">
+                  {settings.darkLogoUrl ? (
+                    <img src={settings.darkLogoUrl} alt={`${settings.siteName} dark`} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-black text-primary">
+                      {settings.siteName.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{settings.siteName}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {settings.defaultMetaDescription || "SEO izahı əlavə edilməyib."}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["Logo", settings.logoUrl],
+                ["Dark", settings.darkLogoUrl],
+                ["Favicon", settings.faviconUrl],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border bg-background p-3 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    {label}
+                  </p>
+                  <div className="mt-3 grid size-14 place-items-center overflow-hidden rounded-lg border bg-muted">
+                    {value ? (
+                      <img src={value} alt={label} className="h-full w-full object-cover" />
+                    ) : (
+                      <ImagePlus className="size-5 text-muted-foreground" aria-hidden="true" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Field label="Sayt adı" name="siteName" defaultValue={settings.siteName} />
         <Field label="Qısa ad" name="shortName" defaultValue={settings.shortName} />
