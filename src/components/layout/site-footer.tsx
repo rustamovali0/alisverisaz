@@ -221,7 +221,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t">
-        <div className="container flex max-w-full flex-col gap-2 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:pb-4">
+        <div className="container flex max-w-full flex-col gap-2 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:pb-4">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
         </div>
       </div>
