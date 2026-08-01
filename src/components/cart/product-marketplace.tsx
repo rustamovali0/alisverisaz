@@ -5,7 +5,6 @@ import type { MouseEvent } from "react";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
-import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -34,7 +33,6 @@ type ProductMarketplaceProps = {
   stores: MarketplaceStore[];
   categories: CategoryOption[];
   selectedCategoryId?: string;
-  searchQuery?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
 };
@@ -125,7 +123,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-28 overflow-hidden sm:h-24">
+          <div className="h-20 overflow-hidden sm:h-24">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -139,10 +137,10 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             )}
           </div>
           <div className="absolute -bottom-5 left-3 z-10">
-            <StoreLogo store={store} className="size-12 shadow-sm sm:size-14" />
+            <StoreLogo store={store} className="size-10 shadow-sm sm:size-14" />
           </div>
         </div>
-        <div className="flex flex-1 flex-col p-3 pt-7 sm:p-4 sm:pt-8">
+        <div className="flex flex-1 flex-col p-3 pt-6 sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
@@ -155,13 +153,13 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:size-5" />
           </div>
           {store.address ? (
-            <p className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:mt-3 sm:text-sm">
+            <p className="mt-2 hidden min-w-0 items-center gap-2 text-xs text-muted-foreground sm:mt-3 sm:flex sm:text-sm">
               <MapPin className="size-3.5 shrink-0 text-primary sm:size-4" aria-hidden="true" />
               <span className="line-clamp-1 min-w-0">{store.address}</span>
             </p>
           ) : null}
           {previewImages.length > 0 ? (
-            <div className="mt-2 grid grid-cols-3 gap-2 sm:mt-3">
+            <div className="mt-2 hidden grid-cols-3 gap-2 sm:mt-3 sm:grid">
               {previewImages.map((imageUrl, index) => (
                 <div
                   key={`${store.id}-${imageUrl}-${index}`}
@@ -202,7 +200,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid min-w-0 grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
         const detailHref = `/${storeSlug}/products/${product.slug}`;
@@ -298,19 +296,11 @@ export function ProductMarketplace({
   stores,
   categories,
   selectedCategoryId,
-  searchQuery,
   footer,
   labels,
 }: ProductMarketplaceProps) {
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <MarketplaceHeader
-        siteName={footer?.siteName}
-        stores={stores}
-        categories={categories}
-        searchDefaultValue={searchQuery}
-        showMobileSearch
-      />
       <div className="container max-w-full py-5 md:py-8">
         <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
@@ -321,7 +311,37 @@ export function ProductMarketplace({
           </span>
         </header>
 
-        <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <section className="md:hidden">
+          <div className="mb-4 flex min-w-0 items-end justify-between gap-3">
+            <h1 className="min-w-0 text-2xl font-black tracking-normal">
+              Kateqoriyalar
+            </h1>
+          </div>
+          {categories.length === 0 ? (
+            <EmptyState
+              className="min-h-60"
+              title="Kateqoriya tapılmadı"
+              description="Hazırda aktiv kateqoriya yoxdur."
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {categories.map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/products?category=${category.slug}`}
+                  className="flex min-h-[92px] min-w-0 items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 hover:text-primary"
+                >
+                  <span className="line-clamp-2 min-w-0 break-words text-sm font-bold">
+                    {category.name}
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <div className="hidden min-w-0 items-start gap-5 md:grid lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <CategoryFilters
               categories={categories}
@@ -336,7 +356,7 @@ export function ProductMarketplace({
               description={labels.emptyDescription}
             />
           ) : (
-            <div className="grid min-w-0 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-w-0 grid-cols-2 items-stretch gap-3 xl:grid-cols-3">
               {stores.map((store) => (
                 <StoreCard key={store.id} store={store} />
               ))}
@@ -359,11 +379,6 @@ export function Storefront({
 }: StorefrontProps) {
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <MarketplaceHeader
-        siteName={footer?.siteName}
-        stores={[store]}
-        categories={categories}
-      />
       <div className="container max-w-full py-5 md:py-6">
         <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
           <Link href="/products" className="hover:text-primary">

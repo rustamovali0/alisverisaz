@@ -132,12 +132,21 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
                 </div>
                 <div className="space-y-3 p-4">
                   <div>
-                    <h4 className="line-clamp-2 text-xl font-black tracking-normal">
-                      {shortValue(section.title, "Başlıq əlavə edilməyib")}
-                    </h4>
-                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                      {shortValue(section.description, "Açıqlama əlavə edilməyib.")}
-                    </p>
+                    {section.showTitle ? (
+                      <h4 className="line-clamp-2 text-xl font-black tracking-normal">
+                        {shortValue(section.title, "Başlıq əlavə edilməyib")}
+                      </h4>
+                    ) : null}
+                    {section.showDescription ? (
+                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                        {shortValue(section.description, "Açıqlama əlavə edilməyib.")}
+                      </p>
+                    ) : null}
+                    {!section.showTitle && !section.showDescription ? (
+                      <p className="text-sm font-semibold text-muted-foreground">
+                        Başlıq və açıqlama gizlidir.
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
@@ -180,6 +189,11 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
 
             <div className="grid gap-4 p-4 xl:p-5">
               <input type="hidden" name="sectionId" value={section.id} />
+              <input
+                type="hidden"
+                name="settingsJson"
+                value={JSON.stringify(section.settings ?? {})}
+              />
               <div className="grid gap-4 lg:grid-cols-2">
                 <input
                   name="title"
@@ -193,6 +207,17 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
                   placeholder="Şəkil URL"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
+                <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/20 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
+                  <ImagePlus className="size-6 text-primary" aria-hidden="true" />
+                  <span className="font-semibold">Bölmə şəklini seç</span>
+                  <span className="text-xs text-muted-foreground">JPG, PNG və WebP, maksimum 5MB</span>
+                  <input
+                    name="imageFile"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                  />
+                </label>
                 <input
                   name="buttonLabel"
                   defaultValue={section.buttonLabel}
@@ -267,6 +292,18 @@ export function HomepageSectionsManager({ sections }: HomepageSectionsManagerPro
                     label: "Desktop göstər",
                     checked: section.showDesktop,
                     icon: Monitor,
+                  },
+                  {
+                    name: "showTitle",
+                    label: "Başlığı göstər",
+                    checked: section.showTitle,
+                    icon: Eye,
+                  },
+                  {
+                    name: "showDescription",
+                    label: "Açıqlamanı göstər",
+                    checked: section.showDescription,
+                    icon: Eye,
                   },
                 ].map((item) => {
                   const ToggleIcon = item.checked ? item.icon : EyeOff;

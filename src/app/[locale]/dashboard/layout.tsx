@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
-import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { getSiteSettings } from "@/lib/cms/data";
@@ -26,14 +26,6 @@ type CustomerDashboardLayoutProps = {
 
 export const dynamic = "force-dynamic";
 
-function formatBrandName(value?: string) {
-  if (!value || value.toLocaleLowerCase("az-AZ").includes("alisveris")) {
-    return "Alışveriş";
-  }
-
-  return value;
-}
-
 export default async function CustomerDashboardLayout({
   children,
 }: CustomerDashboardLayoutProps) {
@@ -43,78 +35,26 @@ export default async function CustomerDashboardLayout({
   ]);
   const userLabel = current.profile?.full_name ?? current.user.email ?? "İstifadəçi";
   const userContact = current.profile?.phone ?? current.user.email ?? "";
-  const displaySiteName = formatBrandName(siteSettings.shortName || siteSettings.siteName);
 
   return (
     <main className="min-h-screen bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <header className="sticky top-0 z-40 hidden border-b bg-card/95 backdrop-blur md:block">
-        <div className="container flex h-16 items-center gap-3">
-          <Link href="/" className="flex min-w-0 items-center gap-2">
-            <span className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
-              a
-            </span>
-            <span className="truncate text-xl font-black tracking-normal">
-              {displaySiteName}
-            </span>
-          </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            <Button asChild variant="ghost">
-              <Link href="/products">Məhsullar</Link>
-            </Button>
-          <Button asChild variant="ghost">
-            <Link href="/dashboard">Sifarişlərim</Link>
-          </Button>
-          <Button asChild variant="ghost">
-            <Link href="/dashboard/messages">Mesajlar</Link>
-          </Button>
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <Button
-              asChild
-              size="icon"
-              variant="outline"
-              className="size-12 rounded-lg"
-              aria-label="Favorilər"
-            >
-              <Link href="/favorites">
-                <Heart className="size-7" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="icon"
-              variant="outline"
-              className="size-12 rounded-lg"
-              aria-label="Səbət"
-            >
-              <Link href="/cart">
-                <ShoppingCart className="size-7" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="hidden sm:inline-flex">
-              <Link href="/dashboard">
-                <UserRound className="mr-2 size-5" aria-hidden="true" />
-                Hesabım
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-      <MobileBottomNav />
       <section className="bg-white px-6 pb-7 pt-10 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
         <div className="mb-7 flex items-center justify-between">
           <h1 className="text-[34px] font-black leading-none tracking-normal">Kabinet</h1>
-          <Button
-            asChild
-            variant="ghost"
-            size="icon"
-            className="relative size-12 rounded-full text-[hsl(var(--marketplace-muted))]"
-            aria-label="Bildirişlər"
-          >
-            <Link href="/dashboard/messages">
-              <Bell className="size-8" aria-hidden="true" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="relative size-12 rounded-full text-[hsl(var(--marketplace-muted))]"
+              aria-label="Bildirişlər"
+            >
+              <Link href="/dashboard/messages">
+                <Bell className="size-8" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
         </div>
         <Link
           href="/dashboard/profile"

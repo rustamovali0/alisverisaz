@@ -130,8 +130,8 @@ export function MarketplaceSearch({
         submitSearch(query.trim());
       }}
       className={cn(
-        "relative flex w-full min-w-0 items-center gap-2",
-        stackOnMobile ? "flex-col sm:flex-row" : "flex-row",
+        "relative flex w-full min-w-0 gap-2",
+        stackOnMobile ? "flex-col items-stretch sm:flex-row sm:items-center" : "flex-row items-center",
         className,
       )}
       onBlur={(event) => {
@@ -140,7 +140,7 @@ export function MarketplaceSearch({
         }
       }}
     >
-      <label className="relative min-w-0 flex-1">
+      <label className={cn("relative min-w-0", stackOnMobile ? "w-full sm:flex-1" : "flex-1")}>
         <span className="sr-only">Axtarış</span>
         <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
         <input

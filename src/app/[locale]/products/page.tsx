@@ -57,7 +57,6 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       stores={stores}
       categories={categories}
       selectedCategoryId={selectedCategory?.id}
-      searchQuery={search?.q}
       footer={{
         siteName: siteSettings.shortName || siteSettings.siteName,
         description: siteSettings.defaultMetaDescription,

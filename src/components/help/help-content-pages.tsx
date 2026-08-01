@@ -1,4 +1,3 @@
-import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import {
   HelpCardList,
@@ -87,7 +86,6 @@ async function PublicHelpFrame({ children, currentPath }: PublicHelpFrameProps) 
 
   return (
     <>
-      <MarketplaceHeader siteName={footer.siteName} />
       <div className="pb-24 md:pb-0">{children}</div>
       <SiteFooter {...footer} />
     </>
@@ -104,7 +102,6 @@ export async function HelpDocumentPage({
 
   return (
     <>
-      <MarketplaceHeader siteName={footer.siteName} />
       <div className="pb-24 md:pb-0">
         <HelpPageShell
           eyebrow={page.eyebrow}

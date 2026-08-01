@@ -27,6 +27,12 @@ function readBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function readObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function isMissingTableError(error: unknown) {
   const value = error as { code?: string; message?: string } | null | undefined;
   const message = String(value?.message ?? "");
@@ -110,12 +116,18 @@ export async function getSiteSettings() {
 }
 
 function readHomepageSection(row: any): HomepageSection {
+  const settings = readObject(row.settings);
+
   return {
     id: row.id,
     key: row.key,
     title: row.title ?? "",
     description: row.description ?? "",
     imageUrl: row.image_url ?? "",
+    settings,
+    showTitle: settings.showTitle !== false && settings.show_title !== false,
+    showDescription:
+      settings.showDescription !== false && settings.show_description !== false,
     buttonLabel: row.button_label ?? "",
     buttonUrl: row.button_url ?? "",
     itemLimit: Number(row.item_limit ?? 0),
@@ -135,6 +147,7 @@ function fallbackHomepageSections() {
       id: section.key,
       ...section,
       image_url: section.imageUrl,
+      settings: section.settings ?? {},
       button_label: section.buttonLabel,
       button_url: section.buttonUrl,
       item_limit: section.itemLimit,
@@ -154,7 +167,7 @@ const getCachedHomepageSections = unstable_cache(
     const { data, error } = await (supabase as any)
       .from("homepage_sections")
       .select(
-        "id,key,title,description,image_url,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
+        "id,key,title,description,image_url,settings,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
       )
       .eq("is_active", true)
       .eq("status", "published")
@@ -186,7 +199,7 @@ export async function getHomepageSections(includeDrafts = false) {
   let query = (supabase as any)
     .from("homepage_sections")
     .select(
-      "id,key,title,description,image_url,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
+      "id,key,title,description,image_url,settings,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
     )
     .order("sort_order", {
       ascending: true,

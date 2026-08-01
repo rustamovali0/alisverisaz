@@ -10,7 +10,6 @@ import {
 import { m } from "framer-motion";
 
 import { SiteFooter } from "@/components/layout/site-footer";
-import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -80,7 +79,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
             )}
           </div>
         </div>
-        <div className="flex min-h-[118px] flex-col justify-between p-3 pt-7 sm:min-h-[132px] sm:p-4 sm:pt-8">
+        <div className="flex min-h-[96px] flex-col justify-between p-3 pt-7 sm:min-h-[132px] sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
@@ -117,6 +116,8 @@ export function HomeExperience({
   const benefitsSection = sectionByKey(sections, "benefits");
   const heroTitle = hero?.title || title;
   const heroDescription = hero?.description || description;
+  const heroShowTitle = hero?.showTitle ?? true;
+  const heroShowDescription = hero?.showDescription ?? true;
   const themeClass = themeClasses[activeTheme] ?? themeClasses.default;
   const featuredStores = stores.slice(0, visibleLimit(featuredSection, 8));
   const newStores = stores.slice(0, visibleLimit(newSection, 8));
@@ -130,13 +131,6 @@ export function HomeExperience({
         themeClass,
       )}
     >
-      <MarketplaceHeader
-        siteName={siteSettings.shortName || siteSettings.siteName}
-        stores={stores}
-        categories={categories}
-        showMobileSearch
-      />
-
       <section className="container grid items-center gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
         <m.div
           initial={{ opacity: 0, y: 18 }}
@@ -179,7 +173,7 @@ export function HomeExperience({
           className="relative hidden lg:block"
         >
           <div className="overflow-hidden rounded-lg border bg-card shadow-2xl shadow-slate-900/12">
-            <div className="aspect-[4/3] bg-muted">
+            <div className="relative aspect-[4/3] bg-muted">
               {hero?.imageUrl ? (
                 <img
                   src={hero.imageUrl}
@@ -187,20 +181,30 @@ export function HomeExperience({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="grid h-full place-items-center bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--accent)/0.12))] p-8 text-center">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--accent)/0.12))]" />
+              )}
+              <div
+                className={cn(
+                  "absolute inset-0 grid place-items-center p-8 text-center",
+                  hero?.imageUrl && "bg-background/68 backdrop-blur-[1px]",
+                )}
+              >
                   <div className="max-w-sm">
                     <div className="mx-auto grid size-16 place-items-center rounded-lg border border-primary/20 bg-background/80 text-primary shadow-sm">
                       <Store className="size-8" aria-hidden="true" />
                     </div>
-                    <h2 className="mt-5 text-2xl font-black tracking-normal">
-                      {heroTitle}
-                    </h2>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                      {heroDescription}
-                    </p>
+                    {heroShowTitle ? (
+                      <h2 className="mt-5 text-2xl font-black tracking-normal">
+                        {heroTitle}
+                      </h2>
+                    ) : null}
+                    {heroShowDescription ? (
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {heroDescription}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
-              )}
             </div>
           </div>
           <div className="absolute -bottom-5 right-5 rounded-lg bg-primary p-4 text-primary-foreground shadow-xl">
@@ -222,7 +226,7 @@ export function HomeExperience({
               <Link href="/products">{productsLabel}</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
             {activeCategories.map((category, index) => (
               <m.div
                 key={category.id}
@@ -233,9 +237,9 @@ export function HomeExperience({
               >
                 <Link
                   href={`/products?category=${category.slug}`}
-                className="flex min-h-16 items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg sm:min-h-24 sm:p-4"
+                className="flex min-h-20 items-center justify-between rounded-lg border bg-card px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg sm:min-h-24 sm:p-4"
                 >
-                  <span className="text-base font-bold">{category.name}</span>
+                  <span className="line-clamp-2 min-w-0 break-words text-sm font-bold sm:text-base">{category.name}</span>
                   <ArrowRight className="size-4 text-muted-foreground" />
                 </Link>
               </m.div>
@@ -256,7 +260,7 @@ export function HomeExperience({
               <Link href="/products">Hamısı</Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {featuredStores.map((store, index) => (
               <HomeStoreCard key={store.id} store={store} index={index} />
             ))}
@@ -273,7 +277,7 @@ export function HomeExperience({
               </h2>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {newStores.map((store, index) => (
               <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
             ))}

@@ -7,12 +7,15 @@ import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { PublicNavigationShell } from "@/components/layout/public-navigation-shell";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
+import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { siteConfig } from "@/lib/config/site";
+import { getCategoryOptions } from "@/lib/products/data";
 
 type LocaleLayoutProps = {
   children: ReactNode;
@@ -107,12 +110,14 @@ export default async function LocaleLayout({
   }
 
   setRequestLocale(locale);
-  const [messages, siteSettings, requestHeaders] = await Promise.all([
+  const [messages, siteSettings, requestHeaders, navStores, navCategories] = await Promise.all([
     getMessages({
       locale,
     }),
     getSiteSettings(),
     headers(),
+    getMarketplaceStores({ locale, limit: 24 }),
+    getCategoryOptions({ rootOnly: true }),
   ]);
   const visiblePathname = normalizeVisiblePath(
     requestHeaders.get("x-current-path") ?? `/${locale}`,
@@ -122,7 +127,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
-      <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] right-3 z-40 flex flex-col items-center gap-2 md:bottom-4 md:right-4 md:flex-row">
+      <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
         <ThemeToggle />
         <LanguageSwitcher />
       </div>
@@ -137,7 +142,13 @@ export default async function LocaleLayout({
           />
         </main>
       ) : (
-        children
+        <PublicNavigationShell
+          siteName={siteSettings.shortName || siteSettings.siteName}
+          stores={navStores}
+          categories={navCategories}
+        >
+          {children}
+        </PublicNavigationShell>
       )}
     </NextIntlClientProvider>
   );

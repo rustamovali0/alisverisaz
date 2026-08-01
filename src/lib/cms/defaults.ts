@@ -41,6 +41,10 @@ export const defaultHomepageSections = [
     description:
       "Azərbaycanda mağaza açmaq, yeni məhsul satmaq və sifarişləri idarə etmək üçün müasir e-ticarət marketplace platforması.",
     imageUrl: "",
+    settings: {
+      showTitle: true,
+      showDescription: true,
+    },
     buttonLabel: "Mağazanı aç",
     buttonUrl: "/register?role=seller",
     itemLimit: 1,
@@ -57,6 +61,10 @@ export const defaultHomepageSections = [
     title: "Kateqoriyalar",
     description: "Axtardığın məhsula daha tez çat.",
     imageUrl: "",
+    settings: {
+      showTitle: true,
+      showDescription: true,
+    },
     buttonLabel: "Məhsullar",
     buttonUrl: "/products",
     itemLimit: 8,
@@ -73,6 +81,10 @@ export const defaultHomepageSections = [
     title: "Seçilmiş mağazalar",
     description: "Güvənilən mağazaları ön plana çıxarın.",
     imageUrl: "",
+    settings: {
+      showTitle: true,
+      showDescription: true,
+    },
     buttonLabel: "Hamısı",
     buttonUrl: "/products",
     itemLimit: 8,
@@ -89,6 +101,10 @@ export const defaultHomepageSections = [
     title: "Yeni mağazalar",
     description: "Yeni qoşulan mağazaları göstər.",
     imageUrl: "",
+    settings: {
+      showTitle: true,
+      showDescription: true,
+    },
     buttonLabel: "Hamısı",
     buttonUrl: "/products",
     itemLimit: 8,
@@ -105,6 +121,10 @@ export const defaultHomepageSections = [
     title: "Üstünlüklər",
     description: "Marketplace imkanlarını vurğula.",
     imageUrl: "",
+    settings: {
+      showTitle: true,
+      showDescription: true,
+    },
     buttonLabel: "Ətraflı",
     buttonUrl: "/about",
     itemLimit: 3,

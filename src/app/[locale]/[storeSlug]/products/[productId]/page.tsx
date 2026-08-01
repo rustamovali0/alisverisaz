@@ -6,7 +6,6 @@ import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { DepositModal } from "@/components/deposits/deposit-modal";
-import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
 import {
@@ -106,7 +105,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <MarketplaceHeader siteName={siteSettings.shortName || siteSettings.siteName} />
       <ViewTracker productId={detail.product.id} />
       <div className="container max-w-full py-5 md:py-8">
         <nav className="mb-5 min-w-0 text-sm text-muted-foreground">

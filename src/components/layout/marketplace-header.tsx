@@ -2,13 +2,8 @@
 
 import {
   Heart,
-  LogIn,
-  ShieldCheck,
   ShoppingCart,
-  Store,
-  UserRound,
 } from "lucide-react";
-import { useMemo } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
@@ -16,9 +11,6 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import { usePathname } from "@/i18n/navigation";
-import type { AuthRole } from "@/lib/auth/types";
-import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { CategoryOption } from "@/lib/products/types";
 
@@ -39,38 +31,6 @@ function formatBrandName(value?: string) {
   return value;
 }
 
-function getAccountHref(role: AuthRole | null) {
-  if (role === "admin") {
-    return "/radmin";
-  }
-
-  if (role === "seller") {
-    return "/store/dashboard";
-  }
-
-  return role ? "/dashboard" : "/login";
-}
-
-function getAccountIcon(role: AuthRole | null) {
-  if (role === "admin") {
-    return ShieldCheck;
-  }
-
-  if (role === "seller") {
-    return Store;
-  }
-
-  return UserRound;
-}
-
-function getNextHref(pathname: string) {
-  if (pathname === "/login" || pathname === "/register") {
-    return "/";
-  }
-
-  return pathname || "/";
-}
-
 export function MarketplaceHeader({
   siteName = "Alışveriş",
   stores = [],
@@ -80,39 +40,6 @@ export function MarketplaceHeader({
   showBottomNav = true,
 }: MarketplaceHeaderProps) {
   const displaySiteName = formatBrandName(siteName);
-  const pathname = usePathname();
-  const profile = useClientAuthProfile();
-  const accountHref = getAccountHref(profile.status === "authenticated" ? profile.role : null);
-  const AccountIcon = getAccountIcon(profile.status === "authenticated" ? profile.role : null);
-  const mobileAccount = useMemo(() => {
-    if (profile.status === "loading") {
-      return (
-        <div
-          className="size-11 animate-pulse rounded-md border bg-muted/70"
-          aria-hidden="true"
-        />
-      );
-    }
-
-    if (profile.status === "guest") {
-      return (
-        <Button asChild variant="outline" size="sm" className="h-10 px-3">
-          <Link href={`/login?next=${encodeURIComponent(getNextHref(pathname))}`}>
-            <LogIn className="mr-2 size-4" aria-hidden="true" />
-            Daxil ol
-          </Link>
-        </Button>
-      );
-    }
-
-    return (
-      <Button asChild variant="outline" size="icon" className="size-11">
-        <Link href={accountHref} aria-label="Hesabım">
-          <AccountIcon className="size-6" aria-hidden="true" />
-        </Link>
-      </Button>
-    );
-  }, [AccountIcon, accountHref, pathname, profile]);
 
   return (
     <>
@@ -184,7 +111,6 @@ export function MarketplaceHeader({
                 <ShoppingCart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
-            {mobileAccount}
           </div>
         </div>
         {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (

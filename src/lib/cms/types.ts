@@ -31,6 +31,9 @@ export type HomepageSection = {
   title: string;
   description: string;
   imageUrl: string;
+  settings: Record<string, unknown>;
+  showTitle: boolean;
+  showDescription: boolean;
   buttonLabel: string;
   buttonUrl: string;
   itemLimit: number;

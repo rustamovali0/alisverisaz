@@ -274,12 +274,41 @@ export async function updateHomepageSectionAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  let imageUrl = readString(formData, "imageUrl");
+  const previousSettings = parseJson(readString(formData, "settingsJson"), {});
+  const settings =
+    previousSettings && typeof previousSettings === "object" && !Array.isArray(previousSettings)
+      ? { ...(previousSettings as Record<string, unknown>) }
+      : {};
+
+  settings.showTitle = readBoolean(formData, "showTitle");
+  settings.showDescription = readBoolean(formData, "showDescription");
+
+  try {
+    const imageFile = readFile(formData, "imageFile");
+
+    if (imageFile) {
+      imageUrl = await uploadCmsMediaFile({
+        file: imageFile,
+        currentUserId: current.user.id,
+        folder: "homepage-sections",
+        altText: readString(formData, "title") || "Ana səhifə bölməsi",
+      });
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Bölmə şəkli yüklənmədi.",
+    };
+  }
+
   const { error } = await (supabaseAdmin as any)
     .from("homepage_sections")
     .update({
       title: readString(formData, "title"),
       description: readString(formData, "description"),
-      image_url: readString(formData, "imageUrl"),
+      image_url: imageUrl,
+      settings,
       button_label: readString(formData, "buttonLabel"),
       button_url: readString(formData, "buttonUrl"),
       item_limit: Math.max(Math.trunc(readNumber(formData, "itemLimit")), 0),
