@@ -122,10 +122,10 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
     .slice(0, 3);
 
   return (
-    <article className="group min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
+    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
-          <div className="h-20 overflow-hidden sm:h-24">
+          <div className="h-28 overflow-hidden sm:h-24">
             {store.coverUrl ? (
               <img
                 src={store.coverUrl}
@@ -142,7 +142,7 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
             <StoreLogo store={store} className="size-12 shadow-sm sm:size-14" />
           </div>
         </div>
-        <div className="p-3 pt-7 sm:p-4 sm:pt-8">
+        <div className="flex flex-1 flex-col p-3 pt-7 sm:p-4 sm:pt-8">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
@@ -202,7 +202,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
         const detailHref = `/${storeSlug}/products/${product.slug}`;
@@ -229,19 +229,19 @@ export function ProductGrid({
               router.push(detailHref);
             }
           }}
-          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-none border-0 bg-transparent text-card-foreground shadow-none transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:rounded-lg sm:border sm:bg-card sm:shadow-sm sm:hover:border-primary/40 sm:hover:shadow-xl sm:hover:shadow-slate-900/10"
         >
           <Link
             href={detailHref}
             className="block"
             aria-label={`${product.name} məhsul detalına keç`}
           >
-            <div className="aspect-[4/3] overflow-hidden bg-muted">
+            <div className="aspect-square overflow-hidden rounded-md bg-white sm:aspect-[4/3] sm:rounded-none sm:bg-muted">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  className="h-full w-full object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -250,19 +250,19 @@ export function ProductGrid({
               )}
             </div>
           </Link>
-          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-3">
-            <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal group-hover:text-primary">
+          <div className="relative z-0 flex min-w-0 flex-1 flex-col px-0 pt-3 sm:p-3">
+            <h2 className="line-clamp-2 min-h-10 break-words text-[15px] font-medium leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:text-sm sm:font-semibold">
               {product.name}
             </h2>
-            <p className="mt-2 truncate text-base font-bold">
+            <p className="mt-2 truncate text-xl font-black text-[#17204a] dark:text-foreground sm:text-base sm:font-bold">
               {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
             </p>
             <p
               className={cn(
-                "mt-1 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium",
+                "mt-1 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium sm:text-xs",
                 isOutOfStock
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-primary/10 text-primary",
+                  ? "bg-[#ec2a7b]/10 text-[#ec2a7b]"
+                  : "bg-emerald-500/10 text-emerald-600 sm:bg-primary/10 sm:text-primary",
               )}
             >
               <span className="truncate">
@@ -273,17 +273,17 @@ export function ProductGrid({
               <DepositModal
                 product={product}
                 enabled={depositEnabled && !isOutOfStock}
-                className="w-full px-2 text-xs sm:text-sm"
+                className="hidden w-full px-2 text-xs sm:inline-flex sm:text-sm"
               />
               <BuyNowButton
                 product={product}
                 disabled={isOutOfStock}
-                className="w-full px-2 text-xs sm:text-sm"
+                className="hidden w-full px-2 text-xs sm:inline-flex sm:text-sm"
               />
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
-                className="w-full px-2 text-xs sm:text-sm"
+                className="h-11 w-full border-0 bg-[#fdeaf2] px-2 text-[13px] font-black uppercase text-[#ec2a7b] shadow-none hover:bg-[#fbd8e8] disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
               />
             </div>
           </div>
@@ -311,8 +311,8 @@ export function ProductMarketplace({
         searchDefaultValue={searchQuery}
         showMobileSearch
       />
-      <div className="container max-w-full py-6 md:py-8">
-        <header className="mb-6 flex min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:p-5">
+      <div className="container max-w-full py-5 md:py-8">
+        <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
             <h1 className="text-2xl font-black tracking-normal">Mağazalar</h1>
           </div>
@@ -321,7 +321,7 @@ export function ProductMarketplace({
           </span>
         </header>
 
-        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <CategoryFilters
               categories={categories}
@@ -336,7 +336,7 @@ export function ProductMarketplace({
               description={labels.emptyDescription}
             />
           ) : (
-            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid min-w-0 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {stores.map((store) => (
                 <StoreCard key={store.id} store={store} />
               ))}

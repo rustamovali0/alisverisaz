@@ -135,28 +135,30 @@ export function CartCheckout({
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:bg-background md:pb-0">
       <div
         className={
           checkoutOnly
             ? "container flex justify-center py-8"
             : isEmptyCart
-              ? "container py-8"
-              : "container grid gap-6 py-8 lg:grid-cols-[1fr_420px]"
+              ? "container py-6 md:py-8"
+              : "container grid gap-5 py-5 md:gap-6 md:py-8 lg:grid-cols-[1fr_420px]"
         }
       >
         {!checkoutOnly ? (
-        <section className="rounded-md border bg-card p-4 text-card-foreground shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <section className="rounded-none border-0 bg-white p-0 text-card-foreground shadow-none md:rounded-md md:border md:bg-card md:p-4 md:shadow-sm">
+          <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center">
             <Button asChild variant="outline" size="sm">
               <Link href={returnHref}>
                 <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
                 Geri
               </Link>
             </Button>
-            <h1 className="text-2xl font-semibold tracking-normal">Səbət</h1>
+            <h1 className="text-center text-3xl font-black tracking-normal text-[#17204a] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
+              Səbət
+            </h1>
           </div>
-          <div className="mt-6 divide-y">
+          <div className="mt-2 divide-y bg-white md:mt-6 md:bg-transparent">
             {!hasLoadedCart || isLoadingProducts ? (
               <div className="space-y-4 py-4">
                 {Array.from({ length: 2 }).map((_, index) => (
@@ -178,31 +180,33 @@ export function CartCheckout({
               visibleItems.map(({ item, product }) => (
                 <div
                   key={product.id}
-                  className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center"
+                  className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-5 sm:flex sm:flex-row sm:items-center"
                 >
-                  <div className="size-20 overflow-hidden rounded-md border bg-muted">
+                  <div className="size-24 overflow-hidden rounded-md bg-white sm:size-20 sm:border sm:bg-muted">
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain sm:object-cover"
                       />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="truncate text-sm font-medium">{product.name}</h2>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <h2 className="line-clamp-2 text-lg font-semibold leading-6 text-[#17204a] sm:truncate sm:text-sm sm:font-medium sm:text-foreground">
+                      {product.name}
+                    </h2>
+                    <p className="mt-2 text-lg font-black text-[#ec2a7b] sm:mt-1 sm:text-sm sm:font-normal sm:text-muted-foreground">
                       {formatMoney(
                         Math.max(product.priceAmount - product.discountAmount, 0),
                       )}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="col-start-2 flex items-center gap-1.5 sm:gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-14"
+                      className="size-11 rounded-none sm:size-14 sm:rounded-md"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -218,14 +222,14 @@ export function CartCheckout({
                     >
                       <Minus className="size-5" aria-hidden="true" />
                     </Button>
-                    <span className="w-10 text-center text-base font-semibold">
+                    <span className="w-10 text-center text-lg font-semibold sm:text-base">
                       {item.quantity}
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-14"
+                      className="size-11 rounded-none sm:size-14 sm:rounded-md"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -248,7 +252,7 @@ export function CartCheckout({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-14 text-destructive hover:text-destructive"
+                      className="ml-auto size-11 text-destructive hover:text-destructive sm:ml-0 sm:size-14"
                       onClick={() => {
                         updateItems(
                           items.filter((nextItem) => nextItem.productId !== product.id),
@@ -283,7 +287,7 @@ export function CartCheckout({
           className={
             checkoutOnly
               ? "h-fit w-full max-w-xl rounded-md border bg-card p-4 text-card-foreground shadow-sm"
-              : "h-fit rounded-md border bg-card p-4 text-card-foreground shadow-sm"
+              : "h-fit rounded-md border bg-white p-4 text-card-foreground shadow-sm md:bg-card"
           }
         >
           {checkoutOnly ? (
@@ -332,7 +336,7 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 w-full"
+            className="mt-4 h-12 w-full bg-[#ec2a7b] text-base font-black hover:bg-[#d81f6b] md:bg-primary md:hover:bg-primary/90"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}

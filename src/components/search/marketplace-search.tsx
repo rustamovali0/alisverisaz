@@ -142,7 +142,7 @@ export function MarketplaceSearch({
     >
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">Axtarış</span>
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
         <input
           autoComplete="off"
           autoCorrect="off"
@@ -162,7 +162,7 @@ export function MarketplaceSearch({
       <Button
         type="submit"
         size={buttonSize}
-        className={cn(stackOnMobile && "w-full sm:w-auto")}
+        className={cn(stackOnMobile && "hidden w-full sm:inline-flex sm:w-auto")}
       >
         {buttonLabel}
         {buttonSize === "lg" ? (

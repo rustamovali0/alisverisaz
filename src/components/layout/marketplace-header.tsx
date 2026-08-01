@@ -119,10 +119,10 @@ export function MarketplaceHeader({
       <header className="sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur">
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-            <span className="grid size-10 place-items-center rounded-md bg-primary text-lg font-black text-primary-foreground shadow-sm">
+            <span className="grid size-12 place-items-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
               a
             </span>
-            <span className="min-w-0 truncate text-lg font-black tracking-normal sm:text-xl">
+            <span className="min-w-0 truncate text-2xl font-black tracking-normal md:text-xl">
               {displaySiteName}
             </span>
           </Link>
@@ -177,7 +177,7 @@ export function MarketplaceHeader({
               asChild
               variant="ghost"
               size="icon"
-              className="size-11 rounded-md border bg-background"
+              className="size-12 rounded-xl border bg-white text-slate-900 shadow-sm dark:bg-card dark:text-card-foreground"
               aria-label="Səbət"
             >
               <Link href="/cart">
@@ -188,13 +188,14 @@ export function MarketplaceHeader({
           </div>
         </div>
         {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (
-          <div className="border-t bg-background/95 px-4 py-3 md:hidden">
+          <div className="border-t bg-white/95 px-4 py-3 dark:bg-background/95 md:hidden">
             <MarketplaceSearch
               stores={stores}
               categories={categories}
               defaultValue={searchDefaultValue}
               stackOnMobile
               className="w-full"
+              inputClassName="h-14 rounded-2xl border-0 bg-slate-100 pl-12 pr-4 text-base shadow-none focus-visible:ring-2 focus-visible:ring-[#ec2a7b]/30 dark:bg-muted"
             />
           </div>
         ) : null}

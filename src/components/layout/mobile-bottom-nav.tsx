@@ -2,13 +2,14 @@
 
 import {
   Grid2X2,
+  Heart,
   Home,
-  MessageCircle,
   ShoppingCart,
   ShieldCheck,
   Store,
   UserRound,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Link, usePathname } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
@@ -18,6 +19,24 @@ import { cn } from "@/lib/utils";
 type MobileBottomNavProps = {
   className?: string;
 };
+
+const CART_KEY = "alisveris_cart";
+
+function readCartCount() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
+      quantity?: number;
+    }>;
+
+    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+  } catch {
+    return 0;
+  }
+}
 
 function accountPath(role: AuthRole | null) {
   if (role === "admin") {
@@ -29,18 +48,6 @@ function accountPath(role: AuthRole | null) {
   }
 
   return role ? "/dashboard" : "/login?next=/dashboard";
-}
-
-function messagesPath(role: AuthRole | null) {
-  if (role === "admin") {
-    return "/radmin/messages";
-  }
-
-  if (role === "seller") {
-    return "/store/dashboard/messages";
-  }
-
-  return role ? "/dashboard/messages" : "/login?next=/dashboard/messages";
 }
 
 function accountLabel(role: AuthRole | null) {
@@ -70,18 +77,34 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
   const profile = useClientAuthProfile();
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
   const role = profile.status === "authenticated" ? profile.role : null;
   const items = [
-    { href: "/", label: "Ana", icon: Home },
-    { href: "/products", label: "Məhsul", icon: Grid2X2 },
-    { href: "/cart", label: "Səbət", icon: ShoppingCart },
-    { href: messagesPath(role), label: "Mesajlar", icon: MessageCircle },
+    { href: "/", label: "Əsas", icon: Home },
+    { href: "/products", label: "Kataloq", icon: Grid2X2 },
+    { href: "/favorites", label: "Seçilmişlər", icon: Heart },
+    { href: "/cart", label: "Səbət", icon: ShoppingCart, badge: cartCount },
   ];
+
+  useEffect(() => {
+    function syncCartCount() {
+      setCartCount(readCartCount());
+    }
+
+    syncCartCount();
+    window.addEventListener("storage", syncCartCount);
+    window.addEventListener("alisveris-cart-updated", syncCartCount);
+
+    return () => {
+      window.removeEventListener("storage", syncCartCount);
+      window.removeEventListener("alisveris-cart-updated", syncCartCount);
+    };
+  }, []);
 
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t bg-background/95 px-1.5 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 shadow-2xl shadow-slate-950/15 backdrop-blur sm:px-2 md:hidden",
+        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.65rem)] pt-2 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] dark:border-border dark:bg-background md:hidden",
         className,
       )}
       aria-label="Mobil naviqasiya"
@@ -89,6 +112,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
       <div className="grid w-full min-w-0 grid-cols-5 items-center text-center">
         {items.map((item) => {
           const Icon = item.icon;
+          const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
           const isActive =
             item.href === "/"
               ? pathname === "/"
@@ -99,12 +123,19 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "grid min-h-14 min-w-0 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground min-[390px]:text-[11px]",
-                isActive && "bg-primary/10 text-primary",
+                "relative grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[#8f8f96] transition hover:text-[#ec2a7b] min-[390px]:text-xs",
+                isActive && "text-[#ec2a7b]",
               )}
               aria-current={isActive ? "page" : undefined}
             >
-              <Icon className="mx-auto size-[26px]" aria-hidden="true" />
+              <span className="relative grid place-items-center">
+                <Icon className="mx-auto size-7" strokeWidth={isActive ? 2.6 : 2.2} aria-hidden="true" />
+                {badge > 0 ? (
+                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[#ec2a7b] px-1 text-[11px] font-bold leading-none text-white">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
+              </span>
               <span className="max-w-full truncate leading-none">{item.label}</span>
             </Link>
           );
@@ -112,12 +143,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         <Link
           href={accountPath(role)}
           className={cn(
-            "grid min-h-14 min-w-0 place-items-center gap-1 rounded-md px-1 text-[10px] font-semibold uppercase text-muted-foreground transition hover:bg-accent hover:text-accent-foreground min-[390px]:text-[11px]",
+            "grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[#8f8f96] transition hover:text-[#ec2a7b] min-[390px]:text-xs",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||
               pathname.startsWith("/radmin")) &&
-              "bg-primary/10 text-primary",
+              "text-[#ec2a7b]",
           )}
           aria-current={
             pathname.startsWith("/dashboard") ||
@@ -129,7 +160,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
           }
         >
           <AccountIcon role={role} />
-          <span className="max-w-full truncate leading-none">{accountLabel(role)}</span>
+          <span className="max-w-full truncate leading-none">{role ? accountLabel(role) : "Kabinet"}</span>
         </Link>
       </div>
     </nav>
