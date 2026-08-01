@@ -80,6 +80,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "box",
     },
     {
+      title: "Satış nöqtələri",
+      href: "/store/dashboard/locations",
+      icon: "building",
+    },
+    {
       title: "Sifarişlər",
       titleKey: "orders",
       href: "/store/dashboard/orders",
@@ -150,6 +155,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       titleKey: "products",
       href: "/radmin/products",
       icon: "box",
+    },
+    {
+      title: "Satış nöqtələri",
+      href: "/radmin/locations",
+      icon: "building",
     },
     {
       title: "Sifarişlər",

@@ -7,6 +7,10 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ProductForm } from "@/components/products/product-form";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
+import type {
+  ProductLocationAvailability,
+  StoreLocation,
+} from "@/lib/locations/types";
 import { deleteProductAction } from "@/lib/products/actions";
 import type { CategoryOption, ManagedProduct } from "@/lib/products/types";
 
@@ -16,6 +20,8 @@ type ProductListProps = {
   emptyTitle: string;
   emptyDescription: string;
   allowPaymentActivation?: boolean;
+  locations?: StoreLocation[];
+  productLocationMap?: Record<string, ProductLocationAvailability[]>;
 };
 
 function formatMoney(value: number) {
@@ -72,6 +78,8 @@ export function ProductList({
   emptyTitle,
   emptyDescription,
   allowPaymentActivation = false,
+  locations = [],
+  productLocationMap = {},
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -134,7 +142,15 @@ export function ProductList({
               Redaktə et
             </summary>
             <div className="mt-4">
-              <ProductForm mode="edit" categories={categories} product={product} />
+              <ProductForm
+                mode="edit"
+                categories={categories}
+                product={product}
+                locations={locations.filter(
+                  (location) => location.storeId === product.storeId,
+                )}
+                productLocations={productLocationMap[product.id] ?? []}
+              />
             </div>
           </details>
         </article>

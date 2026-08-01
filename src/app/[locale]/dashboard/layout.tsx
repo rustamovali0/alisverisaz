@@ -101,14 +101,14 @@ export default async function CustomerDashboardLayout({
         </div>
       </header>
       <MobileBottomNav />
-      <section className="bg-white px-6 pb-7 pt-10 text-[#17204a] dark:bg-background dark:text-foreground md:hidden">
+      <section className="bg-white px-6 pb-7 pt-10 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
         <div className="mb-7 flex items-center justify-between">
           <h1 className="text-[34px] font-black leading-none tracking-normal">Kabinet</h1>
           <Button
             asChild
             variant="ghost"
             size="icon"
-            className="relative size-12 rounded-full text-[#8f8f96]"
+            className="relative size-12 rounded-full text-[hsl(var(--marketplace-muted))]"
             aria-label="Bildirişlər"
           >
             <Link href="/dashboard/messages">
@@ -127,10 +127,10 @@ export default async function CustomerDashboardLayout({
           <span className="min-w-0">
             <span className="block truncate text-xl font-black">{userLabel}</span>
             {userContact ? (
-              <span className="mt-1 block truncate text-base text-[#8f8f96]">{userContact}</span>
+              <span className="mt-1 block truncate text-base text-[hsl(var(--marketplace-muted))]">{userContact}</span>
             ) : null}
           </span>
-          <ChevronRight className="size-7 text-[#9da0aa]" aria-hidden="true" />
+          <ChevronRight className="size-7 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
         </Link>
         <div className="space-y-1">
           {[
@@ -147,11 +147,11 @@ export default async function CustomerDashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className="grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-4 border-b border-slate-100 text-[#17204a] dark:border-border dark:text-foreground"
+                className="grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-4 border-b border-slate-100 text-[hsl(var(--marketplace-navy))] dark:border-border dark:text-foreground"
               >
                 <Icon className="size-8" strokeWidth={1.9} aria-hidden="true" />
                 <span className="min-w-0 truncate text-xl font-medium">{item.label}</span>
-                <ChevronRight className="size-7 text-[#9da0aa]" aria-hidden="true" />
+                <ChevronRight className="size-7 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
               </Link>
             );
           })}
@@ -159,11 +159,11 @@ export default async function CustomerDashboardLayout({
         <div className="mt-8 border-t-8 border-slate-100 pt-6 dark:border-muted">
           <Link
             href="/dashboard/profile"
-            className="grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-4 text-[#17204a] dark:text-foreground"
+            className="grid min-h-[72px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-4 text-[hsl(var(--marketplace-navy))] dark:text-foreground"
           >
             <Settings className="size-8" strokeWidth={1.9} aria-hidden="true" />
             <span className="min-w-0 truncate text-xl font-medium">Ayarlar</span>
-            <ChevronRight className="size-7 text-[#9da0aa]" aria-hidden="true" />
+            <ChevronRight className="size-7 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
           </Link>
         </div>
       </section>

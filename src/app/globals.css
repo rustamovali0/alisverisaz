@@ -24,6 +24,12 @@
     --input: 214 24% 88%;
     --ring: 186 85% 32%;
     --radius: 0.5rem;
+    --marketplace-primary: 331 84% 55%;
+    --marketplace-primary-hover: 331 75% 49%;
+    --marketplace-primary-soft: 331 88% 96%;
+    --marketplace-navy: 233 43% 19%;
+    --marketplace-muted: 240 5% 58%;
+    --marketplace-success: 151 66% 45%;
   }
 
   .dark {
@@ -46,6 +52,12 @@
     --border: 218 17% 22%;
     --input: 218 17% 22%;
     --ring: 178 70% 42%;
+    --marketplace-primary: 331 84% 62%;
+    --marketplace-primary-hover: 331 78% 56%;
+    --marketplace-primary-soft: 331 44% 18%;
+    --marketplace-navy: 210 32% 96%;
+    --marketplace-muted: 215 18% 70%;
+    --marketplace-success: 151 60% 52%;
   }
 
   * {

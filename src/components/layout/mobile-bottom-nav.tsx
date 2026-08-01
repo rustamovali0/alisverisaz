@@ -123,15 +123,15 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[#8f8f96] transition hover:text-[#ec2a7b] min-[390px]:text-xs",
-                isActive && "text-[#ec2a7b]",
+                "relative grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
+                isActive && "text-[hsl(var(--marketplace-primary))]",
               )}
               aria-current={isActive ? "page" : undefined}
             >
               <span className="relative grid place-items-center">
                 <Icon className="mx-auto size-7" strokeWidth={isActive ? 2.6 : 2.2} aria-hidden="true" />
                 {badge > 0 ? (
-                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[#ec2a7b] px-1 text-[11px] font-bold leading-none text-white">
+                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[hsl(var(--marketplace-primary))] px-1 text-[11px] font-bold leading-none text-white">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}
@@ -143,12 +143,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         <Link
           href={accountPath(role)}
           className={cn(
-            "grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[#8f8f96] transition hover:text-[#ec2a7b] min-[390px]:text-xs",
+            "grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||
               pathname.startsWith("/radmin")) &&
-              "text-[#ec2a7b]",
+              "text-[hsl(var(--marketplace-primary))]",
           )}
           aria-current={
             pathname.startsWith("/dashboard") ||

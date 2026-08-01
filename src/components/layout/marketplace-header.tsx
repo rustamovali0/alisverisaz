@@ -195,7 +195,7 @@ export function MarketplaceHeader({
               defaultValue={searchDefaultValue}
               stackOnMobile
               className="w-full"
-              inputClassName="h-14 rounded-2xl border-0 bg-slate-100 pl-12 pr-4 text-base shadow-none focus-visible:ring-2 focus-visible:ring-[#ec2a7b]/30 dark:bg-muted"
+              inputClassName="h-14 rounded-2xl border-0 bg-slate-100 pl-12 pr-4 text-base shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
             />
           </div>
         ) : null}

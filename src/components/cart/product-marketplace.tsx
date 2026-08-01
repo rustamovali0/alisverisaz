@@ -254,14 +254,14 @@ export function ProductGrid({
             <h2 className="line-clamp-2 min-h-10 break-words text-[15px] font-medium leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:text-sm sm:font-semibold">
               {product.name}
             </h2>
-            <p className="mt-2 truncate text-xl font-black text-[#17204a] dark:text-foreground sm:text-base sm:font-bold">
+            <p className="mt-2 truncate text-xl font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground sm:text-base sm:font-bold">
               {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
             </p>
             <p
               className={cn(
                 "mt-1 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium sm:text-xs",
                 isOutOfStock
-                  ? "bg-[#ec2a7b]/10 text-[#ec2a7b]"
+                  ? "bg-[hsl(var(--marketplace-primary)/0.1)] text-[hsl(var(--marketplace-primary))]"
                   : "bg-emerald-500/10 text-emerald-600 sm:bg-primary/10 sm:text-primary",
               )}
             >
@@ -283,7 +283,7 @@ export function ProductGrid({
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
-                className="h-11 w-full border-0 bg-[#fdeaf2] px-2 text-[13px] font-black uppercase text-[#ec2a7b] shadow-none hover:bg-[#fbd8e8] disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
+                className="h-11 w-full border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none hover:bg-[hsl(var(--marketplace-primary)/0.16)] disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
               />
             </div>
           </div>

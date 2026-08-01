@@ -13,6 +13,7 @@ import {
   ProductMessageThread,
   ProductReviewList,
 } from "@/components/products/product-feedback-lists";
+import { ProductLocationSection } from "@/components/products/product-location-section";
 import {
   ProductBackButton,
   ProductDetailGallery,
@@ -25,6 +26,7 @@ import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { formatAznDiscountedPrice } from "@/lib/format";
+import { getPublicProductLocations } from "@/lib/locations/data";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
 import { getProductReviews, getReviewSummary } from "@/lib/reviews/data";
 import { getDepositSettings } from "@/lib/settings/data";
@@ -76,9 +78,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const [messages, reviews] = await Promise.all([
+  const [messages, reviews, productLocations] = await Promise.all([
     getProductMessagesForProduct(detail.product.id),
     getProductReviews(detail.product.id),
+    getPublicProductLocations(detail.product.id),
   ]);
 
   after(() => {
@@ -221,6 +224,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
           </div>
         </section>
+
+        <div className="mt-6">
+          <ProductLocationSection locations={productLocations} />
+        </div>
 
         <section className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
           <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">

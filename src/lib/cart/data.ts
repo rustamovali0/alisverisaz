@@ -219,7 +219,7 @@ async function getMarketplaceStoresUncached(
       };
     })
     .filter((store) => {
-      if (store.productCount === 0) {
+      if ((categoryId || normalizedSearch) && store.productCount === 0) {
         return false;
       }
 
@@ -246,7 +246,7 @@ async function getMarketplaceStoresUncached(
 
 const getMarketplaceStoresCached = unstable_cache(
   getMarketplaceStoresUncached,
-  ["marketplace-stores-v3"],
+  ["marketplace-stores-v4"],
   {
     revalidate: PUBLIC_MARKETPLACE_REVALIDATE_SECONDS,
     tags: ["public-marketplace"],

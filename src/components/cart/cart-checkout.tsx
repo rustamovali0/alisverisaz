@@ -154,7 +154,7 @@ export function CartCheckout({
                 Geri
               </Link>
             </Button>
-            <h1 className="text-center text-3xl font-black tracking-normal text-[#17204a] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
+            <h1 className="text-center text-3xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
               Səbət
             </h1>
           </div>
@@ -192,10 +192,10 @@ export function CartCheckout({
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-lg font-semibold leading-6 text-[#17204a] sm:truncate sm:text-sm sm:font-medium sm:text-foreground">
+                    <h2 className="line-clamp-2 text-lg font-semibold leading-6 text-[hsl(var(--marketplace-navy))] sm:truncate sm:text-sm sm:font-medium sm:text-foreground">
                       {product.name}
                     </h2>
-                    <p className="mt-2 text-lg font-black text-[#ec2a7b] sm:mt-1 sm:text-sm sm:font-normal sm:text-muted-foreground">
+                    <p className="mt-2 text-lg font-black text-[hsl(var(--marketplace-primary))] sm:mt-1 sm:text-sm sm:font-normal sm:text-muted-foreground">
                       {formatMoney(
                         Math.max(product.priceAmount - product.discountAmount, 0),
                       )}
@@ -336,7 +336,7 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 h-12 w-full bg-[#ec2a7b] text-base font-black hover:bg-[#d81f6b] md:bg-primary md:hover:bg-primary/90"
+            className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] md:bg-primary md:hover:bg-primary/90"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}

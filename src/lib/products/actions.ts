@@ -17,6 +17,13 @@ import type {
 
 const PRODUCT_IMAGE_BUCKET = "product-images";
 
+function isMissingTableError(error: unknown) {
+  const value = error as { code?: string; message?: string } | null | undefined;
+  const message = String(value?.message ?? "");
+
+  return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
+}
+
 function revalidateMarketplaceSurfaces() {
   revalidateTag("public-marketplace", "max");
   revalidatePath("/");
@@ -163,6 +170,78 @@ async function replaceVariants(productId: string, variants: ProductVariantInput[
       stock_quantity: variant.stockQuantity,
     })),
   );
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function replaceProductLocations(input: {
+  productId: string;
+  storeId: string;
+  formData: FormData;
+}) {
+  const selectedLocationIds = input.formData
+    .getAll("productLocationIds")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error: deleteError } = await (supabaseAdmin as any)
+    .from("product_locations")
+    .delete()
+    .eq("product_id", input.productId);
+
+  if (deleteError) {
+    if (isMissingTableError(deleteError)) {
+      return;
+    }
+
+    throw new Error(deleteError.message);
+  }
+
+  if (selectedLocationIds.length === 0) {
+    return;
+  }
+
+  const { data: locations, error: locationsError } = await (supabaseAdmin as any)
+    .from("store_locations")
+    .select("id,store_id")
+    .in("id", selectedLocationIds);
+
+  if (locationsError) {
+    if (isMissingTableError(locationsError)) {
+      return;
+    }
+
+    throw new Error(locationsError.message);
+  }
+
+  const allowedLocations = new Set(
+    ((locations ?? []) as Array<{ id: string; store_id: string }>)
+      .filter((location) => location.store_id === input.storeId)
+      .map((location) => location.id),
+  );
+
+  if (allowedLocations.size !== selectedLocationIds.length) {
+    throw new Error("Seçilən satış nöqtələrindən biri bu mağazaya aid deyil.");
+  }
+
+  const rows = selectedLocationIds.map((locationId) => {
+    const stock = Math.max(
+      Math.trunc(Number(input.formData.get(`locationStock:${locationId}`) ?? 0) || 0),
+      0,
+    );
+
+    return {
+      product_id: input.productId,
+      location_id: locationId,
+      stock_quantity: stock,
+      is_available: stock > 0,
+    };
+  });
+
+  const { error } = await (supabaseAdmin as any)
+    .from("product_locations")
+    .insert(rows);
 
   if (error) {
     throw new Error(error.message);
@@ -323,6 +402,11 @@ export async function createStoreProductAction(
 
   try {
     await replaceVariants(product.id, payload.variants);
+    await replaceProductLocations({
+      productId: product.id,
+      storeId,
+      formData,
+    });
     await uploadProductImages({
       userId: current.user.id,
       productId: product.id,
@@ -384,7 +468,7 @@ export async function updateProductAction(
   const supabase = await createSupabaseServerClient();
   const { data: existing } = await (supabase as any)
     .from("products")
-    .select("id,listing_type,metadata")
+    .select("id,store_id,listing_type,metadata")
     .eq("id", productId)
     .maybeSingle();
 
@@ -442,6 +526,13 @@ export async function updateProductAction(
 
   try {
     await replaceVariants(productId, payload.variants);
+    if (existing.listing_type === "store") {
+      await replaceProductLocations({
+        productId,
+        storeId: existing.store_id,
+        formData,
+      });
+    }
     await uploadProductImages({
       userId: current.user.id,
       productId,

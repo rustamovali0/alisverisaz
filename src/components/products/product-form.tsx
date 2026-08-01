@@ -10,6 +10,10 @@ import {
   createStoreProductAction,
   updateProductAction,
 } from "@/lib/products/actions";
+import type {
+  ProductLocationAvailability,
+  StoreLocation,
+} from "@/lib/locations/types";
 import type { CategoryOption, ManagedProduct } from "@/lib/products/types";
 
 type ProductFormMode = "store-create" | "personal-create" | "edit";
@@ -22,6 +26,8 @@ type ProductFormProps = {
     name: string;
   }>;
   product?: ManagedProduct;
+  locations?: StoreLocation[];
+  productLocations?: ProductLocationAvailability[];
   disabled?: boolean;
 };
 
@@ -55,10 +61,16 @@ export function ProductForm({
   categories,
   stores = [],
   product,
+  locations = [],
+  productLocations = [],
   disabled = false,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const selectedLocationMap = new Map(
+    productLocations.map((item) => [item.locationId, item]),
+  );
+  const showLocationSection = mode !== "personal-create" && locations.length > 0;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -288,6 +300,60 @@ export function ProductForm({
           disabled={disabled}
         />
       </label>
+
+      {showLocationSection ? (
+        <div className="grid gap-4 rounded-md border bg-background p-4">
+          <div>
+            <p className="text-sm font-medium">Satış nöqtələri və mövcudluq</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Məhsulun göründüyü filialları və həmin filialdakı stoku seçin.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            {locations.map((location) => {
+              const selected = selectedLocationMap.get(location.id);
+
+              return (
+                <div
+                  key={location.id}
+                  className="grid gap-3 rounded-md border bg-card p-3 sm:grid-cols-[minmax(0,1fr)_140px]"
+                >
+                  <label className="flex min-w-0 items-start gap-3 text-sm font-medium">
+                    <input
+                      name="productLocationIds"
+                      type="checkbox"
+                      value={location.id}
+                      defaultChecked={Boolean(selected)}
+                      disabled={disabled}
+                      className="mt-1 size-4 rounded border-input"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate">{location.name}</span>
+                      <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                        {location.storeName ? `${location.storeName} · ` : ""}
+                        {location.city}
+                        {location.district ? `, ${location.district}` : ""}
+                      </span>
+                    </span>
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                    Bu nöqtədə stok
+                    <input
+                      name={`locationStock:${location.id}`}
+                      type="number"
+                      min="0"
+                      step="1"
+                      defaultValue={selected?.stockQuantity ?? 0}
+                      disabled={disabled}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       <label className="grid gap-2 text-sm font-medium">
         Şəkillər

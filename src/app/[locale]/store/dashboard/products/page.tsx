@@ -5,6 +5,7 @@ import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { getLocationsForStores, getProductLocationMap } from "@/lib/locations/data";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 
@@ -26,6 +27,11 @@ export default async function StoreProductsPage() {
     storeIds: stores.map((store) => store.id),
     listingType: "store",
   });
+  const [locations, productLocationMap] = await Promise.all([
+    getLocationsForStores(stores.map((store) => store.id)),
+    getProductLocationMap(products.map((product) => product.id)),
+  ]);
+  const productLocationRecord = Object.fromEntries(productLocationMap);
   const firstStore = stores[0];
   const limit = firstStore ? await canCreateListing(firstStore.id) : null;
 
@@ -49,6 +55,7 @@ export default async function StoreProductsPage() {
           mode="store-create"
           categories={categories}
           stores={stores}
+          locations={locations}
           disabled={!firstStore || !limit?.allowed}
         />
       </DashboardPanel>
@@ -60,6 +67,8 @@ export default async function StoreProductsPage() {
         <ProductList
           products={products}
           categories={categories}
+          locations={locations}
+          productLocationMap={productLocationRecord}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
             limit?.allowed
