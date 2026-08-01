@@ -39,6 +39,10 @@ function shouldShowPublicNavigation(pathname: string) {
   );
 }
 
+function isProductDetailPath(pathname: string) {
+  return /\/products\/[^/]+$/.test(pathname);
+}
+
 export function PublicNavigationShell({
   children,
   siteName,
@@ -58,6 +62,7 @@ export function PublicNavigationShell({
           categories={categories}
           searchDefaultValue={searchParams.get("q") ?? undefined}
           showMobileSearch
+          sticky={!isProductDetailPath(pathname)}
         />
       ) : null}
       {children}

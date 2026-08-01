@@ -21,6 +21,7 @@ type MarketplaceHeaderProps = {
   searchDefaultValue?: string;
   showMobileSearch?: boolean;
   showBottomNav?: boolean;
+  sticky?: boolean;
 };
 
 function formatBrandName(value?: string) {
@@ -38,12 +39,15 @@ export function MarketplaceHeader({
   searchDefaultValue,
   showMobileSearch = false,
   showBottomNav = true,
+  sticky = true,
 }: MarketplaceHeaderProps) {
   const displaySiteName = formatBrandName(siteName);
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur">
+      <header
+        className={sticky ? "sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur"}
+      >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             <span className="grid size-12 place-items-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">

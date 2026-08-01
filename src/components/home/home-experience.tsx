@@ -285,7 +285,8 @@ export function HomeExperience({
         </section>
       ) : null}
 
-      <section className="container pb-24 pt-8 md:pb-12">
+      <section className="hidden md:block">
+        <div className="container pb-12 pt-8">
         <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           <div className="grid gap-4 md:grid-cols-3">
             {[
@@ -299,6 +300,7 @@ export function HomeExperience({
               </div>
             ))}
           </div>
+        </div>
         </div>
       </section>
       <SiteFooter
