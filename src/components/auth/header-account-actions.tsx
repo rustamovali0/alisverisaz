@@ -135,7 +135,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
     );
   }
 
-  if (profile.status === "guest") {
+  if (profile.status === "guest" || profile.role === "admin") {
     return (
       <div className={cn("items-center gap-2", className)}>
         <Button asChild variant="ghost">

@@ -5,6 +5,7 @@ import type { MouseEvent } from "react";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
+import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -184,7 +185,7 @@ export function ProductGrid({
 }: {
   products: CartProduct[];
   depositEnabled: boolean;
-  storeSlug: string;
+  storeSlug?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
   const router = useRouter();
@@ -203,7 +204,10 @@ export function ProductGrid({
     <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
-        const detailHref = `/${storeSlug}/products/${product.slug}`;
+        const detailStoreSlug = storeSlug ?? product.storeSlug ?? "";
+        const detailHref = detailStoreSlug
+          ? `/${detailStoreSlug}/products/${product.slug}`
+          : "/products";
 
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
@@ -212,7 +216,7 @@ export function ProductGrid({
             return;
           }
 
-          router.push(detailHref);
+          router.push(detailHref, { scroll: true });
         }
 
         return (
@@ -224,7 +228,7 @@ export function ProductGrid({
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              router.push(detailHref);
+              router.push(detailHref, { scroll: true });
             }
           }}
           className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-none border-0 bg-transparent text-card-foreground shadow-none transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:rounded-lg sm:border sm:bg-card sm:shadow-sm sm:hover:border-primary/40 sm:hover:shadow-xl sm:hover:shadow-slate-900/10"
@@ -233,8 +237,9 @@ export function ProductGrid({
             href={detailHref}
             className="block"
             aria-label={`${product.name} məhsul detalına keç`}
+            scroll
           >
-            <div className="aspect-square overflow-hidden rounded-md bg-white sm:aspect-[4/3] sm:rounded-none sm:bg-muted">
+            <div className="relative aspect-square overflow-hidden rounded-md bg-white sm:aspect-[4/3] sm:rounded-none sm:bg-muted">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
@@ -248,6 +253,12 @@ export function ProductGrid({
               )}
             </div>
           </Link>
+          <FavoriteToggleButton
+            productId={product.id}
+            productName={product.name}
+            compact
+            className="absolute right-2 top-2 z-20"
+          />
           <div className="relative z-0 flex min-w-0 flex-1 flex-col px-0 pt-3 sm:p-3">
             <h2 className="line-clamp-2 min-h-10 break-words text-[15px] font-medium leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:text-sm sm:font-semibold">
               {product.name}

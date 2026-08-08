@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -148,7 +148,7 @@ export function CartCheckout({
         {!checkoutOnly ? (
         <section className="rounded-none border-0 bg-white p-0 text-card-foreground shadow-none md:rounded-md md:border md:bg-card md:p-4 md:shadow-sm">
           <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center">
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
               <Link href={returnHref}>
                 <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
                 Geri
@@ -173,9 +173,12 @@ export function CartCheckout({
                 ))}
               </div>
             ) : visibleItems.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">
-                Səbət boşdur.
-              </p>
+              <div className="grid place-items-center gap-3 py-12 text-center text-sm text-muted-foreground">
+                <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
+                  <ShoppingCart className="size-7" aria-hidden="true" />
+                </span>
+                <p>Səbət boşdur.</p>
+              </div>
             ) : (
               visibleItems.map(({ item, product }) => (
                 <div

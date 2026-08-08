@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { DepositModal } from "@/components/deposits/deposit-modal";
+import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
 import {
@@ -134,9 +135,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           />
           <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
             <p className="truncate text-sm text-muted-foreground">{detail.store.name}</p>
-            <h1 className="mt-2 break-words text-2xl font-black tracking-normal md:text-3xl">
-              {detail.product.name}
-            </h1>
+            <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
+              <h1 className="min-w-0 break-words text-2xl font-black tracking-normal md:text-3xl">
+                {detail.product.name}
+              </h1>
+              <FavoriteToggleButton
+                productId={detail.product.id}
+                productName={detail.product.name}
+                className="shrink-0"
+              />
+            </div>
             <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
               {reviewSummary.count ? (
                 <>

@@ -10,7 +10,7 @@ import { SellProductButton } from "@/components/auth/sell-product-button";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { CategoryOption } from "@/lib/products/types";
 
@@ -42,6 +42,9 @@ export function MarketplaceHeader({
   sticky = true,
 }: MarketplaceHeaderProps) {
   const displaySiteName = formatBrandName(siteName);
+  const pathname = usePathname();
+  const isProductsActive = pathname.startsWith("/products");
+  const isAboutActive = pathname.startsWith("/about");
 
   return (
     <>
@@ -58,10 +61,10 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
-            <Button asChild variant="ghost">
+            <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
               <Link href="/products">Məhsullar</Link>
             </Button>
-            <Button asChild variant="ghost">
+            <Button asChild variant={isAboutActive ? "secondary" : "ghost"}>
               <Link href="/about">Haqqında</Link>
             </Button>
           </nav>
@@ -78,22 +81,22 @@ export function MarketplaceHeader({
               asChild
               size="icon"
               variant="ghost"
-              className="size-[52px] rounded-lg border bg-background"
+              className="size-11 rounded-lg border bg-background"
               aria-label="Favorilər"
             >
               <Link href="/favorites">
-                <Heart className="size-7" aria-hidden="true" />
+                <Heart className="size-5" aria-hidden="true" />
               </Link>
             </Button>
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-[52px] rounded-lg border bg-background"
+              className="size-11 rounded-lg border bg-background"
               aria-label="Səbət"
             >
               <Link href="/cart">
-                <ShoppingCart className="size-7" aria-hidden="true" />
+                <ShoppingCart className="size-5" aria-hidden="true" />
               </Link>
             </Button>
             <div className="hidden min-w-[168px] lg:block">
@@ -102,19 +105,6 @@ export function MarketplaceHeader({
             <div className="hidden md:block">
               <SellProductButton />
             </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2 md:hidden">
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="size-12 rounded-xl border bg-white text-slate-900 shadow-sm dark:bg-card dark:text-card-foreground"
-              aria-label="Səbət"
-            >
-              <Link href="/cart">
-                <ShoppingCart className="size-6" aria-hidden="true" />
-              </Link>
-            </Button>
           </div>
         </div>
         {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (

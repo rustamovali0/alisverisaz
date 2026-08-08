@@ -9,11 +9,12 @@ import {
 } from "lucide-react";
 import { m } from "framer-motion";
 
+import { ProductGrid } from "@/components/cart/product-marketplace";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
-import type { MarketplaceStore } from "@/lib/cart/types";
+import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,8 @@ type HomeExperienceProps = {
   sections: HomepageSection[];
   activeTheme: string;
   stores: MarketplaceStore[];
+  products: CartProduct[];
+  depositEnabled: boolean;
   categories: CategoryOption[];
   title: string;
   description: string;
@@ -103,6 +106,8 @@ export function HomeExperience({
   sections,
   activeTheme,
   stores,
+  products,
+  depositEnabled,
   categories,
   title,
   description,
@@ -119,8 +124,11 @@ export function HomeExperience({
   const heroShowTitle = hero?.showTitle ?? true;
   const heroShowDescription = hero?.showDescription ?? true;
   const themeClass = themeClasses[activeTheme] ?? themeClasses.default;
-  const featuredStores = stores.slice(0, visibleLimit(featuredSection, 8));
-  const newStores = stores.slice(0, visibleLimit(newSection, 8));
+  const alphabeticalStores = [...stores].sort((a, b) =>
+    a.name.localeCompare(b.name, "az"),
+  );
+  const featuredStores = alphabeticalStores.slice(0, visibleLimit(featuredSection, 8));
+  const newStores = alphabeticalStores;
   const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
 
@@ -223,7 +231,7 @@ export function HomeExperience({
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">{productsLabel}</Link>
+              <Link href="/products">Bütün kateqoriyalar</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -273,7 +281,7 @@ export function HomeExperience({
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
-                {newSection?.title || "Yeni mağazalar"}
+                {newSection?.title || "Mağazalar"}
               </h2>
             </div>
           </div>
@@ -282,6 +290,24 @@ export function HomeExperience({
               <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
             ))}
           </div>
+        </section>
+      ) : null}
+
+      {products.length > 0 ? (
+        <section className="container py-6 md:py-10">
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-black">Məhsullar</h2>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/products">{productsLabel}</Link>
+            </Button>
+          </div>
+          <ProductGrid
+            products={products}
+            depositEnabled={depositEnabled}
+            labels={{ stock: "Stok" }}
+          />
         </section>
       ) : null}
 

@@ -50,7 +50,11 @@ export function ProductMessageForm({
 
       void appAlert.success("Mesaj göndərildi", result.message);
       router.refresh();
-      formRef.current?.reset();
+      const messageInput = formRef.current?.elements.namedItem("message");
+
+      if (messageInput instanceof HTMLTextAreaElement) {
+        messageInput.value = "";
+      }
     });
   }
 
