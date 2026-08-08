@@ -58,23 +58,23 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10"
     >
       <Link href={`/${store.slug}`} className="block h-full min-w-0">
-        <div className="relative bg-muted">
-          <div className="h-20 overflow-hidden sm:h-24">
-            <div className="flex h-full items-center justify-center">
-              <Store className="size-8 text-muted-foreground" aria-hidden="true" />
-            </div>
-          </div>
-          <div className="absolute -bottom-5 left-3 z-10 grid size-12 place-items-center overflow-hidden rounded-md border bg-background shadow-sm sm:size-14">
+        <div className="border-b bg-muted/60 p-2.5">
+          <div className="grid h-24 place-items-center overflow-hidden rounded-md bg-background sm:h-28">
             {store.logoUrl ? (
-              <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
+              <img
+                src={store.logoUrl}
+                alt={store.name}
+                className="h-full w-full object-contain p-3"
+                loading="lazy"
+              />
             ) : (
-              <span className="text-base font-black text-primary">
+              <span className="grid size-12 place-items-center rounded-md border bg-muted text-lg font-black text-primary sm:size-14 sm:text-xl">
                 {store.name.slice(0, 1).toUpperCase()}
               </span>
             )}
           </div>
         </div>
-        <div className="flex min-h-[96px] flex-col justify-between p-3 pt-7 sm:min-h-[132px] sm:p-4 sm:pt-8">
+        <div className="flex min-h-[76px] flex-col justify-between p-3 sm:min-h-[88px] sm:p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">

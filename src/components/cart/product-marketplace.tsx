@@ -122,25 +122,24 @@ function CategoryFilters({
 }
 
 function StoreCard({ store }: { store: MarketplaceStore }) {
-  const previewImages = store.sampleProducts
-    .map((product) => product.imageUrl)
-    .filter(Boolean)
-    .slice(0, 3);
-
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block min-w-0">
-        <div className="relative bg-muted">
-          <div className="h-20 overflow-hidden sm:h-24">
-            <div className="flex h-full items-center justify-center text-muted-foreground">
-              <Store className="size-8" aria-hidden="true" />
-            </div>
-          </div>
-          <div className="absolute -bottom-5 left-3 z-10">
-            <StoreLogo store={store} className="size-10 shadow-sm sm:size-14" />
+        <div className="border-b bg-muted/60 p-2.5">
+          <div className="grid h-24 place-items-center overflow-hidden rounded-md bg-background sm:h-28">
+            {store.logoUrl ? (
+              <img
+                src={store.logoUrl}
+                alt={store.name}
+                className="h-full w-full object-contain p-3"
+                loading="lazy"
+              />
+            ) : (
+              <StoreLogo store={store} className="size-12 shadow-sm sm:size-14" />
+            )}
           </div>
         </div>
-        <div className="flex flex-1 flex-col p-3 pt-6 sm:p-4 sm:pt-8">
+        <div className="flex min-h-[76px] flex-col justify-between p-3 sm:min-h-[88px] sm:p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
@@ -157,18 +156,6 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
               <MapPin className="size-3.5 shrink-0 text-primary sm:size-4" aria-hidden="true" />
               <span className="line-clamp-1 min-w-0">{store.address}</span>
             </p>
-          ) : null}
-          {previewImages.length > 0 ? (
-            <div className="mt-2 hidden grid-cols-3 gap-2 sm:mt-3 sm:grid">
-              {previewImages.map((imageUrl, index) => (
-                <div
-                  key={`${store.id}-${imageUrl}-${index}`}
-                  className="aspect-square overflow-hidden rounded-md bg-muted"
-                >
-                  <img src={imageUrl ?? ""} alt={store.name} className="h-full w-full object-cover" />
-                </div>
-              ))}
-            </div>
           ) : null}
         </div>
       </Link>

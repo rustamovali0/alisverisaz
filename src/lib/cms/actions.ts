@@ -531,23 +531,40 @@ export async function updateThemeDraftAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { error } = await (supabaseAdmin as any).from("theme_settings").upsert(
-    {
-      theme_key: themeKey,
-      name: readString(formData, "name") || themeKey,
-      status: "draft",
-      is_active: false,
-      preview_image_url: readString(formData, "previewImageUrl"),
-      hero_variant: readString(formData, "heroVariant") || "default",
-      product_card_variant: readString(formData, "productCardVariant") || "default",
-      section_order: parseJson(readString(formData, "sectionOrder"), []),
-      config: parseJson(readString(formData, "config"), {}),
-      updated_by: current.user.id,
-    },
-    {
-      onConflict: "theme_key,status",
-    },
-  );
+  const payload = {
+    name: readString(formData, "name") || themeKey,
+    preview_image_url: readString(formData, "previewImageUrl"),
+    hero_variant: readString(formData, "heroVariant") || "default",
+    product_card_variant: readString(formData, "productCardVariant") || "default",
+    section_order: parseJson(readString(formData, "sectionOrder"), []),
+    config: parseJson(readString(formData, "config"), {}),
+    updated_by: current.user.id,
+  };
+
+  const { data: existingTheme, error: lookupError } = await (supabaseAdmin as any)
+    .from("theme_settings")
+    .select("id,status,is_active")
+    .eq("theme_key", themeKey)
+    .maybeSingle();
+
+  if (lookupError) {
+    return {
+      ok: false,
+      message: lookupError.message,
+    };
+  }
+
+  const { error } = existingTheme
+    ? await (supabaseAdmin as any)
+        .from("theme_settings")
+        .update(payload)
+        .eq("theme_key", themeKey)
+    : await (supabaseAdmin as any).from("theme_settings").insert({
+        theme_key: themeKey,
+        status: "draft",
+        is_active: false,
+        ...payload,
+      });
 
   if (error) {
     return {
