@@ -72,6 +72,7 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
     id: row.id,
     slug: row.slug ?? row.id,
     storeId: row.store_id,
+    categoryId: row.category_id ?? null,
     storeSlug: row.stores?.slug ?? null,
     storeName: row.stores?.name ?? null,
     createdAt: row.created_at ?? null,
@@ -127,19 +128,42 @@ function isUuid(value: string) {
   );
 }
 
-export async function getMarketplaceProducts(locale = "az") {
+export async function getMarketplaceProducts(
+  locale = "az",
+  input: {
+    categoryId?: string;
+    searchQuery?: string;
+  } = {},
+) {
   const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
+  let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
     )
     .eq("status", "active")
     .order("created_at", {
       ascending: false,
     });
 
-  return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row, locale));
+  if (input.categoryId) {
+    query = query.eq("category_id", input.categoryId);
+  }
+
+  const { data } = await query;
+  const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
+
+  return ((data ?? []) as ProductRow[])
+    .map((row) => toCartProduct(row, locale))
+    .filter((product) => {
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return normalizeSearchValue(
+        [product.name, product.description, product.storeName].filter(Boolean).join(" "),
+      ).includes(normalizedSearch);
+    });
 }
 
 async function getMarketplaceStoresUncached(

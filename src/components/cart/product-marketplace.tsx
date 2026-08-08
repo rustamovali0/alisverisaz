@@ -1,6 +1,6 @@
 "use client";
 
-import type { MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
@@ -16,8 +16,6 @@ import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
-  ArrowRight,
-  Eye,
   GitCompare,
   MapPin,
   PackageSearch,
@@ -37,7 +35,7 @@ type MarketplaceLabels = {
 };
 
 type ProductMarketplaceProps = {
-  stores: MarketplaceStore[];
+  products: CartProduct[];
   categories: CategoryOption[];
   selectedCategoryId?: string;
   footer?: FooterProps;
@@ -87,79 +85,56 @@ function CategoryFilters({
   categories,
   selectedCategoryId,
   baseHref,
+  onSelect,
 }: {
   categories: CategoryOption[];
   selectedCategoryId?: string;
   baseHref: string;
+  onSelect?: (category?: CategoryOption) => void;
 }) {
   if (categories.length === 0) {
     return null;
   }
 
+  const renderFilterButton = (category?: CategoryOption) => {
+    const isSelected = category ? selectedCategoryId === category.id : !selectedCategoryId;
+    const label = category?.name ?? "Bütün kateqoriyalar";
+
+    if (onSelect) {
+      return (
+        <Button
+          key={category?.id ?? "all"}
+          type="button"
+          variant={isSelected ? "default" : "outline"}
+          className="shrink-0 justify-start lg:w-full"
+          onClick={() => onSelect(category)}
+        >
+          {label}
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        key={category?.id ?? "all"}
+        asChild
+        variant={isSelected ? "default" : "outline"}
+        className="shrink-0 justify-start lg:w-full"
+      >
+        <Link href={category ? `${baseHref}?category=${category.slug}` : baseHref}>
+          {label}
+        </Link>
+      </Button>
+    );
+  };
+
   return (
     <div className="max-w-full min-w-0 overflow-x-auto pb-2 lg:overflow-visible lg:pb-0">
       <div className="flex w-max min-w-full gap-2 lg:grid lg:w-full lg:min-w-0 lg:gap-2">
-      <Button
-        asChild
-        variant={!selectedCategoryId ? "default" : "outline"}
-        className="shrink-0 justify-start lg:w-full"
-      >
-        <Link href={baseHref}>Bütün kateqoriyalar</Link>
-      </Button>
-      {categories.map((category) => (
-        <Button
-          key={category.id}
-          asChild
-          variant={selectedCategoryId === category.id ? "default" : "outline"}
-          className="shrink-0 justify-start lg:w-full"
-        >
-          <Link href={`${baseHref}?category=${category.slug}`}>{category.name}</Link>
-        </Button>
-      ))}
+        {renderFilterButton()}
+        {categories.map((category) => renderFilterButton(category))}
       </div>
     </div>
-  );
-}
-
-function StoreCard({ store }: { store: MarketplaceStore }) {
-  return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
-      <Link href={`/${store.slug}`} className="block min-w-0">
-        <div className="border-b bg-muted/60 p-2.5">
-          <div className="grid h-24 place-items-center overflow-hidden rounded-md bg-background sm:h-28">
-            {store.logoUrl ? (
-              <img
-                src={store.logoUrl}
-                alt={store.name}
-                className="h-full w-full object-contain p-3"
-                loading="lazy"
-              />
-            ) : (
-              <StoreLogo store={store} className="size-12 shadow-sm sm:size-14" />
-            )}
-          </div>
-        </div>
-        <div className="flex min-h-[76px] flex-col justify-between p-3 sm:min-h-[88px] sm:p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">
-                {store.name}
-              </h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                {store.productCount} məhsul
-              </p>
-            </div>
-            <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:size-5" />
-          </div>
-          {store.address ? (
-            <p className="mt-2 hidden min-w-0 items-center gap-2 text-xs text-muted-foreground sm:mt-3 sm:flex sm:text-sm">
-              <MapPin className="size-3.5 shrink-0 text-primary sm:size-4" aria-hidden="true" />
-              <span className="line-clamp-1 min-w-0">{store.address}</span>
-            </p>
-          ) : null}
-        </div>
-      </Link>
-    </article>
   );
 }
 
@@ -189,7 +164,7 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
         const hasDiscount = product.discountAmount > 0;
@@ -238,13 +213,13 @@ export function ProductGrid({
             aria-label={`${product.name} məhsul detalına keç`}
             scroll
           >
-            <div className="relative aspect-square overflow-hidden bg-white">
+            <div className="relative aspect-[4/3] overflow-hidden bg-white sm:aspect-square">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
                   loading="lazy"
-                  className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105"
+                  className="h-full w-full object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:p-2"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -263,14 +238,6 @@ export function ProductGrid({
                   </span>
                 ) : null}
               </div>
-              <div className="absolute bottom-2 left-2 right-2 hidden translate-y-2 opacity-0 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 sm:flex">
-                <Button asChild size="sm" className="h-9 w-full rounded-lg shadow-md">
-                  <Link href={detailHref}>
-                    <Eye className="mr-2 size-4" aria-hidden="true" />
-                    Quick View
-                  </Link>
-                </Button>
-              </div>
             </div>
           </Link>
           <FavoriteToggleButton
@@ -279,8 +246,8 @@ export function ProductGrid({
             compact
             className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-md"
           />
-          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-3">
-            <div className="mb-2 flex min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+            <div className="mb-1.5 hidden min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground sm:flex">
               {displayStoreName ? (
                 <span className="min-w-0 truncate">{displayStoreName}</span>
               ) : (
@@ -298,17 +265,17 @@ export function ProductGrid({
                 <GitCompare className="size-4" aria-hidden="true" />
               </button>
             </div>
-            <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground">
+            <h2 className="line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:min-h-10 sm:text-sm sm:leading-5">
               {product.name}
             </h2>
-            <div className="mt-2 flex items-center gap-1 text-amber-400" aria-label="Rəy yoxdur">
+            <div className="mt-1.5 flex items-center gap-0.5 text-amber-400 sm:gap-1" aria-label="Rəy yoxdur">
               {[1, 2, 3, 4, 5].map((value) => (
-                <Star key={value} className="size-3.5" aria-hidden="true" />
+                <Star key={value} className="size-3 sm:size-3.5" aria-hidden="true" />
               ))}
               <span className="ml-1 text-xs text-muted-foreground">(0)</span>
             </div>
-            <div className="mt-2 min-w-0">
-              <p className="truncate text-lg font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground">
+            <div className="mt-1.5 min-w-0 sm:mt-2">
+              <p className="truncate text-base font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground sm:text-lg">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
               {hasDiscount ? (
@@ -319,7 +286,7 @@ export function ProductGrid({
             </div>
             <p
               className={cn(
-                "mt-2 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium",
+                "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
                 isOutOfStock
                   ? "bg-rose-500/10 text-rose-600"
                   : "bg-emerald-500/10 text-emerald-600",
@@ -329,11 +296,11 @@ export function ProductGrid({
                 {isOutOfStock ? "Stokda yoxdur" : `${labels.stock}: ${product.stockQuantity}`}
               </span>
             </p>
-            <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+            <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
               <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
               Çatdırılma mağaza ilə
             </p>
-            <div className="relative z-10 mt-auto grid gap-2 pt-4">
+            <div className="relative z-10 mt-auto grid gap-2 pt-3 sm:pt-4">
               <DepositModal
                 product={product}
                 enabled={depositEnabled && !isOutOfStock}
@@ -359,75 +326,92 @@ export function ProductGrid({
 }
 
 export function ProductMarketplace({
-  stores,
+  products,
   categories,
   selectedCategoryId,
   footer,
   labels,
 }: ProductMarketplaceProps) {
+  const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const visibleProducts = useMemo(
+    () =>
+      activeCategoryId
+        ? products.filter((product) => product.categoryId === activeCategoryId)
+        : products,
+    [activeCategoryId, products],
+  );
+
+  function selectCategory(category?: CategoryOption) {
+    setActiveCategoryId(category?.id);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (category) {
+      url.searchParams.set("category", category.slug);
+    } else {
+      url.searchParams.delete("category");
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <div className="container max-w-full py-5 md:py-8">
         <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
-            <h1 className="text-2xl font-black tracking-normal">Mağazalar</h1>
+            <h1 className="text-2xl font-black tracking-normal">Bütün məhsullar</h1>
           </div>
           <span className="rounded-md border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground">
-            {stores.length} aktiv mağaza
+            {visibleProducts.length} məhsul
           </span>
         </header>
 
-        <section className="md:hidden">
-          <div className="mb-4 flex min-w-0 items-end justify-between gap-3">
-            <h1 className="min-w-0 text-2xl font-black tracking-normal">
-              Kateqoriyalar
-            </h1>
-          </div>
-          {categories.length === 0 ? (
-            <EmptyState
-              className="min-h-60"
-              title="Kateqoriya tapılmadı"
-              description="Hazırda aktiv kateqoriya yoxdur."
-            />
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/products?category=${category.slug}`}
-                  className="flex min-h-[92px] min-w-0 items-center justify-between gap-3 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 hover:text-primary"
-                >
-                  <span className="line-clamp-2 min-w-0 break-words text-sm font-bold">
-                    {category.name}
-                  </span>
-                  <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                </Link>
-              ))}
-            </div>
-          )}
+        <section className="mb-4 md:hidden">
+          <h1 className="mb-3 min-w-0 text-2xl font-black tracking-normal">
+            Bütün məhsullar
+          </h1>
+          <CategoryFilters
+            categories={categories}
+            selectedCategoryId={activeCategoryId}
+            baseHref="/products"
+            onSelect={selectCategory}
+          />
         </section>
 
         <div className="hidden min-w-0 items-start gap-5 md:grid lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
             <CategoryFilters
               categories={categories}
-              selectedCategoryId={selectedCategoryId}
+              selectedCategoryId={activeCategoryId}
               baseHref="/products"
+              onSelect={selectCategory}
             />
           </aside>
-          {stores.length === 0 ? (
+          {visibleProducts.length === 0 ? (
             <EmptyState
               className="min-h-96"
               title={labels.emptyTitle}
               description={labels.emptyDescription}
             />
           ) : (
-            <div className="grid min-w-0 grid-cols-2 items-stretch gap-3 xl:grid-cols-3">
-              {stores.map((store) => (
-                <StoreCard key={store.id} store={store} />
-              ))}
-            </div>
+            <ProductGrid
+              products={visibleProducts}
+              depositEnabled={false}
+              labels={{ stock: labels.stock }}
+            />
           )}
+        </div>
+        <div className="md:hidden">
+          <ProductGrid
+            products={visibleProducts}
+            depositEnabled={false}
+            labels={{ stock: labels.stock }}
+          />
         </div>
       </div>
       <SiteFooter {...footer} />
@@ -444,6 +428,33 @@ export function Storefront({
   footer,
   labels,
 }: StorefrontProps) {
+  const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const visibleProducts = useMemo(
+    () =>
+      activeCategoryId
+        ? store.sampleProducts.filter((product) => product.categoryId === activeCategoryId)
+        : store.sampleProducts,
+    [activeCategoryId, store.sampleProducts],
+  );
+
+  function selectCategory(category?: CategoryOption) {
+    setActiveCategoryId(category?.id);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (category) {
+      url.searchParams.set("category", category.slug);
+    } else {
+      url.searchParams.delete("category");
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <div className="container max-w-full py-5 md:py-6">
@@ -528,12 +539,13 @@ export function Storefront({
             <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
               <CategoryFilters
                 categories={categories}
-                selectedCategoryId={selectedCategoryId}
+                selectedCategoryId={activeCategoryId}
                 baseHref={`/${store.slug}`}
+                onSelect={selectCategory}
               />
             </aside>
             <ProductGrid
-              products={store.sampleProducts}
+              products={visibleProducts}
               depositEnabled={depositEnabled}
               storeSlug={store.slug}
               storeName={store.name}

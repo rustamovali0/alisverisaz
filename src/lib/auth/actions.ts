@@ -482,6 +482,46 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   };
 }
 
+export async function googleOAuthAction(formData: FormData): Promise<AuthResult> {
+  const nextPath = normalizeNextPath(readString(formData, "next")) || "/";
+  const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
+
+  if (mode === "admin") {
+    return {
+      ok: false,
+      message: "Google ilə giriş yalnız public hesablar üçün aktivdir.",
+    };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const redirectTo = new URL("/auth/callback", clientEnv.appUrl);
+  redirectTo.searchParams.set("next", nextPath);
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectTo.toString(),
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+      },
+    },
+  });
+
+  if (error || !data.url) {
+    return {
+      ok: false,
+      message: "Google ilə giriş başlatmaq mümkün olmadı. Yenidən cəhd edin.",
+    };
+  }
+
+  return {
+    ok: true,
+    message: "Google girişinə yönləndirilirsiniz.",
+    redirectTo: data.url,
+  };
+}
+
 export async function logoutAction(): Promise<AuthResult> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();

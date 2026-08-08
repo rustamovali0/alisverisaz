@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,12 @@ export function ProductBackButton() {
   const router = useRouter();
 
   return (
-    <Button type="button" variant="outline" onClick={() => router.back()}>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={() => router.back()}
+      className="hidden md:inline-flex"
+    >
       <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
       Geri
     </Button>
@@ -75,6 +80,9 @@ export function ProductDetailGallery({
       return;
     }
 
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setIsOpen(false);
@@ -91,7 +99,10 @@ export function ProductDetailGallery({
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [goToNext, goToPrevious, isOpen]);
 
   function handleTouchEnd(clientX: number) {
@@ -116,40 +127,35 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className="min-w-0 overflow-hidden rounded-lg border bg-card">
+      <div className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-square w-full max-h-[72vh] bg-muted text-left"
+          className="group relative block aspect-[4/3] w-full bg-muted text-left md:aspect-square md:max-h-[72vh]"
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
             <img
               src={activeImage.url}
               alt={productName}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+              className="h-full w-full object-contain transition duration-300 md:object-cover md:group-hover:scale-[1.02]"
             />
           ) : (
             <div className="grid h-full place-items-center text-muted-foreground">
               Şəkil yoxdur
             </div>
           )}
-          {activeImage ? (
-            <span className="absolute right-3 top-3 inline-flex size-10 items-center justify-center rounded-lg bg-background/90 text-foreground shadow-sm">
-              <Maximize2 className="size-5" aria-hidden="true" />
-            </span>
-          ) : null}
         </button>
         {hasMultipleImages ? (
-          <div className="grid grid-cols-4 gap-2 border-t bg-background p-3 sm:grid-cols-5">
+          <div className="flex gap-2 overflow-x-auto border-t bg-background p-2.5 sm:grid sm:grid-cols-5 sm:p-3">
             {galleryImages.map((image, index) => (
               <button
                 key={`${image.url}-${index}`}
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 className={cn(
-                  "aspect-square overflow-hidden rounded-md border bg-muted",
+                  "size-14 shrink-0 overflow-hidden rounded-md border bg-muted sm:size-auto sm:aspect-square",
                   index === activeIndex ? "border-primary ring-2 ring-primary/20" : "",
                 )}
                 aria-label={`${index + 1}. şəkil`}
@@ -208,7 +214,7 @@ export function ProductDetailGallery({
             </>
           ) : null}
           <div
-            className="flex max-h-[86vh] max-w-[94vw] touch-pan-y flex-col items-center gap-3"
+            className="flex max-h-[86vh] max-w-[94vw] touch-pan-x flex-col items-center gap-3"
             onClick={(event) => event.stopPropagation()}
             onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
             onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}

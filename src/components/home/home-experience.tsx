@@ -49,6 +49,26 @@ function visibleLimit(section: HomepageSection | undefined, fallback: number) {
   return section?.itemLimit && section.itemLimit > 0 ? section.itemLimit : fallback;
 }
 
+function stringArraySetting(section: HomepageSection | undefined, key: string) {
+  const value = section?.settings?.[key];
+
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
 function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: number }) {
   return (
     <m.article
@@ -109,7 +129,6 @@ export function HomeExperience({
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
-  const newSection = sectionByKey(sections, "new_products");
   const benefitsSection = sectionByKey(sections, "benefits");
   const heroTitle = hero?.title || title;
   const heroDescription = hero?.description || description;
@@ -119,8 +138,17 @@ export function HomeExperience({
   const alphabeticalStores = [...stores].sort((a, b) =>
     a.name.localeCompare(b.name, "az"),
   );
-  const featuredStores = alphabeticalStores.slice(0, visibleLimit(featuredSection, 8));
-  const newStores = alphabeticalStores;
+  const selectedFeaturedStoreIds = stringArraySetting(featuredSection, "storeIds");
+  const selectedFeaturedStores =
+    selectedFeaturedStoreIds.length > 0
+      ? selectedFeaturedStoreIds
+          .map((storeId) => alphabeticalStores.find((store) => store.id === storeId))
+          .filter((store): store is MarketplaceStore => Boolean(store))
+      : alphabeticalStores;
+  const featuredStores = selectedFeaturedStores.slice(
+    0,
+    visibleLimit(featuredSection, 8),
+  );
   const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
 
@@ -257,29 +285,14 @@ export function HomeExperience({
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">Hamısı</Link>
+              <Link href="/products">Bütün mağazalar</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {featuredStores.map((store, index) => (
-              <HomeStoreCard key={store.id} store={store} index={index} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {newStores.length > 0 ? (
-        <section className="container py-6 md:py-10">
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="text-2xl font-black">
-                {newSection?.title || "Mağazalar"}
-              </h2>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {newStores.map((store, index) => (
-              <HomeStoreCard key={`new-${store.id}`} store={store} index={index} />
+              <div key={store.id} className={cn(index >= 4 && "hidden md:block")}>
+                <HomeStoreCard store={store} index={index} />
+              </div>
             ))}
           </div>
         </section>

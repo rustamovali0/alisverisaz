@@ -252,7 +252,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
             <div className="mb-3 flex items-center gap-2 md:mb-4">
               <MessageCircle className="size-4 text-primary md:size-5" aria-hidden="true" />
-              <h2 className="text-lg font-black tracking-normal md:text-xl">Mesaj / Chat</h2>
+              <h2 className="text-lg font-black tracking-normal md:text-xl">
+                Məhsul haqqında suallar
+              </h2>
             </div>
             <ProductMessageForm
               productId={detail.product.id}
@@ -268,7 +270,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <h2 className="text-xl font-black tracking-normal">Dəyərləndirmə və rəylər</h2>
+              <h2 className="text-xl font-black tracking-normal">Məhsul dəyərləndirməsi</h2>
             </div>
             {canWriteReview ? (
               <ProductReviewForm

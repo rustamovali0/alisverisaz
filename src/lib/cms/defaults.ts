@@ -85,7 +85,7 @@ export const defaultHomepageSections = [
       showTitle: true,
       showDescription: true,
     },
-    buttonLabel: "Hamısı",
+    buttonLabel: "Bütün mağazalar",
     buttonUrl: "/products",
     itemLimit: 8,
     dataFilter: "featured",

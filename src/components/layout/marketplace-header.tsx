@@ -2,8 +2,11 @@
 
 import {
   Heart,
+  Search,
   ShoppingCart,
+  X,
 } from "lucide-react";
+import { useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
@@ -22,6 +25,7 @@ type MarketplaceHeaderProps = {
   categories?: CategoryOption[];
   searchDefaultValue?: string;
   showMobileSearch?: boolean;
+  compactMobileSearch?: boolean;
   showBottomNav?: boolean;
   sticky?: boolean;
 };
@@ -42,9 +46,11 @@ export function MarketplaceHeader({
   categories = [],
   searchDefaultValue,
   showMobileSearch = false,
+  compactMobileSearch = false,
   showBottomNav = true,
   sticky = true,
 }: MarketplaceHeaderProps) {
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
   const isProductsActive = pathname.startsWith("/products");
@@ -81,6 +87,23 @@ export function MarketplaceHeader({
               {displaySiteName}
             </span>
           </Link>
+          {showMobileSearch && compactMobileSearch ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="ml-auto size-11 rounded-xl border bg-background md:hidden"
+              onClick={() => setIsMobileSearchOpen((value) => !value)}
+              aria-label={isMobileSearchOpen ? "Axtarışı bağla" : "Axtarışı aç"}
+              aria-expanded={isMobileSearchOpen}
+            >
+              {isMobileSearchOpen ? (
+                <X className="size-5" aria-hidden="true" />
+              ) : (
+                <Search className="size-5" aria-hidden="true" />
+              )}
+            </Button>
+          ) : null}
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
               <Link href="/products">Məhsullar</Link>
@@ -102,22 +125,22 @@ export function MarketplaceHeader({
               asChild
               size="icon"
               variant="ghost"
-              className="size-11 rounded-lg border bg-background"
+              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               aria-label="Favorilər"
             >
-              <Link href="/favorites">
-                <Heart className="size-6" aria-hidden="true" />
+              <Link href="/favorites" className="grid place-items-center">
+                <Heart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
               </Link>
             </Button>
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-11 rounded-lg border bg-background"
+              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               aria-label="Səbət"
             >
-              <Link href="/cart">
-                <ShoppingCart className="size-6" aria-hidden="true" />
+              <Link href="/cart" className="grid place-items-center">
+                <ShoppingCart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
               </Link>
             </Button>
             <div className="hidden min-w-[168px] lg:block">
@@ -128,7 +151,9 @@ export function MarketplaceHeader({
             </div>
           </div>
         </div>
-        {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+        {showMobileSearch &&
+        (stores.length > 0 || categories.length > 0) &&
+        (!compactMobileSearch || isMobileSearchOpen) ? (
           <div className="border-t bg-white/95 px-4 py-3 dark:bg-background/95 md:hidden">
             <MarketplaceSearch
               stores={stores}

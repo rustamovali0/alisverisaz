@@ -123,18 +123,18 @@ export function SiteFooter({
 
   return (
     <footer className="w-full max-w-full overflow-x-clip border-t bg-card/95">
-      <div className="container grid max-w-full grid-cols-1 gap-6 py-6 md:grid-cols-2 md:py-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
-        <div className="min-w-0">
+      <div className="container grid max-w-full grid-cols-2 gap-x-5 gap-y-4 py-4 md:grid-cols-2 md:gap-6 md:py-10 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+        <div className="col-span-2 min-w-0 md:col-span-1">
           <Link href="/" className="inline-flex min-w-0 items-center gap-2">
-            <span className="grid size-11 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground">
+            <span className="grid size-8 place-items-center rounded-md bg-primary text-sm font-black text-primary-foreground md:size-11 md:rounded-lg md:text-lg">
               a
             </span>
-            <span className="min-w-0 truncate text-xl font-black tracking-normal">
+            <span className="min-w-0 truncate text-lg font-black tracking-normal md:text-xl">
               {displaySiteName}
             </span>
           </Link>
           {socials.length > 0 ? (
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-3 flex items-center gap-2 md:mt-5 md:gap-3">
               {socials.map((item) => {
                 const Icon = item.icon;
 
@@ -144,10 +144,10 @@ export function SiteFooter({
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex size-12 items-center justify-center rounded-lg border bg-background text-muted-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                    className="inline-flex size-9 items-center justify-center rounded-md border bg-background text-muted-foreground transition hover:border-primary hover:bg-primary hover:text-primary-foreground md:size-12 md:rounded-lg"
                     aria-label={item.label}
                   >
-                    <Icon className="size-6" aria-hidden="true" />
+                    <Icon className="size-5 md:size-6" aria-hidden="true" />
                   </a>
                 );
               })}
@@ -155,10 +155,10 @@ export function SiteFooter({
           ) : null}
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
+          <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
             Platforma
           </h2>
-          <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+          <div className="mt-2 grid gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-3 md:text-sm">
             <Link href="/products" className="hover:text-primary">
               Mağazalar
             </Link>
@@ -171,10 +171,10 @@ export function SiteFooter({
           </div>
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
+          <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
             Hesab
           </h2>
-          <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+          <div className="mt-2 grid gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-3 md:text-sm">
             {isChecked && role ? (
               <Link href={getAccountHref(role)} className="hover:text-primary">
                 {role === "seller" ? "Panelə keç" : "Hesabım"}
@@ -194,11 +194,11 @@ export function SiteFooter({
             </Link>
           </div>
         </div>
-        <div className="min-w-0">
-          <h2 className="text-sm font-black uppercase tracking-normal text-foreground">
+        <div className="col-span-2 min-w-0 md:col-span-1">
+          <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
             Dəstək
           </h2>
-          <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground md:mt-4 md:grid-cols-1 md:gap-3 md:text-sm">
             <Link href="/help" className="hover:text-primary">
               Kömək mərkəzi
             </Link>
@@ -221,7 +221,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t">
-        <div className="container flex max-w-full flex-col gap-2 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:pb-4">
+        <div className="container flex max-w-full flex-col gap-2 py-2 pb-[calc(4.6rem+env(safe-area-inset-bottom))] text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:py-4 md:pb-4 md:text-sm">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
         </div>
       </div>

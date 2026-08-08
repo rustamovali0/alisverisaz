@@ -10,7 +10,7 @@ import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
-import { loginAction } from "@/lib/auth/actions";
+import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { Link } from "@/i18n/navigation";
 
@@ -30,6 +30,7 @@ function getInitialIdentifier(params: URLSearchParams) {
 export function LoginForm({ mode = "public" }: LoginFormProps) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [isGooglePending, startGoogleTransition] = useTransition();
   const [identifier, setIdentifier] = useState(() => getInitialIdentifier(searchParams));
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
@@ -88,6 +89,28 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
       }
 
       void appAlert.success("Xoş gəldiniz", result.message);
+      window.location.assign(result.redirectTo);
+    });
+  }
+
+  function handleGoogleSubmit(formData: FormData) {
+    if (isGooglePending) {
+      return;
+    }
+
+    formData.set("next", next);
+    formData.set("mode", mode);
+    setServerError(null);
+
+    startGoogleTransition(async () => {
+      const result = await googleOAuthAction(formData);
+
+      if (!result.ok) {
+        setServerError(result.message);
+        void appAlert.error(result.message, "Google girişi alınmadı");
+        return;
+      }
+
       window.location.assign(result.redirectTo);
     });
   }
@@ -195,19 +218,25 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
         </Button>
       </form>
 
-      <AuthDivider />
+      {mode === "public" ? (
+        <>
+          <AuthDivider />
 
-      <div className="grid gap-3">
-        <Button type="button" variant="outline" className="h-12 w-full rounded-xl" disabled>
-          <Chrome className="mr-2 size-4" aria-hidden="true" />
-          Google ilə giriş tezliklə
-        </Button>
-        {mode === "public" ? (
-          <p className="text-center text-xs leading-6 text-muted-foreground">
-            Gələcək sosial girişlər burada aktiv ediləcək. Hazırda yalnız email və telefon girişi dəstəklənir.
-          </p>
-        ) : null}
-      </div>
+          <form action={handleGoogleSubmit} className="grid gap-3">
+            <input name="next" type="hidden" value={next} />
+            <input name="mode" type="hidden" value={mode} />
+            <Button
+              type="submit"
+              variant="outline"
+              className="h-12 w-full rounded-xl"
+              disabled={isGooglePending}
+            >
+              <Chrome className="mr-2 size-4" aria-hidden="true" />
+              {isGooglePending ? "Google açılır" : "Google ilə davam et"}
+            </Button>
+          </form>
+        </>
+      ) : null}
     </AuthCard>
   );
 }

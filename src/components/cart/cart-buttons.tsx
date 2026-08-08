@@ -107,7 +107,7 @@ export function AddToCartButton({
       disabled={isUnavailable}
       className={cn("min-w-0", className)}
     >
-      <ShoppingCart className="mr-2 size-4 shrink-0" aria-hidden="true" />
+      <ShoppingCart className="mr-2 size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
       <span className="truncate">{t("addToCart")}</span>
     </Button>
   );
@@ -177,7 +177,7 @@ export function BuyNowButton({
       disabled={isChecking || isUnavailable}
       className={cn("min-w-0", className)}
     >
-      <Zap className="mr-2 size-4 shrink-0" aria-hidden="true" />
+      <Zap className="mr-2 size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
       <span className="truncate">{isChecking ? "Yönləndirilir" : t("buyNow")}</span>
     </Button>
   );

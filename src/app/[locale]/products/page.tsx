@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
-import { getMarketplaceStores } from "@/lib/cart/data";
+import { getMarketplaceProducts } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -46,15 +46,14 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
-  const stores = await getMarketplaceStores({
-    locale,
+  const products = await getMarketplaceProducts(locale, {
     categoryId: selectedCategory?.id,
     searchQuery: search?.q,
   });
 
   return (
     <ProductMarketplace
-      stores={stores}
+      products={products}
       categories={categories}
       selectedCategoryId={selectedCategory?.id}
       footer={{

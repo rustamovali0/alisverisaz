@@ -101,7 +101,6 @@ export default async function StorePage({ params, searchParams }: StorePageProps
     getMarketplaceStoreBySlug({
       slug: storeSlug,
       locale,
-      categoryId: selectedCategory?.id,
     }),
     getDepositSettings(),
   ]);

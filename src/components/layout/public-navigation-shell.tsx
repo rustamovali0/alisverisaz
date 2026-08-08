@@ -68,6 +68,7 @@ export function PublicNavigationShell({
           categories={categories}
           searchDefaultValue={searchParams.get("q") ?? undefined}
           showMobileSearch
+          compactMobileSearch={isProductDetailPath(pathname)}
           sticky={!isProductDetailPath(pathname)}
         />
       ) : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, ImagePlus, Store, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { registerAction } from "@/lib/auth/actions";
+import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
 
 type RegisterFormProps = {
   userRegistrationEnabled: boolean;
@@ -141,6 +141,7 @@ export function RegisterForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const [isGooglePending, startGoogleTransition] = useTransition();
   const [role, setRole] = useState(
     searchParams.get("role") === "seller" && storeRegistrationEnabled
       ? "seller"
@@ -159,6 +160,7 @@ export function RegisterForm({
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const canRegister = userRegistrationEnabled || storeRegistrationEnabled;
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+  const next = searchParams.get("next") ?? "";
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -227,6 +229,28 @@ export function RegisterForm({
       void appAlert.success("Qeydiyyat uğurludur", result.message);
       router.replace(result.redirectTo);
       router.refresh();
+    });
+  }
+
+  function handleGoogleSubmit(formData: FormData) {
+    if (isGooglePending) {
+      return;
+    }
+
+    formData.set("next", next);
+    formData.set("mode", "public");
+    setServerError(null);
+
+    startGoogleTransition(async () => {
+      const result = await googleOAuthAction(formData);
+
+      if (!result.ok) {
+        setServerError(result.message);
+        void appAlert.error(result.message, "Google qeydiyyatı alınmadı");
+        return;
+      }
+
+      window.location.assign(result.redirectTo);
     });
   }
 
@@ -464,7 +488,21 @@ export function RegisterForm({
       ) : null}
 
       <AuthDivider />
-
+      {canRegister ? (
+        <form action={handleGoogleSubmit} className="grid gap-3">
+          <input name="next" type="hidden" value={next} />
+          <input name="mode" type="hidden" value="public" />
+          <Button
+            type="submit"
+            variant="outline"
+            className="h-12 w-full rounded-xl"
+            disabled={isGooglePending}
+          >
+            <Chrome className="mr-2 size-4" aria-hidden="true" />
+            {isGooglePending ? "Google açılır" : "Google ilə davam et"}
+          </Button>
+        </form>
+      ) : null}
     </AuthCard>
   );
 }
