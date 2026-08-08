@@ -68,7 +68,16 @@ begin
 
   if to_regclass('public.product_messages') is not null then
     execute 'create index if not exists product_messages_product_id_perf_idx on public.product_messages(product_id)';
-    execute 'create index if not exists product_messages_sender_user_id_perf_idx on public.product_messages(sender_user_id)';
     execute 'create index if not exists product_messages_store_id_perf_idx on public.product_messages(store_id)';
+
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'product_messages'
+        and column_name = 'sender_id'
+    ) then
+      execute 'create index if not exists product_messages_sender_id_perf_idx on public.product_messages(sender_id)';
+    end if;
   end if;
 end $$;
