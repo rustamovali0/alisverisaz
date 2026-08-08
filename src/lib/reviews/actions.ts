@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { getCurrentUserProfile } from "@/lib/auth/session";
+import { hasUserPurchasedProduct } from "@/lib/reviews/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ActionResult =
@@ -71,6 +72,18 @@ export async function upsertProductReviewAction(
     return {
       ok: false,
       message: productError?.message ?? "Məhsul tapılmadı.",
+    };
+  }
+
+  const hasPurchased = await hasUserPurchasedProduct({
+    userId: current.user.id,
+    productId,
+  });
+
+  if (!hasPurchased) {
+    return {
+      ok: false,
+      message: "Rəy yazmaq üçün əvvəlcə bu məhsulu sifariş etməlisiniz.",
     };
   }
 

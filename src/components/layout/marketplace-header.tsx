@@ -16,6 +16,8 @@ import type { CategoryOption } from "@/lib/products/types";
 
 type MarketplaceHeaderProps = {
   siteName?: string;
+  logoUrl?: string;
+  darkLogoUrl?: string;
   stores?: MarketplaceStore[];
   categories?: CategoryOption[];
   searchDefaultValue?: string;
@@ -34,6 +36,8 @@ function formatBrandName(value?: string) {
 
 export function MarketplaceHeader({
   siteName = "Alışveriş",
+  logoUrl,
+  darkLogoUrl,
   stores = [],
   categories = [],
   searchDefaultValue,
@@ -53,9 +57,26 @@ export function MarketplaceHeader({
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
-            <span className="grid size-12 place-items-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
-              a
-            </span>
+            {logoUrl ? (
+              <span className="grid size-12 place-items-center overflow-hidden rounded-xl border bg-background shadow-sm md:size-10 md:rounded-md">
+                <img
+                  src={logoUrl}
+                  alt={displaySiteName}
+                  className={darkLogoUrl ? "h-full w-full object-contain p-1.5 dark:hidden" : "h-full w-full object-contain p-1.5"}
+                />
+                {darkLogoUrl ? (
+                  <img
+                    src={darkLogoUrl}
+                    alt={displaySiteName}
+                    className="hidden h-full w-full object-contain p-1.5 dark:block"
+                  />
+                ) : null}
+              </span>
+            ) : (
+              <span className="grid size-12 place-items-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
+                a
+              </span>
+            )}
             <span className="min-w-0 truncate text-2xl font-black tracking-normal md:text-xl">
               {displaySiteName}
             </span>
@@ -85,7 +106,7 @@ export function MarketplaceHeader({
               aria-label="Favorilər"
             >
               <Link href="/favorites">
-                <Heart className="size-5" aria-hidden="true" />
+                <Heart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
             <Button
@@ -96,7 +117,7 @@ export function MarketplaceHeader({
               aria-label="Səbət"
             >
               <Link href="/cart">
-                <ShoppingCart className="size-5" aria-hidden="true" />
+                <ShoppingCart className="size-6" aria-hidden="true" />
               </Link>
             </Button>
             <div className="hidden min-w-[168px] lg:block">

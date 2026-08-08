@@ -18,6 +18,7 @@ import {
   ProductBackButton,
   ProductDetailGallery,
 } from "@/components/products/product-detail-gallery";
+import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -28,7 +29,11 @@ import { getSiteSettings } from "@/lib/cms/data";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import { getPublicProductLocations } from "@/lib/locations/data";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
-import { getProductReviews, getReviewSummary } from "@/lib/reviews/data";
+import {
+  getProductReviews,
+  getReviewSummary,
+  hasUserPurchasedProduct,
+} from "@/lib/reviews/data";
 import { getDepositSettings } from "@/lib/settings/data";
 import { setRequestLocale } from "next-intl/server";
 
@@ -78,10 +83,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const [messages, reviews, productLocations] = await Promise.all([
+  const [messages, reviews, productLocations, hasPurchasedProduct] = await Promise.all([
     getProductMessagesForProduct(detail.product.id),
     getProductReviews(detail.product.id),
     getPublicProductLocations(detail.product.id),
+    current?.role === "customer"
+      ? hasUserPurchasedProduct({
+          userId: current.user.id,
+          productId: detail.product.id,
+        })
+      : Promise.resolve(false),
   ]);
 
   after(() => {
@@ -101,11 +112,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const reviewSummary = getReviewSummary(reviews);
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
+  const canWriteReview = current?.role === "customer" && hasPurchasedProduct;
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
+      <ProductDetailScrollReset />
       <ViewTracker productId={detail.product.id} />
       <div className="container max-w-full py-5 md:py-8">
         <nav className="mb-5 min-w-0 text-sm text-muted-foreground">
@@ -235,11 +248,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <ProductLocationSection locations={productLocations} />
         </div>
 
-        <section className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <MessageCircle className="size-5 text-primary" aria-hidden="true" />
-              <h2 className="text-xl font-black tracking-normal">Mesaj / Chat</h2>
+        <section className="mt-5 grid min-w-0 gap-4 md:mt-6 md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+          <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
+            <div className="mb-3 flex items-center gap-2 md:mb-4">
+              <MessageCircle className="size-4 text-primary md:size-5" aria-hidden="true" />
+              <h2 className="text-lg font-black tracking-normal md:text-xl">Mesaj / Chat</h2>
             </div>
             <ProductMessageForm
               productId={detail.product.id}
@@ -252,19 +265,21 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             <ProductMessageThread messages={messages} />
           </div>
 
-          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
+          <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
               <h2 className="text-xl font-black tracking-normal">Dəyərləndirmə və rəylər</h2>
             </div>
-            <ProductReviewForm
-              productId={detail.product.id}
-              storeSlug={detail.store.slug}
-              viewerRole={viewerRole}
-              reviewId={currentReview?.id ?? null}
-              initialRating={currentReview?.rating ?? 0}
-              initialComment={currentReview?.comment ?? ""}
-            />
+            {canWriteReview ? (
+              <ProductReviewForm
+                productId={detail.product.id}
+                storeSlug={detail.store.slug}
+                viewerRole={viewerRole}
+                reviewId={currentReview?.id ?? null}
+                initialRating={currentReview?.rating ?? 0}
+                initialComment={currentReview?.comment ?? ""}
+              />
+            ) : null}
             <ProductReviewList reviews={reviews} />
           </div>
         </section>

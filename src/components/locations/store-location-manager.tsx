@@ -181,31 +181,59 @@ function LocationFields({
           />
         </label>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium">
-          Latitude
-          <input
-            name="latitude"
-            type="number"
-            step="0.0000001"
-            defaultValue={location?.latitude ?? ""}
-            disabled={pending}
-            className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Longitude
-          <input
-            name="longitude"
-            type="number"
-            step="0.0000001"
-            defaultValue={location?.longitude ?? ""}
-            disabled={pending}
-            className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
-        </label>
-      </div>
+      <label className="grid gap-2 text-sm font-medium">
+        Google Maps linki
+        <input
+          name="mapLink"
+          type="url"
+          inputMode="url"
+          defaultValue={location?.mapLink ?? ""}
+          placeholder="https://maps.google.com/..."
+          disabled={pending}
+          className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </label>
       <div className="flex flex-wrap gap-4 text-sm font-medium">
+        <label className="inline-flex items-center gap-2">
+          <input
+            name="showAddress"
+            type="checkbox"
+            defaultChecked={location?.showAddress ?? true}
+            disabled={pending}
+            className="size-4 rounded border-input"
+          />
+          Ünvanı göstər
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            name="showMetro"
+            type="checkbox"
+            defaultChecked={location?.showMetro ?? true}
+            disabled={pending}
+            className="size-4 rounded border-input"
+          />
+          Metronu göstər
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            name="showBus"
+            type="checkbox"
+            defaultChecked={location?.showBus ?? true}
+            disabled={pending}
+            className="size-4 rounded border-input"
+          />
+          Avtobusu göstər
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            name="showMap"
+            type="checkbox"
+            defaultChecked={location?.showMap ?? true}
+            disabled={pending}
+            className="size-4 rounded border-input"
+          />
+          Xəritəni göstər
+        </label>
         <label className="inline-flex items-center gap-2">
           <input
             name="pickupAvailable"

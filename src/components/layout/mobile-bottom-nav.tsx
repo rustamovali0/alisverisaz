@@ -104,7 +104,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.65rem)] pt-2 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] dark:border-border dark:bg-background md:hidden",
+        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] dark:border-border dark:bg-background md:hidden",
         className,
       )}
       aria-label="Mobil naviqasiya"
@@ -123,13 +123,13 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
+                "relative grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
                 isActive && "text-[hsl(var(--marketplace-primary))]",
               )}
               aria-current={isActive ? "page" : undefined}
             >
               <span className="relative grid place-items-center">
-                <Icon className="mx-auto size-7" strokeWidth={isActive ? 2.6 : 2.2} aria-hidden="true" />
+                <Icon className="mx-auto size-6" strokeWidth={isActive ? 2.6 : 2.2} aria-hidden="true" />
                 {badge > 0 ? (
                   <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[hsl(var(--marketplace-primary))] px-1 text-[11px] font-bold leading-none text-white">
                     {badge > 99 ? "99+" : badge}
@@ -143,7 +143,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         <Link
           href={accountPath(role)}
           className={cn(
-            "grid min-h-[58px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
+            "grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||

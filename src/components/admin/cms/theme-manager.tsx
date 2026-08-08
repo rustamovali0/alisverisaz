@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { publishThemeAction } from "@/lib/cms/actions";
+import { publishThemeAction, updateThemeDraftAction } from "@/lib/cms/actions";
 import type { ThemeSetting } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,20 @@ const themePreviewStyles: Record<
   },
 };
 
+function readThemeColors(theme: ThemeSetting) {
+  const config = theme.config && typeof theme.config === "object" ? theme.config : {};
+  const colors =
+    config.colors && typeof config.colors === "object" && !Array.isArray(config.colors)
+      ? (config.colors as Record<string, unknown>)
+      : {};
+
+  return {
+    primary: typeof colors.primary === "string" ? colors.primary : "#0891b2",
+    accent: typeof colors.accent === "string" ? colors.accent : "#f59e0b",
+    surface: typeof colors.surface === "string" ? colors.surface : "#f8fafc",
+  };
+}
+
 export function ThemeManager({ themes }: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
   const totalThemes = themes.length;
@@ -70,9 +84,49 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
     });
   }
 
+  function handleSaveColors(formData: FormData) {
+    const themeKey = String(formData.get("themeKey") ?? "");
+    const theme = themes.find((item) => item.themeKey === themeKey);
+
+    if (!theme) {
+      void appAlert.error("Tema tapılmadı.", "Rənglər saxlanmadı");
+      return;
+    }
+
+    const nextConfig = {
+      ...theme.config,
+      colors: {
+        primary: String(formData.get("primaryColor") ?? "#0891b2"),
+        accent: String(formData.get("accentColor") ?? "#f59e0b"),
+        surface: String(formData.get("surfaceColor") ?? "#f8fafc"),
+      },
+    };
+
+    formData.set("name", theme.name);
+    formData.set("previewImageUrl", theme.previewImageUrl);
+    formData.set("heroVariant", theme.heroVariant);
+    formData.set("productCardVariant", theme.productCardVariant);
+    formData.set("sectionOrder", JSON.stringify(theme.sectionOrder));
+    formData.set("config", JSON.stringify(nextConfig));
+
+    startTransition(async () => {
+      const result = await updateThemeDraftAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Rənglər saxlanmadı");
+        return;
+      }
+
+      void appAlert.success("Rənglər saxlandı", result.message);
+    });
+  }
+
   return (
     <div className="grid gap-4 xl:grid-cols-2">
-      {themes.map((theme) => (
+      {themes.map((theme) => {
+        const colors = readThemeColors(theme);
+
+        return (
         <section
           key={theme.id}
           className="overflow-hidden rounded-xl border bg-card shadow-sm"
@@ -185,6 +239,33 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
                         </div>
                       ))}
                     </div>
+                    <form action={handleSaveColors} className="mt-4 grid gap-3">
+                      <input type="hidden" name="themeKey" value={theme.themeKey} />
+                      {[
+                        ["primaryColor", "Əsas rəng", colors.primary],
+                        ["accentColor", "Vurğu rəngi", colors.accent],
+                        ["surfaceColor", "Fon rəngi", colors.surface],
+                      ].map(([name, label, value]) => (
+                        <label key={name} className="grid gap-2 text-xs font-semibold text-muted-foreground">
+                          {label}
+                          <div className="flex items-center gap-2">
+                            <input
+                              name={name}
+                              type="color"
+                              defaultValue={value}
+                              disabled={isPending}
+                              className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
+                            />
+                            <span className="min-w-0 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
+                              {value}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                      <Button type="submit" variant="outline" disabled={isPending}>
+                        Rəngləri saxla
+                      </Button>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -230,7 +311,8 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
             </div>
           </div>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

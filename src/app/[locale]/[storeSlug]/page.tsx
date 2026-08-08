@@ -6,6 +6,7 @@ import { Storefront } from "@/components/cart/product-marketplace";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getSiteSettings } from "@/lib/cms/data";
+import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getDepositSettings } from "@/lib/settings/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -109,6 +110,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
     notFound();
   }
 
+  const storeLocations = await getLocationsForStores([store.id]);
+  const storeCategories = categories.filter((category) =>
+    store.categoryIds.includes(category.id),
+  );
+
   after(() => {
     void trackActivityEvent({
       eventType: "store_view",
@@ -127,12 +133,8 @@ export default async function StorePage({ params, searchParams }: StorePageProps
       <ViewTracker storeId={store.id} />
       <Storefront
         store={store}
-        categories={categories.filter(
-          (category) =>
-            !store.categoryIds.length ||
-            store.categoryIds.includes(category.id) ||
-            selectedCategory?.id === category.id,
-        )}
+        categories={storeCategories}
+        locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
         depositEnabled={depositSettings.enabled}
         footer={{

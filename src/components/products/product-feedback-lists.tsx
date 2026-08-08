@@ -21,30 +21,30 @@ export function ProductMessageThread({ messages }: { messages: ProductMessage[] 
 
   if (messages.length === 0) {
     return (
-      <p className="mt-6 rounded-lg border bg-background p-3 text-sm text-muted-foreground">
+      <p className="mt-4 rounded-lg border bg-background p-2.5 text-sm text-muted-foreground md:mt-6 md:p-3">
         Mesaj tarixçəniz yoxdur.
       </p>
     );
   }
 
   return (
-    <div className="mt-6 space-y-3">
+    <div className="mt-4 space-y-2 md:mt-6 md:space-y-3">
       {visibleMessages.map((item) => (
         <article
           key={item.id}
-          className="min-w-0 space-y-3 rounded-lg border bg-background p-3"
+          className="min-w-0 space-y-2 rounded-lg border bg-background p-2.5 md:space-y-3 md:p-3"
         >
-          <div className="flex items-center justify-between gap-3">
-            <p className="font-semibold">{item.senderName}</p>
-            <span className="shrink-0 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-sm font-semibold md:text-base">{item.senderName}</p>
+            <span className="text-[11px] text-muted-foreground md:text-xs">
               {formatDateTime(item.createdAt)}
             </span>
           </div>
-          <div className="break-words rounded-lg bg-card p-3 text-sm leading-6 text-muted-foreground">
+          <div className="break-words rounded-lg bg-card p-2.5 text-sm leading-5 text-muted-foreground md:p-3 md:leading-6">
             {item.message}
           </div>
           {item.replyMessage ? (
-            <div className="ml-auto break-words rounded-lg bg-primary p-3 text-sm leading-6 text-primary-foreground sm:max-w-[85%]">
+            <div className="ml-auto break-words rounded-lg bg-primary p-2.5 text-sm leading-5 text-primary-foreground sm:max-w-[85%] md:p-3 md:leading-6">
               <p className="mb-1 text-xs font-semibold text-primary-foreground/75">
                 Satıcının cavabı
                 {item.replyAt ? ` · ${formatDateTime(item.replyAt)}` : ""}
@@ -52,7 +52,7 @@ export function ProductMessageThread({ messages }: { messages: ProductMessage[] 
               {item.replyMessage}
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+            <div className="inline-flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground md:px-3 md:py-2">
               <MessageCircle className="size-3.5" aria-hidden="true" />
               Satıcı cavabı gözlənilir.
             </div>

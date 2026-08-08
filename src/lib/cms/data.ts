@@ -382,6 +382,32 @@ export async function getNavigationMenus() {
   return getCachedNavigationMenus();
 }
 
+async function applyDashboardFeatureFilters(
+  role: "seller" | "customer" | "admin",
+  items: DashboardNavItem[],
+) {
+  if (role !== "seller") {
+    return items;
+  }
+
+  const [siteSettings, panelSettings] = await Promise.all([
+    getSiteSettings(),
+    getPanelSettings("store"),
+  ]);
+  const depositsEnabled =
+    siteSettings.depositEnabled !== false &&
+    panelSettings.features.deposits !== false &&
+    panelSettings.features.deposit !== false;
+
+  if (depositsEnabled) {
+    return items;
+  }
+
+  return items.filter(
+    (item) => item.titleKey !== "deposits" && !item.href.includes("/deposits"),
+  );
+}
+
 function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: string) {
   if (role === "admin" && (href === "/admin" || href.startsWith("/admin/"))) {
     return href.replace(/^\/admin/, "/radmin");
@@ -406,7 +432,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
   const menu = menus.find((item) => item.location === location && item.isActive);
 
   if (!menu || menu.items.length === 0) {
-    return fallback;
+    return applyDashboardFeatureFilters(role, fallback);
   }
 
   const normalizedMenuItems = menu.items.map((item) => ({
@@ -444,7 +470,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
       }),
     );
 
-  return [...merged, ...extra];
+  return applyDashboardFeatureFilters(role, [...merged, ...extra]);
 }
 
 export async function getMediaAssets() {

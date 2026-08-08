@@ -15,6 +15,7 @@ type StoreLocationRow = {
   city: string;
   district: string | null;
   address: string;
+  map_link?: string | null;
   latitude: string | number | null;
   longitude: string | number | null;
   nearest_metro: string | null;
@@ -26,6 +27,10 @@ type StoreLocationRow = {
   working_hours: string | null;
   pickup_available: boolean;
   delivery_available: boolean;
+  show_address?: boolean | null;
+  show_metro?: boolean | null;
+  show_bus?: boolean | null;
+  show_map?: boolean | null;
   is_active: boolean;
   created_at: string;
 };
@@ -65,6 +70,7 @@ function toStoreLocation(row: StoreLocationRow): StoreLocation {
     city: row.city,
     district: row.district,
     address: row.address,
+    mapLink: row.map_link ?? null,
     latitude: toNumberOrNull(row.latitude),
     longitude: toNumberOrNull(row.longitude),
     nearestMetro: row.nearest_metro,
@@ -76,6 +82,10 @@ function toStoreLocation(row: StoreLocationRow): StoreLocation {
     workingHours: row.working_hours,
     pickupAvailable: row.pickup_available,
     deliveryAvailable: row.delivery_available,
+    showAddress: row.show_address !== false,
+    showMetro: row.show_metro !== false,
+    showBus: row.show_bus !== false,
+    showMap: row.show_map !== false,
     isActive: row.is_active,
     createdAt: row.created_at,
   };
@@ -90,7 +100,7 @@ export async function getLocationsForStores(storeIds: string[]) {
   const { data, error } = await (supabase as any)
     .from("store_locations")
     .select(
-      "id,store_id,stores(name),name,city,district,address,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,is_active,created_at",
+      "id,store_id,stores(name),name,city,district,address,map_link,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,show_address,show_metro,show_bus,show_map,is_active,created_at",
     )
     .in("store_id", storeIds)
     .order("created_at", {
@@ -109,7 +119,7 @@ export async function getAllStoreLocations() {
   const { data, error } = await (supabase as any)
     .from("store_locations")
     .select(
-      "id,store_id,stores(name),name,city,district,address,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,is_active,created_at",
+      "id,store_id,stores(name),name,city,district,address,map_link,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,show_address,show_metro,show_bus,show_map,is_active,created_at",
     )
     .order("created_at", {
       ascending: false,
@@ -131,7 +141,7 @@ export async function getProductLocationMap(productIds: string[]) {
   const { data, error } = await (supabase as any)
     .from("product_locations")
     .select(
-      "id,product_id,location_id,stock_quantity,is_available,store_locations(id,store_id,stores(name),name,city,district,address,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,is_active,created_at)",
+      "id,product_id,location_id,stock_quantity,is_available,store_locations(id,store_id,stores(name),name,city,district,address,map_link,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,show_address,show_metro,show_bus,show_map,is_active,created_at)",
     )
     .in("product_id", productIds);
 

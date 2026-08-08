@@ -59,15 +59,15 @@ export function ProductMessageForm({
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="grid gap-3">
+    <form ref={formRef} action={handleSubmit} className="grid gap-2.5 md:gap-3">
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="storeId" value={storeId} />
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2 md:gap-3">
         <label className="grid gap-1 text-sm font-medium">
           Ad Soyad
           <input
-            className="premium-input h-11"
+            className="premium-input h-10 md:h-11"
             name="senderName"
             defaultValue={defaultSenderName}
             placeholder="Adınızı yazın"
@@ -75,19 +75,19 @@ export function ProductMessageForm({
         </label>
         <label className="grid gap-1 text-sm font-medium">
           Telefon
-          <PhoneInput name="senderPhone" defaultValue={defaultSenderPhone} className="h-11" />
+          <PhoneInput name="senderPhone" defaultValue={defaultSenderPhone} className="h-10 md:h-11" />
         </label>
       </div>
       <label className="grid gap-1 text-sm font-medium">
         Mesaj
         <textarea
-          className="premium-input min-h-28 resize-y py-3"
+          className="premium-input min-h-20 resize-y py-2.5 md:min-h-28 md:py-3"
           name="message"
           placeholder="Məhsul haqqında sualınızı yazın"
           required
         />
       </label>
-      <Button type="submit" disabled={isPending} className="w-fit">
+      <Button type="submit" disabled={isPending} className="h-10 w-fit px-3 md:h-11 md:px-4">
         <MessageCircle className="mr-2 size-4" aria-hidden="true" />
         {isPending ? "Göndərilir" : "Satıcıya mesaj göndər"}
       </Button>

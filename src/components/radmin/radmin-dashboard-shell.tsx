@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, Search, X } from "lucide-react";
+import { ChevronDown, Menu, PanelLeftClose, PanelLeftOpen, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -194,38 +194,49 @@ export function RadminDashboardShell({
     };
   }, []);
 
-  const sidebarWidth = isCollapsed ? "lg:pl-20" : "lg:pl-80";
+  const sidebarWidth = isCollapsed ? "lg:pl-24" : "lg:pl-80";
 
   return (
     <div className="min-h-screen bg-slate-100 text-foreground dark:bg-slate-950">
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 hidden border-r border-slate-800/90 bg-slate-950 text-slate-100 transition-all duration-200 lg:flex",
-          isCollapsed ? "w-20" : "w-80",
+          isCollapsed ? "w-24" : "w-80",
         )}
       >
         <div className="flex w-full flex-col">
-          <div className="flex h-16 items-center justify-between border-b border-slate-800 px-5">
+          <div className="flex h-[72px] items-center justify-between border-b border-slate-800 px-5 py-3">
             <Link href="/radmin" className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-primary text-sm font-black text-primary-foreground">
+              <span className="grid size-12 place-items-center rounded-xl bg-primary text-base font-black text-primary-foreground">
                 a
               </span>
               {!isCollapsed ? (
                 <div>
-                  <p className="text-sm font-semibold leading-none">Alisveris.az</p>
-                  <p className="text-xs text-slate-400">RAdmin</p>
+                  <p className="text-base font-semibold leading-none">Alisveris.az</p>
+                  <p className="text-sm text-slate-400">RAdmin</p>
                 </div>
               ) : null}
             </Link>
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              className="text-slate-300 hover:bg-slate-800 hover:text-white"
+              size={isCollapsed ? "icon" : "sm"}
+              className={cn(
+                "text-slate-300 hover:bg-slate-800 hover:text-white",
+                !isCollapsed && "gap-2 px-2",
+              )}
               onClick={() => setIsCollapsed((current) => !current)}
               aria-label={isCollapsed ? "Sidebari aç" : "Sidebari daralt"}
+              title={isCollapsed ? "Sidebari böyüt" : "Sidebari kiçilt"}
             >
-              <Menu className="size-5" aria-hidden="true" />
+              {isCollapsed ? (
+                <PanelLeftOpen className="size-5" aria-hidden="true" />
+              ) : (
+                <>
+                  <PanelLeftClose className="size-5" aria-hidden="true" />
+                  <span className="text-xs font-semibold">Daralt</span>
+                </>
+              )}
             </Button>
           </div>
           <div className="border-b border-slate-800 px-5 py-4">
@@ -245,7 +256,7 @@ export function RadminDashboardShell({
               const Icon = (
                 <DashboardIconView
                   name={item.icon}
-                  className={cn("size-4 shrink-0", isActive ? "text-white" : "text-slate-400")}
+                  className={cn("size-5 shrink-0", isActive ? "text-white" : "text-slate-400")}
                 />
               );
 
@@ -254,7 +265,7 @@ export function RadminDashboardShell({
                   key={item.href}
                   href={href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
+                    "group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition",
                     isActive
                       ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white",
@@ -266,7 +277,7 @@ export function RadminDashboardShell({
                     <>
                       <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
                       {item.badgeText ? (
-                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-white">
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">
                           {item.badgeText}
                         </span>
                       ) : null}
@@ -278,11 +289,11 @@ export function RadminDashboardShell({
           </nav>
           <div className="border-t border-slate-800 p-4">
             {!isCollapsed ? (
-              <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+              <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
                   Sessiya
                 </p>
-                <p className="mt-2 truncate text-sm text-slate-200">{userLabel}</p>
+                <p className="mt-2 truncate text-base text-slate-200">{userLabel}</p>
               </div>
             ) : null}
             <div className="mt-3">
@@ -328,14 +339,14 @@ export function RadminDashboardShell({
                     key={item.href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium",
+                      "flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-slate-300 hover:bg-slate-800 hover:text-white",
                     )}
                     onClick={() => setIsDrawerOpen(false)}
                   >
-                    <DashboardIconView name={item.icon} className="size-4 shrink-0" />
+                    <DashboardIconView name={item.icon} className="size-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>
                   </Link>
                 );

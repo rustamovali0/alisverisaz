@@ -64,6 +64,26 @@ export async function getProductReviews(productId: string) {
   return ((data ?? []) as ReviewRow[]).map(mapReview);
 }
 
+export async function hasUserPurchasedProduct(input: {
+  userId: string;
+  productId: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data, error } = await (supabase as any)
+    .from("order_items")
+    .select("id,orders!inner(user_id,status)")
+    .eq("product_id", input.productId)
+    .eq("orders.user_id", input.userId)
+    .in("orders.status", ["pending", "confirmed", "processing", "delivered"])
+    .limit(1);
+
+  if (error) {
+    return false;
+  }
+
+  return Boolean(data?.length);
+}
+
 export async function getAdminProductReviews() {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)

@@ -68,13 +68,17 @@ export async function generateMetadata({
     locale,
     namespace: "seo",
   });
+  const siteSettings = await getSiteSettings();
+  const seoTitle = siteSettings.defaultSeoTitle || t("title");
+  const seoDescription = siteSettings.defaultMetaDescription || t("description");
+  const faviconUrl = siteSettings.faviconUrl || undefined;
 
   return {
     title: {
-      default: t("title"),
-      template: `%s | ${t("title")}`,
+      default: seoTitle,
+      template: `%s | ${siteSettings.shortName || siteSettings.siteName || seoTitle}`,
     },
-    description: t("description"),
+    description: seoDescription,
     keywords: [
       "alışveriş Azərbaycan",
       "online mağaza",
@@ -95,15 +99,22 @@ export async function generateMetadata({
       type: "website",
       locale: "az_AZ",
       url: `${siteConfig.url}/${locale}`,
-      siteName: siteConfig.name,
-      title: t("title"),
-      description: t("description"),
+      siteName: siteSettings.siteName || siteConfig.name,
+      title: seoTitle,
+      description: seoDescription,
     },
     twitter: {
       card: "summary_large_image",
-      title: t("title"),
-      description: t("description"),
+      title: seoTitle,
+      description: seoDescription,
     },
+    icons: faviconUrl
+      ? {
+          icon: [{ url: faviconUrl }],
+          shortcut: [{ url: faviconUrl }],
+          apple: [{ url: faviconUrl }],
+        }
+      : undefined,
   };
 }
 
@@ -152,6 +163,8 @@ export default async function LocaleLayout({
       ) : (
         <PublicNavigationShell
           siteName={siteSettings.shortName || siteSettings.siteName}
+          logoUrl={siteSettings.logoUrl}
+          darkLogoUrl={siteSettings.darkLogoUrl}
           stores={navStores}
           categories={navCategories}
         >

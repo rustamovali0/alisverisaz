@@ -7,18 +7,24 @@ import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
-import { formatAznDiscountedPrice } from "@/lib/format";
+import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
+import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
   ArrowRight,
+  Eye,
+  GitCompare,
   MapPin,
   PackageSearch,
   Phone,
+  Star,
   Store,
+  Truck,
 } from "lucide-react";
 
 type MarketplaceLabels = {
@@ -41,6 +47,7 @@ type ProductMarketplaceProps = {
 type StorefrontProps = {
   store: MarketplaceStore;
   categories: CategoryOption[];
+  locations?: StoreLocation[];
   selectedCategoryId?: string;
   depositEnabled: boolean;
   footer?: FooterProps;
@@ -125,17 +132,9 @@ function StoreCard({ store }: { store: MarketplaceStore }) {
       <Link href={`/${store.slug}`} className="block min-w-0">
         <div className="relative bg-muted">
           <div className="h-20 overflow-hidden sm:h-24">
-            {store.coverUrl ? (
-              <img
-                src={store.coverUrl}
-                alt={store.name}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-muted-foreground">
-                <Store className="size-8" aria-hidden="true" />
-              </div>
-            )}
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <Store className="size-8" aria-hidden="true" />
+            </div>
           </div>
           <div className="absolute -bottom-5 left-3 z-10">
             <StoreLogo store={store} className="size-10 shadow-sm sm:size-14" />
@@ -181,11 +180,13 @@ export function ProductGrid({
   products,
   depositEnabled,
   storeSlug,
+  storeName,
   labels,
 }: {
   products: CartProduct[];
   depositEnabled: boolean;
   storeSlug?: string;
+  storeName?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
   const router = useRouter();
@@ -204,10 +205,21 @@ export function ProductGrid({
     <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
+        const hasDiscount = product.discountAmount > 0;
+        const discountPercent =
+          hasDiscount && product.priceAmount > 0
+            ? Math.round((product.discountAmount / product.priceAmount) * 100)
+            : 0;
+        const displayStoreName = storeName ?? product.storeName ?? null;
         const detailStoreSlug = storeSlug ?? product.storeSlug ?? "";
         const detailHref = detailStoreSlug
           ? `/${detailStoreSlug}/products/${product.slug}`
           : "/products";
+        const createdTime = product.createdAt ? new Date(product.createdAt).getTime() : 0;
+        const isNewProduct =
+          Number.isFinite(createdTime) &&
+          createdTime > 0 &&
+          Date.now() - createdTime < 14 * 24 * 60 * 60 * 1000;
 
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
@@ -231,7 +243,7 @@ export function ProductGrid({
               router.push(detailHref, { scroll: true });
             }
           }}
-          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-none border-0 bg-transparent text-card-foreground shadow-none transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:rounded-lg sm:border sm:bg-card sm:shadow-sm sm:hover:border-primary/40 sm:hover:shadow-xl sm:hover:shadow-slate-900/10"
+          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Link
             href={detailHref}
@@ -239,46 +251,102 @@ export function ProductGrid({
             aria-label={`${product.name} məhsul detalına keç`}
             scroll
           >
-            <div className="relative aspect-square overflow-hidden rounded-md bg-white sm:aspect-[4/3] sm:rounded-none sm:bg-muted">
+            <div className="relative aspect-square overflow-hidden bg-white">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="h-full w-full object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:object-cover sm:p-0"
+                  loading="lazy"
+                  className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground">
                   <PackageSearch className="size-8" aria-hidden="true" />
                 </div>
               )}
+              <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
+                {hasDiscount ? (
+                  <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-black text-white">
+                    -{discountPercent}%
+                  </span>
+                ) : null}
+                {isNewProduct ? (
+                  <span className="rounded-full bg-emerald-500 px-2 py-1 text-[11px] font-black text-white">
+                    Yeni
+                  </span>
+                ) : null}
+              </div>
+              <div className="absolute bottom-2 left-2 right-2 hidden translate-y-2 opacity-0 transition duration-200 group-hover:translate-y-0 group-hover:opacity-100 sm:flex">
+                <Button asChild size="sm" className="h-9 w-full rounded-lg shadow-md">
+                  <Link href={detailHref}>
+                    <Eye className="mr-2 size-4" aria-hidden="true" />
+                    Quick View
+                  </Link>
+                </Button>
+              </div>
             </div>
           </Link>
           <FavoriteToggleButton
             productId={product.id}
             productName={product.name}
             compact
-            className="absolute right-2 top-2 z-20"
+            className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-md"
           />
-          <div className="relative z-0 flex min-w-0 flex-1 flex-col px-0 pt-3 sm:p-3">
-            <h2 className="line-clamp-2 min-h-10 break-words text-[15px] font-medium leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:text-sm sm:font-semibold">
+          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-3">
+            <div className="mb-2 flex min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground">
+              {displayStoreName ? (
+                <span className="min-w-0 truncate">{displayStoreName}</span>
+              ) : (
+                <span>Mağaza</span>
+              )}
+              <button
+                type="button"
+                className="grid size-8 shrink-0 place-items-center rounded-lg border bg-background text-muted-foreground transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-sm"
+                aria-label="Müqayisəyə əlavə et"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+              >
+                <GitCompare className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+            <h2 className="line-clamp-2 min-h-10 break-words text-sm font-semibold leading-5 tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground">
               {product.name}
             </h2>
-            <p className="mt-2 truncate text-xl font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground sm:text-base sm:font-bold">
-              {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
-            </p>
+            <div className="mt-2 flex items-center gap-1 text-amber-400" aria-label="Rəy yoxdur">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <Star key={value} className="size-3.5" aria-hidden="true" />
+              ))}
+              <span className="ml-1 text-xs text-muted-foreground">(0)</span>
+            </div>
+            <div className="mt-2 min-w-0">
+              <p className="truncate text-lg font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground">
+                {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
+              </p>
+              {hasDiscount ? (
+                <p className="truncate text-sm font-medium text-muted-foreground line-through">
+                  {formatAznPrice(product.priceAmount)}
+                </p>
+              ) : null}
+            </div>
             <p
               className={cn(
-                "mt-1 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium sm:text-xs",
+                "mt-2 inline-flex w-fit max-w-full rounded-md px-2 py-1 text-xs font-medium",
                 isOutOfStock
-                  ? "bg-[hsl(var(--marketplace-primary)/0.1)] text-[hsl(var(--marketplace-primary))]"
-                  : "bg-emerald-500/10 text-emerald-600 sm:bg-primary/10 sm:text-primary",
+                  ? "bg-rose-500/10 text-rose-600"
+                  : "bg-emerald-500/10 text-emerald-600",
               )}
             >
               <span className="truncate">
                 {isOutOfStock ? "Stokda yoxdur" : `${labels.stock}: ${product.stockQuantity}`}
               </span>
             </p>
-            <div className="relative z-10 mt-4 grid gap-2">
+            <p className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+              Çatdırılma mağaza ilə
+            </p>
+            <div className="relative z-10 mt-auto grid gap-2 pt-4">
               <DepositModal
                 product={product}
                 enabled={depositEnabled && !isOutOfStock}
@@ -292,7 +360,7 @@ export function ProductGrid({
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
-                className="h-11 w-full border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none hover:bg-[hsl(var(--marketplace-primary)/0.16)] disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
+                className="h-11 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
               />
             </div>
           </div>
@@ -383,6 +451,7 @@ export function ProductMarketplace({
 export function Storefront({
   store,
   categories,
+  locations = [],
   selectedCategoryId,
   depositEnabled,
   footer,
@@ -460,6 +529,8 @@ export function Storefront({
           </div>
         </section>
 
+        <PublicStoreLocationSection locations={locations} />
+
         <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
           <div className="mb-6 min-w-0">
             <h2 className="break-words text-xl font-black tracking-normal">
@@ -478,6 +549,7 @@ export function Storefront({
               products={store.sampleProducts}
               depositEnabled={depositEnabled}
               storeSlug={store.slug}
+              storeName={store.name}
               labels={{ stock: labels.stock }}
             />
           </div>

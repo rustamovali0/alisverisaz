@@ -12,6 +12,7 @@ type ProductRow = {
   id: string;
   store_id: string;
   slug: string | null;
+  created_at?: string | null;
   name: string;
   description: string | null;
   name_translations?: Record<string, string> | null;
@@ -29,6 +30,7 @@ type ProductRow = {
     sort_order?: number | null;
   }>;
   stores?: {
+    name?: string | null;
     slug: string | null;
   } | null;
 };
@@ -71,6 +73,8 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
     slug: row.slug ?? row.id,
     storeId: row.store_id,
     storeSlug: row.stores?.slug ?? null,
+    storeName: row.stores?.name ?? null,
+    createdAt: row.created_at ?? null,
     name: readLocalizedText(row.name, row.name_translations, locale),
     description: readLocalizedText(
       row.description,
@@ -128,13 +132,12 @@ export async function getMarketplaceProducts(locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(slug)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
     )
     .eq("status", "active")
     .order("created_at", {
       ascending: false,
-    })
-    .limit(200);
+    });
 
   return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row, locale));
 }
@@ -164,7 +167,7 @@ async function getMarketplaceStoresUncached(
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("status", "active")
     .in("store_id", storeIds)
@@ -287,7 +290,7 @@ export async function getMarketplaceStoreBySlug(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
     )
     .eq("store_id", store.id)
     .eq("status", "active")
@@ -299,7 +302,7 @@ export async function getMarketplaceStoreBySlug(input: {
     productQuery = productQuery.eq("category_id", input.categoryId);
   }
 
-  const { data: products } = await productQuery.limit(72);
+  const { data: products } = await productQuery;
   const productRows = (products ?? []) as ProductRow[];
 
   return {
@@ -352,7 +355,7 @@ export async function getMarketplaceProductById(input: {
   let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,settings)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,settings)",
     )
     .eq("status", "active");
 
@@ -404,7 +407,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(slug)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
     )
     .eq("status", "active")
     .in("id", productIds);

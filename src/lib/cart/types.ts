@@ -3,6 +3,8 @@ export type CartProduct = {
   slug: string;
   storeId: string;
   storeSlug?: string | null;
+  storeName?: string | null;
+  createdAt?: string | null;
   name: string;
   description: string | null;
   priceAmount: number;

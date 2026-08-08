@@ -10,6 +10,10 @@ type ProductLocationSectionProps = {
 function getMapUrl(item: ProductLocationAvailability) {
   const { location } = item;
 
+  if (location.mapLink) {
+    return location.mapLink;
+  }
+
   if (location.latitude !== null && location.longitude !== null) {
     return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
   }
@@ -19,6 +23,15 @@ function getMapUrl(item: ProductLocationAvailability) {
     .join(", ");
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function getEmbedUrl(item: ProductLocationAvailability) {
+  const { location } = item;
+  const query = [location.city, location.district, location.address]
+    .filter(Boolean)
+    .join(", ");
+
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
 }
 
 export function ProductLocationSection({ locations }: ProductLocationSectionProps) {
@@ -49,12 +62,14 @@ export function ProductLocationSection({ locations }: ProductLocationSectionProp
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="truncate font-semibold">{item.location.name}</h3>
-                <p className="mt-1 break-words text-sm text-muted-foreground">
-                  {item.location.city}
-                  {item.location.district ? `, ${item.location.district}` : ""}
-                  {" · "}
-                  {item.location.address}
-                </p>
+                {item.location.showAddress ? (
+                  <p className="mt-1 break-words text-sm text-muted-foreground">
+                    {item.location.city}
+                    {item.location.district ? `, ${item.location.district}` : ""}
+                    {" · "}
+                    {item.location.address}
+                  </p>
+                ) : null}
               </div>
               <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
                 Stok: {item.stockQuantity}
@@ -62,7 +77,7 @@ export function ProductLocationSection({ locations }: ProductLocationSectionProp
             </div>
 
             <div className="grid gap-2 text-sm text-muted-foreground">
-              {item.location.nearestMetro ? (
+              {item.location.showMetro && item.location.nearestMetro ? (
                 <div className="flex items-center gap-2">
                   <Navigation className="size-4 text-primary" aria-hidden="true" />
                   <span>
@@ -76,7 +91,7 @@ export function ProductLocationSection({ locations }: ProductLocationSectionProp
                   </span>
                 </div>
               ) : null}
-              {item.location.busStopName || item.location.busRoutes.length ? (
+              {item.location.showBus && (item.location.busStopName || item.location.busRoutes.length) ? (
                 <div className="flex items-center gap-2">
                   <Bus className="size-4 text-primary" aria-hidden="true" />
                   <span>
@@ -103,11 +118,24 @@ export function ProductLocationSection({ locations }: ProductLocationSectionProp
               </div>
             </div>
 
-            <Button asChild variant="outline" className="w-full">
-              <a href={getMapUrl(item)} target="_blank" rel="noreferrer">
-                Xəritədə bax
-              </a>
-            </Button>
+            {item.location.showMap ? (
+              <>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={getMapUrl(item)} target="_blank" rel="noreferrer">
+                    Google Maps-də aç
+                  </a>
+                </Button>
+                <div className="hidden overflow-hidden rounded-lg border md:block">
+                  <iframe
+                    title={`${item.location.name} xəritəsi`}
+                    src={getEmbedUrl(item)}
+                    loading="lazy"
+                    className="h-44 w-full"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </>
+            ) : null}
           </article>
         ))}
       </div>

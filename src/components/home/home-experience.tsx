@@ -60,17 +60,9 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
       <Link href={`/${store.slug}`} className="block h-full min-w-0">
         <div className="relative bg-muted">
           <div className="h-20 overflow-hidden sm:h-24">
-            {store.coverUrl ? (
-              <img
-                src={store.coverUrl}
-                alt={store.name}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <Store className="size-8 text-muted-foreground" aria-hidden="true" />
-              </div>
-            )}
+            <div className="flex h-full items-center justify-center">
+              <Store className="size-8 text-muted-foreground" aria-hidden="true" />
+            </div>
           </div>
           <div className="absolute -bottom-5 left-3 z-10 grid size-12 place-items-center overflow-hidden rounded-md border bg-background shadow-sm sm:size-14">
             {store.logoUrl ? (

@@ -92,6 +92,7 @@ export async function saveStoreLocationAction(
     city: readString(formData, "city") || "Bakı",
     district: readString(formData, "district") || null,
     address,
+    map_link: readString(formData, "mapLink") || null,
     latitude: readOptionalNumber(formData, "latitude"),
     longitude: readOptionalNumber(formData, "longitude"),
     nearest_metro: readString(formData, "nearestMetro") || null,
@@ -103,6 +104,10 @@ export async function saveStoreLocationAction(
     working_hours: readString(formData, "workingHours") || null,
     pickup_available: readString(formData, "pickupAvailable") === "on",
     delivery_available: readString(formData, "deliveryAvailable") === "on",
+    show_address: readString(formData, "showAddress") === "on",
+    show_metro: readString(formData, "showMetro") === "on",
+    show_bus: readString(formData, "showBus") === "on",
+    show_map: readString(formData, "showMap") === "on",
     is_active: readString(formData, "isActive") === "on",
   };
 

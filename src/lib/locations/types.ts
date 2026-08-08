@@ -6,6 +6,7 @@ export type StoreLocation = {
   city: string;
   district: string | null;
   address: string;
+  mapLink: string | null;
   latitude: number | null;
   longitude: number | null;
   nearestMetro: string | null;
@@ -17,6 +18,10 @@ export type StoreLocation = {
   workingHours: string | null;
   pickupAvailable: boolean;
   deliveryAvailable: boolean;
+  showAddress: boolean;
+  showMetro: boolean;
+  showBus: boolean;
+  showMap: boolean;
   isActive: boolean;
   createdAt: string;
 };

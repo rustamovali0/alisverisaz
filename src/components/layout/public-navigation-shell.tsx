@@ -11,6 +11,8 @@ import type { CategoryOption } from "@/lib/products/types";
 type PublicNavigationShellProps = {
   children: ReactNode;
   siteName?: string;
+  logoUrl?: string;
+  darkLogoUrl?: string;
   stores: MarketplaceStore[];
   categories: CategoryOption[];
 };
@@ -46,6 +48,8 @@ function isProductDetailPath(pathname: string) {
 export function PublicNavigationShell({
   children,
   siteName,
+  logoUrl,
+  darkLogoUrl,
   stores,
   categories,
 }: PublicNavigationShellProps) {
@@ -58,6 +62,8 @@ export function PublicNavigationShell({
       {showNavigation ? (
         <MarketplaceHeader
           siteName={siteName}
+          logoUrl={logoUrl}
+          darkLogoUrl={darkLogoUrl}
           stores={stores}
           categories={categories}
           searchDefaultValue={searchParams.get("q") ?? undefined}
