@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import {
   ArrowRight,
   PackageSearch,
@@ -15,6 +16,10 @@ import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
+import {
+  defaultHomeThemeColors,
+  homeThemeColorPresets,
+} from "@/lib/cms/defaults";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
@@ -24,6 +29,7 @@ type HomeExperienceProps = {
   siteSettings: SiteSettings;
   sections: HomepageSection[];
   activeTheme: string;
+  themeConfig?: Record<string, unknown>;
   stores: MarketplaceStore[];
   products: CartProduct[];
   depositEnabled: boolean;
@@ -33,13 +39,110 @@ type HomeExperienceProps = {
   productsLabel: string;
 };
 
-const themeClasses: Record<string, string> = {
-  default: "from-background via-muted/50 to-background",
-  "modern-marketplace": "from-cyan-50 via-background to-amber-50 dark:from-slate-950 dark:via-background dark:to-cyan-950/30",
-  "luxury-commerce": "from-stone-50 via-background to-yellow-50 dark:from-zinc-950 dark:via-background dark:to-yellow-950/20",
-  "minimal-storefront": "from-background via-background to-muted/50",
-  "bold-catalog": "from-rose-50 via-background to-cyan-50 dark:from-rose-950/20 dark:via-background dark:to-cyan-950/20",
-};
+type HomeThemeColors = Record<keyof typeof defaultHomeThemeColors, string>;
+
+function getThemeDefaults(themeKey: string): HomeThemeColors {
+  const preset = (homeThemeColorPresets as Record<string, Partial<HomeThemeColors>>)[
+    themeKey
+  ];
+
+  return {
+    ...defaultHomeThemeColors,
+    ...preset,
+  };
+}
+
+function readHomeThemeColors(
+  themeKey: string,
+  themeConfig: Record<string, unknown> | undefined,
+): HomeThemeColors {
+  const defaults = getThemeDefaults(themeKey);
+  const colors =
+    themeConfig?.colors &&
+    typeof themeConfig.colors === "object" &&
+    !Array.isArray(themeConfig.colors)
+      ? (themeConfig.colors as Record<string, unknown>)
+      : {};
+  const nextColors = { ...defaults };
+
+  for (const key of Object.keys(defaults) as Array<keyof HomeThemeColors>) {
+    if (typeof colors[key] === "string") {
+      nextColors[key] = colors[key];
+    }
+  }
+
+  return nextColors;
+}
+
+function hexToHslTriplet(hex: string, fallback: string) {
+  const normalized = hex.trim().replace("#", "");
+  const value =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((item) => item + item)
+          .join("")
+      : normalized;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) {
+    return fallback;
+  }
+
+  const r = parseInt(value.slice(0, 2), 16) / 255;
+  const g = parseInt(value.slice(2, 4), 16) / 255;
+  const b = parseInt(value.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const delta = max - min;
+    s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+    h =
+      max === r
+        ? (g - b) / delta + (g < b ? 6 : 0)
+        : max === g
+          ? (b - r) / delta + 2
+          : (r - g) / delta + 4;
+    h /= 6;
+  }
+
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function createHomeThemeStyle(
+  colors: HomeThemeColors,
+): CSSProperties & Record<string, string> {
+  return {
+    backgroundColor: colors.pageBackground,
+    color: colors.text,
+    "--background": hexToHslTriplet(colors.pageBackground, "0 0% 100%"),
+    "--foreground": hexToHslTriplet(colors.text, "222 47% 11%"),
+    "--card": hexToHslTriplet(colors.cardBackground, "0 0% 100%"),
+    "--card-foreground": hexToHslTriplet(colors.text, "222 47% 11%"),
+    "--muted": hexToHslTriplet(colors.productsBackground, "210 40% 96%"),
+    "--muted-foreground": hexToHslTriplet(colors.mutedText, "215 16% 47%"),
+    "--border": hexToHslTriplet(colors.border, "214 32% 91%"),
+    "--primary": hexToHslTriplet(colors.primary, "187 92% 32%"),
+    "--primary-foreground": hexToHslTriplet(colors.buttonText, "0 0% 100%"),
+    "--accent": hexToHslTriplet(colors.accent, "38 92% 50%"),
+    "--home-hero-bg": colors.heroBackground,
+    "--home-categories-bg": colors.categoriesBackground,
+    "--home-stores-bg": colors.storesBackground,
+    "--home-products-bg": colors.productsBackground,
+    "--home-benefits-bg": colors.benefitsBackground,
+    "--home-button-bg": colors.buttonBackground,
+    "--home-button-text": colors.buttonText,
+    "--home-border": colors.border,
+    "--marketplace-primary": hexToHslTriplet(colors.primary, "187 92% 32%"),
+    "--marketplace-primary-hover": hexToHslTriplet(colors.buttonBackground, "187 92% 28%"),
+    "--marketplace-primary-soft": hexToHslTriplet(colors.primary, "187 92% 90%"),
+    "--marketplace-navy": hexToHslTriplet(colors.text, "222 47% 11%"),
+    "--marketplace-muted": hexToHslTriplet(colors.mutedText, "215 16% 47%"),
+  };
+}
 
 function sectionByKey(sections: HomepageSection[], key: string) {
   return sections.find((section) => section.key === key);
@@ -117,6 +220,7 @@ export function HomeExperience({
   siteSettings,
   sections,
   activeTheme,
+  themeConfig,
   stores,
   products,
   depositEnabled,
@@ -134,7 +238,8 @@ export function HomeExperience({
   const heroDescription = hero?.description || description;
   const heroShowTitle = hero?.showTitle ?? true;
   const heroShowDescription = hero?.showDescription ?? true;
-  const themeClass = themeClasses[activeTheme] ?? themeClasses.default;
+  const themeColors = readHomeThemeColors(activeTheme, themeConfig);
+  const themeStyle = createHomeThemeStyle(themeColors);
   const alphabeticalStores = [...stores].sort((a, b) =>
     a.name.localeCompare(b.name, "az"),
   );
@@ -154,12 +259,14 @@ export function HomeExperience({
 
   return (
     <main
-      className={cn(
-        "min-h-screen w-full max-w-full overflow-x-clip bg-gradient-to-br pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0",
-        themeClass,
-      )}
+      className="min-h-screen w-full max-w-full overflow-x-clip pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0"
+      style={themeStyle}
     >
-      <section className="container grid items-center gap-8 py-8 lg:min-h-[560px] lg:grid-cols-[1.08fr_0.92fr] lg:py-14">
+      <section
+        className="grid items-center gap-8 py-8 lg:min-h-[560px] lg:py-14"
+        style={{ backgroundColor: "var(--home-hero-bg)" }}
+      >
+        <div className="container grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
         <m.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,15 +342,26 @@ export function HomeExperience({
                 </div>
             </div>
           </div>
-          <div className="absolute -bottom-5 right-5 rounded-lg bg-primary p-4 text-primary-foreground shadow-xl">
+          <div
+            className="absolute -bottom-5 right-5 rounded-lg p-4 shadow-xl"
+            style={{
+              backgroundColor: "var(--home-button-bg)",
+              color: "var(--home-button-text)",
+            }}
+          >
             <p className="text-sm opacity-90">Aktiv məhsul</p>
             <p className="text-3xl font-black">{totalProductCount}</p>
           </div>
         </m.div>
+        </div>
       </section>
 
       {activeCategories.length > 0 ? (
-        <section className="container py-6 md:py-10">
+        <section
+          className="py-6 md:py-10"
+          style={{ backgroundColor: "var(--home-categories-bg)" }}
+        >
+          <div className="container">
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
@@ -273,11 +391,16 @@ export function HomeExperience({
               </m.div>
             ))}
           </div>
+          </div>
         </section>
       ) : null}
 
       {featuredStores.length > 0 ? (
-        <section className="container py-6 md:py-10">
+        <section
+          className="py-6 md:py-10"
+          style={{ backgroundColor: "var(--home-stores-bg)" }}
+        >
+          <div className="container">
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
@@ -295,11 +418,16 @@ export function HomeExperience({
               </div>
             ))}
           </div>
+          </div>
         </section>
       ) : null}
 
       {products.length > 0 ? (
-        <section className="container py-6 md:py-10">
+        <section
+          className="py-6 md:py-10"
+          style={{ backgroundColor: "var(--home-products-bg)" }}
+        >
+          <div className="container">
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">Məhsullar</h2>
@@ -313,10 +441,14 @@ export function HomeExperience({
             depositEnabled={depositEnabled}
             labels={{ stock: "Stok" }}
           />
+          </div>
         </section>
       ) : null}
 
-      <section className="hidden md:block">
+      <section
+        className="hidden md:block"
+        style={{ backgroundColor: "var(--home-benefits-bg)" }}
+      >
         <div className="container pb-12 pt-8">
         <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           <div className="grid gap-4 md:grid-cols-3">

@@ -5,6 +5,7 @@ import type { ProductLocationAvailability } from "@/lib/locations/types";
 
 type ProductLocationSectionProps = {
   locations: ProductLocationAvailability[];
+  compact?: boolean;
 };
 
 function getMapUrl(item: ProductLocationAvailability) {
@@ -34,30 +35,35 @@ function getEmbedUrl(item: ProductLocationAvailability) {
   return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
 }
 
-export function ProductLocationSection({ locations }: ProductLocationSectionProps) {
+export function ProductLocationSection({
+  locations,
+  compact = false,
+}: ProductLocationSectionProps) {
   if (locations.length === 0) {
     return null;
   }
 
   return (
-    <section className="rounded-lg border bg-card p-4 text-card-foreground shadow-sm md:p-6">
+    <section className="rounded-lg border bg-card p-3 text-card-foreground shadow-sm md:p-4">
       <div className="flex items-center gap-3">
-        <span className="grid size-10 place-items-center rounded-md bg-primary/10 text-primary">
+        <span className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
           <MapPin className="size-5" aria-hidden="true" />
         </span>
         <div>
-          <h2 className="text-xl font-semibold tracking-normal">Ünvan və nəqliyyat</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className={compact ? "text-base font-semibold tracking-normal" : "text-xl font-semibold tracking-normal"}>
+            Ünvan və nəqliyyat
+          </h2>
+          <p className={compact ? "sr-only" : "text-sm text-muted-foreground"}>
             Məhsulun mövcud olduğu satış nöqtələri.
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className={compact ? "mt-3 grid gap-2" : "mt-4 grid gap-3 md:grid-cols-2"}>
         {locations.map((item) => (
           <article
             key={item.id}
-            className="grid min-w-0 gap-3 rounded-lg border bg-background p-4"
+            className={compact ? "grid min-w-0 gap-2 rounded-lg border bg-background p-3" : "grid min-w-0 gap-3 rounded-lg border bg-background p-4"}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -130,7 +136,7 @@ export function ProductLocationSection({ locations }: ProductLocationSectionProp
                     title={`${item.location.name} xəritəsi`}
                     src={getEmbedUrl(item)}
                     loading="lazy"
-                    className="h-44 w-full"
+                    className={compact ? "h-28 w-full" : "h-44 w-full"}
                     referrerPolicy="no-referrer-when-downgrade"
                   />
                 </div>

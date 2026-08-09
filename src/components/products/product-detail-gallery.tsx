@@ -132,14 +132,14 @@ export function ProductDetailGallery({
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-[4/3] w-full bg-muted text-left md:aspect-square md:max-h-[72vh]"
+          className="group relative block aspect-[4/3] w-full bg-muted text-left md:aspect-[4/3] md:max-h-[420px] lg:max-h-[460px]"
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
             <img
               src={activeImage.url}
               alt={productName}
-              className="h-full w-full object-contain transition duration-300 md:object-cover md:group-hover:scale-[1.02]"
+              className="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.02]"
             />
           ) : (
             <div className="grid h-full place-items-center text-muted-foreground">

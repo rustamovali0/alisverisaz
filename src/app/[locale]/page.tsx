@@ -1,5 +1,5 @@
 import { HomeExperience } from "@/components/home/home-experience";
-import { getHomepageSections, getSiteSettings, getActiveHomeTheme } from "@/lib/cms/data";
+import { getHomepageSections, getSiteSettings, getActiveHomeThemeSetting } from "@/lib/cms/data";
 import { getMarketplaceProducts, getMarketplaceStores } from "@/lib/cart/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getDepositSettings } from "@/lib/settings/data";
@@ -20,7 +20,7 @@ export default async function HomePage({ params }: HomePageProps) {
     await Promise.all([
       getSiteSettings(),
       getHomepageSections(),
-      getActiveHomeTheme(),
+      getActiveHomeThemeSetting(),
       getMarketplaceStores({ locale, limit: 120 }),
       getMarketplaceProducts(locale),
       getCategoryOptions({ rootOnly: true }),
@@ -32,7 +32,8 @@ export default async function HomePage({ params }: HomePageProps) {
       locale={locale}
       siteSettings={siteSettings}
       sections={sections}
-      activeTheme={activeTheme}
+      activeTheme={activeTheme.themeKey}
+      themeConfig={activeTheme.config}
       stores={stores}
       products={products}
       depositEnabled={depositSettings.enabled}

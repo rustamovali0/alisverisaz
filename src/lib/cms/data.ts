@@ -320,6 +320,19 @@ export async function getActiveHomeTheme() {
   return active?.themeKey ?? site.activeHomeTheme;
 }
 
+export async function getActiveHomeThemeSetting() {
+  const [site, themes] = await Promise.all([
+    getSiteSettings(),
+    getThemeSettings(false),
+  ]);
+  const active =
+    themes.find((theme) => theme.isActive) ??
+    themes.find((theme) => theme.themeKey === site.activeHomeTheme) ??
+    fallbackThemeSettings()[0];
+
+  return active;
+}
+
 function readNavigationItem(row: any): ManagedNavigationItem {
   return {
     id: row.id,

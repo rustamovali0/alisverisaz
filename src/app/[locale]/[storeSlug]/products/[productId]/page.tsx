@@ -241,12 +241,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <Link href={`/${detail.store.slug}`}>Mağazaya keç</Link>
               </Button>
             </div>
+            <div className="mt-4">
+              <ProductLocationSection locations={productLocations} compact />
+            </div>
           </div>
         </section>
-
-        <div className="mt-6">
-          <ProductLocationSection locations={productLocations} />
-        </div>
 
         <section className="mt-5 grid min-w-0 gap-4 md:mt-6 md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
           <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">

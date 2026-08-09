@@ -574,6 +574,7 @@ export async function updateThemeDraftAction(
   }
 
   revalidateTag("theme-settings", "max");
+  revalidateLocalizedPath("/");
   revalidateLocalizedPath("/radmin/themes");
 
   return {

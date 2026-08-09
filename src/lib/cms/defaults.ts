@@ -9,6 +9,64 @@ export const homeThemeKeys = [
   "bold-catalog",
 ] as const;
 
+export const defaultHomeThemeColors = {
+  pageBackground: "#f8fafc",
+  heroBackground: "#f0fdfa",
+  categoriesBackground: "#ffffff",
+  storesBackground: "#ffffff",
+  productsBackground: "#f8fafc",
+  benefitsBackground: "#ffffff",
+  cardBackground: "#ffffff",
+  text: "#0f172a",
+  mutedText: "#64748b",
+  primary: "#0891b2",
+  accent: "#f59e0b",
+  buttonBackground: "#0891b2",
+  buttonText: "#ffffff",
+  border: "#dbe3ea",
+} as const;
+
+export const homeThemeColorPresets = {
+  default: defaultHomeThemeColors,
+  "modern-marketplace": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#ecfeff",
+    heroBackground: "#f0fdfa",
+    productsBackground: "#f8fafc",
+    primary: "#0891b2",
+    accent: "#f59e0b",
+    buttonBackground: "#0891b2",
+  },
+  "luxury-commerce": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#fafaf9",
+    heroBackground: "#fffbeb",
+    productsBackground: "#f5f5f4",
+    primary: "#92400e",
+    accent: "#d97706",
+    buttonBackground: "#92400e",
+    border: "#e7e5e4",
+  },
+  "minimal-storefront": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#ffffff",
+    heroBackground: "#f8fafc",
+    productsBackground: "#ffffff",
+    primary: "#111827",
+    accent: "#64748b",
+    buttonBackground: "#111827",
+  },
+  "bold-catalog": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#fff1f2",
+    heroBackground: "#ecfeff",
+    productsBackground: "#fff7ed",
+    primary: "#e11d48",
+    accent: "#0891b2",
+    buttonBackground: "#e11d48",
+  },
+} as const;
+
 export const defaultSiteSettings: SiteSettings = {
   siteName: "Alışveriş",
   shortName: "Alışveriş",
@@ -148,7 +206,7 @@ export const defaultThemeSettings = [
     heroVariant: "default",
     productCardVariant: "default",
     sectionOrder: ["hero", "categories", "featured_products", "new_products", "benefits"],
-    config: {},
+    config: { colors: homeThemeColorPresets.default },
   },
   {
     themeKey: "modern-marketplace",
@@ -159,7 +217,7 @@ export const defaultThemeSettings = [
     heroVariant: "modern",
     productCardVariant: "rounded",
     sectionOrder: ["hero", "featured_products", "categories", "benefits", "new_products"],
-    config: {},
+    config: { colors: homeThemeColorPresets["modern-marketplace"] },
   },
   {
     themeKey: "luxury-commerce",
@@ -170,7 +228,7 @@ export const defaultThemeSettings = [
     heroVariant: "premium",
     productCardVariant: "elevated",
     sectionOrder: ["hero", "featured_products", "benefits", "categories", "new_products"],
-    config: {},
+    config: { colors: homeThemeColorPresets["luxury-commerce"] },
   },
   {
     themeKey: "minimal-storefront",
@@ -181,7 +239,7 @@ export const defaultThemeSettings = [
     heroVariant: "minimal",
     productCardVariant: "minimal",
     sectionOrder: ["hero", "categories", "new_products", "featured_products", "benefits"],
-    config: {},
+    config: { colors: homeThemeColorPresets["minimal-storefront"] },
   },
   {
     themeKey: "bold-catalog",
@@ -192,7 +250,7 @@ export const defaultThemeSettings = [
     heroVariant: "bold",
     productCardVariant: "bold",
     sectionOrder: ["hero", "featured_products", "new_products", "benefits", "categories"],
-    config: {},
+    config: { colors: homeThemeColorPresets["bold-catalog"] },
   },
 ] as const;
 
