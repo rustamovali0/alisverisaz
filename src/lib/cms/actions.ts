@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { defaultThemeSettings } from "@/lib/cms/defaults";
 import type { CmsActionResult } from "@/lib/cms/types";
 
 const CMS_MEDIA_BUCKET = "cms-media";
@@ -451,7 +452,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
 
   const supabaseAdmin = createSupabaseAdminClient();
 
-  const { data: targetTheme } = await (supabaseAdmin as any)
+  let { data: targetTheme } = await (supabaseAdmin as any)
     .from("theme_settings")
     .select("id,status")
     .eq("theme_key", themeKey)
@@ -462,10 +463,41 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
     .maybeSingle();
 
   if (!targetTheme) {
-    return {
-      ok: false,
-      message: "Tema tapılmadı.",
-    };
+    const fallbackTheme = defaultThemeSettings.find(
+      (theme) => theme.themeKey === themeKey,
+    );
+
+    if (!fallbackTheme) {
+      return {
+        ok: false,
+        message: "Tema tapılmadı.",
+      };
+    }
+
+    const { data: insertedTheme, error: insertError } = await (supabaseAdmin as any)
+      .from("theme_settings")
+      .insert({
+        theme_key: fallbackTheme.themeKey,
+        name: fallbackTheme.name,
+        status: fallbackTheme.status,
+        is_active: false,
+        preview_image_url: fallbackTheme.previewImageUrl,
+        hero_variant: fallbackTheme.heroVariant,
+        product_card_variant: fallbackTheme.productCardVariant,
+        section_order: fallbackTheme.sectionOrder,
+        config: fallbackTheme.config,
+      })
+      .select("id,status")
+      .single();
+
+    if (insertError) {
+      return {
+        ok: false,
+        message: insertError.message,
+      };
+    }
+
+    targetTheme = insertedTheme;
   }
 
   await (supabaseAdmin as any)

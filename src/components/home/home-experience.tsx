@@ -240,6 +240,8 @@ export function HomeExperience({
   const heroShowDescription = hero?.showDescription ?? true;
   const themeColors = readHomeThemeColors(activeTheme, themeConfig);
   const themeStyle = createHomeThemeStyle(themeColors);
+  const productCardVariant =
+    activeTheme === "liquid-glass" ? "liquid-glass" : undefined;
   const alphabeticalStores = [...stores].sort((a, b) =>
     a.name.localeCompare(b.name, "az"),
   );
@@ -439,6 +441,7 @@ export function HomeExperience({
           <ProductGrid
             products={products}
             depositEnabled={depositEnabled}
+            productCardVariant={productCardVariant}
             labels={{ stock: "Stok" }}
           />
           </div>

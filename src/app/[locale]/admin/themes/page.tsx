@@ -12,7 +12,7 @@ export default async function AdminThemesPage() {
   return (
     <DashboardPanel
       title="Ana səhifə temaları"
-      description="Default, Modern Marketplace, Luxury Commerce, Minimal Storefront və Bold Catalog temalarını preview edin və publish edin."
+      description="Default, Modern Marketplace, Luxury Commerce, Minimal Storefront, Bold Catalog və Liquid Glass temalarını preview edin və publish edin."
     >
       <ThemeManager themes={themes} />
     </DashboardPanel>

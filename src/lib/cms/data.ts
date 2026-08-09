@@ -252,6 +252,15 @@ function fallbackThemeSettings() {
   );
 }
 
+function withFallbackThemeSettings(themes: ThemeSetting[]) {
+  const themeKeys = new Set(themes.map((theme) => theme.themeKey));
+  const missingThemes = fallbackThemeSettings().filter(
+    (theme) => !themeKeys.has(theme.themeKey),
+  );
+
+  return [...themes, ...missingThemes];
+}
+
 const getCachedThemeSettings = unstable_cache(
   async () => {
     const supabase = createSupabaseAdminClient();
@@ -271,7 +280,7 @@ const getCachedThemeSettings = unstable_cache(
 
     const themes = ((data ?? []) as any[]).map(readTheme);
 
-    return themes.length ? themes : fallbackThemeSettings();
+    return themes.length ? withFallbackThemeSettings(themes) : fallbackThemeSettings();
   },
   ["theme-settings"],
   {
@@ -307,7 +316,7 @@ export async function getThemeSettings(includeDrafts = false) {
 
   const themes = ((data ?? []) as any[]).map(readTheme);
 
-  return themes.length ? themes : fallbackThemeSettings();
+  return themes.length ? withFallbackThemeSettings(themes) : fallbackThemeSettings();
 }
 
 export async function getActiveHomeTheme() {

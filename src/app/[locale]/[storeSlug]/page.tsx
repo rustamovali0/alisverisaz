@@ -5,7 +5,7 @@ import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
-import { getSiteSettings } from "@/lib/cms/data";
+import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getDepositSettings } from "@/lib/settings/data";
@@ -90,9 +90,10 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const [categories, siteSettings] = await Promise.all([
+  const [categories, siteSettings, activeTheme] = await Promise.all([
     getCategoryOptions({ rootOnly: true }),
     getSiteSettings(),
+    getActiveHomeThemeSetting(),
   ]);
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
@@ -135,6 +136,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         categories={storeCategories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
+        productCardVariant={activeTheme.productCardVariant}
         depositEnabled={depositSettings.enabled}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,

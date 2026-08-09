@@ -7,6 +7,7 @@ export const homeThemeKeys = [
   "luxury-commerce",
   "minimal-storefront",
   "bold-catalog",
+  "liquid-glass",
 ] as const;
 
 export const defaultHomeThemeColors = {
@@ -64,6 +65,22 @@ export const homeThemeColorPresets = {
     primary: "#e11d48",
     accent: "#0891b2",
     buttonBackground: "#e11d48",
+  },
+  "liquid-glass": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#ecfeff",
+    heroBackground: "#e6fbff",
+    categoriesBackground: "#f8fdff",
+    storesBackground: "#f1fcff",
+    productsBackground: "#eafcff",
+    benefitsBackground: "#f8fdff",
+    cardBackground: "#ffffff",
+    text: "#071827",
+    mutedText: "#4b6473",
+    primary: "#06b6d4",
+    accent: "#8b5cf6",
+    buttonBackground: "#0891b2",
+    border: "#bdebf3",
   },
 } as const;
 
@@ -251,6 +268,17 @@ export const defaultThemeSettings = [
     productCardVariant: "bold",
     sectionOrder: ["hero", "featured_products", "new_products", "benefits", "categories"],
     config: { colors: homeThemeColorPresets["bold-catalog"] },
+  },
+  {
+    themeKey: "liquid-glass",
+    name: "Liquid Glass",
+    status: "published",
+    isActive: false,
+    previewImageUrl: "",
+    heroVariant: "liquid",
+    productCardVariant: "liquid-glass",
+    sectionOrder: ["hero", "featured_products", "categories", "new_products", "benefits"],
+    config: { colors: homeThemeColorPresets["liquid-glass"] },
   },
 ] as const;
 

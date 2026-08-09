@@ -38,6 +38,7 @@ type ProductMarketplaceProps = {
   products: CartProduct[];
   categories: CategoryOption[];
   selectedCategoryId?: string;
+  productCardVariant?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
 };
@@ -47,6 +48,7 @@ type StorefrontProps = {
   categories: CategoryOption[];
   locations?: StoreLocation[];
   selectedCategoryId?: string;
+  productCardVariant?: string;
   depositEnabled: boolean;
   footer?: FooterProps;
   labels: MarketplaceLabels;
@@ -143,15 +145,18 @@ export function ProductGrid({
   depositEnabled,
   storeSlug,
   storeName,
+  productCardVariant,
   labels,
 }: {
   products: CartProduct[];
   depositEnabled: boolean;
   storeSlug?: string;
   storeName?: string;
+  productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
   const router = useRouter();
+  const isLiquidGlass = productCardVariant === "liquid-glass";
 
   if (products.length === 0) {
     return (
@@ -205,7 +210,11 @@ export function ProductGrid({
               router.push(detailHref, { scroll: true });
             }
           }}
-          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:380px] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className={cn(
+            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:360px] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            isLiquidGlass &&
+              "liquid-glass-product-card border-white/70 bg-white/60 hover:-translate-y-1 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
+          )}
         >
           <Link
             href={detailHref}
@@ -213,14 +222,22 @@ export function ProductGrid({
             aria-label={`${product.name} məhsul detalına keç`}
             scroll
           >
-            <div className="relative aspect-[4/3] overflow-hidden bg-white">
+            <div
+              className={cn(
+                "relative aspect-[4/3] overflow-hidden bg-white",
+                isLiquidGlass && "liquid-glass-product-image-shell",
+              )}
+            >
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
-                  className="h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none sm:p-2"
+                  className={cn(
+                    "h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none sm:p-2",
+                    isLiquidGlass && "drop-shadow-[0_18px_28px_rgba(8,145,178,0.18)]",
+                  )}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -255,7 +272,12 @@ export function ProductGrid({
                 <span>Mağaza</span>
               )}
             </div>
-            <h2 className="line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:min-h-10 sm:text-sm sm:leading-5">
+            <h2
+              className={cn(
+                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:min-h-10 sm:text-sm sm:leading-5",
+                isLiquidGlass && "font-black group-hover:text-cyan-700 dark:group-hover:text-cyan-200",
+              )}
+            >
               {product.name}
             </h2>
             <div className="mt-1.5 flex items-center gap-0.5 text-amber-400 sm:gap-1" aria-label="Rəy yoxdur">
@@ -299,7 +321,11 @@ export function ProductGrid({
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
-                className="h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
+                className={cn(
+                  "h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent",
+                  isLiquidGlass &&
+                    "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                )}
               />
             </div>
           </div>
@@ -314,6 +340,7 @@ export function ProductMarketplace({
   products,
   categories,
   selectedCategoryId,
+  productCardVariant,
   footer,
   labels,
 }: ProductMarketplaceProps) {
@@ -387,6 +414,7 @@ export function ProductMarketplace({
             <ProductGrid
               products={visibleProducts}
               depositEnabled={false}
+              productCardVariant={productCardVariant}
               labels={{ stock: labels.stock }}
             />
           )}
@@ -395,6 +423,7 @@ export function ProductMarketplace({
           <ProductGrid
             products={visibleProducts}
             depositEnabled={false}
+            productCardVariant={productCardVariant}
             labels={{ stock: labels.stock }}
           />
         </div>
@@ -409,6 +438,7 @@ export function Storefront({
   categories,
   locations = [],
   selectedCategoryId,
+  productCardVariant,
   depositEnabled,
   footer,
   labels,
@@ -552,6 +582,7 @@ export function Storefront({
               depositEnabled={depositEnabled}
               storeSlug={store.slug}
               storeName={store.name}
+              productCardVariant={productCardVariant}
               labels={{ stock: labels.stock }}
             />
           </div>
