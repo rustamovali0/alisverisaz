@@ -27,7 +27,11 @@ import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { formatAznDiscountedPrice } from "@/lib/format";
-import { getPublicProductLocations } from "@/lib/locations/data";
+import {
+  getLocationsForStores,
+  getPublicProductLocations,
+} from "@/lib/locations/data";
+import type { ProductLocationAvailability } from "@/lib/locations/types";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
 import {
   getProductReviews,
@@ -83,10 +87,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const [messages, reviews, productLocations, hasPurchasedProduct] = await Promise.all([
+  const [messages, reviews, productLocations, storeLocations, hasPurchasedProduct] =
+    await Promise.all([
     getProductMessagesForProduct(detail.product.id),
     getProductReviews(detail.product.id),
     getPublicProductLocations(detail.product.id),
+    getLocationsForStores([detail.store.id]),
     current?.role === "customer"
       ? hasUserPurchasedProduct({
           userId: current.user.id,
@@ -115,6 +121,19 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const canWriteReview = current?.role === "customer" && hasPurchasedProduct;
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
+  const visibleProductLocations: ProductLocationAvailability[] =
+    productLocations.length > 0
+      ? productLocations
+      : storeLocations
+          .filter((location) => location.isActive)
+          .map((location) => ({
+            id: `store-location-${location.id}`,
+            productId: detail.product.id,
+            locationId: location.id,
+            stockQuantity: detail.product.stockQuantity,
+            isAvailable: canBuy,
+            location,
+          }));
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -242,7 +261,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </Button>
             </div>
             <div className="mt-4">
-              <ProductLocationSection locations={productLocations} compact />
+              <ProductLocationSection locations={visibleProductLocations} compact />
             </div>
           </div>
         </section>

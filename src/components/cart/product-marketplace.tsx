@@ -16,6 +16,7 @@ import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
+  Clock,
   GitCompare,
   MapPin,
   PackageSearch,
@@ -424,6 +425,16 @@ export function Storefront({
   labels,
 }: StorefrontProps) {
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const primaryLocation = useMemo(
+    () => locations.find((location) => location.isActive) ?? locations[0] ?? null,
+    [locations],
+  );
+  const primaryAddress =
+    primaryLocation && primaryLocation.showAddress
+      ? [primaryLocation.city, primaryLocation.district, primaryLocation.address]
+          .filter(Boolean)
+          .join(", ")
+      : store.address;
   const visibleProducts = useMemo(
     () =>
       activeCategoryId
@@ -500,10 +511,18 @@ export function Storefront({
                   </p>
                 ) : null}
                 <div className="mt-4 flex min-w-0 flex-wrap gap-4 text-sm text-muted-foreground">
-                  {store.address ? (
+                  {primaryAddress ? (
                     <span className="inline-flex min-w-0 items-center gap-2">
                       <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{store.address}</span>
+                      <span className="min-w-0 break-words">{primaryAddress}</span>
+                    </span>
+                  ) : null}
+                  {primaryLocation?.workingHours ? (
+                    <span className="inline-flex min-w-0 items-center gap-2">
+                      <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">
+                        {primaryLocation.workingHours}
+                      </span>
                     </span>
                   ) : null}
                 </div>

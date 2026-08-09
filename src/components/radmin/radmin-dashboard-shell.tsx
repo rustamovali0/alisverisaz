@@ -205,8 +205,16 @@ export function RadminDashboardShell({
         )}
       >
         <div className="flex w-full flex-col">
-          <div className="flex h-[72px] items-center justify-between border-b border-slate-800 px-5 py-3">
-            <Link href="/radmin" className="flex items-center gap-3">
+          <div
+            className={cn(
+              "flex items-center border-b border-slate-800 py-3",
+              isCollapsed ? "h-28 flex-col justify-center gap-2 px-3" : "h-[72px] justify-between px-5",
+            )}
+          >
+            <Link
+              href="/radmin"
+              className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}
+            >
               <span className="grid size-12 place-items-center rounded-xl bg-primary text-base font-black text-primary-foreground">
                 a
               </span>
@@ -224,6 +232,8 @@ export function RadminDashboardShell({
               className={cn(
                 "text-slate-300 hover:bg-slate-800 hover:text-white",
                 !isCollapsed && "gap-2 px-2",
+                isCollapsed &&
+                  "size-9 rounded-lg border border-slate-700 bg-slate-900 shadow-sm",
               )}
               onClick={() => setIsCollapsed((current) => !current)}
               aria-label={isCollapsed ? "Sidebari aç" : "Sidebari daralt"}

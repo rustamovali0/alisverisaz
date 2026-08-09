@@ -182,22 +182,22 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
     >
       <Link href={`/${store.slug}`} className="block h-full min-w-0">
         <div className="border-b bg-muted/60 p-2.5">
-          <div className="grid h-24 place-items-center overflow-hidden rounded-md bg-background sm:h-28">
+          <div className="grid h-28 place-items-center overflow-hidden rounded-md bg-background sm:h-32 lg:h-36">
             {store.logoUrl ? (
               <img
                 src={store.logoUrl}
                 alt={store.name}
-                className="h-full w-full object-contain p-3"
+                className="h-full w-full object-contain p-3.5"
                 loading="lazy"
               />
             ) : (
-              <span className="grid size-12 place-items-center rounded-md border bg-muted text-lg font-black text-primary sm:size-14 sm:text-xl">
+              <span className="grid size-14 place-items-center rounded-md border bg-muted text-xl font-black text-primary sm:size-16 sm:text-2xl">
                 {store.name.slice(0, 1).toUpperCase()}
               </span>
             )}
           </div>
         </div>
-        <div className="flex min-h-[76px] flex-col justify-between p-3 sm:min-h-[88px] sm:p-4">
+        <div className="flex min-h-[86px] flex-col justify-between p-3.5 sm:min-h-[96px] sm:p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-sm font-black tracking-normal sm:text-base">

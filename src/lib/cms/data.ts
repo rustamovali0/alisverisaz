@@ -411,14 +411,25 @@ async function applyDashboardFeatureFilters(
     siteSettings.depositEnabled !== false &&
     panelSettings.features.deposits !== false &&
     panelSettings.features.deposit !== false;
+  const subscriptionEnabled = panelSettings.features.subscription !== false;
 
-  if (depositsEnabled) {
-    return items;
-  }
+  return items.filter((item) => {
+    if (
+      !depositsEnabled &&
+      (item.titleKey === "deposits" || item.href.includes("/deposits"))
+    ) {
+      return false;
+    }
 
-  return items.filter(
-    (item) => item.titleKey !== "deposits" && !item.href.includes("/deposits"),
-  );
+    if (
+      !subscriptionEnabled &&
+      (item.titleKey === "subscription" || item.href.includes("/subscription"))
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: string) {
