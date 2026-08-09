@@ -30,7 +30,14 @@ function formatDate(value: string) {
 export function ProductMessageList({ messages }: ProductMessageListProps) {
   const [isPending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [showAllMessages, setShowAllMessages] = useState(false);
   const router = useRouter();
+  const sortedMessages = [...messages].sort(
+    (first, second) =>
+      new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime(),
+  );
+  const visibleMessages = showAllMessages ? sortedMessages : sortedMessages.slice(0, 1);
+  const hiddenMessageCount = Math.max(sortedMessages.length - 1, 0);
 
   function updateStatus(messageId: string, status: string) {
     const formData = new FormData();
@@ -151,7 +158,7 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
           Hamısını sil
         </Button>
       </div>
-      {messages.map((item) => (
+      {visibleMessages.map((item) => (
         <article key={item.id} className="rounded-lg border bg-background p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex min-w-0 gap-3">
@@ -254,6 +261,20 @@ export function ProductMessageList({ messages }: ProductMessageListProps) {
           </form>
         </article>
       ))}
+      {hiddenMessageCount > 0 ? (
+        <div className="flex justify-center pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAllMessages((current) => !current)}
+          >
+            {showAllMessages
+              ? "Yalnız son mesajı göstər"
+              : `Bütün mesajları göstər (${hiddenMessageCount})`}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

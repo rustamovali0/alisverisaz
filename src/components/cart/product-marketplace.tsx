@@ -17,7 +17,6 @@ import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
   Clock,
-  GitCompare,
   MapPin,
   PackageSearch,
   Phone,
@@ -206,7 +205,7 @@ export function ProductGrid({
               router.push(detailHref, { scroll: true });
             }
           }}
-          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:380px] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Link
             href={detailHref}
@@ -220,7 +219,8 @@ export function ProductGrid({
                   src={product.imageUrl}
                   alt={product.name}
                   loading="lazy"
-                  className="h-full w-full object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:p-2"
+                  decoding="async"
+                  className="h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none sm:p-2"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -248,23 +248,12 @@ export function ProductGrid({
             className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-md"
           />
           <div className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-            <div className="mb-1.5 hidden min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground sm:flex">
+            <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
               {displayStoreName ? (
-                <span className="min-w-0 truncate">{displayStoreName}</span>
+                <span className="block min-w-0 truncate">{displayStoreName}</span>
               ) : (
                 <span>Mağaza</span>
               )}
-              <button
-                type="button"
-                className="grid size-8 shrink-0 place-items-center rounded-lg border bg-background text-muted-foreground transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-sm"
-                aria-label="Müqayisəyə əlavə et"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-              >
-                <GitCompare className="size-4" aria-hidden="true" />
-              </button>
             </div>
             <h2 className="line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:min-h-10 sm:text-sm sm:leading-5">
               {product.name}
