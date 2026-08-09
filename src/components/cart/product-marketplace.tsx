@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type MouseEvent } from "react";
 
-import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
+import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
@@ -213,7 +213,7 @@ export function ProductGrid({
             aria-label={`${product.name} məhsul detalına keç`}
             scroll
           >
-            <div className="relative aspect-[4/3] overflow-hidden bg-white sm:aspect-square">
+            <div className="relative aspect-[4/3] overflow-hidden bg-white">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
@@ -300,21 +300,16 @@ export function ProductGrid({
               <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
               Çatdırılma mağaza ilə
             </p>
-            <div className="relative z-10 mt-auto grid gap-2 pt-3 sm:pt-4">
+            <div className="relative z-10 mt-auto grid gap-2 pt-3">
               <DepositModal
                 product={product}
                 enabled={depositEnabled && !isOutOfStock}
-                className="hidden w-full px-2 text-xs sm:inline-flex sm:text-sm"
-              />
-              <BuyNowButton
-                product={product}
-                disabled={isOutOfStock}
-                className="hidden w-full px-2 text-xs sm:inline-flex sm:text-sm"
+                className="hidden h-9 w-full px-2 text-xs md:inline-flex"
               />
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
-                className="h-11 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
+                className="h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent"
               />
             </div>
           </div>

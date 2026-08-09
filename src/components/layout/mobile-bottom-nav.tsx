@@ -64,14 +64,14 @@ function accountLabel(role: AuthRole | null) {
 
 function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "admin") {
-    return <ShieldCheck className="mx-auto size-[26px]" aria-hidden="true" />;
+    return <ShieldCheck className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
   }
 
   if (role === "seller") {
-    return <Store className="mx-auto size-[26px]" aria-hidden="true" />;
+    return <Store className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
   }
 
-  return <UserRound className="mx-auto size-[26px]" aria-hidden="true" />;
+  return <UserRound className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
 }
 
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
@@ -129,7 +129,11 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               aria-current={isActive ? "page" : undefined}
             >
               <span className="relative grid place-items-center">
-                <Icon className="mx-auto size-6" strokeWidth={isActive ? 2.6 : 2.2} aria-hidden="true" />
+                <Icon
+                  className="mx-auto size-7 min-h-7 min-w-7"
+                  strokeWidth={isActive ? 2.7 : 2.35}
+                  aria-hidden="true"
+                />
                 {badge > 0 ? (
                   <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[hsl(var(--marketplace-primary))] px-1 text-[11px] font-bold leading-none text-white">
                     {badge > 99 ? "99+" : badge}
