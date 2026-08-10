@@ -168,6 +168,8 @@ export function ProductGrid({
     );
   }
 
+  const now = Date.now();
+
   return (
     <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
@@ -186,7 +188,7 @@ export function ProductGrid({
         const isNewProduct =
           Number.isFinite(createdTime) &&
           createdTime > 0 &&
-          Date.now() - createdTime < 14 * 24 * 60 * 60 * 1000;
+          now - createdTime < 14 * 24 * 60 * 60 * 1000;
 
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
@@ -211,9 +213,9 @@ export function ProductGrid({
             }
           }}
           className={cn(
-            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:360px] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-colors duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
             isLiquidGlass &&
-              "liquid-glass-product-card border-white/70 bg-white/60 hover:-translate-y-1 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
+              "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
           )}
         >
           <Link
@@ -235,8 +237,7 @@ export function ProductGrid({
                   loading="lazy"
                   decoding="async"
                   className={cn(
-                    "h-full w-full object-contain p-1.5 transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none sm:p-2",
-                    isLiquidGlass && "drop-shadow-[0_18px_28px_rgba(8,145,178,0.18)]",
+                    "h-full w-full object-contain p-1.5 transition-transform duration-200 ease-out motion-reduce:transition-none sm:p-2 md:group-hover:scale-[1.025]",
                   )}
                 />
               ) : (
@@ -262,7 +263,7 @@ export function ProductGrid({
             productId={product.id}
             productName={product.name}
             compact
-            className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-md"
+            className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-sm"
           />
           <div className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
             <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">

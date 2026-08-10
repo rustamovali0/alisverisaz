@@ -15,6 +15,73 @@ type FavoriteToggleButtonProps = {
   compact?: boolean;
 };
 
+type FavoriteProductCache = {
+  userId: string;
+  productIds: Set<string>;
+};
+
+let favoriteProductCache: FavoriteProductCache | null = null;
+let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null = null;
+
+async function loadFavoriteProductCache() {
+  if (favoriteProductCache) {
+    return favoriteProductCache;
+  }
+
+  if (!favoriteProductCachePromise) {
+    favoriteProductCachePromise = (async () => {
+      const supabase = createSupabaseBrowserClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return null;
+      }
+
+      const { data, error } = await (supabase as any)
+        .from("favorites")
+        .select("product_id")
+        .eq("user_id", user.id);
+
+      if (error) {
+        return null;
+      }
+
+      const productIds = new Set<string>();
+      for (const item of data ?? []) {
+        if (typeof item?.product_id === "string") {
+          productIds.add(item.product_id);
+        }
+      }
+
+      favoriteProductCache = {
+        userId: user.id,
+        productIds,
+      };
+
+      return favoriteProductCache;
+    })().finally(() => {
+      favoriteProductCachePromise = null;
+    });
+  }
+
+  return favoriteProductCachePromise;
+}
+
+function updateFavoriteProductCache(userId: string, productId: string, isActive: boolean) {
+  if (!favoriteProductCache || favoriteProductCache.userId !== userId) {
+    return;
+  }
+
+  if (isActive) {
+    favoriteProductCache.productIds.add(productId);
+    return;
+  }
+
+  favoriteProductCache.productIds.delete(productId);
+}
+
 export function FavoriteToggleButton({
   productId,
   productName = "Məhsul",
@@ -32,6 +99,17 @@ export function FavoriteToggleButton({
     let mounted = true;
 
     async function loadFavoriteState() {
+      if (compact) {
+        const cache = await loadFavoriteProductCache();
+
+        if (mounted) {
+          setFavoriteId(cache?.productIds.has(productId) ? productId : null);
+          setIsReady(true);
+        }
+
+        return;
+      }
+
       const supabase = createSupabaseBrowserClient();
       const {
         data: { user },
@@ -84,12 +162,21 @@ export function FavoriteToggleButton({
         return;
       }
 
+      if (favoriteProductCache && favoriteProductCache.userId !== user.id) {
+        favoriteProductCache = null;
+      }
+
       if (favoriteId) {
-        const { error } = await (supabase as any)
+        let deleteQuery = (supabase as any)
           .from("favorites")
           .delete()
-          .eq("id", favoriteId)
           .eq("user_id", user.id);
+
+        deleteQuery = compact
+          ? deleteQuery.eq("product_id", productId)
+          : deleteQuery.eq("id", favoriteId);
+
+        const { error } = await deleteQuery;
 
         if (error) {
           showToast({
@@ -101,6 +188,7 @@ export function FavoriteToggleButton({
         }
 
         setFavoriteId(null);
+        updateFavoriteProductCache(user.id, productId, false);
         showToast({
           title: "Məhsul seçilmişlərdən çıxarıldı.",
           variant: "info",
@@ -127,6 +215,7 @@ export function FavoriteToggleButton({
       }
 
       setFavoriteId(data.id);
+      updateFavoriteProductCache(user.id, productId, true);
       showToast({
         title: "Məhsul seçilmişlərə əlavə edildi.",
         variant: "success",
@@ -146,7 +235,7 @@ export function FavoriteToggleButton({
       disabled={!isReady || isPending}
       onClick={toggleFavorite}
       className={cn(
-        "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60",
+        "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 md:hover:shadow-md",
         compact ? "size-10" : "size-11",
         isActive && "border-primary/40 bg-primary text-primary-foreground hover:text-primary-foreground",
         className,
