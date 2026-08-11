@@ -11,6 +11,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardPanel
+      className="hidden md:block"
       title="Sifariş statusu"
       description="Sifarişləriniz və cari statusları burada görünür."
     >

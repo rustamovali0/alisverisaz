@@ -166,6 +166,42 @@ export async function getMarketplaceProducts(
     });
 }
 
+export async function getFavoriteMarketplaceProducts(locale = "az", userId: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: favorites } = await (supabase as any)
+    .from("favorites")
+    .select("id,product_id")
+    .eq("user_id", userId);
+  const productIds = Array.from(
+    new Set(
+      ((favorites ?? []) as Array<{ product_id?: string | null }>)
+        .map((favorite) => favorite.product_id)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  if (productIds.length === 0) {
+    return [];
+  }
+
+  const favoriteOrder = new Map(productIds.map((productId, index) => [productId, index]));
+  const { data } = await (supabase as any)
+    .from("products")
+    .select(
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
+    )
+    .eq("status", "active")
+    .in("id", productIds);
+
+  return ((data ?? []) as ProductRow[])
+    .map((row) => toCartProduct(row, locale))
+    .sort(
+      (a, b) =>
+        (favoriteOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (favoriteOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+}
+
 async function getMarketplaceStoresUncached(
   locale: string,
   categoryId: string,

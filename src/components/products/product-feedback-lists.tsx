@@ -17,7 +17,10 @@ function formatDate(value: string) {
 
 export function ProductMessageThread({ messages }: { messages: ProductMessage[] }) {
   const [showAll, setShowAll] = useState(false);
-  const visibleMessages = showAll ? messages : messages.slice(-3);
+  const orderedMessages = [...messages].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  const visibleMessages = showAll ? orderedMessages : orderedMessages.slice(0, 1);
 
   if (messages.length === 0) {
     return (
@@ -59,14 +62,14 @@ export function ProductMessageThread({ messages }: { messages: ProductMessage[] 
           )}
         </article>
       ))}
-      {messages.length > 3 ? (
+      {messages.length > 1 ? (
         <Button
           type="button"
           variant="outline"
           className="w-full"
           onClick={() => setShowAll((value) => !value)}
         >
-          {showAll ? "Az göstər" : `Ətraflı (${messages.length - 3})`}
+          {showAll ? "Az göstər" : `Ətraflı (${messages.length - 1})`}
         </Button>
       ) : null}
     </div>

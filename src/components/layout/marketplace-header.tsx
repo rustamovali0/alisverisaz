@@ -59,10 +59,10 @@ export function MarketplaceHeader({
   return (
     <>
       <header
-        className={sticky ? "sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] backdrop-blur"}
+        className={sticky ? "sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
-          <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          <Link href="/" prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
               <span className="grid size-12 place-items-center overflow-hidden rounded-xl border bg-background shadow-sm md:size-10 md:rounded-md">
                 <img
@@ -92,7 +92,7 @@ export function MarketplaceHeader({
               type="button"
               size="icon"
               variant="ghost"
-              className="ml-auto size-11 rounded-xl border bg-background md:hidden"
+              className="ml-auto size-12 rounded-xl border bg-background md:hidden"
               onClick={() => setIsMobileSearchOpen((value) => !value)}
               aria-label={isMobileSearchOpen ? "Axtarışı bağla" : "Axtarışı aç"}
               aria-expanded={isMobileSearchOpen}
@@ -100,16 +100,20 @@ export function MarketplaceHeader({
               {isMobileSearchOpen ? (
                 <X className="size-5" aria-hidden="true" />
               ) : (
-                <Search className="size-5" aria-hidden="true" />
+                <Search className="size-6 stroke-[2.4]" aria-hidden="true" />
               )}
             </Button>
           ) : null}
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
-              <Link href="/products">Məhsullar</Link>
+              <Link href="/products" prefetch>
+                Məhsullar
+              </Link>
             </Button>
             <Button asChild variant={isAboutActive ? "secondary" : "ghost"}>
-              <Link href="/about">Haqqında</Link>
+              <Link href="/about" prefetch>
+                Haqqında
+              </Link>
             </Button>
           </nav>
           <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
@@ -128,7 +132,7 @@ export function MarketplaceHeader({
               className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               aria-label="Favorilər"
             >
-              <Link href="/favorites" className="grid place-items-center">
+              <Link href="/favorites" prefetch className="grid place-items-center">
                 <Heart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
               </Link>
             </Button>
@@ -139,7 +143,7 @@ export function MarketplaceHeader({
               className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               aria-label="Səbət"
             >
-              <Link href="/cart" className="grid place-items-center">
+              <Link href="/cart" prefetch className="grid place-items-center">
                 <ShoppingCart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
               </Link>
             </Button>

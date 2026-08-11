@@ -100,11 +100,11 @@
 
 @layer components {
   .glass-panel {
-    @apply border border-white/60 bg-white/[0.72] shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06];
+    @apply border border-white/60 bg-white/90 shadow-sm dark:border-white/10 dark:bg-card;
   }
 
   .premium-card {
-    @apply rounded-md border bg-card/[0.92] text-card-foreground shadow-sm shadow-slate-900/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-xl hover:shadow-slate-900/10 dark:bg-card/[0.82] dark:shadow-black/20;
+    @apply rounded-md border bg-card text-card-foreground shadow-sm shadow-slate-900/5 transition-[border-color,box-shadow] duration-200 hover:border-primary/35 hover:shadow-md dark:shadow-black/20;
   }
 
   .liquid-glass-product-card {
@@ -159,7 +159,7 @@
   }
 
   .premium-input {
-    @apply rounded-md border border-input bg-background/80 shadow-inner shadow-slate-900/[0.02] outline-none transition-all duration-200 placeholder:text-muted-foreground focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-white/[0.04];
+    @apply rounded-md border border-input bg-background/80 shadow-inner shadow-slate-900/[0.02] outline-none transition-colors duration-150 placeholder:text-muted-foreground focus-visible:border-primary/60 focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-white/[0.04];
   }
 
   .soft-grid-bg {

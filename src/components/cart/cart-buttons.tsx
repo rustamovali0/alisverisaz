@@ -94,7 +94,7 @@ export function AddToCartButton({
     writeCart(items);
     showToast({
       title: "Məhsul səbətə əlavə edildi",
-      description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
+      description: "Məhsul səbətinizdədir.",
       variant: "success",
     });
   }

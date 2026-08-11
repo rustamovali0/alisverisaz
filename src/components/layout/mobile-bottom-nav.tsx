@@ -122,6 +122,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "relative grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
                 isActive && "text-[hsl(var(--marketplace-primary))]",
@@ -146,6 +147,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
         })}
         <Link
           href={accountPath(role)}
+          prefetch
           className={cn(
             "grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
             (pathname.startsWith("/dashboard") ||
