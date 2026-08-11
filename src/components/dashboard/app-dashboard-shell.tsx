@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 import { m } from "framer-motion";
@@ -44,7 +44,7 @@ export function AppDashboardShell({
   }
 
   const sidebar = (
-    <aside className="glass-panel flex h-full w-72 flex-col border-r">
+    <aside className="glass-panel flex h-full w-72 max-w-[calc(100vw-4rem)] flex-col border-r">
       <div className="border-b px-5 py-5">
         <Link href="/" className="block text-lg font-semibold tracking-normal text-foreground">
           Alışveriş
@@ -75,18 +75,60 @@ export function AppDashboardShell({
     </aside>
   );
 
+  const mobileRail = (
+    <aside className="fixed inset-y-0 left-0 z-40 flex w-16 flex-col border-r bg-background/95 shadow-lg shadow-slate-950/5 backdrop-blur-xl lg:hidden">
+      <div className="grid h-16 place-items-center border-b">
+        <button
+          type="button"
+          className="grid size-11 place-items-center rounded-xl bg-primary text-lg font-black text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => setIsOpen(true)}
+          aria-label="Menyunu böyüt"
+          aria-expanded={isOpen}
+        >
+          a
+        </button>
+      </div>
+      <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
+        {navItems.map((item) => {
+          const active = isActive(item.href);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.titleKey ? t(item.titleKey as any) : item.title}
+              aria-label={item.titleKey ? t(item.titleKey as any) : item.title}
+              className={cn(
+                "grid size-11 place-items-center rounded-xl border text-muted-foreground transition-all duration-200",
+                active
+                  ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "border-transparent bg-background/70 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/10 hover:text-foreground",
+              )}
+            >
+              <DashboardIconView name={item.icon} className="size-5 shrink-0" />
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="border-t p-2">
+        <LogoutButton compact />
+      </div>
+    </aside>
+  );
+
   return (
     <div className="min-h-screen bg-background soft-grid-bg">
       <div className="hidden min-h-screen lg:fixed lg:inset-y-0 lg:flex">
         {sidebar}
       </div>
+      {mobileRail}
 
       {isOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             aria-label="Menyunu bağla"
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            className="absolute inset-y-0 left-16 right-0 bg-background/75 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
           <m.div
@@ -94,14 +136,14 @@ export function AppDashboardShell({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative h-full"
+            className="relative ml-16 h-full w-72 max-w-[calc(100vw-4rem)]"
           >
             {sidebar}
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute left-72 top-3 ml-2 bg-background"
+              className="absolute right-3 top-3 bg-background"
               onClick={() => setIsOpen(false)}
               aria-label="Menyunu bağla"
             >
@@ -111,19 +153,9 @@ export function AppDashboardShell({
         </div>
       ) : null}
 
-      <div className="lg:pl-72">
+      <div className="pl-16 lg:pl-72">
         <header className="sticky top-0 z-30 border-b bg-background/[0.82] backdrop-blur-xl">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setIsOpen(true)}
-              aria-label="Menyunu aç"
-            >
-              <Menu className="size-5" aria-hidden="true" />
-            </Button>
+          <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-semibold tracking-normal">
                 {title}

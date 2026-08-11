@@ -44,7 +44,7 @@ export function ProductLocationSection({
   }
 
   return (
-    <section className="rounded-lg border bg-card p-3 text-card-foreground shadow-sm md:p-4">
+    <section className="mx-auto w-full max-w-5xl rounded-lg border bg-card p-3 text-card-foreground shadow-sm md:p-4">
       <div className="flex items-center gap-3">
         <span className="grid size-9 place-items-center rounded-md bg-primary/10 text-primary">
           <MapPin className="size-5" aria-hidden="true" />

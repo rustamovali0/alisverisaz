@@ -2,11 +2,8 @@
 
 import {
   Heart,
-  Search,
   ShoppingCart,
-  X,
 } from "lucide-react";
-import { useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
@@ -46,11 +43,9 @@ export function MarketplaceHeader({
   categories = [],
   searchDefaultValue,
   showMobileSearch = false,
-  compactMobileSearch = false,
   showBottomNav = true,
   sticky = true,
 }: MarketplaceHeaderProps) {
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
   const isProductsActive = pathname.startsWith("/products");
@@ -59,7 +54,7 @@ export function MarketplaceHeader({
   return (
     <>
       <header
-        className={sticky ? "sticky top-0 z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
+        className={sticky ? "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
@@ -87,23 +82,6 @@ export function MarketplaceHeader({
               {displaySiteName}
             </span>
           </Link>
-          {showMobileSearch && compactMobileSearch ? (
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className="ml-auto size-12 rounded-xl border bg-background md:hidden"
-              onClick={() => setIsMobileSearchOpen((value) => !value)}
-              aria-label={isMobileSearchOpen ? "Axtarışı bağla" : "Axtarışı aç"}
-              aria-expanded={isMobileSearchOpen}
-            >
-              {isMobileSearchOpen ? (
-                <X className="size-5" aria-hidden="true" />
-              ) : (
-                <Search className="size-6 stroke-[2.4]" aria-hidden="true" />
-              )}
-            </Button>
-          ) : null}
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
               <Link href="/products" prefetch>
@@ -155,21 +133,19 @@ export function MarketplaceHeader({
             </div>
           </div>
         </div>
-        {showMobileSearch &&
-        (stores.length > 0 || categories.length > 0) &&
-        (!compactMobileSearch || isMobileSearchOpen) ? (
-          <div className="border-t bg-white/95 px-4 py-3 dark:bg-background/95 md:hidden">
-            <MarketplaceSearch
-              stores={stores}
-              categories={categories}
-              defaultValue={searchDefaultValue}
-              stackOnMobile
-              className="w-full"
-              inputClassName="h-14 rounded-2xl border-0 bg-slate-100 pl-12 pr-4 text-base shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
-            />
-          </div>
-        ) : null}
       </header>
+      {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+        <div className="sticky top-0 z-40 border-b bg-white/95 px-4 py-2 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl dark:bg-background/95 md:hidden">
+          <MarketplaceSearch
+            stores={stores}
+            categories={categories}
+            defaultValue={searchDefaultValue}
+            stackOnMobile
+            className="w-full"
+            inputClassName="h-10 rounded-xl border-0 bg-slate-100 pl-11 pr-4 text-[16px] shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+          />
+        </div>
+      ) : null}
       {showBottomNav ? <MobileBottomNav /> : null}
     </>
   );

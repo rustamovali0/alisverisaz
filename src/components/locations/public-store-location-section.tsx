@@ -48,7 +48,7 @@ export function PublicStoreLocationSection({
   }
 
   return (
-    <section className="mt-6 rounded-lg bg-card p-4 shadow-sm md:p-6">
+    <section className="mx-auto mt-6 w-full max-w-5xl rounded-lg bg-card p-4 shadow-sm md:p-6">
       <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
           <MapPin className="size-5" aria-hidden="true" />
