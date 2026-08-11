@@ -163,8 +163,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               }}
               onClick={() => navigate(item.href)}
               className={cn(
-                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition-colors min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
-                isActive && "text-[hsl(var(--marketplace-primary))]",
+                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                isActive && "bg-primary/10 text-primary",
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
@@ -176,7 +176,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                   aria-hidden="true"
                 />
                 {badge > 0 ? (
-                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-[hsl(var(--marketplace-primary))] px-1 text-[11px] font-bold leading-none text-white">
+                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-bold leading-none text-primary-foreground">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}
@@ -195,12 +195,12 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
           }}
           onClick={() => navigate(accountHref)}
           className={cn(
-            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition-colors min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||
               pathname.startsWith("/radmin")) &&
-              "text-[hsl(var(--marketplace-primary))]",
+              "bg-primary/10 text-primary",
           )}
           aria-current={
             pathname.startsWith("/dashboard") ||
