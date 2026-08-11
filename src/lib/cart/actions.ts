@@ -71,7 +71,6 @@ function createOrderNumber() {
 }
 
 export async function getCartProductsAction(productIds: string[], locale = "az") {
-  await requireRole(["customer"], "/cart");
   const uniqueProductIds = Array.from(
     new Set(productIds.filter((productId) => Boolean(productId))),
   ).slice(0, MAX_CHECKOUT_ITEMS);
