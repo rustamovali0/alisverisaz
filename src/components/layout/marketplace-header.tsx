@@ -135,14 +135,14 @@ export function MarketplaceHeader({
         </div>
       </header>
       {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (
-        <div className="sticky top-0 z-40 border-b bg-white/95 px-4 py-2 shadow-sm shadow-slate-950/[0.03] backdrop-blur-xl dark:bg-background/95 md:hidden">
+        <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             categories={categories}
             defaultValue={searchDefaultValue}
             stackOnMobile
             className="w-full"
-            inputClassName="h-10 rounded-xl border-0 bg-slate-100 pl-11 pr-4 text-[16px] shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-4 text-[16px] shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
           />
         </div>
       ) : null}

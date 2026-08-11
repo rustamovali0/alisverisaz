@@ -9,9 +9,9 @@ import {
   Store,
   UserRound,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { Link, usePathname } from "@/i18n/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,9 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
 export function MobileBottomNav({ className }: MobileBottomNavProps) {
   const profile = useClientAuthProfile();
   const pathname = usePathname();
+  const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const role = profile.status === "authenticated" ? profile.role : null;
   const items = [
     { href: "/", label: "Əsas", icon: Home },
@@ -85,6 +87,37 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
     { href: "/favorites", label: "Seçilmişlər", icon: Heart },
     { href: "/cart", label: "Səbət", icon: ShoppingCart, badge: cartCount },
   ];
+  const accountHref = accountPath(role);
+
+  const isCurrentRoute = useCallback(
+    (href: string) => {
+      const cleanHref = href.split("?")[0] || "/";
+
+      return cleanHref === "/"
+        ? pathname === "/"
+        : pathname === cleanHref || pathname.startsWith(`${cleanHref}/`);
+    },
+    [pathname],
+  );
+
+  const navigate = useCallback(
+    (href: string) => {
+      if (isCurrentRoute(href)) {
+        return;
+      }
+
+      const now = Date.now();
+      const lastNavigation = lastNavigationRef.current;
+
+      if (lastNavigation?.href === href && now - lastNavigation.at < 600) {
+        return;
+      }
+
+      lastNavigationRef.current = { href, at: now };
+      router.push(href);
+    },
+    [isCurrentRoute, router],
+  );
 
   useEffect(() => {
     function syncCartCount() {
@@ -119,15 +152,22 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
-              prefetch
+              type="button"
+              onPointerUp={(event) => {
+                if (event.pointerType === "touch") {
+                  event.preventDefault();
+                  navigate(item.href);
+                }
+              }}
+              onClick={() => navigate(item.href)}
               className={cn(
-                "relative grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
+                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition-colors min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
                 isActive && "text-[hsl(var(--marketplace-primary))]",
               )}
               aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
             >
               <span className="relative grid place-items-center">
                 <Icon
@@ -142,14 +182,20 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
                 ) : null}
               </span>
               <span className="max-w-full truncate leading-none">{item.label}</span>
-            </Link>
+            </button>
           );
         })}
-        <Link
-          href={accountPath(role)}
-          prefetch
+        <button
+          type="button"
+          onPointerUp={(event) => {
+            if (event.pointerType === "touch") {
+              event.preventDefault();
+              navigate(accountHref);
+            }
+          }}
+          onClick={() => navigate(accountHref)}
           className={cn(
-            "grid min-h-[52px] min-w-0 place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition hover:text-[hsl(var(--marketplace-primary))] min-[390px]:text-xs",
+            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-[hsl(var(--marketplace-muted))] transition-colors min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||
@@ -164,10 +210,11 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               ? "page"
               : undefined
           }
+          aria-label={role ? accountLabel(role) : "Kabinet"}
         >
           <AccountIcon role={role} />
           <span className="max-w-full truncate leading-none">{role ? accountLabel(role) : "Kabinet"}</span>
-        </Link>
+        </button>
       </div>
     </nav>
   );

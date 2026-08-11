@@ -13,6 +13,50 @@ import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const CART_KEY = "alisveris_cart";
+type AuthListener = (hasUser: boolean | null) => void;
+
+const authListeners = new Set<AuthListener>();
+let cachedHasUser: boolean | null = null;
+let authWatcherStarted = false;
+
+function setCachedHasUser(hasUser: boolean | null) {
+  cachedHasUser = hasUser;
+  authListeners.forEach((listener) => listener(hasUser));
+}
+
+function ensureAuthWatcher() {
+  if (typeof window === "undefined" || authWatcherStarted) {
+    return;
+  }
+
+  authWatcherStarted = true;
+  const supabase = createSupabaseBrowserClient();
+
+  void supabase.auth
+    .getUser()
+    .then(({ data }) => setCachedHasUser(Boolean(data.user)))
+    .catch(() => setCachedHasUser(false));
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setCachedHasUser(Boolean(session?.user));
+  });
+}
+
+function useSharedAuthState() {
+  const [hasUser, setHasUser] = useState(cachedHasUser);
+
+  useEffect(() => {
+    ensureAuthWatcher();
+    setHasUser(cachedHasUser);
+    authListeners.add(setHasUser);
+
+    return () => {
+      authListeners.delete(setHasUser);
+    };
+  }, []);
+
+  return hasUser;
+}
 
 function readCart() {
   if (typeof window === "undefined") {
@@ -68,7 +112,7 @@ export function AddToCartButton({
 }) {
   const t = useTranslations("marketplace");
   const [quantity, setQuantity] = useState(0);
-  const [hasUser, setHasUser] = useState<boolean | null>(null);
+  const hasUser = useSharedAuthState();
   const isUnavailable = disabled || product.stockQuantity <= 0;
 
   useEffect(() => {
@@ -82,26 +126,6 @@ export function AddToCartButton({
 
     return () => window.removeEventListener("alisveris-cart-updated", handleCartUpdate);
   }, [product.id]);
-
-  useEffect(() => {
-    let mounted = true;
-    const supabase = createSupabaseBrowserClient();
-
-    void supabase.auth.getUser().then(({ data }) => {
-      if (mounted) {
-        setHasUser(Boolean(data.user));
-      }
-    });
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setHasUser(Boolean(session?.user));
-    });
-
-    return () => {
-      mounted = false;
-      data.subscription.unsubscribe();
-    };
-  }, []);
 
   function emitCartToast(isSignedIn: boolean) {
     if (!isSignedIn) {
@@ -127,11 +151,17 @@ export function AddToCartButton({
     }
 
     const supabase = createSupabaseBrowserClient();
-    void supabase.auth.getUser().then(({ data }) => {
-      const isSignedIn = Boolean(data.user);
-      setHasUser(isSignedIn);
-      emitCartToast(isSignedIn);
-    });
+    void supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        const isSignedIn = Boolean(data.user);
+        setCachedHasUser(isSignedIn);
+        emitCartToast(isSignedIn);
+      })
+      .catch(() => {
+        setCachedHasUser(false);
+        emitCartToast(false);
+      });
   }
 
   function updateQuantity(nextQuantity: number) {
@@ -196,7 +226,7 @@ export function AddToCartButton({
     return (
       <div
         className={cn(
-          "grid min-w-0 grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center overflow-hidden rounded-lg border bg-background text-foreground",
+          "grid min-w-0 grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-center overflow-hidden rounded-lg border bg-background text-foreground sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
           className,
         )}
       >
@@ -208,9 +238,10 @@ export function AddToCartButton({
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center gap-1 px-1 text-center text-[11px] font-black leading-tight sm:text-xs">
+        <span className="flex min-w-0 items-center justify-center gap-1 px-1 text-center text-[10px] font-black leading-tight min-[390px]:text-[11px] sm:text-xs">
           <Check className="size-4 shrink-0 stroke-[2.5]" aria-hidden="true" />
-          <span className="truncate">Səbətə əlavə edilib</span>
+          <span className="hidden truncate sm:inline">Səbətə əlavə edilib</span>
+          <span className="whitespace-nowrap sm:hidden">Səbətdə</span>
           <span className="shrink-0">({quantity})</span>
         </span>
         <button

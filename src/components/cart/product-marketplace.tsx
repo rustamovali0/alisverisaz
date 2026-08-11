@@ -140,6 +140,39 @@ function CategoryFilters({
   );
 }
 
+function MobileCategoryCatalog({ categories }: { categories: CategoryOption[] }) {
+  if (categories.length === 0) {
+    return (
+      <EmptyState
+        className="min-h-72 bg-background"
+        title="Kateqoriya yoxdur"
+        description="Aktiv kateqoriya tapılmadı."
+      />
+    );
+  }
+
+  return (
+    <section className="md:hidden">
+      <div className="grid grid-cols-3 gap-2.5">
+        {categories.map((category) => (
+          <Link
+            key={category.id}
+            href={`/products?category=${category.slug}`}
+            className="group flex min-h-[132px] min-w-0 flex-col items-center justify-between rounded-xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-200/70 transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:bg-card dark:ring-border"
+          >
+            <span className="grid size-16 place-items-center rounded-2xl bg-slate-50 text-primary ring-1 ring-slate-100 dark:bg-muted dark:ring-border">
+              <PackageSearch className="size-8 stroke-[2.2]" aria-hidden="true" />
+            </span>
+            <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
+              {category.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function ProductGrid({
   products,
   depositEnabled,
@@ -213,7 +246,7 @@ export function ProductGrid({
             }
           }}
           className={cn(
-            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-colors duration-200 ease-out [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
+            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
           )}
@@ -384,17 +417,7 @@ export function ProductMarketplace({
           </span>
         </header>
 
-        <section className="mb-4 md:hidden">
-          <h1 className="mb-3 min-w-0 text-2xl font-black tracking-normal">
-            Bütün məhsullar
-          </h1>
-          <CategoryFilters
-            categories={categories}
-            selectedCategoryId={activeCategoryId}
-            baseHref="/products"
-            onSelect={selectCategory}
-          />
-        </section>
+        <MobileCategoryCatalog categories={categories} />
 
         <div className="hidden min-w-0 items-start gap-5 md:grid lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
@@ -419,14 +442,6 @@ export function ProductMarketplace({
               labels={{ stock: labels.stock }}
             />
           )}
-        </div>
-        <div className="md:hidden">
-          <ProductGrid
-            products={visibleProducts}
-            depositEnabled={false}
-            productCardVariant={productCardVariant}
-            labels={{ stock: labels.stock }}
-          />
         </div>
       </div>
       <SiteFooter {...footer} />
