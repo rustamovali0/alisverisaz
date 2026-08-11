@@ -1,7 +1,8 @@
 "use client";
 
 import { MapPin, Power, Save } from "lucide-react";
-import { useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -277,6 +278,8 @@ function LocationForm({
   stores: StoreOption[];
 }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -290,6 +293,10 @@ function LocationForm({
         return;
       }
 
+      if (!location) {
+        formRef.current?.reset();
+      }
+      router.refresh();
       void appAlert.success("Saxlandı", result.message);
     });
   }
@@ -320,11 +327,13 @@ function LocationForm({
       }
 
       void appAlert.success("Deaktiv edildi", result.message);
+      router.refresh();
     });
   }
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       className="grid gap-4 rounded-md border bg-card p-4 text-card-foreground shadow-sm"
     >

@@ -3,7 +3,6 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
-import { getOwnedStores } from "@/lib/dashboard/data";
 import type { LocationActionResult } from "@/lib/locations/types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -36,6 +35,8 @@ function readBusRoutes(value: string) {
 function revalidateLocationSurfaces() {
   revalidatePath("/store/dashboard/locations");
   revalidatePath("/store/dashboard/products");
+  revalidatePath("/admin/locations");
+  revalidatePath("/admin/stores");
   revalidatePath("/radmin/locations");
   revalidatePath("/radmin/stores");
   revalidatePath("/");
@@ -44,13 +45,22 @@ function revalidateLocationSurfaces() {
 }
 
 async function canManageStore(userId: string, role: string, storeId: string) {
+  const supabase = createSupabaseAdminClient() as any;
+  const { data: store } = await supabase
+    .from("stores")
+    .select("id, owner_id")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (!store) {
+    return false;
+  }
+
   if (role === "admin") {
     return true;
   }
 
-  const stores = await getOwnedStores(userId);
-
-  return stores.some((store) => store.id === storeId);
+  return store.owner_id === userId;
 }
 
 export async function saveStoreLocationAction(
@@ -85,7 +95,23 @@ export async function saveStoreLocationAction(
     };
   }
 
-  const supabase = createSupabaseAdminClient();
+  const supabase = createSupabaseAdminClient() as any;
+
+  if (locationId) {
+    const { data: existingLocation } = await supabase
+      .from("store_locations")
+      .select("id, store_id")
+      .eq("id", locationId)
+      .maybeSingle();
+
+    if (!existingLocation || existingLocation.store_id !== storeId) {
+      return {
+        ok: false,
+        message: "Satış nöqtəsi bu mağazaya aid deyil.",
+      };
+    }
+  }
+
   const payload = {
     store_id: storeId,
     name,
@@ -112,8 +138,8 @@ export async function saveStoreLocationAction(
   };
 
   const query = locationId
-    ? (supabase as any).from("store_locations").update(payload).eq("id", locationId)
-    : (supabase as any).from("store_locations").insert(payload);
+    ? supabase.from("store_locations").update(payload).eq("id", locationId)
+    : supabase.from("store_locations").insert(payload);
   const { error } = await query;
 
   if (error) {

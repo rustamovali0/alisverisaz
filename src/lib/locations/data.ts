@@ -1,5 +1,4 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ProductLocationAvailability,
   StoreLocation,
@@ -51,6 +50,20 @@ function isMissingTableError(error: unknown) {
   return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
 }
 
+function isRecoverableLocationSchemaError(error: unknown) {
+  const value = error as { code?: string; message?: string } | null | undefined;
+  const message = String(value?.message ?? "").toLowerCase();
+
+  return (
+    isMissingTableError(error) ||
+    value?.code === "PGRST204" ||
+    value?.code === "42703" ||
+    message.includes("could not find") ||
+    message.includes("column") ||
+    message.includes("schema cache")
+  );
+}
+
 function toNumberOrNull(value: string | number | null) {
   if (value === null) {
     return null;
@@ -96,7 +109,7 @@ export async function getLocationsForStores(storeIds: string[]) {
     return [];
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await (supabase as any)
     .from("store_locations")
     .select(
@@ -109,6 +122,24 @@ export async function getLocationsForStores(storeIds: string[]) {
 
   if (error && isMissingTableError(error)) {
     return [];
+  }
+
+  if (error && isRecoverableLocationSchemaError(error)) {
+    const fallback = await (supabase as any)
+      .from("store_locations")
+      .select(
+        "id,store_id,stores(name),name,city,district,address,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,is_active,created_at",
+      )
+      .in("store_id", storeIds)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (fallback.error && isMissingTableError(fallback.error)) {
+      return [];
+    }
+
+    return ((fallback.data ?? []) as StoreLocationRow[]).map(toStoreLocation);
   }
 
   return ((data ?? []) as StoreLocationRow[]).map(toStoreLocation);
@@ -137,7 +168,7 @@ export async function getProductLocationMap(productIds: string[]) {
     return new Map<string, ProductLocationAvailability[]>();
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data, error } = await (supabase as any)
     .from("product_locations")
     .select(
@@ -151,7 +182,25 @@ export async function getProductLocationMap(productIds: string[]) {
     return map;
   }
 
-  for (const row of (data ?? []) as ProductLocationRow[]) {
+  const rows =
+    error && isRecoverableLocationSchemaError(error)
+      ? await (async () => {
+          const fallback = await (supabase as any)
+            .from("product_locations")
+            .select(
+              "id,product_id,location_id,stock_quantity,is_available,store_locations(id,store_id,stores(name),name,city,district,address,latitude,longitude,nearest_metro,metro_distance_meters,metro_walk_minutes,bus_stop_name,bus_routes,phone,working_hours,pickup_available,delivery_available,is_active,created_at)",
+            )
+            .in("product_id", productIds);
+
+          if (fallback.error && isMissingTableError(fallback.error)) {
+            return [];
+          }
+
+          return (fallback.data ?? []) as ProductLocationRow[];
+        })()
+      : ((data ?? []) as ProductLocationRow[]);
+
+  for (const row of rows) {
     if (!row.store_locations) {
       continue;
     }
