@@ -14,11 +14,11 @@ export function AnnouncementForm() {
       const result = await createAnnouncementAction(formData);
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Announcement saxlanmadı");
+        void appAlert.error(result.message, "Bildiriş saxlanmadı");
         return;
       }
 
-      void appAlert.success("Announcement saxlandı", result.message);
+      void appAlert.success("Bildiriş göndərildi", result.message);
     });
   }
 
@@ -43,14 +43,14 @@ export function AnnouncementForm() {
         </select>
         <select
           name="target"
-          defaultValue="seller"
+          defaultValue="all"
           className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">Hamı</option>
           <option value="seller">Satıcılar</option>
-          <option value="customer">İstifadəçilər</option>
+          <option value="customer">Müştərilər</option>
           <option value="admin">Adminlər</option>
-          <option value="store">Konkret mağazalar</option>
+          <option value="store">Mağaza sahibləri</option>
         </select>
         <input
           name="startsAt"
@@ -79,7 +79,7 @@ export function AnnouncementForm() {
         </label>
       </div>
       <Button type="submit" className="w-fit" disabled={isPending}>
-        Announcement yarat
+        Bildiriş göndər
       </Button>
     </form>
   );

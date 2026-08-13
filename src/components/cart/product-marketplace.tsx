@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 
 import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
@@ -16,13 +16,26 @@ import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import {
+  Baby,
+  BookOpen,
+  BriefcaseBusiness,
+  Car,
   Clock,
+  Dumbbell,
+  Home as HomeIcon,
+  Laptop,
   MapPin,
   PackageSearch,
+  PawPrint,
   Phone,
+  Shirt,
+  Sparkles,
   Star,
   Store,
   Truck,
+  Utensils,
+  Wrench,
+  type LucideIcon,
 } from "lucide-react";
 
 type MarketplaceLabels = {
@@ -140,7 +153,46 @@ function CategoryFilters({
   );
 }
 
-function MobileCategoryCatalog({ categories }: { categories: CategoryOption[] }) {
+const CATEGORY_ICON_STYLES = [
+  "bg-cyan-50 text-cyan-700 ring-cyan-100 dark:bg-cyan-950/30 dark:text-cyan-200 dark:ring-cyan-900/40",
+  "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-900/40",
+  "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/30 dark:text-rose-200 dark:ring-rose-900/40",
+  "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/30 dark:text-amber-200 dark:ring-amber-900/40",
+  "bg-indigo-50 text-indigo-700 ring-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-200 dark:ring-indigo-900/40",
+  "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-950/30 dark:text-sky-200 dark:ring-sky-900/40",
+];
+
+const CATEGORY_ICON_RULES: Array<[RegExp, LucideIcon]> = [
+  [/elektron|telefon|smart|komp|notbuk|audio|monitor|planset|tv/i, Laptop],
+  [/ev|bag|bağ|meiset|məişət|mebel|dekor/i, HomeIcon],
+  [/moda|geyim|ayaqqabi|ayaqqabı|şexsi|shexsi|aksesuar/i, Shirt],
+  [/gozell|gözəl|baxim|baxım|kosmetik/i, Sparkles],
+  [/ana|usaq|uşaq|korpə|korpe/i, Baby],
+  [/idman|outdoor|eylence|əyləncə|asude/i, Dumbbell],
+  [/avto|avtomobil|masin|maşın/i, Car],
+  [/tikinti|alet|alət|temir|təmir/i, Wrench],
+  [/ofis|deft|dəft|kitab|hobi|hobbi/i, BookOpen],
+  [/heyvan|zoo|pet/i, PawPrint],
+  [/qida|icki|içki|restoran|market/i, Utensils],
+  [/biznes|xidmet|xidmət|sirket|şirkət/i, BriefcaseBusiness],
+];
+
+function getCategoryIcon(category: CategoryOption): LucideIcon {
+  const value = `${category.slug} ${category.name}`;
+  const match = CATEGORY_ICON_RULES.find(([pattern]) => pattern.test(value));
+
+  return match?.[1] ?? PackageSearch;
+}
+
+function MobileCategoryCatalog({
+  categories,
+  productCounts,
+  onSelect,
+}: {
+  categories: CategoryOption[];
+  productCounts: Map<string, number>;
+  onSelect: (category: CategoryOption) => void;
+}) {
   if (categories.length === 0) {
     return (
       <EmptyState
@@ -154,20 +206,31 @@ function MobileCategoryCatalog({ categories }: { categories: CategoryOption[] })
   return (
     <section className="md:hidden">
       <div className="grid grid-cols-3 gap-2.5">
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/products?category=${category.slug}`}
-            className="group flex min-h-[132px] min-w-0 flex-col items-center justify-between rounded-xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-200/70 transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:bg-card dark:ring-border"
-          >
-            <span className="grid size-16 place-items-center rounded-2xl bg-slate-50 text-primary ring-1 ring-slate-100 dark:bg-muted dark:ring-border">
-              <PackageSearch className="size-8 stroke-[2.2]" aria-hidden="true" />
-            </span>
-            <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
-              {category.name}
-            </span>
-          </Link>
-        ))}
+        {categories.map((category, index) => {
+          const Icon = getCategoryIcon(category);
+          const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
+
+          return (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => onSelect(category)}
+              className="group flex min-h-[132px] min-w-0 touch-manipulation flex-col items-center justify-between rounded-xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-200/70 transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:bg-card dark:ring-border"
+            >
+              <span className={cn("grid size-16 place-items-center rounded-2xl ring-1", iconStyle)}>
+                <Icon className="size-8 stroke-[2.2]" aria-hidden="true" />
+              </span>
+              <span className="grid min-w-0 gap-0.5">
+                <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
+                  {category.name}
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {productCounts.get(category.id) ?? 0} məhsul
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -379,6 +442,21 @@ export function ProductMarketplace({
   labels,
 }: ProductMarketplaceProps) {
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const activeCategory = useMemo(
+    () => categories.find((category) => category.id === activeCategoryId),
+    [activeCategoryId, categories],
+  );
+  const categoryProductCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    products.forEach((product) => {
+      if (product.categoryId) {
+        counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1);
+      }
+    });
+
+    return counts;
+  }, [products]);
   const visibleProducts = useMemo(
     () =>
       activeCategoryId
@@ -386,6 +464,10 @@ export function ProductMarketplace({
         : products,
     [activeCategoryId, products],
   );
+
+  useEffect(() => {
+    setActiveCategoryId(selectedCategoryId);
+  }, [selectedCategoryId]);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -403,6 +485,9 @@ export function ProductMarketplace({
     }
 
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
   }
 
   return (
@@ -417,7 +502,48 @@ export function ProductMarketplace({
           </span>
         </header>
 
-        <MobileCategoryCatalog categories={categories} />
+        <div className="md:hidden">
+          {activeCategoryId ? (
+            <section className="space-y-3">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 rounded-xl px-3 text-sm"
+                  onClick={() => selectCategory()}
+                >
+                  Bütün kateqoriyalar
+                </Button>
+                <span className="shrink-0 rounded-xl border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
+                  {visibleProducts.length} məhsul
+                </span>
+              </div>
+              <h1 className="text-2xl font-black tracking-normal">
+                {activeCategory?.name ?? "Kateqoriya məhsulları"}
+              </h1>
+              {visibleProducts.length === 0 ? (
+                <EmptyState
+                  className="min-h-72 bg-background"
+                  title={labels.emptyTitle}
+                  description={labels.emptyDescription}
+                />
+              ) : (
+                <ProductGrid
+                  products={visibleProducts}
+                  depositEnabled={false}
+                  productCardVariant={productCardVariant}
+                  labels={{ stock: labels.stock }}
+                />
+              )}
+            </section>
+          ) : (
+            <MobileCategoryCatalog
+              categories={categories}
+              productCounts={categoryProductCounts}
+              onSelect={selectCategory}
+            />
+          )}
+        </div>
 
         <div className="hidden min-w-0 items-start gap-5 md:grid lg:grid-cols-[240px_minmax(0,1fr)]">
           <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">

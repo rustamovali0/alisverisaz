@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import {
-  Bell,
   ChevronRight,
   CreditCard,
   Heart,
@@ -14,6 +13,7 @@ import {
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -43,17 +43,10 @@ export default async function CustomerDashboardLayout({
           <h1 className="text-[34px] font-black leading-none tracking-normal">Kabinet</h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button
-              asChild
-              variant="ghost"
-              size="icon"
-              className="relative size-12 rounded-full text-[hsl(var(--marketplace-muted))]"
-              aria-label="Bildirişlər"
-            >
-              <Link href="/dashboard/messages">
-                <Bell className="size-8" aria-hidden="true" />
-              </Link>
-            </Button>
+            <NotificationCenter
+              buttonClassName="size-12 rounded-full border-0 bg-transparent text-[hsl(var(--marketplace-muted))] shadow-none hover:bg-slate-100 dark:hover:bg-muted"
+              iconClassName="size-8"
+            />
           </div>
         </div>
         <Link
@@ -105,6 +98,9 @@ export default async function CustomerDashboardLayout({
             <span className="min-w-0 truncate text-xl font-medium">Ayarlar</span>
             <ChevronRight className="size-7 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
           </Link>
+          <div className="mt-5">
+            <LogoutButton className="w-full justify-center rounded-2xl text-base" />
+          </div>
         </div>
       </section>
       <section className="hidden border-b bg-card md:block">

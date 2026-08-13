@@ -1,4 +1,5 @@
 import { SiteFooter } from "@/components/layout/site-footer";
+import { SupportMessageForm } from "@/components/support/support-message-form";
 import {
   HelpCardList,
   HelpFaqList,
@@ -122,6 +123,7 @@ export async function HelpDocumentPage({
         >
           {page.slug === "help" ? <HelpHubContent /> : null}
           <HelpSectionList sections={page.sections} />
+          {page.slug === "contact" ? <SupportMessageForm /> : null}
           <HelpRelated items={relatedPageItems(page.relatedSlugs)} />
         </HelpPageShell>
       </div>

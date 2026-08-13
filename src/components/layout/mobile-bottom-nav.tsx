@@ -62,6 +62,17 @@ function accountLabel(role: AuthRole | null) {
   return role ? "Hesabım" : "Giriş";
 }
 
+function scrollPageToTop() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  });
+}
+
 function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "admin") {
     return <ShieldCheck className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
@@ -114,7 +125,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
       }
 
       lastNavigationRef.current = { href, at: now };
-      router.push(href);
+      router.push(href, { scroll: true });
+      scrollPageToTop();
     },
     [isCurrentRoute, router],
   );

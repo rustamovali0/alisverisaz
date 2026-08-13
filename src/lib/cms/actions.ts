@@ -883,6 +883,10 @@ export async function createAnnouncementAction(
 ): Promise<CmsActionResult> {
   const current = await audit("create_announcement", "announcements", {});
   const title = readString(formData, "title");
+  const body = readString(formData, "body");
+  const type = readString(formData, "type") || "info";
+  const target = readString(formData, "target") || "all";
+  const isActive = readBoolean(formData, "isActive");
 
   if (!title) {
     return {
@@ -891,19 +895,23 @@ export async function createAnnouncementAction(
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await (supabase as any).from("announcements").insert({
-    title,
-    body: readString(formData, "body"),
-    type: readString(formData, "type") || "info",
-    target: readString(formData, "target") || "all",
-    starts_at: readString(formData, "startsAt") || null,
-    ends_at: readString(formData, "endsAt") || null,
-    is_dismissible: readBoolean(formData, "isDismissible"),
-    is_active: readBoolean(formData, "isActive"),
-    created_by: current.user.id,
-    updated_by: current.user.id,
-  });
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data, error } = await (supabaseAdmin as any)
+    .from("announcements")
+    .insert({
+      title,
+      body,
+      type,
+      target,
+      starts_at: readString(formData, "startsAt") || null,
+      ends_at: readString(formData, "endsAt") || null,
+      is_dismissible: readBoolean(formData, "isDismissible"),
+      is_active: isActive,
+      created_by: current.user.id,
+      updated_by: current.user.id,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return {
@@ -912,10 +920,72 @@ export async function createAnnouncementAction(
     };
   }
 
+  if (isActive && data?.id) {
+    await deliverAnnouncementNotifications({
+      announcementId: data.id,
+      title,
+      body,
+      type,
+      target,
+    });
+  }
+
   revalidatePath("/radmin/announcements");
+  revalidatePath("/az/radmin/announcements");
+  revalidatePath("/dashboard");
+  revalidatePath("/az/dashboard");
 
   return {
     ok: true,
-    message: "Announcement yaradıldı.",
+    message: isActive
+      ? "Bildiriş yaradıldı və göndərildi."
+      : "Bildiriş qaralama kimi saxlanıldı.",
   };
+}
+
+async function deliverAnnouncementNotifications(input: {
+  announcementId: string;
+  title: string;
+  body: string;
+  type: string;
+  target: string;
+}) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  let query = (supabaseAdmin as any).from("profiles").select("id,role");
+
+  if (input.target === "seller" || input.target === "store") {
+    query = query.eq("role", "seller");
+  }
+
+  if (input.target === "customer") {
+    query = query.eq("role", "customer");
+  }
+
+  if (input.target === "admin") {
+    query = query.eq("role", "admin");
+  }
+
+  const { data, error } = await query;
+
+  if (error || !Array.isArray(data) || data.length === 0) {
+    return;
+  }
+
+  const rows = data
+    .filter((profile: { id?: string }) => profile.id)
+    .map((profile: { id: string }) => ({
+      user_id: profile.id,
+      type: input.type || "info",
+      title: input.title,
+      body: input.body || null,
+      data: {
+        source: "announcement",
+        announcement_id: input.announcementId,
+        target: input.target || "all",
+      },
+    }));
+
+  if (rows.length) {
+    await (supabaseAdmin as any).from("notifications").insert(rows);
+  }
 }

@@ -8,6 +8,7 @@ import {
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
+import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -82,6 +83,11 @@ export function MarketplaceHeader({
               {displaySiteName}
             </span>
           </Link>
+          <NotificationCenter
+            className="ml-auto md:hidden"
+            buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
+            iconClassName="size-6"
+          />
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
               <Link href="/products" prefetch>
@@ -103,6 +109,10 @@ export function MarketplaceHeader({
             />
           </div>
           <div className="ml-auto hidden items-center gap-1 md:flex">
+            <NotificationCenter
+              buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
+              iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"
+            />
             <Button
               asChild
               size="icon"

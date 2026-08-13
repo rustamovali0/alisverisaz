@@ -8,12 +8,14 @@ import { clearHeaderAccountCache } from "@/components/auth/header-account-action
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { logoutAction } from "@/lib/auth/actions";
+import { cn } from "@/lib/utils";
 
 type LogoutButtonProps = {
   compact?: boolean;
+  className?: string;
 };
 
-export function LogoutButton({ compact = false }: LogoutButtonProps) {
+export function LogoutButton({ compact = false, className }: LogoutButtonProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -40,7 +42,7 @@ export function LogoutButton({ compact = false }: LogoutButtonProps) {
       onClick={handleLogout}
       disabled={isPending}
       size={compact ? "icon" : "default"}
-      className={compact ? "size-10 rounded-xl" : undefined}
+      className={cn(compact ? "size-10 rounded-xl" : undefined, className)}
       aria-label={compact ? "Çıxış" : undefined}
     >
       <LogOut className={compact ? "size-4" : "mr-2 size-4"} aria-hidden="true" />
