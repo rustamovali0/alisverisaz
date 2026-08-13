@@ -86,7 +86,7 @@ export function MarketplaceHeader({
           <NotificationCenter
             className="ml-auto md:hidden"
             buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
-            iconClassName="size-6"
+            iconClassName="size-7"
           />
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>

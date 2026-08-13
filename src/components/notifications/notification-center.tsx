@@ -79,6 +79,22 @@ export function NotificationCenter({
     });
   }, []);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const unreadCount = useMemo(() => items.filter((item) => !item.readAt).length, [items]);
 
   function openModal() {
@@ -109,7 +125,7 @@ export function NotificationCenter({
         )}
         aria-label="Bildirişlər"
       >
-        <Bell className={cn("size-6 stroke-[2.3]", iconClassName)} aria-hidden="true" />
+        <Bell className={cn("size-7 stroke-[2.3]", iconClassName)} aria-hidden="true" />
         {unreadCount > 0 ? (
           <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground">
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -118,8 +134,20 @@ export function NotificationCenter({
       </Button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80] bg-slate-950/45 px-4 py-6 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="mx-auto flex max-h-[min(620px,calc(100dvh-48px))] w-full max-w-md flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl">
+        <div
+          className="fixed inset-0 z-[999] bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setOpen(false);
+            }
+          }}
+        >
+          <div
+            className="mx-auto flex max-h-[min(620px,calc(100dvh-48px))] w-full max-w-md flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div>
                 <h2 className="text-lg font-black tracking-normal">Bildirişlər</h2>
@@ -128,7 +156,7 @@ export function NotificationCenter({
                 </p>
               </div>
               <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => setOpen(false)} aria-label="Bağla">
-                <X className="size-5" aria-hidden="true" />
+                <X className="size-6" aria-hidden="true" />
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
@@ -143,12 +171,12 @@ export function NotificationCenter({
                     <article
                       key={item.id}
                       className={cn(
-                        "grid grid-cols-[40px_minmax(0,1fr)] gap-3 rounded-xl border p-3",
+                        "grid grid-cols-[44px_minmax(0,1fr)] gap-3 rounded-xl border p-3",
                         item.readAt ? "bg-card" : "border-primary/30 bg-primary/5",
                       )}
                     >
-                      <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                        {item.readAt ? <CheckCircle2 className="size-5" /> : <Info className="size-5" />}
+                      <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                        {item.readAt ? <CheckCircle2 className="size-6" /> : <Info className="size-6" />}
                       </span>
                       <span className="min-w-0">
                         <span className="flex items-start justify-between gap-3">

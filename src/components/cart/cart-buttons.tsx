@@ -226,27 +226,27 @@ export function AddToCartButton({
     return (
       <div
         className={cn(
-          "grid min-w-0 grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-center overflow-hidden rounded-lg border bg-background text-foreground sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
+          "grid h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 bg-primary text-primary-foreground shadow-sm sm:h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
           className,
         )}
       >
         <button
           type="button"
-          className="grid h-full min-h-10 place-items-center border-r transition hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="grid h-full min-h-11 place-items-center border-r border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70"
           onClick={handleDecrease}
           aria-label="Səbətdəki sayı azalt"
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center gap-1 px-1 text-center text-[10px] font-black leading-tight min-[390px]:text-[11px] sm:text-xs">
-          <Check className="size-4 shrink-0 stroke-[2.5]" aria-hidden="true" />
+        <span className="flex min-w-0 items-center justify-center gap-0.5 px-0.5 text-center text-[11px] font-black leading-tight text-primary-foreground min-[390px]:gap-1 min-[390px]:text-xs sm:text-sm">
+          <Check className="hidden size-4 shrink-0 stroke-[2.5] min-[390px]:block" aria-hidden="true" />
           <span className="hidden truncate sm:inline">Səbətə əlavə edilib</span>
-          <span className="whitespace-nowrap sm:hidden">Səbətdə</span>
+          <span className="whitespace-nowrap sm:hidden">Səbət</span>
           <span className="shrink-0">({quantity})</span>
         </span>
         <button
           type="button"
-          className="grid h-full min-h-10 place-items-center border-l transition hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-45"
+          className="grid h-full min-h-11 place-items-center border-l border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 disabled:cursor-not-allowed disabled:opacity-45"
           onClick={handleAdd}
           disabled={quantity >= product.stockQuantity}
           aria-label="Səbətdəki sayı artır"
@@ -263,10 +263,16 @@ export function AddToCartButton({
       variant="outline"
       onClick={handleAdd}
       disabled={isUnavailable}
-      className={cn("min-w-0", className)}
+      className={cn(
+        "h-11 min-w-0 gap-1.5 overflow-hidden rounded-xl px-2 text-sm font-black sm:h-12 sm:gap-2 sm:px-4",
+        className,
+      )}
     >
-      <ShoppingCart className="mr-2 size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
-      <span className="truncate">{t("addToCart")}</span>
+      <ShoppingCart className="mr-0 size-5 shrink-0 stroke-[2.4] sm:mr-2" aria-hidden="true" />
+      <span className="min-w-0 truncate">
+        <span className="sm:hidden">Səbətə</span>
+        <span className="hidden sm:inline">{t("addToCart")}</span>
+      </span>
     </Button>
   );
 }
