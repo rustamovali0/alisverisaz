@@ -1,15 +1,25 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import {
+  invalidateHomepagePublicData,
+  invalidateNavigationPublicData,
+  invalidatePublicSiteSettings,
+  invalidateStorePublicData,
+} from "@/lib/cache/public-cache";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
+import {
+  deleteR2MediaAssetsByUrls,
+  recordImageMediaAsset,
+} from "@/lib/storage/media-assets";
+import { isR2PublicUrl, uploadImageToR2 } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { defaultThemeSettings } from "@/lib/cms/defaults";
 import type { CmsActionResult } from "@/lib/cms/types";
 
-const CMS_MEDIA_BUCKET = "cms-media";
 const MAX_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -25,8 +35,66 @@ function readNumber(formData: FormData, key: string) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function readOptionalLimit(formData: FormData, key: string) {
+  const rawValue = readString(formData, key);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const value = Number(rawValue);
+
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null;
+}
+
 function readBoolean(formData: FormData, key: string) {
   return readString(formData, key) === "on";
+}
+
+function readLoaderType(formData: FormData) {
+  const value = readString(formData, "globalLoaderType");
+
+  return [
+    "classic",
+    "dual",
+    "dots-circle",
+    "moving-dots",
+    "half",
+    "wave",
+    "pulse",
+    "clock",
+    "oval",
+    "gradient",
+  ].includes(value)
+    ? value
+    : "classic";
+}
+
+function readLoaderPalette(formData: FormData) {
+  const value = readString(formData, "globalLoaderPalette");
+
+  return ["primary", "cyan", "emerald", "rose", "amber", "violet"].includes(value)
+    ? value
+    : "primary";
+}
+
+function readMobileNavbarVariant(formData: FormData) {
+  const value = readString(formData, "mobileNavbarVariant");
+
+  return [
+    "classic",
+    "floating",
+    "pill",
+    "compact",
+    "outlined",
+    "soft",
+    "solid",
+    "glass",
+    "minimal",
+    "rail",
+  ].includes(value)
+    ? value
+    : "classic";
 }
 
 function revalidateLocalizedPath(path: string, type?: "layout" | "page") {
@@ -50,32 +118,6 @@ function readFile(formData: FormData, key: string) {
   const value = formData.get(key);
 
   return value instanceof File && value.size > 0 ? value : null;
-}
-
-function sanitizeFileName(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function ensureCmsMediaBucket() {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data: bucket } = await supabaseAdmin.storage.getBucket(CMS_MEDIA_BUCKET);
-
-  if (bucket) {
-    return;
-  }
-
-  const { error } = await supabaseAdmin.storage.createBucket(CMS_MEDIA_BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_MEDIA_SIZE,
-    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
-  });
-
-  if (error && !error.message.toLowerCase().includes("already")) {
-    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
-  }
 }
 
 function normalizeSocialLinks(formData: FormData) {
@@ -105,51 +147,25 @@ async function uploadCmsMediaFile(input: {
   folder: string;
   altText: string;
 }) {
-  if (input.file.size > MAX_MEDIA_SIZE) {
-    throw new Error(`${input.file.name} maksimum 5MB ola bilər.`);
-  }
+  const uploaded = await uploadImageToR2({
+    file: input.file,
+    folder: `cms/${input.folder}/${input.currentUserId}`,
+    maxSizeBytes: MAX_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
+  });
 
-  if (!ALLOWED_MEDIA_TYPES.includes(input.file.type)) {
-    throw new Error("Yalnız JPG, PNG və WebP qəbul edilir. SVG deaktivdir.");
-  }
+  await recordImageMediaAsset({
+    uploaded,
+    originalFileName: input.file.name,
+    altText: input.altText,
+    userId: input.currentUserId,
+    metadata: {
+      source: "cms",
+      folder: input.folder,
+    },
+  });
 
-  const supabaseAdmin = createSupabaseAdminClient();
-  await ensureCmsMediaBucket();
-  const fileName = sanitizeFileName(input.file.name) || "image.webp";
-  const path = `${input.folder}/${input.currentUserId}/${crypto.randomUUID()}-${fileName}`;
-  const body = new Uint8Array(await input.file.arrayBuffer());
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from(CMS_MEDIA_BUCKET)
-    .upload(path, body, {
-      contentType: input.file.type,
-      upsert: false,
-    });
-
-  if (uploadError) {
-    throw new Error(uploadError.message);
-  }
-
-  const { data } = supabaseAdmin.storage.from(CMS_MEDIA_BUCKET).getPublicUrl(path);
-
-  const { error: insertError } = await (supabaseAdmin as any)
-    .from("media_assets")
-    .insert({
-      bucket: CMS_MEDIA_BUCKET,
-      path,
-      url: data.publicUrl,
-      file_name: input.file.name,
-      mime_type: input.file.type,
-      size_bytes: input.file.size,
-      alt_text: input.altText,
-      created_by: input.currentUserId,
-      updated_by: input.currentUserId,
-    });
-
-  if (insertError && !["42P01", "PGRST205"].includes(insertError.code ?? "")) {
-    throw new Error(insertError.message);
-  }
-
-  return data.publicUrl;
+  return uploaded.url;
 }
 
 async function audit(action: string, entityType: string, metadata: Record<string, unknown>) {
@@ -176,6 +192,7 @@ export async function updateSiteSettingsAction(
   let logoUrl = readString(formData, "logoUrl");
   let darkLogoUrl = readString(formData, "darkLogoUrl");
   let faviconUrl = readString(formData, "faviconUrl");
+  const replacedUrls: string[] = [];
 
   try {
     const logoFile = readFile(formData, "logoFile");
@@ -183,6 +200,7 @@ export async function updateSiteSettingsAction(
     const faviconFile = readFile(formData, "faviconFile");
 
     if (logoFile) {
+      replacedUrls.push(logoUrl);
       logoUrl = await uploadCmsMediaFile({
         file: logoFile,
         currentUserId: current.user.id,
@@ -192,6 +210,7 @@ export async function updateSiteSettingsAction(
     }
 
     if (darkLogoFile) {
+      replacedUrls.push(darkLogoUrl);
       darkLogoUrl = await uploadCmsMediaFile({
         file: darkLogoFile,
         currentUserId: current.user.id,
@@ -201,6 +220,7 @@ export async function updateSiteSettingsAction(
     }
 
     if (faviconFile) {
+      replacedUrls.push(faviconUrl);
       faviconUrl = await uploadCmsMediaFile({
         file: faviconFile,
         currentUserId: current.user.id,
@@ -234,6 +254,22 @@ export async function updateSiteSettingsAction(
     user_registration_enabled: readBoolean(formData, "userRegistrationEnabled"),
     store_registration_enabled: readBoolean(formData, "storeRegistrationEnabled"),
     deposit_enabled: readBoolean(formData, "depositEnabled"),
+    show_subscription_in_seller_panel: readBoolean(
+      formData,
+      "showSubscriptionInSellerPanel",
+    ),
+    global_loader: {
+      type: readLoaderType(formData),
+      palette: readLoaderPalette(formData),
+    },
+    mobile_navbar_variant: readMobileNavbarVariant(formData),
+    subscription_limits: {
+      default_product_limit: readOptionalLimit(formData, "defaultProductLimit"),
+      default_images_per_product_limit: readOptionalLimit(
+        formData,
+        "defaultImagesPerProductLimit",
+      ),
+    },
     active_home_theme: readString(formData, "activeHomeTheme") || "default",
     default_theme_mode: readString(formData, "defaultThemeMode") || "system",
   };
@@ -250,8 +286,9 @@ export async function updateSiteSettingsAction(
     };
   }
 
-  revalidateTag("site-settings", "max");
-  revalidateLocalizedPath("/", "layout");
+  await deleteR2MediaAssetsByUrls(replacedUrls);
+  invalidatePublicSiteSettings();
+  revalidateLocalizedPath("/radmin/settings");
 
   return {
     ok: true,
@@ -276,6 +313,7 @@ export async function updateHomepageSectionAction(
 
   const supabaseAdmin = createSupabaseAdminClient();
   let imageUrl = readString(formData, "imageUrl");
+  const previousImageUrl = imageUrl;
   const previousSettings = parseJson(readString(formData, "settingsJson"), {});
   const settings =
     previousSettings && typeof previousSettings === "object" && !Array.isArray(previousSettings)
@@ -331,8 +369,8 @@ export async function updateHomepageSectionAction(
     };
   }
 
-  revalidateTag("homepage-sections", "max");
-  revalidateLocalizedPath("/");
+  await deleteR2MediaAssetsByUrls([previousImageUrl !== imageUrl ? previousImageUrl : ""]);
+  invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/homepage-sections");
 
   return {
@@ -360,7 +398,7 @@ export async function reorderHomepageSectionsAction(
     ),
   );
 
-  revalidateLocalizedPath("/");
+  invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/homepage-sections");
 
   return {
@@ -427,8 +465,7 @@ export async function updateNavigationItemAction(
     };
   }
 
-  revalidateTag("navigation-menus", "max");
-  revalidateLocalizedPath("/", "layout");
+  invalidateNavigationPublicData();
   revalidateLocalizedPath("/radmin/menus");
 
   return {
@@ -537,8 +574,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
     },
   });
 
-  revalidateTag("theme-settings", "max");
-  revalidateLocalizedPath("/");
+  invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/themes");
 
   return {
@@ -605,8 +641,7 @@ export async function updateThemeDraftAction(
     };
   }
 
-  revalidateTag("theme-settings", "max");
-  revalidateLocalizedPath("/");
+  invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/themes");
 
   return {
@@ -636,54 +671,15 @@ export async function uploadMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  const supabaseAdmin = createSupabaseAdminClient();
-
   try {
-    await ensureCmsMediaBucket();
     await Promise.all(
       files.map(async (file) => {
-        if (file.size > MAX_MEDIA_SIZE) {
-          throw new Error(`${file.name} maksimum 5MB ola bilər.`);
-        }
-
-        if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
-          throw new Error("Yalnız JPG, PNG və WebP qəbul edilir. SVG deaktivdir.");
-        }
-
-        const path = `${current.user.id}/${crypto.randomUUID()}-${file.name}`;
-        const body = new Uint8Array(await file.arrayBuffer());
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from(CMS_MEDIA_BUCKET)
-          .upload(path, body, {
-            contentType: file.type,
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw new Error(uploadError.message);
-        }
-
-        const { data } = supabaseAdmin.storage
-          .from(CMS_MEDIA_BUCKET)
-          .getPublicUrl(path);
-
-        const { error: insertError } = await (supabaseAdmin as any)
-          .from("media_assets")
-          .insert({
-            bucket: CMS_MEDIA_BUCKET,
-            path,
-            url: data.publicUrl,
-            file_name: file.name,
-            mime_type: file.type,
-            size_bytes: file.size,
-            alt_text: altText,
-            created_by: current.user.id,
-            updated_by: current.user.id,
-          });
-
-        if (insertError && !["42P01", "PGRST205"].includes(insertError.code ?? "")) {
-          throw new Error(insertError.message);
-        }
+        await uploadCmsMediaFile({
+          file,
+          currentUserId: current.user.id,
+          folder: "media-library",
+          altText,
+        });
       }),
     );
   } catch (error) {
@@ -709,7 +705,7 @@ export async function deleteMediaAction(formData: FormData): Promise<CmsActionRe
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: asset } = await (supabaseAdmin as any)
     .from("media_assets")
-    .select("bucket,path")
+    .select("id,bucket,path,url")
     .eq("id", mediaId)
     .maybeSingle();
 
@@ -720,17 +716,20 @@ export async function deleteMediaAction(formData: FormData): Promise<CmsActionRe
     };
   }
 
-  await supabaseAdmin.storage.from(asset.bucket).remove([asset.path]);
-  const { error } = await (supabaseAdmin as any)
-    .from("media_assets")
-    .delete()
-    .eq("id", mediaId);
+  if (isR2PublicUrl(asset.url)) {
+    await deleteR2MediaAssetsByUrls([asset.url]);
+  } else {
+    const { error: deleteError } = await (supabaseAdmin as any)
+      .from("media_assets")
+      .delete()
+      .eq("id", mediaId);
 
-  if (error) {
-    return {
-      ok: false,
-      message: error.message,
-    };
+    if (deleteError) {
+      return {
+        ok: false,
+        message: deleteError.message,
+      };
+    }
   }
 
   revalidateLocalizedPath("/radmin/media");
@@ -830,6 +829,11 @@ export async function updateStoreManagementAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingStore } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,slug")
+    .eq("id", storeId)
+    .maybeSingle();
   const { error: storeError } = await (supabaseAdmin as any)
     .from("stores")
     .update({
@@ -868,9 +872,10 @@ export async function updateStoreManagementAction(
 
   revalidatePath("/radmin/stores");
   revalidatePath(`/radmin/stores/${storeId}`);
-  revalidateTag("public-marketplace", "max");
-  revalidateLocalizedPath("/");
-  revalidateLocalizedPath("/products");
+  invalidateStorePublicData({
+    storeId,
+    storeSlug: existingStore?.slug,
+  });
 
   return {
     ok: true,

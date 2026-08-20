@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
-import { isAuthRole, type AuthRole } from "@/lib/auth/types";
+import type { AuthRole } from "@/lib/auth/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function normalizeNextPath(value: string | null) {
@@ -42,7 +42,6 @@ export async function GET(request: Request) {
   }
 
   const metadata = data.user.user_metadata ?? {};
-  const metadataRole = metadata.role;
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
@@ -56,10 +55,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(new URL("/login?error=google-admin", origin));
   }
 
-  const role: AuthRole = isAuthRole(profile?.role)
-    ? profile.role
-    :
-    isAuthRole(metadataRole) && metadataRole !== "admin" ? metadataRole : "customer";
+  const role: AuthRole = profile?.role ?? "customer";
 
   try {
     await ensureAuthProfile({

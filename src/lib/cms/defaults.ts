@@ -105,6 +105,16 @@ export const defaultSiteSettings: SiteSettings = {
   userRegistrationEnabled: true,
   storeRegistrationEnabled: true,
   depositEnabled: true,
+  showSubscriptionInSellerPanel: false,
+  globalLoader: {
+    type: "classic",
+    palette: "primary",
+  },
+  mobileNavbarVariant: "classic",
+  subscriptionLimits: {
+    defaultProductLimit: null,
+    defaultImagesPerProductLimit: null,
+  },
   activeHomeTheme: "default",
   defaultThemeMode: "system",
 };

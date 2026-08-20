@@ -16,6 +16,12 @@ function formatPrice(plan: SubscriptionPlan) {
 
 export function PlanCard({ plan, storeId, activeSubscription }: PlanCardProps) {
   const isCurrent = activeSubscription?.planId === plan.id;
+  const productLimitLabel =
+    plan.productLimit === null ? "Limitsiz məhsul" : `${plan.productLimit} məhsul`;
+  const imageLimitLabel =
+    plan.imagesPerProductLimit === null
+      ? "Limitsiz şəkil"
+      : `Məhsul başına ${plan.imagesPerProductLimit} şəkil`;
 
   return (
     <article className="flex h-full flex-col rounded-md border bg-card p-5 text-card-foreground shadow-sm">
@@ -23,7 +29,7 @@ export function PlanCard({ plan, storeId, activeSubscription }: PlanCardProps) {
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-lg font-semibold tracking-normal">{plan.name}</h3>
           <span className="rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-            {plan.listingLimit} elan
+            {productLimitLabel}
           </span>
         </div>
         {plan.description ? (
@@ -39,13 +45,10 @@ export function PlanCard({ plan, storeId, activeSubscription }: PlanCardProps) {
         <span className="ml-1 text-sm text-muted-foreground">/ ay</span>
       </div>
       <ul className="mt-5 flex-1 space-y-2 text-sm text-muted-foreground">
-        <li>Elan limiti: {plan.listingLimit}</li>
-        <li>Bitmə tarixi abunəlik aktivləşəndə saxlanılır</li>
-        <li>
-          {plan.priceAmount > 0
-            ? "Pullu plan üçün real ödəniş provayderi tələb olunur"
-            : "Pulsuz plan birbaşa aktivləşir"}
-        </li>
+        <li>Məhsul limiti: {productLimitLabel}</li>
+        <li>Şəkil limiti: {imageLimitLabel}</li>
+        <li>Qiymət gələcək ödəniş inteqrasiyası üçün metadatadır</li>
+        <li>Plan radmin tərəfindən manual təyin olunur</li>
       </ul>
       {storeId ? (
         <div className="mt-5">

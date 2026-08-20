@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { MarketplaceHeader } from "@/components/layout/marketplace-header";
 import { usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
+import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 
 type PublicNavigationShellProps = {
@@ -15,6 +16,7 @@ type PublicNavigationShellProps = {
   darkLogoUrl?: string;
   stores: MarketplaceStore[];
   categories: CategoryOption[];
+  mobileNavbarVariant?: MobileNavbarVariant;
 };
 
 const hiddenPrefixes = [
@@ -52,6 +54,7 @@ export function PublicNavigationShell({
   darkLogoUrl,
   stores,
   categories,
+  mobileNavbarVariant,
 }: PublicNavigationShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -69,6 +72,7 @@ export function PublicNavigationShell({
           searchDefaultValue={searchParams.get("q") ?? undefined}
           showMobileSearch
           compactMobileSearch={isProductDetailPath(pathname)}
+          mobileNavbarVariant={mobileNavbarVariant}
           sticky={!isProductDetailPath(pathname)}
         />
       ) : null}

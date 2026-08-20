@@ -52,21 +52,11 @@ function createRedirectResponse(request: NextRequest, response: NextResponse, pa
 }
 
 function getLocalizedPath(locale: string, path: string) {
-  void locale;
-
-  return path;
-}
-
-function getMetadataRole(role: unknown): AuthRole {
-  if (role === "admin") {
-    return "admin";
+  if (locale === routing.defaultLocale) {
+    return path;
   }
 
-  if (role === "seller") {
-    return "seller";
-  }
-
-  return "customer";
+  return `/${locale}${path === "/" ? "" : path}`;
 }
 
 export async function updateSession(
@@ -147,7 +137,7 @@ export async function updateSession(
     .returns<{ role: AuthRole }[]>()
     .maybeSingle();
 
-  const role = profile?.role ?? getMetadataRole(user.user_metadata?.role);
+  const role: AuthRole = profile?.role ?? "customer";
 
   const matchedAuthRoute = authRoutes.find(
     (path) => pathname === path || localizedPathname === path,

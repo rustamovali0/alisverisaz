@@ -136,6 +136,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         categories={storeCategories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
+        locale={locale}
         productCardVariant={activeTheme.productCardVariant}
         depositEnabled={depositSettings.enabled}
         footer={{

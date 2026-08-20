@@ -9,18 +9,22 @@ function copyCookies(from: NextResponse, to: NextResponse) {
   });
 }
 
-function stripLocalePath(pathname: string) {
-  const localePrefix = `/${routing.defaultLocale}`;
+function splitLocalePath(pathname: string) {
+  const [, maybeLocale, ...rest] = pathname.split("/");
 
-  if (pathname === localePrefix) {
-    return "/";
+  if (routing.locales.includes(maybeLocale as any)) {
+    return {
+      locale: maybeLocale,
+      visiblePathname: `/${rest.join("/")}`.replace(/\/$/, "") || "/",
+      hadLocalePrefix: true,
+    };
   }
 
-  if (pathname.startsWith(`${localePrefix}/`)) {
-    return pathname.slice(localePrefix.length);
-  }
-
-  return pathname;
+  return {
+    locale: routing.defaultLocale,
+    visiblePathname: pathname,
+    hadLocalePrefix: false,
+  };
 }
 
 function needsSessionCheck(pathname: string) {
@@ -35,25 +39,28 @@ function needsSessionCheck(pathname: string) {
   );
 }
 
-function createLocalizedRewrite(request: NextRequest, pathname: string) {
+function localizedInternalPath(locale: string, pathname: string) {
+  return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+}
+
+function createLocalizedRewrite(request: NextRequest, pathname: string, locale: string) {
   const url = request.nextUrl.clone();
 
   if (
     (pathname === "/radmin" || pathname.startsWith("/radmin/")) &&
     pathname !== "/radmin/login"
   ) {
-    url.pathname = `/${routing.defaultLocale}${pathname.replace(/^\/radmin/, "/admin")}`;
+    url.pathname = localizedInternalPath(locale, pathname.replace(/^\/radmin/, "/admin"));
   } else if (pathname === "/admin") {
-    url.pathname = `/${routing.defaultLocale}/store/dashboard`;
+    url.pathname = localizedInternalPath(locale, "/store/dashboard");
   } else if (pathname.startsWith("/admin/")) {
-    url.pathname = `/${routing.defaultLocale}${pathname.replace(/^\/admin/, "/store/dashboard")}`;
+    url.pathname = localizedInternalPath(locale, pathname.replace(/^\/admin/, "/store/dashboard"));
   } else {
-    url.pathname =
-      pathname === "/" ? `/${routing.defaultLocale}` : `/${routing.defaultLocale}${pathname}`;
+    url.pathname = localizedInternalPath(locale, pathname);
   }
 
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("X-NEXT-INTL-LOCALE", routing.defaultLocale);
+  requestHeaders.set("X-NEXT-INTL-LOCALE", locale);
   requestHeaders.set("x-current-path", pathname);
 
   const response = NextResponse.rewrite(url, {
@@ -61,7 +68,7 @@ function createLocalizedRewrite(request: NextRequest, pathname: string) {
       headers: requestHeaders,
     },
   });
-  response.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
+  response.cookies.set("NEXT_LOCALE", locale, {
     path: "/",
     sameSite: "lax",
   });
@@ -69,7 +76,7 @@ function createLocalizedRewrite(request: NextRequest, pathname: string) {
   return response;
 }
 
-function createLocalizedNextResponse(request: NextRequest, pathname: string) {
+function createLocalizedNextResponse(request: NextRequest, pathname: string, locale: string) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-current-path", pathname);
   const response = NextResponse.next({
@@ -77,7 +84,7 @@ function createLocalizedNextResponse(request: NextRequest, pathname: string) {
       headers: requestHeaders,
     },
   });
-  response.cookies.set("NEXT_LOCALE", routing.defaultLocale, {
+  response.cookies.set("NEXT_LOCALE", locale, {
     path: "/",
     sameSite: "lax",
   });
@@ -99,29 +106,39 @@ async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: Ne
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const visiblePathname = stripLocalePath(pathname);
+  const { locale, visiblePathname, hadLocalePrefix } = splitLocalePath(pathname);
 
-  if (visiblePathname !== pathname) {
+  if (hadLocalePrefix) {
+    if (
+      (visiblePathname === "/radmin" || visiblePathname.startsWith("/radmin/")) &&
+      visiblePathname !== "/radmin/login"
+    ) {
+      return mergeSessionIntoRewrite(
+        request,
+        createLocalizedRewrite(request, visiblePathname, locale),
+      );
+    }
+
     if (visiblePathname === "/admin") {
       return mergeSessionIntoRewrite(
         request,
-        createLocalizedRewrite(request, visiblePathname),
+        createLocalizedRewrite(request, visiblePathname, locale),
       );
     }
 
     if (visiblePathname.startsWith("/admin/")) {
       return mergeSessionIntoRewrite(
         request,
-        createLocalizedRewrite(request, visiblePathname),
+        createLocalizedRewrite(request, visiblePathname, locale),
       );
     }
 
     return needsSessionCheck(visiblePathname)
-      ? updateSession(request, createLocalizedNextResponse(request, visiblePathname))
-      : createLocalizedNextResponse(request, visiblePathname);
+      ? updateSession(request, createLocalizedNextResponse(request, visiblePathname, locale))
+      : createLocalizedNextResponse(request, visiblePathname, locale);
   }
 
-  const rewriteResponse = createLocalizedRewrite(request, pathname);
+  const rewriteResponse = createLocalizedRewrite(request, pathname, locale);
 
   if (!needsSessionCheck(pathname)) {
     return rewriteResponse;

@@ -1,5 +1,8 @@
-import { unstable_cache } from "next/cache";
-
+import {
+  CACHE_TAGS,
+  CACHE_TTL,
+  publicCache,
+} from "@/lib/cache/public-cache";
 import {
   defaultHomepageSections,
   defaultSiteSettings,
@@ -7,10 +10,13 @@ import {
   navItemKey,
 } from "@/lib/cms/defaults";
 import type {
+  GlobalLoaderPalette,
+  GlobalLoaderType,
   HomepageSection,
   ManagedNavigationItem,
   ManagedNavigationMenu,
   MediaAsset,
+  MobileNavbarVariant,
   PanelFeatureSettings,
   SiteSettings,
   ThemeSetting,
@@ -27,10 +33,60 @@ function readBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function readNullableLimit(value: unknown, fallback: number | null) {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
+  }
+
+  return fallback;
+}
+
 function readObject(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
+}
+
+function readGlobalLoaderType(value: unknown): GlobalLoaderType {
+  return value === "dual" ||
+    value === "dots-circle" ||
+    value === "moving-dots" ||
+    value === "half" ||
+    value === "wave" ||
+    value === "pulse" ||
+    value === "clock" ||
+    value === "oval" ||
+    value === "gradient"
+    ? value
+    : defaultSiteSettings.globalLoader.type;
+}
+
+function readGlobalLoaderPalette(value: unknown): GlobalLoaderPalette {
+  return value === "cyan" ||
+    value === "emerald" ||
+    value === "rose" ||
+    value === "amber" ||
+    value === "violet"
+    ? value
+    : defaultSiteSettings.globalLoader.palette;
+}
+
+function readMobileNavbarVariant(value: unknown): MobileNavbarVariant {
+  return value === "floating" ||
+    value === "pill" ||
+    value === "compact" ||
+    value === "outlined" ||
+    value === "soft" ||
+    value === "solid" ||
+    value === "glass" ||
+    value === "minimal" ||
+    value === "rail"
+    ? value
+    : defaultSiteSettings.mobileNavbarVariant;
 }
 
 function isMissingTableError(error: unknown) {
@@ -41,6 +97,9 @@ function isMissingTableError(error: unknown) {
 }
 
 function normalizeSiteSettings(value: any): SiteSettings {
+  const subscriptionLimits = readObject(value?.subscription_limits);
+  const globalLoader = readObject(value?.global_loader);
+
   return {
     siteName: readString(value?.site_name, defaultSiteSettings.siteName),
     shortName: readString(value?.short_name, defaultSiteSettings.shortName),
@@ -81,6 +140,25 @@ function normalizeSiteSettings(value: any): SiteSettings {
       defaultSiteSettings.storeRegistrationEnabled,
     ),
     depositEnabled: readBoolean(value?.deposit_enabled, defaultSiteSettings.depositEnabled),
+    showSubscriptionInSellerPanel: readBoolean(
+      value?.show_subscription_in_seller_panel,
+      defaultSiteSettings.showSubscriptionInSellerPanel,
+    ),
+    globalLoader: {
+      type: readGlobalLoaderType(globalLoader.type),
+      palette: readGlobalLoaderPalette(globalLoader.palette),
+    },
+    mobileNavbarVariant: readMobileNavbarVariant(value?.mobile_navbar_variant),
+    subscriptionLimits: {
+      defaultProductLimit: readNullableLimit(
+        subscriptionLimits.default_product_limit,
+        defaultSiteSettings.subscriptionLimits.defaultProductLimit,
+      ),
+      defaultImagesPerProductLimit: readNullableLimit(
+        subscriptionLimits.default_images_per_product_limit,
+        defaultSiteSettings.subscriptionLimits.defaultImagesPerProductLimit,
+      ),
+    },
     activeHomeTheme: readString(
       value?.active_home_theme,
       defaultSiteSettings.activeHomeTheme,
@@ -94,7 +172,7 @@ function normalizeSiteSettings(value: any): SiteSettings {
   };
 }
 
-const getCachedSiteSettings = unstable_cache(
+const getCachedSiteSettings = publicCache(
   async () => {
     const supabase = createSupabaseAdminClient();
     const { data } = await (supabase as any)
@@ -105,9 +183,10 @@ const getCachedSiteSettings = unstable_cache(
 
     return normalizeSiteSettings(data?.value);
   },
-  ["site-settings"],
+  ["public-site-settings"],
   {
-    tags: ["site-settings"],
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.publicSiteSettings],
   },
 );
 
@@ -161,7 +240,7 @@ function fallbackHomepageSections() {
   );
 }
 
-const getCachedHomepageSections = unstable_cache(
+const getCachedHomepageSections = publicCache(
   async () => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await (supabase as any)
@@ -185,7 +264,8 @@ const getCachedHomepageSections = unstable_cache(
   },
   ["homepage-sections"],
   {
-    tags: ["homepage-sections"],
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.homepage],
   },
 );
 
@@ -261,7 +341,7 @@ function withFallbackThemeSettings(themes: ThemeSetting[]) {
   return [...themes, ...missingThemes];
 }
 
-const getCachedThemeSettings = unstable_cache(
+const getCachedThemeSettings = publicCache(
   async () => {
     const supabase = createSupabaseAdminClient();
     const { data, error } = await (supabase as any)
@@ -284,7 +364,8 @@ const getCachedThemeSettings = unstable_cache(
   },
   ["theme-settings"],
   {
-    tags: ["theme-settings"],
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.themeSettings, CACHE_TAGS.homepage],
   },
 );
 
@@ -362,7 +443,7 @@ function readNavigationItem(row: any): ManagedNavigationItem {
   };
 }
 
-const getCachedNavigationMenus = unstable_cache(
+const getCachedNavigationMenus = publicCache(
   async () => {
     const supabase = createSupabaseAdminClient();
     const { data: menus } = await (supabase as any)
@@ -396,7 +477,8 @@ const getCachedNavigationMenus = unstable_cache(
   },
   ["navigation-menus"],
   {
-    tags: ["navigation-menus"],
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.navigationMenus],
   },
 );
 
@@ -420,7 +502,7 @@ async function applyDashboardFeatureFilters(
     siteSettings.depositEnabled !== false &&
     panelSettings.features.deposits !== false &&
     panelSettings.features.deposit !== false;
-  const subscriptionEnabled = panelSettings.features.subscription !== false;
+  const subscriptionVisible = siteSettings.showSubscriptionInSellerPanel === true;
 
   return items.filter((item) => {
     if (
@@ -431,7 +513,7 @@ async function applyDashboardFeatureFilters(
     }
 
     if (
-      !subscriptionEnabled &&
+      !subscriptionVisible &&
       (item.titleKey === "subscription" || item.href.includes("/subscription"))
     ) {
       return false;

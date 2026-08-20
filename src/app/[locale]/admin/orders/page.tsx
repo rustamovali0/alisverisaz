@@ -14,7 +14,7 @@ export default async function AdminOrdersPage() {
       title="Sifarişlər"
       description="Bütün real sifarişlər və status idarəsi"
     >
-      <OrderList orders={orders} canUpdateStatus canDelete />
+      <OrderList orders={orders} canUpdateStatus canDelete viewerRole="admin" />
     </DashboardPanel>
   );
 }

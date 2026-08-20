@@ -168,6 +168,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "shoppingCart",
     },
     {
+      title: "Çatdırılma sistemi",
+      href: "/radmin/delivery",
+      icon: "shoppingCart",
+    },
+    {
       title: "Beh sifarişləri",
       titleKey: "deposits",
       href: "/radmin/deposits",

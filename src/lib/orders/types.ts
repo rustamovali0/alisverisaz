@@ -1,11 +1,22 @@
-export type OrderStatus = "pending" | "confirmed" | "processing" | "delivered" | "canceled";
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "canceled"
+  | "refunded"
+  | "archived";
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   pending: "Yeni",
   confirmed: "Təsdiqləndi",
   processing: "Hazırlanır",
+  shipped: "Göndərildi",
   delivered: "Çatdırıldı",
   canceled: "Ləğv edildi",
+  refunded: "Geri ödəndi",
+  archived: "Arxivləndi",
 };
 
 export const orderStatusOptions: Array<{

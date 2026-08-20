@@ -14,13 +14,51 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
+import type { MobileNavbarVariant } from "@/lib/cms/types";
 import { cn } from "@/lib/utils";
 
 type MobileBottomNavProps = {
   className?: string;
+  variant?: MobileNavbarVariant;
 };
 
 const CART_KEY = "alisveris_cart";
+
+const navVariantClass: Record<MobileNavbarVariant, string> = {
+  classic:
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/88 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-border dark:bg-background/88",
+  floating:
+    "inset-x-3 bottom-3 rounded-2xl border border-white/70 bg-white/86 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.18)] backdrop-blur-md dark:border-border dark:bg-background/86",
+  pill:
+    "inset-x-4 bottom-3 rounded-full border border-slate-200 bg-white/90 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md dark:border-border dark:bg-background/90",
+  compact:
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/92 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-border dark:bg-background/92",
+  outlined:
+    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/20 bg-background/90 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur-md",
+  soft:
+    "inset-x-0 bottom-0 border-t border-primary/10 bg-primary/5 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.07)] backdrop-blur-sm",
+  solid:
+    "inset-x-0 bottom-0 border-t border-primary/20 bg-background px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)]",
+  glass:
+    "inset-x-3 bottom-3 rounded-2xl border border-white/60 bg-white/72 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.18)] backdrop-blur-lg dark:border-white/10 dark:bg-background/68",
+  minimal:
+    "inset-x-0 bottom-0 bg-background/94 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-sm",
+  rail:
+    "inset-x-2 bottom-2 rounded-lg border border-slate-200 bg-white/90 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-md dark:border-border dark:bg-background/90",
+};
+
+const itemVariantClass: Record<MobileNavbarVariant, string> = {
+  classic: "rounded-xl",
+  floating: "rounded-xl",
+  pill: "rounded-full",
+  compact: "rounded-lg min-h-[48px]",
+  outlined: "rounded-lg",
+  soft: "rounded-xl",
+  solid: "rounded-xl",
+  glass: "rounded-xl",
+  minimal: "rounded-lg",
+  rail: "rounded-md min-h-[48px]",
+};
 
 function readCartCount() {
   if (typeof window === "undefined") {
@@ -85,7 +123,7 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
   return <UserRound className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
 }
 
-export function MobileBottomNav({ className }: MobileBottomNavProps) {
+export function MobileBottomNav({ className, variant = "classic" }: MobileBottomNavProps) {
   const profile = useClientAuthProfile();
   const pathname = usePathname();
   const router = useRouter();
@@ -149,7 +187,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 w-full max-w-full overflow-x-clip border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] dark:border-border dark:bg-background md:hidden",
+        "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+        navVariantClass[variant],
         className,
       )}
       aria-label="Mobil naviqasiya"
@@ -175,7 +214,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               }}
               onClick={() => navigate(item.href)}
               className={cn(
-                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                itemVariantClass[variant],
                 isActive && "bg-primary/10 text-primary",
               )}
               aria-current={isActive ? "page" : undefined}
@@ -207,7 +247,8 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
           }}
           onClick={() => navigate(accountHref)}
           className={cn(
-            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 rounded-xl px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            itemVariantClass[variant],
             (pathname.startsWith("/dashboard") ||
               pathname.startsWith("/admin") ||
               pathname.startsWith("/store/dashboard") ||

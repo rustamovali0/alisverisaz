@@ -146,31 +146,38 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
-      <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
-        <ThemeToggle />
-        <LanguageSwitcher />
+      <div
+        className="global-loader-root min-h-screen"
+        data-loader-type={siteSettings.globalLoader.type}
+        data-loader-palette={siteSettings.globalLoader.palette}
+      >
+        <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
+          <ThemeToggle />
+          <LanguageSwitcher />
+        </div>
+        <ToastViewport />
+        <StructuredData />
+        {isMaintenanceBlocked ? (
+          <main className="grid min-h-screen place-items-center bg-background px-4">
+            <EmptyState
+              className="rounded-md border bg-card p-8 shadow-sm"
+              title="Texniki rejim"
+              description="Saytda texniki işlər aparılır. Zəhmət olmasa bir az sonra yenidən yoxlayın."
+            />
+          </main>
+        ) : (
+          <PublicNavigationShell
+            siteName={siteSettings.shortName || siteSettings.siteName}
+            logoUrl={siteSettings.logoUrl}
+            darkLogoUrl={siteSettings.darkLogoUrl}
+            stores={navStores}
+            categories={navCategories}
+            mobileNavbarVariant={siteSettings.mobileNavbarVariant}
+          >
+            {children}
+          </PublicNavigationShell>
+        )}
       </div>
-      <ToastViewport />
-      <StructuredData />
-      {isMaintenanceBlocked ? (
-        <main className="grid min-h-screen place-items-center bg-background px-4">
-          <EmptyState
-            className="rounded-md border bg-card p-8 shadow-sm"
-            title="Texniki rejim"
-            description="Saytda texniki işlər aparılır. Zəhmət olmasa bir az sonra yenidən yoxlayın."
-          />
-        </main>
-      ) : (
-        <PublicNavigationShell
-          siteName={siteSettings.shortName || siteSettings.siteName}
-          logoUrl={siteSettings.logoUrl}
-          darkLogoUrl={siteSettings.darkLogoUrl}
-          stores={navStores}
-          categories={navCategories}
-        >
-          {children}
-        </PublicNavigationShell>
-      )}
     </NextIntlClientProvider>
   );
 }

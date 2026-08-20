@@ -20,7 +20,6 @@ export function PlanActivationForm({
   isCurrent = false,
 }: PlanActivationFormProps) {
   const [isPending, startTransition] = useTransition();
-  const requiresPayment = plan.priceAmount > 0;
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -43,7 +42,7 @@ export function PlanActivationForm({
         type="submit"
         className="w-full"
         variant={isCurrent ? "secondary" : "default"}
-        disabled={isPending || isCurrent || requiresPayment}
+        disabled={isPending || isCurrent}
       >
         {isCurrent ? (
           <>
@@ -51,11 +50,9 @@ export function PlanActivationForm({
             Aktiv plan
           </>
         ) : isPending ? (
-          "Aktiv edilir"
-        ) : requiresPayment ? (
-          "Ödəniş provayderi lazımdır"
+          "Yoxlanılır"
         ) : (
-          "Pulsuz aktiv et"
+          "Admin təyinatı tələb olunur"
         )}
       </Button>
     </form>

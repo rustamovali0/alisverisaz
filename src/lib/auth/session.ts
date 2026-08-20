@@ -7,18 +7,6 @@ import type { Database } from "@/types/database";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
-function getFallbackRole(email: string | undefined, role: unknown): AuthRole {
-  if (email?.toLowerCase() === "rustamovali664@gmail.com" || role === "admin") {
-    return "admin";
-  }
-
-  if (role === "seller") {
-    return "seller";
-  }
-
-  return "customer";
-}
-
 export async function getCurrentUserProfile() {
   const supabase = await createSupabaseServerClient();
   const {
@@ -40,7 +28,7 @@ export async function getCurrentUserProfile() {
   return {
     user,
     profile,
-    role: profile?.role ?? getFallbackRole(user.email, user.user_metadata?.role),
+    role: profile?.role ?? "customer",
   };
 }
 

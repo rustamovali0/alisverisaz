@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import type { LocationActionResult } from "@/lib/locations/types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -32,16 +33,25 @@ function readBusRoutes(value: string) {
     .slice(0, 20);
 }
 
-function revalidateLocationSurfaces() {
+async function revalidateLocationSurfaces(storeId: string) {
   revalidatePath("/store/dashboard/locations");
   revalidatePath("/store/dashboard/products");
   revalidatePath("/admin/locations");
   revalidatePath("/admin/stores");
   revalidatePath("/radmin/locations");
   revalidatePath("/radmin/stores");
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidateTag("public-marketplace", "max");
+
+  const supabase = createSupabaseAdminClient() as any;
+  const { data: store } = await supabase
+    .from("stores")
+    .select("id,slug")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  invalidateStorePublicData({
+    storeId,
+    storeSlug: store?.slug,
+  });
 }
 
 async function canManageStore(userId: string, role: string, storeId: string) {
@@ -149,7 +159,7 @@ export async function saveStoreLocationAction(
     };
   }
 
-  revalidateLocationSurfaces();
+  await revalidateLocationSurfaces(storeId);
 
   return {
     ok: true,
@@ -196,7 +206,7 @@ export async function deactivateStoreLocationAction(
     };
   }
 
-  revalidateLocationSurfaces();
+  await revalidateLocationSurfaces(storeId);
 
   return {
     ok: true,

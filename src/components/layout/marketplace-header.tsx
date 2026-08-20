@@ -13,6 +13,7 @@ import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
+import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 
 type MarketplaceHeaderProps = {
@@ -25,6 +26,7 @@ type MarketplaceHeaderProps = {
   showMobileSearch?: boolean;
   compactMobileSearch?: boolean;
   showBottomNav?: boolean;
+  mobileNavbarVariant?: MobileNavbarVariant;
   sticky?: boolean;
 };
 
@@ -45,6 +47,7 @@ export function MarketplaceHeader({
   searchDefaultValue,
   showMobileSearch = false,
   showBottomNav = true,
+  mobileNavbarVariant,
   sticky = true,
 }: MarketplaceHeaderProps) {
   const displaySiteName = formatBrandName(siteName);
@@ -156,7 +159,7 @@ export function MarketplaceHeader({
           />
         </div>
       ) : null}
-      {showBottomNav ? <MobileBottomNav /> : null}
+      {showBottomNav ? <MobileBottomNav variant={mobileNavbarVariant} /> : null}
     </>
   );
 }

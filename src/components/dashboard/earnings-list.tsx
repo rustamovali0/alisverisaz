@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Trash2 } from "lucide-react";
+import { Archive } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
@@ -30,14 +30,14 @@ export function EarningsList({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-  function deleteItem(orderId: string) {
+  function archiveItem(orderId: string) {
     startTransition(async () => {
       const confirmed = await appAlert.confirm({
-        title: "Dövriyyə qeydi silinsin?",
-        message: "Bu sifarişə bağlı dövriyyə qeydi paneldən silinəcək.",
-        confirmText: "Sil",
+        title: "Dövriyyə qeydi arxivlənsin?",
+        message: "Bu sifariş hard delete edilmədən arxiv statusuna keçiriləcək.",
+        confirmText: "Arxivlə",
         cancelText: "Bağla",
-        variant: "danger",
+        variant: "default",
       });
 
       if (!confirmed.isConfirmed) {
@@ -49,23 +49,23 @@ export function EarningsList({
       const result = await deleteOrderAction(formData);
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Qeyd silinmədi");
+        void appAlert.error(result.message, "Qeyd arxivlənmədi");
         return;
       }
 
-      void appAlert.success("Qeyd silindi", result.message);
+      void appAlert.success("Qeyd arxivləndi", result.message);
       router.refresh();
     });
   }
 
-  function deleteAllItems() {
+  function archiveAllItems() {
     startTransition(async () => {
       const confirmed = await appAlert.confirm({
-        title: "Bütün dövriyyə qeydləri silinsin?",
-        message: "Sizə bağlı bütün sifariş dövriyyəsi silinəcək.",
-        confirmText: "Hamısını sil",
+        title: "Bütün dövriyyə qeydləri arxivlənsin?",
+        message: "Sizə bağlı bütün sifarişlər arxiv statusuna keçiriləcək.",
+        confirmText: "Hamısını arxivlə",
         cancelText: "Bağla",
-        variant: "danger",
+        variant: "default",
       });
 
       if (!confirmed.isConfirmed) {
@@ -75,11 +75,11 @@ export function EarningsList({
       const result = await deleteAllOrdersAction();
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Qeydlər silinmədi");
+        void appAlert.error(result.message, "Qeydlər arxivlənmədi");
         return;
       }
 
-      void appAlert.success("Qeydlər silindi", result.message);
+      void appAlert.success("Qeydlər arxivləndi", result.message);
       router.refresh();
     });
   }
@@ -103,10 +103,10 @@ export function EarningsList({
           size="sm"
           className="text-destructive hover:text-destructive"
           disabled={isPending}
-          onClick={deleteAllItems}
+          onClick={archiveAllItems}
         >
-          <Trash2 className="mr-2 size-4" aria-hidden="true" />
-          Hamısını sil
+          <Archive className="mr-2 size-4" aria-hidden="true" />
+          Hamısını arxivlə
         </Button>
       </div>
       <div className="divide-y rounded-lg border bg-background">
@@ -135,10 +135,10 @@ export function EarningsList({
                 size="sm"
                 className="text-destructive hover:text-destructive"
                 disabled={isPending}
-                onClick={() => deleteItem(item.id)}
+                onClick={() => archiveItem(item.id)}
               >
-                <Trash2 className="mr-2 size-4" aria-hidden="true" />
-                Sil
+                <Archive className="mr-2 size-4" aria-hidden="true" />
+                Arxivlə
               </Button>
             </div>
           </div>

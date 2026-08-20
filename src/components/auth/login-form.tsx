@@ -9,6 +9,7 @@ import { AuthDivider } from "@/components/auth/auth-divider";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordInput } from "@/components/auth/password-input";
+import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -34,6 +35,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
   const [identifier, setIdentifier] = useState(() => getInitialIdentifier(searchParams));
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
+  const [captchaToken, setCaptchaToken] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const next = searchParams.get("next") ?? "";
@@ -78,11 +80,13 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
     formData.set("rememberMe", rememberMe ? "on" : "");
     formData.set("next", next);
     formData.set("mode", mode);
+    formData.set("captchaToken", captchaToken);
 
     startTransition(async () => {
       const result = await loginAction(formData);
 
       if (!result.ok) {
+        setCaptchaToken("");
         setServerError(result.message);
         void appAlert.error(result.message, "Giriş alınmadı");
         return;
@@ -100,12 +104,14 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
 
     formData.set("next", next);
     formData.set("mode", mode);
+    formData.set("captchaToken", captchaToken);
     setServerError(null);
 
     startGoogleTransition(async () => {
       const result = await googleOAuthAction(formData);
 
       if (!result.ok) {
+        setCaptchaToken("");
         setServerError(result.message);
         void appAlert.error(result.message, "Google girişi alınmadı");
         return;
@@ -213,6 +219,7 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
             Şifrəni unutmusunuz?
           </Link>
         </div>
+        <TurnstileField token={captchaToken} onTokenChange={setCaptchaToken} />
         <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>

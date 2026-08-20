@@ -7,6 +7,8 @@ export type ActivityEventType =
   | "user_login"
   | "user_logout"
   | "order_created"
+  | "order_status_updated"
+  | "order_deleted"
   | "message_created";
 
 export async function trackActivityEvent(input: {

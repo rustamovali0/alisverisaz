@@ -19,6 +19,8 @@ type CartCheckoutProps = {
   checkoutOnly?: boolean;
 };
 
+type DeliveryMethod = "pickup" | "courier" | "region";
+
 function readCart() {
   try {
     return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
@@ -48,6 +50,9 @@ export function CartCheckout({
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<CartProduct[]>(initialProducts);
+  const [checkoutRequestId, setCheckoutRequestId] = useState("");
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("courier");
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -78,6 +83,10 @@ export function CartCheckout({
       : "/products";
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
+
+  useEffect(() => {
+    setCheckoutRequestId(crypto.randomUUID());
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -117,7 +126,10 @@ export function CartCheckout({
   }
 
   function handleSubmit(formData: FormData) {
+    const requestId = checkoutRequestId || crypto.randomUUID();
+
     formData.set("items", JSON.stringify(items));
+    formData.set("checkoutRequestId", requestId);
 
     startTransition(async () => {
       const result = await createCheckoutOrdersAction(formData);
@@ -128,8 +140,9 @@ export function CartCheckout({
       }
 
       updateItems([]);
+      setCheckoutRequestId(crypto.randomUUID());
       void appAlert.success("Sifariş yaradıldı", result.message);
-      router.replace("/dashboard");
+      router.replace(result.isGuest ? "/products" : "/dashboard");
       router.refresh();
     });
   }
@@ -303,6 +316,7 @@ export function CartCheckout({
           ) : null}
           <h2 className="text-lg font-semibold tracking-normal">Sifarişi təsdiqlə</h2>
           <input type="hidden" name="items" value="" />
+          <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <div className="mt-4 grid gap-4">
             <label className="grid gap-2 text-sm font-medium">
               Ad Soyad
@@ -318,11 +332,38 @@ export function CartCheckout({
               <PhoneInput name="phone" required />
             </label>
             <label className="grid gap-2 text-sm font-medium">
+              Çatdırılma üsulu
+              <select
+                name="deliveryMethod"
+                value={deliveryMethod}
+                onChange={(event) =>
+                  setDeliveryMethod(event.target.value as DeliveryMethod)
+                }
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="courier">Bakı daxili kuryer</option>
+                <option value="region">Rayonlara çatdırılma</option>
+                <option value="pickup">Mağazadan götür</option>
+              </select>
+            </label>
+            {deliveryMethod === "region" ? (
+              <label className="grid gap-2 text-sm font-medium">
+                Rayon / region
+                <input
+                  name="deliveryRegion"
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  required
+                />
+              </label>
+            ) : (
+              <input type="hidden" name="deliveryRegion" value="" />
+            )}
+            <label className="grid gap-2 text-sm font-medium">
               Ünvan
               <textarea
                 name="address"
                 className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
+                required={deliveryMethod !== "pickup"}
               />
             </label>
             <label className="grid gap-2 text-sm font-medium">
@@ -334,9 +375,12 @@ export function CartCheckout({
             </label>
           </div>
           <div className="mt-5 flex items-center justify-between border-t pt-4">
-            <span className="text-sm text-muted-foreground">Cəmi</span>
+            <span className="text-sm text-muted-foreground">Məhsullar</span>
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Çatdırılma məbləği mağaza qaydalarına görə serverdə hesablanacaq.
+          </p>
           <Button
             type="submit"
             className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] md:bg-primary md:hover:bg-primary/90"

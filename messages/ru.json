@@ -10,7 +10,15 @@
     "loading": "Загрузка",
     "empty": "Нет данных",
     "save": "Сохранить",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "view": "Посмотреть",
+    "search": "Поиск",
+    "all": "Все",
+    "status": "Статус",
+    "unlimited": "Без лимита"
   },
   "home": {
     "title": "alisveris.az",
@@ -24,7 +32,13 @@
     "stock": "Склад",
     "addToCart": "В корзину",
     "buyNow": "Купить сейчас",
-    "sendDeposit": "Отправить аванс"
+    "sendDeposit": "Отправить аванс",
+    "allProductsShown": "Показаны все товары",
+    "loadingMore": "Загружаются товары",
+    "sortNewest": "Сначала новые",
+    "sortOldest": "Сначала старые",
+    "sortPriceAsc": "Цена: по возрастанию",
+    "sortPriceDesc": "Цена: по убыванию"
   },
   "nav": {
     "dashboard": "Панель",
@@ -42,7 +56,96 @@
     "users": "Пользователи",
     "stores": "Магазины",
     "systemSettings": "Системные настройки",
-    "messages": "Сообщения"
+    "messages": "Сообщения",
+    "home": "Главная",
+    "catalog": "Каталог"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Email",
+    "password": "Пароль",
+    "forgotPassword": "Забыли пароль",
+    "resetPassword": "Сбросить пароль",
+    "captchaRequired": "Пройдите проверку безопасности",
+    "genericLoginError": "Email или пароль неверны",
+    "resetRequestSent": "Если аккаунт с этим email существует, ссылка восстановления будет отправлена."
+  },
+  "cartUi": {
+    "title": "Корзина",
+    "empty": "Корзина пуста",
+    "checkout": "Оформить заказ",
+    "quantity": "Количество",
+    "remove": "Удалить из корзины",
+    "total": "Итого"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "guest": "Гостевой checkout",
+    "fullName": "Имя и фамилия",
+    "phone": "Телефон",
+    "address": "Адрес",
+    "notes": "Заметки",
+    "placeOrder": "Создать заказ",
+    "success": "Заказ создан",
+    "genericError": "Не удалось завершить заказ. Попробуйте позже."
+  },
+  "delivery": {
+    "title": "Доставка",
+    "pickup": "Самовывоз",
+    "courier": "Курьер по Баку",
+    "region": "Доставка в регионы",
+    "price": "Стоимость доставки",
+    "estimate": "Ориентировочный срок",
+    "free": "Бесплатно"
+  },
+  "dashboardUi": {
+    "customer": "Панель покупателя",
+    "seller": "Панель продавца",
+    "admin": "Radmin панель",
+    "orders": "Заказы",
+    "products": "Товары",
+    "settings": "Настройки",
+    "profile": "Профиль"
+  },
+  "subscriptionUi": {
+    "title": "Подписка",
+    "currentPlan": "Текущий план",
+    "businessStatus": "Статус",
+    "productUsage": "Товары",
+    "imagesPerProduct": "Изображений на товар",
+    "assignedByAdmin": "Планы назначаются radmin"
+  },
+  "settingsUi": {
+    "loaderType": "Тип loader",
+    "loaderPalette": "Цвет loader",
+    "mobileNavbarVariant": "Дизайн mobile navbar",
+    "showSellerSubscription": "Показывать подписку в панели продавца"
+  },
+  "loaders": {
+    "classic": "Классический круг",
+    "dual": "Двойной круг",
+    "dotsCircle": "Точки по кругу",
+    "movingDots": "3 движущиеся точки",
+    "half": "Полукруг",
+    "wave": "Волновой круг",
+    "pulse": "Пульсирующий круг",
+    "clock": "Стрелка часов",
+    "oval": "Овальный loader",
+    "gradient": "Градиентный круг"
+  },
+  "errors": {
+    "accessDenied": "Доступ запрещен",
+    "notFound": "Не найдено",
+    "rateLimited": "Слишком много попыток. Попробуйте позже.",
+    "generic": "Не удалось выполнить действие"
+  },
+  "validation": {
+    "required": "Это поле обязательно",
+    "invalidEmail": "Введите корректный email",
+    "tooLong": "Значение слишком длинное",
+    "invalidCaptcha": "Проверка безопасности не пройдена"
   },
   "productFields": {
     "name": "Название",
@@ -62,6 +165,7 @@
     "confirmed": "Подтвержден",
     "processing": "Готовится",
     "delivered": "Доставлен",
-    "canceled": "Отменен"
+    "canceled": "Отменен",
+    "archived": "В архиве"
   }
 }

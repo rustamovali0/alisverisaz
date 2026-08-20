@@ -16,6 +16,41 @@ type SiteSettingsFormProps = {
   themes: ThemeSetting[];
 };
 
+const loaderTypeOptions = [
+  ["classic", "Klassik dairə"],
+  ["dual", "İkili dairə"],
+  ["dots-circle", "Dairəvi nöqtələr"],
+  ["moving-dots", "3 hərəkətli nöqtə"],
+  ["half", "Yarım dairə"],
+  ["wave", "Dalğalı dairə"],
+  ["pulse", "Pulsing dairə"],
+  ["clock", "Saat əqrəbi"],
+  ["oval", "Oval loader"],
+  ["gradient", "Gradient dairə"],
+] as const;
+
+const loaderPaletteOptions = [
+  ["primary", "Tema rəngi"],
+  ["cyan", "Cyan"],
+  ["emerald", "Yaşıl"],
+  ["rose", "Rose"],
+  ["amber", "Amber"],
+  ["violet", "Violet"],
+] as const;
+
+const mobileNavbarOptions = [
+  ["classic", "Classic"],
+  ["floating", "Floating"],
+  ["pill", "Pill"],
+  ["compact", "Compact"],
+  ["outlined", "Outlined"],
+  ["soft", "Soft"],
+  ["solid", "Solid"],
+  ["glass", "Glass"],
+  ["minimal", "Minimal"],
+  ["rail", "Rail"],
+] as const;
+
 function Field({
   label,
   name,
@@ -30,6 +65,31 @@ function Field({
       {label}
       <input
         name={name}
+        defaultValue={defaultValue ?? ""}
+        className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+    </label>
+  );
+}
+
+function LimitField({
+  label,
+  name,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  defaultValue: number | null;
+}) {
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      {label}
+      <input
+        name={name}
+        type="number"
+        min="0"
+        step="1"
+        placeholder="Limitsiz"
         defaultValue={defaultValue ?? ""}
         className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
@@ -484,6 +544,85 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
         defaultValue={settings.copyrightText}
       />
 
+      <section className="grid gap-4 rounded-md border bg-background p-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <p className="text-sm font-semibold">Global subscription limit default-ları</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Plan təyin edilməyən mağazalar üçün istifadə olunur. Boş dəyər limitsizdir.
+          </p>
+        </div>
+        <LimitField
+          label="Default məhsul limiti"
+          name="defaultProductLimit"
+          defaultValue={settings.subscriptionLimits.defaultProductLimit}
+        />
+        <LimitField
+          label="Default məhsul şəkil limiti"
+          name="defaultImagesPerProductLimit"
+          defaultValue={settings.subscriptionLimits.defaultImagesPerProductLimit}
+        />
+      </section>
+
+      <section className="grid gap-4 rounded-md border bg-background p-4 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <p className="text-sm font-semibold">Global loader</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Bütün sayt üzrə minimal yüklənmə animasiyası.
+          </p>
+        </div>
+        <label className="grid gap-2 text-sm font-medium">
+          Loader tipi
+          <select
+            name="globalLoaderType"
+            defaultValue={settings.globalLoader.type}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {loaderTypeOptions.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Loader rəngi
+          <select
+            name="globalLoaderPalette"
+            defaultValue={settings.globalLoader.palette}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {loaderPaletteOptions.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
+      <section className="grid gap-4 rounded-md border bg-background p-4 md:grid-cols-2">
+        <div>
+          <p className="text-sm font-semibold">Mobile navbar</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Mobil alt naviqasiyanın qlobal dizayn variantı.
+          </p>
+        </div>
+        <label className="grid gap-2 text-sm font-medium">
+          Navbar dizaynı
+          <select
+            name="mobileNavbarVariant"
+            defaultValue={settings.mobileNavbarVariant}
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {mobileNavbarOptions.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Aktiv ana səhifə teması
@@ -527,6 +666,11 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
             settings.storeRegistrationEnabled,
           ],
           ["depositEnabled", "Beh sistemi", settings.depositEnabled],
+          [
+            "showSubscriptionInSellerPanel",
+            "Seller paneldə abunəliyi göstər",
+            settings.showSubscriptionInSellerPanel,
+          ],
         ].map(([name, label, checked]) => (
           <label key={String(name)} className="flex items-center gap-2 text-sm font-medium">
             <input

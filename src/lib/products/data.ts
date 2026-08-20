@@ -1,5 +1,8 @@
-import { unstable_cache } from "next/cache";
-
+import {
+  CACHE_TAGS,
+  CACHE_TTL,
+  publicCache,
+} from "@/lib/cache/public-cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CategoryOption, ManagedProduct, ProductStatus } from "@/lib/products/types";
@@ -111,7 +114,7 @@ function sortPublicRootCategories(categories: CategoryOption[]) {
     .sort((a, b) => Number(order.get(a.slug)) - Number(order.get(b.slug)));
 }
 
-const getRootCategoryOptionsCached = unstable_cache(
+const getRootCategoryOptionsCached = publicCache(
   async () => {
     const supabase = createSupabaseAdminClient();
     const { data } = await (supabase as any)
@@ -125,10 +128,10 @@ const getRootCategoryOptionsCached = unstable_cache(
 
     return sortPublicRootCategories((data ?? []) as CategoryOption[]);
   },
-  ["public-root-categories-v2"],
+  ["public-root-categories"],
   {
-    revalidate: 300,
-    tags: ["public-categories"],
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.categories, CACHE_TAGS.homepage],
   },
 );
 

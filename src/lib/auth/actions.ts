@@ -11,6 +11,16 @@ import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
+import { recordImageMediaAsset } from "@/lib/storage/media-assets";
+import { uploadImageToR2 } from "@/lib/storage/r2";
+import {
+  assertAuthRateLimit,
+  getClientIp,
+  readCaptchaToken,
+  recordAuthRateLimitAttempt,
+  resetAuthRateLimit,
+  verifyCaptchaToken,
+} from "@/lib/auth/security";
 import {
   isAuthRole,
   isPublicAuthRole,
@@ -18,9 +28,11 @@ import {
   type AuthRole,
 } from "@/lib/auth/types";
 
-const AUTH_MEDIA_BUCKET = "cms-media";
 const MAX_AUTH_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_AUTH_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
+const GENERIC_RESET_RESPONSE =
+  "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -34,90 +46,38 @@ function readFile(formData: FormData, key: string) {
   return value instanceof File && value.size > 0 ? value : null;
 }
 
-function sanitizeFileName(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function ensureAuthMediaBucket() {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data: bucket } = await supabaseAdmin.storage.getBucket(AUTH_MEDIA_BUCKET);
-
-  if (bucket) {
-    return;
-  }
-
-  const { error } = await supabaseAdmin.storage.createBucket(AUTH_MEDIA_BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_AUTH_MEDIA_SIZE,
-    allowedMimeTypes: ALLOWED_AUTH_MEDIA_TYPES,
-  });
-
-  if (error && !error.message.toLowerCase().includes("already")) {
-    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
-  }
-}
-
 async function uploadAuthMediaFile(input: {
   file: File;
   userId: string;
   kind: "avatar" | "banner";
 }) {
-  if (input.file.size > MAX_AUTH_MEDIA_SIZE) {
-    throw new Error("Şəkil maksimum 5MB ola bilər.");
-  }
-
-  if (!ALLOWED_AUTH_MEDIA_TYPES.includes(input.file.type)) {
-    throw new Error("Yalnız JPG, PNG və WebP şəkillər qəbul edilir.");
-  }
-
-  const supabaseAdmin = createSupabaseAdminClient();
-  await ensureAuthMediaBucket();
-
-  const fileName = sanitizeFileName(input.file.name) || `${input.kind}.webp`;
-  const path = `seller-applications/${input.userId}/${input.kind}/${crypto.randomUUID()}-${fileName}`;
-  const body = new Uint8Array(await input.file.arrayBuffer());
-  const { error } = await supabaseAdmin.storage.from(AUTH_MEDIA_BUCKET).upload(path, body, {
-    contentType: input.file.type,
-    upsert: false,
+  const uploaded = await uploadImageToR2({
+    file: input.file,
+    folder: `seller-applications/${input.userId}/${input.kind}`,
+    maxSizeBytes: MAX_AUTH_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_AUTH_MEDIA_TYPES,
   });
 
-  if (error) {
-    throw new Error(
-      error.message.toLowerCase().includes("bucket")
-        ? "Şəkil yükləmə yaddaşı tapılmadı. Supabase-də cms-media bucket yaradın."
-        : error.message,
-    );
-  }
-
-  const { data } = supabaseAdmin.storage.from(AUTH_MEDIA_BUCKET).getPublicUrl(path);
-
-  const { error: mediaAssetError } = await (supabaseAdmin as any).from("media_assets").insert({
-    bucket: AUTH_MEDIA_BUCKET,
-    path,
-    url: data.publicUrl,
-    file_name: input.file.name,
-    mime_type: input.file.type,
-    size_bytes: input.file.size,
-    alt_text: input.kind === "avatar" ? "Satıcı profil şəkli" : "Satıcı banner şəkli",
-    created_by: input.userId,
-    updated_by: input.userId,
+  await recordImageMediaAsset({
+    uploaded,
+    originalFileName: input.file.name,
+    altText: input.kind === "avatar" ? "Satıcı profil şəkli" : "Satıcı banner şəkli",
+    userId: input.userId,
+    metadata: {
+      source: "seller-registration",
+      kind: input.kind,
+    },
   });
 
-  if (
-    mediaAssetError &&
-    !["42P01", "PGRST205"].includes(mediaAssetError.code ?? "")
-  ) {
-    throw new Error(mediaAssetError.message);
-  }
-
-  return data.publicUrl;
+  return uploaded.url;
 }
 
 function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase().slice(0, 320);
 }
 
 function normalizeNextPath(value: string) {
@@ -223,7 +183,6 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     user_metadata: {
       full_name: fullName,
       phone,
-      role: accountRole,
       requested_role: role,
       seller_application_status: role === "seller" ? "pending" : "active",
     },
@@ -326,15 +285,49 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
 }
 
 export async function loginAction(formData: FormData): Promise<AuthResult> {
-  const identifier = readString(formData, "identifier").toLowerCase();
+  const identifier = normalizeIdentifier(readString(formData, "identifier"));
   const password = readString(formData, "password");
   const nextPath = normalizeNextPath(readString(formData, "next"));
   const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
+  const ip = await getClientIp();
+  const rateLimitRule = {
+    endpoint: "login" as const,
+    identifier,
+    ip,
+    maxAttempts: 8,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
 
   if (!identifier || !password) {
     return {
       ok: false,
       message: "Email və şifrə mütləqdir.",
+    };
+  }
+
+  if (password.length > 1024) {
+    return {
+      ok: false,
+      message: GENERIC_LOGIN_ERROR,
+    };
+  }
+
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+
+  if (!rateLimit.ok) {
+    return {
+      ok: false,
+      message: rateLimit.message,
+    };
+  }
+
+  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
+
+  if (!captcha.ok) {
+    return {
+      ok: false,
+      message: captcha.message,
     };
   }
 
@@ -356,6 +349,8 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   if (!isValidEmail(email)) {
+    await recordAuthRateLimitAttempt(rateLimitRule);
+
     return {
       ok: false,
       message: "Düzgün email və ya telefon daxil edin.",
@@ -368,27 +363,22 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
+    await recordAuthRateLimitAttempt(rateLimitRule);
+
     return {
       ok: false,
-      message: error.message,
+      message: GENERIC_LOGIN_ERROR,
     };
   }
 
   if (!data.user) {
+    await recordAuthRateLimitAttempt(rateLimitRule);
+
     return {
       ok: false,
-      message: "Sessiya yaradılarkən xəta baş verdi.",
+      message: GENERIC_LOGIN_ERROR,
     };
   }
-
-  const metadataRole = data.user.user_metadata?.role;
-  const fallbackRole: AuthRole =
-    data.user.email?.toLowerCase() === "rustamovali664@gmail.com" ||
-    metadataRole === "admin"
-      ? "admin"
-      : isAuthRole(metadataRole)
-        ? metadataRole
-        : "customer";
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -397,23 +387,25 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     .returns<{ role: AuthRole; full_name: string | null }[]>()
     .maybeSingle();
 
-  const role = profile?.role ?? fallbackRole;
+  const role: AuthRole = profile?.role ?? "customer";
 
   if (mode === "admin" && role !== "admin") {
     await supabase.auth.signOut();
+    await recordAuthRateLimitAttempt(rateLimitRule);
 
     return {
       ok: false,
-      message: "Bu giriş yalnız admin hesabı üçündür.",
+      message: GENERIC_LOGIN_ERROR,
     };
   }
 
   if (mode === "public" && role === "admin") {
     await supabase.auth.signOut();
+    await recordAuthRateLimitAttempt(rateLimitRule);
 
     return {
       ok: false,
-      message: "Email və ya şifrə səhvdir.",
+      message: GENERIC_LOGIN_ERROR,
     };
   }
 
@@ -474,6 +466,11 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       role,
     },
   });
+  await resetAuthRateLimit({
+    endpoint: "login",
+    identifier,
+    ip,
+  });
 
   return {
     ok: true,
@@ -485,11 +482,37 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 export async function googleOAuthAction(formData: FormData): Promise<AuthResult> {
   const nextPath = normalizeNextPath(readString(formData, "next")) || "/";
   const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
+  const ip = await getClientIp();
 
   if (mode === "admin") {
     return {
       ok: false,
       message: "Google ilə giriş yalnız public hesablar üçün aktivdir.",
+    };
+  }
+
+  const rateLimit = await assertAuthRateLimit({
+    endpoint: "login",
+    identifier: "google-oauth",
+    ip,
+    maxAttempts: 8,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  });
+
+  if (!rateLimit.ok) {
+    return {
+      ok: false,
+      message: rateLimit.message,
+    };
+  }
+
+  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
+
+  if (!captcha.ok) {
+    return {
+      ok: false,
+      message: captcha.message,
     };
   }
 
@@ -552,12 +575,39 @@ export async function logoutAction(): Promise<AuthResult> {
 }
 
 export async function requestPasswordResetAction(formData: FormData): Promise<AuthResult> {
-  const identifier = readString(formData, "identifier").toLowerCase();
+  const identifier = normalizeIdentifier(readString(formData, "identifier"));
+  const ip = await getClientIp();
+  const rateLimitRule = {
+    endpoint: "password_reset" as const,
+    identifier,
+    ip,
+    maxAttempts: 3,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
 
   if (!identifier) {
     return {
       ok: false,
       message: "Email daxil edin.",
+    };
+  }
+
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+
+  if (!rateLimit.ok) {
+    return {
+      ok: false,
+      message: rateLimit.message,
+    };
+  }
+
+  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
+
+  if (!captcha.ok) {
+    return {
+      ok: false,
+      message: captcha.message,
     };
   }
 
@@ -585,20 +635,15 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     };
   }
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  await recordAuthRateLimitAttempt(rateLimitRule);
+
+  await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${clientEnv.appUrl}/reset-password`,
   });
 
-  if (error) {
-    return {
-      ok: false,
-      message: error.message,
-    };
-  }
-
   return {
     ok: true,
-    message: "Şifrə bərpa linki email ünvanınıza göndərildi.",
+    message: GENERIC_RESET_RESPONSE,
     redirectTo: "/login",
   };
 }
@@ -719,7 +764,7 @@ export async function updateUserRoleAction(
   const userId = readString(formData, "userId");
   const action = readString(formData, "applicationAction");
   const selectedRole = readString(formData, "role");
-  const role = action === "reject" ? "customer" : selectedRole;
+  const role = action === "approve" ? "seller" : action === "reject" ? "customer" : selectedRole;
 
   if (!userId || !isAuthRole(role)) {
     return {
@@ -738,9 +783,24 @@ export async function updateUserRoleAction(
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userId);
   const existingMeta = existingUser.user?.user_metadata ?? {};
+  const isSellerApplication =
+    existingMeta.requested_role === "seller" &&
+    existingMeta.seller_application_status === "pending";
+
+  if ((action === "approve" || action === "reject") && !isSellerApplication) {
+    return {
+      ok: false,
+      message: "Gözləyən satıcı müraciəti tapılmadı.",
+    };
+  }
+
+  const { role: _ignoredMetadataRole, ...safeExistingMeta } = existingMeta as Record<
+    string,
+    unknown
+  >;
+  void _ignoredMetadataRole;
   const mergedMetadata = {
-    ...existingMeta,
-    role,
+    ...safeExistingMeta,
     seller_application_status:
       action === "reject"
         ? "rejected"

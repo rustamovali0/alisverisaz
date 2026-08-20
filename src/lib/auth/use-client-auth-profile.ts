@@ -71,11 +71,7 @@ function writeCachedProfile(profile: ClientAuthProfile) {
   }
 }
 
-function normalizeRole(email: string | null | undefined, role: unknown): AuthRole {
-  if (email?.toLowerCase() === "rustamovali664@gmail.com" || role === "admin") {
-    return "admin";
-  }
-
+function normalizeRole(role: unknown): AuthRole {
   return isAuthRole(role) ? role : "customer";
 }
 
@@ -111,7 +107,7 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
 
   return {
     status: "authenticated",
-    role: normalizeRole(user.email, profile?.role ?? user.user_metadata?.role),
+    role: normalizeRole(profile?.role),
     email: profile?.email ?? user.email ?? null,
     fullName:
       profile?.full_name ??

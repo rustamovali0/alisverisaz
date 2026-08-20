@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { PackageSearch, Trash2 } from "lucide-react";
+import { Archive, PackageSearch, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,16 @@ import {
   orderStatusLabels,
   orderStatusOptions,
   type ManagedOrder,
+  type OrderStatus,
 } from "@/lib/orders/types";
+
+type OrderViewerRole = "admin" | "seller" | "customer";
 
 type OrderListProps = {
   orders: ManagedOrder[];
   canUpdateStatus?: boolean;
   canDelete?: boolean;
+  viewerRole?: OrderViewerRole;
 };
 
 function formatMoney(value: number, currency: string) {
@@ -31,9 +35,31 @@ function formatMoney(value: number, currency: string) {
   }).format(value);
 }
 
-function OrderStatusForm({ order }: { order: ManagedOrder }) {
+type StatusOption = {
+  value: OrderStatus;
+  label: string;
+  disabled?: boolean;
+};
+
+function OrderStatusForm({
+  order,
+  statusOptions,
+}: {
+  order: ManagedOrder;
+  statusOptions: StatusOption[];
+}) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const options = statusOptions.some((status) => status.value === order.status)
+    ? statusOptions
+    : [
+        {
+          value: order.status,
+          label: orderStatusLabels[order.status],
+          disabled: true,
+        },
+        ...statusOptions,
+      ];
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -57,8 +83,8 @@ function OrderStatusForm({ order }: { order: ManagedOrder }) {
         defaultValue={order.status}
         className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        {orderStatusOptions.map((status) => (
-          <option key={status.value} value={status.value}>
+        {options.map((status) => (
+          <option key={status.value} value={status.value} disabled={status.disabled}>
             {status.label}
           </option>
         ))}
@@ -74,18 +100,29 @@ export function OrderList({
   orders,
   canUpdateStatus = false,
   canDelete = false,
+  viewerRole = "customer",
 }: OrderListProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const isSeller = viewerRole === "seller";
+  const statusOptions =
+    viewerRole === "seller"
+      ? orderStatusOptions.filter((status) =>
+          (["canceled", "archived"] as OrderStatus[]).includes(status.value),
+        )
+      : orderStatusOptions;
+  const DeleteIcon = isSeller ? Archive : Trash2;
 
   function deleteOrder(orderId: string) {
     startTransition(async () => {
       const confirmed = await appAlert.confirm({
-        title: "Sifariş silinsin?",
-        message: "Bu sifariş paneldən silinəcək.",
-        confirmText: "Sil",
+        title: isSeller ? "Sifariş arxivlənsin?" : "Sifariş silinsin?",
+        message: isSeller
+          ? "Bu sifariş hard delete edilmədən arxiv statusuna keçiriləcək."
+          : "Bu sifariş paneldən silinəcək.",
+        confirmText: isSeller ? "Arxivlə" : "Sil",
         cancelText: "Bağla",
-        variant: "danger",
+        variant: isSeller ? "default" : "danger",
       });
 
       if (!confirmed.isConfirmed) {
@@ -97,11 +134,14 @@ export function OrderList({
       const result = await deleteOrderAction(formData);
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Sifariş silinmədi");
+        void appAlert.error(
+          result.message,
+          isSeller ? "Sifariş arxivlənmədi" : "Sifariş silinmədi",
+        );
         return;
       }
 
-      void appAlert.success("Sifariş silindi", result.message);
+      void appAlert.success(isSeller ? "Sifariş arxivləndi" : "Sifariş silindi", result.message);
       router.refresh();
     });
   }
@@ -109,11 +149,13 @@ export function OrderList({
   function deleteAllOrders() {
     startTransition(async () => {
       const confirmed = await appAlert.confirm({
-        title: "Bütün sifarişlər silinsin?",
-        message: "Sizə bağlı bütün sifariş qeydləri silinəcək.",
-        confirmText: "Hamısını sil",
+        title: isSeller ? "Bütün sifarişlər arxivlənsin?" : "Bütün sifarişlər silinsin?",
+        message: isSeller
+          ? "Sizə bağlı bütün sifarişlər hard delete edilmədən arxiv statusuna keçiriləcək."
+          : "Sizə bağlı bütün sifariş qeydləri silinəcək.",
+        confirmText: isSeller ? "Hamısını arxivlə" : "Hamısını sil",
         cancelText: "Bağla",
-        variant: "danger",
+        variant: isSeller ? "default" : "danger",
       });
 
       if (!confirmed.isConfirmed) {
@@ -123,11 +165,17 @@ export function OrderList({
       const result = await deleteAllOrdersAction();
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Sifarişlər silinmədi");
+        void appAlert.error(
+          result.message,
+          isSeller ? "Sifarişlər arxivlənmədi" : "Sifarişlər silinmədi",
+        );
         return;
       }
 
-      void appAlert.success("Sifarişlər silindi", result.message);
+      void appAlert.success(
+        isSeller ? "Sifarişlər arxivləndi" : "Sifarişlər silindi",
+        result.message,
+      );
       router.refresh();
     });
   }
@@ -154,8 +202,8 @@ export function OrderList({
             disabled={isPending}
             onClick={deleteAllOrders}
           >
-            <Trash2 className="mr-2 size-4" aria-hidden="true" />
-            Hamısını sil
+            <DeleteIcon className="mr-2 size-4" aria-hidden="true" />
+            {isSeller ? "Hamısını arxivlə" : "Hamısını sil"}
           </Button>
         </div>
       ) : null}
@@ -186,7 +234,9 @@ export function OrderList({
               <p className="text-muted-foreground">
                 Status: {orderStatusLabels[order.status]}
               </p>
-              {canUpdateStatus ? <OrderStatusForm order={order} /> : null}
+              {canUpdateStatus ? (
+                <OrderStatusForm order={order} statusOptions={statusOptions} />
+              ) : null}
               {canDelete ? (
                 <Button
                   type="button"
@@ -196,8 +246,8 @@ export function OrderList({
                   disabled={isPending}
                   onClick={() => deleteOrder(order.id)}
                 >
-                  <Trash2 className="mr-2 size-4" aria-hidden="true" />
-                  Sil
+                  <DeleteIcon className="mr-2 size-4" aria-hidden="true" />
+                  {isSeller ? "Arxivlə" : "Sil"}
                 </Button>
               ) : null}
             </div>

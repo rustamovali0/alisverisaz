@@ -51,4 +51,5 @@ export const clientEnv = {
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
     fallbackSupabasePublishableKey,
   ),
+  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
 } as const;

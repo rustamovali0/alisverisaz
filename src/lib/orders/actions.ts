@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { trackActivityEvent } from "@/lib/activity/events";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
@@ -14,18 +15,31 @@ function readString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+const adminOrderStatuses: OrderStatus[] = [
+  "pending",
+  "confirmed",
+  "processing",
+  "shipped",
+  "delivered",
+  "canceled",
+  "refunded",
+  "archived",
+];
+
+const sellerOrderStatuses: OrderStatus[] = ["canceled", "archived"];
+
 function readOrderStatus(value: string): OrderStatus | null {
-  if (
-    value === "pending" ||
-    value === "confirmed" ||
-    value === "processing" ||
-    value === "delivered" ||
-    value === "canceled"
-  ) {
-    return value;
+  const normalized = value === "cancelled" ? "canceled" : value;
+
+  if (adminOrderStatuses.includes(normalized as OrderStatus)) {
+    return normalized as OrderStatus;
   }
 
   return null;
+}
+
+function canSellerSetStatus(status: OrderStatus) {
+  return sellerOrderStatuses.includes(status);
 }
 
 async function getManageableOrderIds(input: {
@@ -88,6 +102,46 @@ function revalidateOrderPaths() {
   revalidatePath("/dashboard");
 }
 
+async function getOrderActivityContext(orderId: string) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await (supabaseAdmin as any)
+    .from("orders")
+    .select("id,store_id,order_number,total_amount")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  return data as
+    | {
+        id: string;
+        store_id: string | null;
+        order_number: string | null;
+        total_amount: string | number | null;
+      }
+    | null;
+}
+
+async function trackOrderStatusChange(input: {
+  actorId: string;
+  role: string;
+  orderId: string;
+  status: OrderStatus;
+}) {
+  const order = await getOrderActivityContext(input.orderId);
+
+  await trackActivityEvent({
+    eventType: "order_status_updated",
+    actorId: input.actorId,
+    storeId: order?.store_id ?? null,
+    metadata: {
+      title: "Sifariş statusu yeniləndi",
+      description: order?.order_number ?? input.status,
+      order_id: input.orderId,
+      status: input.status,
+      role: input.role,
+    },
+  });
+}
+
 export async function updateOrderStatusAction(
   formData: FormData,
 ): Promise<OrderActionResult> {
@@ -102,38 +156,25 @@ export async function updateOrderStatusAction(
     };
   }
 
+  if (current.role === "seller" && !canSellerSetStatus(status)) {
+    return {
+      ok: false,
+      message: "Satıcı bu status keçidini edə bilməz.",
+    };
+  }
+
   const supabaseAdmin = createSupabaseAdminClient();
+  const orderIds = await getManageableOrderIds({
+    role: current.role,
+    userId: current.user.id,
+    orderId,
+  });
 
-  if (current.role === "seller") {
-    const featureEnabled = await getSellerFeatureAccess(current.user.id, "orders");
-
-    if (!featureEnabled) {
-      return {
-        ok: false,
-        message: "Sifariş idarəetməsi admin tərəfindən deaktiv edilib.",
-      };
-    }
-
-    const stores = await getOwnedStores(current.user.id);
-    const storeIds = stores.map((store) => store.id);
-    const { data: order } = await (supabaseAdmin as any)
-      .from("orders")
-      .select("id")
-      .eq("id", orderId)
-      .in(
-        "store_id",
-        storeIds.length > 0
-          ? storeIds
-          : ["00000000-0000-0000-0000-000000000000"],
-      )
-      .maybeSingle();
-
-    if (!order) {
-      return {
-        ok: false,
-        message: "Bu sifariş üzərində icazəniz yoxdur.",
-      };
-    }
+  if (orderIds.length === 0) {
+    return {
+      ok: false,
+      message: "Bu sifariş üzərində icazəniz yoxdur.",
+    };
   }
 
   const { error } = await (supabaseAdmin as any)
@@ -141,7 +182,8 @@ export async function updateOrderStatusAction(
     .update({
       status,
     })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .in("id", orderIds);
 
   if (error) {
     return {
@@ -150,6 +192,12 @@ export async function updateOrderStatusAction(
     };
   }
 
+  await trackOrderStatusChange({
+    actorId: current.user.id,
+    role: current.role,
+    orderId,
+    status,
+  });
   revalidateOrderPaths();
 
   return {
@@ -185,6 +233,36 @@ export async function deleteOrderAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+
+  if (current.role === "seller") {
+    const { error } = await (supabaseAdmin as any)
+      .from("orders")
+      .update({
+        status: "archived",
+      })
+      .in("id", orderIds);
+
+    if (error) {
+      return {
+        ok: false,
+        message: error.message,
+      };
+    }
+
+    await trackOrderStatusChange({
+      actorId: current.user.id,
+      role: current.role,
+      orderId,
+      status: "archived",
+    });
+    revalidateOrderPaths();
+
+    return {
+      ok: true,
+      message: "Sifariş arxivləndi.",
+    };
+  }
+
   const { error } = await (supabaseAdmin as any)
     .from("orders")
     .delete()
@@ -197,6 +275,15 @@ export async function deleteOrderAction(
     };
   }
 
+  await trackActivityEvent({
+    eventType: "order_deleted",
+    actorId: current.user.id,
+    metadata: {
+      title: "Sifariş silindi",
+      order_id: orderId,
+      role: current.role,
+    },
+  });
   revalidateOrderPaths();
 
   return {
@@ -220,6 +307,40 @@ export async function deleteAllOrdersAction(): Promise<OrderActionResult> {
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+
+  if (current.role === "seller") {
+    const { error } = await (supabaseAdmin as any)
+      .from("orders")
+      .update({
+        status: "archived",
+      })
+      .in("id", orderIds);
+
+    if (error) {
+      return {
+        ok: false,
+        message: error.message,
+      };
+    }
+
+    await trackActivityEvent({
+      eventType: "order_status_updated",
+      actorId: current.user.id,
+      metadata: {
+        title: "Sifarişlər arxivləndi",
+        order_ids: orderIds,
+        status: "archived",
+        role: current.role,
+      },
+    });
+    revalidateOrderPaths();
+
+    return {
+      ok: true,
+      message: "Sifarişlər arxivləndi.",
+    };
+  }
+
   const { error } = await (supabaseAdmin as any)
     .from("orders")
     .delete()
@@ -232,6 +353,15 @@ export async function deleteAllOrdersAction(): Promise<OrderActionResult> {
     };
   }
 
+  await trackActivityEvent({
+    eventType: "order_deleted",
+    actorId: current.user.id,
+    metadata: {
+      title: "Bütün sifarişlər silindi",
+      order_ids: orderIds,
+      role: current.role,
+    },
+  });
   revalidateOrderPaths();
 
   return {

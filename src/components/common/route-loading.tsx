@@ -1,3 +1,5 @@
+import { GlobalLoader } from "@/components/common/global-loader";
+
 type RouteLoadingProps = {
   variant?: "marketplace" | "dashboard" | "account";
 };
@@ -13,9 +15,7 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
       aria-live="polite"
     >
       <div className="flex w-full max-w-[180px] flex-col items-center gap-3">
-        <span className="h-1 w-24 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-          <span className="block h-full w-1/2 animate-pulse rounded-full bg-primary" />
-        </span>
+        <GlobalLoader />
         <span className="text-xs font-semibold text-muted-foreground">{label}</span>
       </div>
     </main>

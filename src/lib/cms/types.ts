@@ -2,6 +2,38 @@ import type { DashboardNavItem } from "@/lib/dashboard/navigation";
 
 export type ThemeMode = "light" | "dark" | "system";
 
+export type GlobalLoaderType =
+  | "classic"
+  | "dual"
+  | "dots-circle"
+  | "moving-dots"
+  | "half"
+  | "wave"
+  | "pulse"
+  | "clock"
+  | "oval"
+  | "gradient";
+
+export type GlobalLoaderPalette =
+  | "primary"
+  | "cyan"
+  | "emerald"
+  | "rose"
+  | "amber"
+  | "violet";
+
+export type MobileNavbarVariant =
+  | "classic"
+  | "floating"
+  | "pill"
+  | "compact"
+  | "outlined"
+  | "soft"
+  | "solid"
+  | "glass"
+  | "minimal"
+  | "rail";
+
 export type SiteSettings = {
   siteName: string;
   shortName: string;
@@ -21,6 +53,16 @@ export type SiteSettings = {
   userRegistrationEnabled: boolean;
   storeRegistrationEnabled: boolean;
   depositEnabled: boolean;
+  showSubscriptionInSellerPanel: boolean;
+  globalLoader: {
+    type: GlobalLoaderType;
+    palette: GlobalLoaderPalette;
+  };
+  mobileNavbarVariant: MobileNavbarVariant;
+  subscriptionLimits: {
+    defaultProductLimit: number | null;
+    defaultImagesPerProductLimit: number | null;
+  };
   activeHomeTheme: string;
   defaultThemeMode: ThemeMode;
 };

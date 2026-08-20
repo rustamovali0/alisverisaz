@@ -1,16 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 
 import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
+import { GlobalLoader } from "@/components/common/global-loader";
 import { DepositModal } from "@/components/deposits/deposit-modal";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
-import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
+import type {
+  CartProduct,
+  MarketplaceProductPage,
+  MarketplaceProductSort,
+  MarketplaceStore,
+} from "@/lib/cart/types";
 import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
 import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
@@ -49,8 +62,13 @@ type MarketplaceLabels = {
 
 type ProductMarketplaceProps = {
   products: CartProduct[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
   categories: CategoryOption[];
   selectedCategoryId?: string;
+  locale: string;
+  searchQuery?: string;
+  sort?: MarketplaceProductSort;
   productCardVariant?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
@@ -61,6 +79,7 @@ type StorefrontProps = {
   categories: CategoryOption[];
   locations?: StoreLocation[];
   selectedCategoryId?: string;
+  locale: string;
   productCardVariant?: string;
   depositEnabled: boolean;
   footer?: FooterProps;
@@ -94,6 +113,67 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
       {store.name.slice(0, 1).toUpperCase()}
     </span>
   );
+}
+
+function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
+  const seen = new Set(current.map((product) => product.id));
+  const merged = [...current];
+
+  nextProducts.forEach((product) => {
+    if (!seen.has(product.id)) {
+      seen.add(product.id);
+      merged.push(product);
+    }
+  });
+
+  return merged;
+}
+
+function ProductListLoader({ show }: { show: boolean }) {
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <div className="flex justify-center py-5" aria-live="polite" aria-busy="true">
+      <GlobalLoader />
+    </div>
+  );
+}
+
+function ProductInfiniteSentinel({
+  onIntersect,
+  disabled,
+}: {
+  onIntersect: () => void;
+  disabled: boolean;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (disabled || !ref.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          onIntersect();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "560px 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(ref.current);
+
+    return () => observer.disconnect();
+  }, [disabled, onIntersect]);
+
+  return <div ref={ref} className="h-px w-full" aria-hidden="true" />;
 }
 
 function CategoryFilters({
@@ -433,15 +513,199 @@ export function ProductGrid({
   );
 }
 
+function useInfiniteProducts({
+  initialProducts,
+  initialCursor,
+  initialHasMore,
+  locale,
+  categoryId,
+  storeId,
+  searchQuery,
+  sort,
+}: {
+  initialProducts: CartProduct[];
+  initialCursor?: string | null;
+  initialHasMore?: boolean;
+  locale: string;
+  categoryId?: string;
+  storeId?: string;
+  searchQuery?: string;
+  sort?: MarketplaceProductSort;
+}) {
+  const [products, setProducts] = useState(initialProducts);
+  const [cursor, setCursor] = useState(initialCursor ?? null);
+  const [hasMore, setHasMore] = useState(Boolean(initialHasMore));
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const requestRef = useRef(0);
+  const mountedRef = useRef(false);
+  const queryKey = useMemo(
+    () => [locale, categoryId ?? "", storeId ?? "", searchQuery ?? "", sort ?? "newest"].join("|"),
+    [categoryId, locale, searchQuery, sort, storeId],
+  );
+
+  useEffect(() => {
+    abortRef.current?.abort();
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
+
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      setProducts(initialProducts);
+      setCursor(initialCursor ?? null);
+      setHasMore(Boolean(initialHasMore));
+      setIsLoadingNext(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setIsLoadingNext(true);
+
+    const params = new URLSearchParams({
+      locale,
+      limit: "20",
+      sort: sort ?? "newest",
+    });
+
+    if (categoryId) {
+      params.set("categoryId", categoryId);
+    }
+
+    if (storeId) {
+      params.set("storeId", storeId);
+    }
+
+    if (searchQuery?.trim()) {
+      params.set("q", searchQuery.trim());
+    }
+
+    fetch(`/api/marketplace/products?${params.toString()}`, {
+      signal: controller.signal,
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("PRODUCT_PAGE_FAILED");
+        }
+
+        return response.json() as Promise<MarketplaceProductPage>;
+      })
+      .then((page) => {
+        if (requestRef.current !== requestId || controller.signal.aborted) {
+          return;
+        }
+
+        setProducts(page.products);
+        setCursor(page.nextCursor);
+        setHasMore(page.hasMore);
+      })
+      .catch((error) => {
+        if ((error as Error).name !== "AbortError") {
+          setProducts([]);
+          setCursor(null);
+          setHasMore(false);
+        }
+      })
+      .finally(() => {
+        if (requestRef.current === requestId) {
+          setIsLoadingNext(false);
+        }
+      });
+  }, [initialCursor, initialHasMore, initialProducts, queryKey]);
+
+  const loadNext = useCallback(async () => {
+    if (isLoadingNext || !hasMore || !cursor) {
+      return;
+    }
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
+    setIsLoadingNext(true);
+
+    const params = new URLSearchParams({
+      locale,
+      limit: "20",
+      cursor,
+      sort: sort ?? "newest",
+    });
+
+    if (categoryId) {
+      params.set("categoryId", categoryId);
+    }
+
+    if (storeId) {
+      params.set("storeId", storeId);
+    }
+
+    if (searchQuery?.trim()) {
+      params.set("q", searchQuery.trim());
+    }
+
+    try {
+      const response = await fetch(`/api/marketplace/products?${params.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error("PRODUCT_PAGE_FAILED");
+      }
+
+      const page = (await response.json()) as MarketplaceProductPage;
+
+      if (requestRef.current !== requestId || controller.signal.aborted) {
+        return;
+      }
+
+      setProducts((current) => mergeProducts(current, page.products));
+      setCursor(page.nextCursor);
+      setHasMore(page.hasMore);
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        setHasMore(false);
+      }
+    } finally {
+      if (requestRef.current === requestId) {
+        setIsLoadingNext(false);
+      }
+    }
+  }, [categoryId, cursor, hasMore, isLoadingNext, locale, searchQuery, sort, storeId]);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  return {
+    products,
+    hasMore,
+    isLoadingNext,
+    loadNext,
+  };
+}
+
 export function ProductMarketplace({
   products,
+  nextCursor,
+  hasMore,
   categories,
   selectedCategoryId,
+  locale,
+  searchQuery,
+  sort = "newest",
   productCardVariant,
   footer,
   labels,
 }: ProductMarketplaceProps) {
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const infinite = useInfiniteProducts({
+    initialProducts: products,
+    initialCursor: nextCursor,
+    initialHasMore: hasMore,
+    locale,
+    categoryId: activeCategoryId,
+    searchQuery,
+    sort,
+  });
   const activeCategory = useMemo(
     () => categories.find((category) => category.id === activeCategoryId),
     [activeCategoryId, categories],
@@ -449,21 +713,15 @@ export function ProductMarketplace({
   const categoryProductCounts = useMemo(() => {
     const counts = new Map<string, number>();
 
-    products.forEach((product) => {
+    infinite.products.forEach((product) => {
       if (product.categoryId) {
         counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1);
       }
     });
 
     return counts;
-  }, [products]);
-  const visibleProducts = useMemo(
-    () =>
-      activeCategoryId
-        ? products.filter((product) => product.categoryId === activeCategoryId)
-        : products,
-    [activeCategoryId, products],
-  );
+  }, [infinite.products]);
+  const visibleProducts = infinite.products;
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
@@ -528,20 +786,40 @@ export function ProductMarketplace({
                   description={labels.emptyDescription}
                 />
               ) : (
-                <ProductGrid
-                  products={visibleProducts}
-                  depositEnabled={false}
-                  productCardVariant={productCardVariant}
-                  labels={{ stock: labels.stock }}
-                />
+                <>
+                  <ProductGrid
+                    products={visibleProducts}
+                    depositEnabled={false}
+                    productCardVariant={productCardVariant}
+                    labels={{ stock: labels.stock }}
+                  />
+                  <ProductInfiniteSentinel
+                    disabled={!infinite.hasMore || infinite.isLoadingNext}
+                    onIntersect={infinite.loadNext}
+                  />
+                  <ProductListLoader show={infinite.isLoadingNext} />
+                </>
               )}
             </section>
           ) : (
-            <MobileCategoryCatalog
-              categories={categories}
-              productCounts={categoryProductCounts}
-              onSelect={selectCategory}
-            />
+            <section className="space-y-5">
+              <MobileCategoryCatalog
+                categories={categories}
+                productCounts={categoryProductCounts}
+                onSelect={selectCategory}
+              />
+              <ProductGrid
+                products={visibleProducts}
+                depositEnabled={false}
+                productCardVariant={productCardVariant}
+                labels={{ stock: labels.stock }}
+              />
+              <ProductInfiniteSentinel
+                disabled={!infinite.hasMore || infinite.isLoadingNext}
+                onIntersect={infinite.loadNext}
+              />
+              <ProductListLoader show={infinite.isLoadingNext} />
+            </section>
           )}
         </div>
 
@@ -561,12 +839,19 @@ export function ProductMarketplace({
               description={labels.emptyDescription}
             />
           ) : (
-            <ProductGrid
-              products={visibleProducts}
-              depositEnabled={false}
-              productCardVariant={productCardVariant}
-              labels={{ stock: labels.stock }}
-            />
+            <>
+              <ProductGrid
+                products={visibleProducts}
+                depositEnabled={false}
+                productCardVariant={productCardVariant}
+                labels={{ stock: labels.stock }}
+              />
+              <ProductInfiniteSentinel
+                disabled={!infinite.hasMore || infinite.isLoadingNext}
+                onIntersect={infinite.loadNext}
+              />
+              <ProductListLoader show={infinite.isLoadingNext} />
+            </>
           )}
         </div>
       </div>
@@ -580,12 +865,21 @@ export function Storefront({
   categories,
   locations = [],
   selectedCategoryId,
+  locale,
   productCardVariant,
   depositEnabled,
   footer,
   labels,
 }: StorefrontProps) {
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const infinite = useInfiniteProducts({
+    initialProducts: store.sampleProducts,
+    initialCursor: store.productNextCursor,
+    initialHasMore: store.productHasMore,
+    locale,
+    categoryId: activeCategoryId,
+    storeId: store.id,
+  });
   const primaryLocation = useMemo(
     () => locations.find((location) => location.isActive) ?? locations[0] ?? null,
     [locations],
@@ -596,13 +890,7 @@ export function Storefront({
           .filter(Boolean)
           .join(", ")
       : store.address;
-  const visibleProducts = useMemo(
-    () =>
-      activeCategoryId
-        ? store.sampleProducts.filter((product) => product.categoryId === activeCategoryId)
-        : store.sampleProducts,
-    [activeCategoryId, store.sampleProducts],
-  );
+  const visibleProducts = infinite.products;
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -719,14 +1007,21 @@ export function Storefront({
                 onSelect={selectCategory}
               />
             </aside>
-            <ProductGrid
-              products={visibleProducts}
-              depositEnabled={depositEnabled}
-              storeSlug={store.slug}
-              storeName={store.name}
-              productCardVariant={productCardVariant}
-              labels={{ stock: labels.stock }}
-            />
+            <div className="min-w-0">
+              <ProductGrid
+                products={visibleProducts}
+                depositEnabled={depositEnabled}
+                storeSlug={store.slug}
+                storeName={store.name}
+                productCardVariant={productCardVariant}
+                labels={{ stock: labels.stock }}
+              />
+              <ProductInfiniteSentinel
+                disabled={!infinite.hasMore || infinite.isLoadingNext}
+                onIntersect={infinite.loadNext}
+              />
+              <ProductListLoader show={infinite.isLoadingNext} />
+            </div>
           </div>
         </section>
       </div>

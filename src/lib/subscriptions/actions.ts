@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { SubscriptionActionResult } from "@/lib/subscriptions/types";
 
 function readString(formData: FormData, key: string) {
@@ -19,86 +18,103 @@ function readNumber(formData: FormData, key: string) {
   return Number.isFinite(value) ? value : 0;
 }
 
-function addOneMonth(date: Date) {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + 1);
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
-  return next;
+function readCurrency(formData: FormData) {
+  const currency = readString(formData, "currency").toUpperCase();
+
+  return /^[A-Z]{3}$/.test(currency) ? currency : "AZN";
+}
+
+function readBillingInterval(formData: FormData) {
+  const interval = readString(formData, "billingInterval");
+
+  return interval === "year" ? "year" : "month";
+}
+
+function readOptionalLimit(formData: FormData, key: string) {
+  const rawValue = readString(formData, key);
+
+  if (!rawValue) {
+    return null;
+  }
+
+  const value = Number(rawValue);
+
+  return Number.isFinite(value) && value >= 0 ? Math.floor(value) : null;
+}
+
+function revalidateSubscriptionPaths() {
+  revalidatePath("/radmin/subscriptions");
+  revalidatePath("/admin/subscriptions");
+  revalidatePath("/store/dashboard");
 }
 
 export async function activateFreePlanAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  const current = await requireRole(["seller"], "/store/dashboard/subscription");
-  const storeId = readString(formData, "storeId");
-  const planId = readString(formData, "planId");
+  await requireRole(["seller"], "/store/dashboard");
 
-  if (!storeId || !planId) {
+  return {
+    ok: false,
+    message: "Abunəlik planı yalnız admin tərəfindən manual təyin olunur.",
+  };
+}
+
+export async function createPlanAction(
+  formData: FormData,
+): Promise<SubscriptionActionResult> {
+  await requireRole(["admin"], "/radmin/subscriptions");
+
+  const name = readString(formData, "name");
+  const rawSlug = readString(formData, "slug");
+  const slug = slugify(rawSlug || name);
+  const description = readString(formData, "description");
+  const priceAmount = readNumber(formData, "priceAmount");
+  const productLimit = readOptionalLimit(formData, "productLimit");
+  const imagesPerProductLimit = readOptionalLimit(formData, "imagesPerProductLimit");
+  const currency = readCurrency(formData);
+  const billingInterval = readBillingInterval(formData);
+
+  if (!name || !slug) {
     return {
       ok: false,
-      message: "Mağaza və plan seçimi mütləqdir.",
+      message: "Plan adı və slug mütləqdir.",
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: store } = await (supabase as any)
-    .from("stores")
-    .select("id")
-    .eq("id", storeId)
-    .eq("owner_id", current.user.id)
-    .maybeSingle();
-
-  if (!store) {
+  if (priceAmount < 0) {
     return {
       ok: false,
-      message: "Bu mağaza üzərində icazəniz yoxdur.",
+      message: "Qiymət mənfi ola bilməz.",
     };
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: plan } = await (supabaseAdmin as any)
-    .from("subscription_plans")
-    .select("price_amount")
-    .eq("id", planId)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!plan) {
-    return {
-      ok: false,
-      message: "Aktiv plan tapılmadı.",
-    };
-  }
-
-  if (Number(plan.price_amount ?? 0) > 0) {
-    return {
-      ok: false,
-      message: "Pullu planlar üçün real ödəniş provayderi qoşulmalıdır.",
-    };
-  }
-
-  const now = new Date();
-  const endsAt = addOneMonth(now);
-
-  await (supabaseAdmin as any)
-    .from("subscriptions")
-    .update({
-      status: "canceled",
-      canceled_at: now.toISOString(),
-    })
-    .eq("store_id", storeId)
-    .in("status", ["trialing", "active", "past_due"]);
-
-  const { error } = await (supabaseAdmin as any).from("subscriptions").insert({
-    store_id: storeId,
-    plan_id: planId,
-    status: "active",
-    starts_at: now.toISOString(),
-    ends_at: endsAt.toISOString(),
-    metadata: {
-      payment_mode: "free",
-      note: "Free plan activation.",
+  const { error } = await (supabaseAdmin as any).from("subscription_plans").insert({
+    name,
+    slug,
+    description,
+    price_amount: priceAmount,
+    currency,
+    billing_interval: billingInterval,
+    features: [
+      productLimit === null ? "Limitsiz məhsul" : `${productLimit} məhsul`,
+      imagesPerProductLimit === null
+        ? "Limitsiz şəkil"
+        : `Məhsul başına ${imagesPerProductLimit} şəkil`,
+    ],
+    limits: {
+      product_limit: productLimit,
+      images_per_product_limit: imagesPerProductLimit,
     },
+    is_active: true,
   });
 
   if (error) {
@@ -108,12 +124,11 @@ export async function activateFreePlanAction(
     };
   }
 
-  revalidatePath("/store/dashboard/subscription");
-  revalidatePath("/store/dashboard");
+  revalidateSubscriptionPaths();
 
   return {
     ok: true,
-    message: "Pulsuz abunəlik aktiv edildi.",
+    message: "Plan yaradıldı.",
   };
 }
 
@@ -124,37 +139,49 @@ export async function updatePlanAction(
 
   const planId = readString(formData, "planId");
   const name = readString(formData, "name");
+  const rawSlug = readString(formData, "slug");
+  const slug = slugify(rawSlug || name);
   const description = readString(formData, "description");
   const priceAmount = readNumber(formData, "priceAmount");
-  const listingLimit = Math.trunc(readNumber(formData, "listingLimit"));
+  const productLimit = readOptionalLimit(formData, "productLimit");
+  const imagesPerProductLimit = readOptionalLimit(formData, "imagesPerProductLimit");
+  const currency = readCurrency(formData);
+  const billingInterval = readBillingInterval(formData);
   const isActive = readString(formData, "isActive") === "on";
 
-  if (!planId || !name) {
+  if (!planId || !name || !slug) {
     return {
       ok: false,
-      message: "Plan ID və ad mütləqdir.",
+      message: "Plan ID, ad və slug mütləqdir.",
     };
   }
 
-  if (priceAmount < 0 || listingLimit < 0) {
+  if (priceAmount < 0) {
     return {
       ok: false,
-      message: "Qiymət və elan limiti mənfi ola bilməz.",
+      message: "Qiymət mənfi ola bilməz.",
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { error } = await (supabase as any)
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await (supabaseAdmin as any)
     .from("subscription_plans")
     .update({
       name,
+      slug,
       description,
       price_amount: priceAmount,
-      currency: "AZN",
-      billing_interval: "month",
-      features: [`${listingLimit} elan`],
+      currency,
+      billing_interval: billingInterval,
+      features: [
+        productLimit === null ? "Limitsiz məhsul" : `${productLimit} məhsul`,
+        imagesPerProductLimit === null
+          ? "Limitsiz şəkil"
+          : `Məhsul başına ${imagesPerProductLimit} şəkil`,
+      ],
       limits: {
-        listing_limit: listingLimit,
+        product_limit: productLimit,
+        images_per_product_limit: imagesPerProductLimit,
       },
       is_active: isActive,
     })
@@ -167,11 +194,121 @@ export async function updatePlanAction(
     };
   }
 
-  revalidatePath("/radmin/subscriptions");
-  revalidatePath("/store/dashboard/subscription");
+  revalidateSubscriptionPaths();
 
   return {
     ok: true,
     message: "Plan yeniləndi.",
+  };
+}
+
+export async function assignStorePlanAction(
+  formData: FormData,
+): Promise<SubscriptionActionResult> {
+  const current = await requireRole(["admin"], "/radmin/subscriptions");
+  const storeId = readString(formData, "storeId");
+  const planId = readString(formData, "planId");
+  const statusInput = readString(formData, "status");
+  const status =
+    statusInput === "inactive" || statusInput === "canceled"
+      ? statusInput
+      : "assigned";
+
+  if (!storeId) {
+    return {
+      ok: false,
+      message: "Mağaza seçimi mütləqdir.",
+    };
+  }
+
+  if (status === "assigned" && !planId) {
+    return {
+      ok: false,
+      message: "Plan seçimi mütləqdir.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: store } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (!store) {
+    return {
+      ok: false,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  if (status === "assigned") {
+    const { data: plan } = await (supabaseAdmin as any)
+      .from("subscription_plans")
+      .select("id")
+      .eq("id", planId)
+      .maybeSingle();
+
+    if (!plan) {
+      return {
+        ok: false,
+        message: "Plan tapılmadı.",
+      };
+    }
+  }
+
+  const now = new Date().toISOString();
+  const replacementStatus = status === "canceled" ? "canceled" : "inactive";
+  const { error: closeError } = await (supabaseAdmin as any)
+    .from("subscriptions")
+    .update({
+      status: replacementStatus,
+      canceled_at: status === "canceled" ? now : null,
+    })
+    .eq("store_id", storeId)
+    .in("status", ["trialing", "active", "past_due", "assigned"]);
+
+  if (closeError) {
+    return {
+      ok: false,
+      message: closeError.message,
+    };
+  }
+
+  if (status !== "assigned") {
+    revalidateSubscriptionPaths();
+
+    return {
+      ok: true,
+      message: "Abunəlik statusu yeniləndi.",
+    };
+  }
+
+  const { error } = await (supabaseAdmin as any).from("subscriptions").insert({
+    store_id: storeId,
+    plan_id: planId,
+    status: "assigned",
+    starts_at: now,
+    current_period_start: null,
+    current_period_end: null,
+    assigned_by: current.user.id,
+    assigned_at: now,
+    metadata: {
+      assignment_mode: "manual",
+    },
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidateSubscriptionPaths();
+
+  return {
+    ok: true,
+    message: "Plan mağazaya manual təyin edildi.",
   };
 }

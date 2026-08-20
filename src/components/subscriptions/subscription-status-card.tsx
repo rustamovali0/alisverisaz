@@ -33,14 +33,16 @@ export function SubscriptionStatusCard({
   }
 
   const usagePercent =
-    subscription.listingLimit > 0
+    subscription.productLimit !== null && subscription.productLimit > 0
       ? Math.min(
           Math.round(
-            (subscription.listingCount / subscription.listingLimit) * 100,
+            (subscription.listingCount / subscription.productLimit) * 100,
           ),
           100,
         )
       : 0;
+  const productLimitLabel =
+    subscription.productLimit === null ? "Limitsiz" : String(subscription.productLimit);
 
   return (
     <section className="rounded-md border bg-card p-5 text-card-foreground shadow-sm">
@@ -61,7 +63,7 @@ export function SubscriptionStatusCard({
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Elan limiti</span>
           <span className="font-medium">
-            {subscription.listingCount} / {subscription.listingLimit}
+            {subscription.listingCount} / {productLimitLabel}
           </span>
         </div>
         <div className="h-2 rounded-full bg-muted">
@@ -71,7 +73,8 @@ export function SubscriptionStatusCard({
           />
         </div>
         <p className="text-sm text-muted-foreground">
-          Qalan elan sayı: {subscription.remainingListings}
+          Qalan məhsul sayı:{" "}
+          {subscription.productLimit === null ? "Limitsiz" : subscription.remainingListings}
         </p>
       </div>
     </section>

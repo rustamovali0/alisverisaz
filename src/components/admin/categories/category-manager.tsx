@@ -145,6 +145,15 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
           placeholder="Açıqlama"
           className="min-h-20 rounded-md border bg-background px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
         />
+        <label className="grid gap-2 text-sm font-medium">
+          Şəkil
+          <input
+            name="imageFile"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="h-11 rounded-md border bg-background px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+          />
+        </label>
       </form>
 
       <div className="grid gap-3 rounded-lg border bg-card p-4 shadow-sm">
@@ -159,9 +168,18 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
             <form
               key={category.id}
               action={handleUpdate}
-              className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[1fr_1fr_120px_180px_120px_auto]"
+              className="grid gap-3 rounded-lg border bg-background p-3 lg:grid-cols-[72px_1fr_1fr_120px_180px_120px_auto]"
             >
               <input type="hidden" name="categoryId" value={category.id} />
+              <div className="h-16 w-16 overflow-hidden rounded-md border bg-card">
+                {category.imageUrl ? (
+                  <img
+                    src={category.imageUrl}
+                    alt={category.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : null}
+              </div>
               <input
                 name="name"
                 defaultValue={category.name}
@@ -209,6 +227,15 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
                 placeholder="Açıqlama"
                 className="min-h-16 rounded-md border bg-card px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 lg:col-span-full"
               />
+              <label className="grid gap-2 text-sm font-medium lg:col-span-full">
+                Şəkli dəyiş
+                <input
+                  name="imageFile"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="h-11 rounded-md border bg-card px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1.5 file:text-primary-foreground"
+                />
+              </label>
             </form>
           ))}
         </div>

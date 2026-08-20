@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
-import { getMarketplaceProducts } from "@/lib/cart/data";
+import { getMarketplaceProductPage } from "@/lib/cart/data";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -12,6 +12,7 @@ type ProductsPageProps = {
   searchParams?: Promise<{
     category?: string;
     q?: string;
+    sort?: string;
   }>;
 };
 
@@ -47,16 +48,27 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
-  const products = await getMarketplaceProducts(locale, {
+  const productPage = await getMarketplaceProductPage(locale, {
     categoryId: selectedCategory?.id,
     searchQuery: search?.q,
+    sort: search?.sort,
+    limit: 20,
   });
 
   return (
     <ProductMarketplace
-      products={products}
+      products={productPage.products}
+      nextCursor={productPage.nextCursor}
+      hasMore={productPage.hasMore}
       categories={categories}
       selectedCategoryId={selectedCategory?.id}
+      locale={locale}
+      searchQuery={search?.q}
+      sort={
+        search?.sort === "oldest" || search?.sort === "price_asc" || search?.sort === "price_desc"
+          ? search.sort
+          : "newest"
+      }
       productCardVariant={activeTheme.productCardVariant}
       footer={{
         siteName: siteSettings.shortName || siteSettings.siteName,

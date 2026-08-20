@@ -23,4 +23,34 @@ export const serverEnv = {
         readOptionalServerEnv("SUPABASE_SERVICE_ROLE_KEY"),
     );
   },
+  get r2AccountId() {
+    return readOptionalServerEnv("R2_ACCOUNT_ID");
+  },
+  get r2AccessKeyId() {
+    return readOptionalServerEnv("R2_ACCESS_KEY_ID");
+  },
+  get r2SecretAccessKey() {
+    return readOptionalServerEnv("R2_SECRET_ACCESS_KEY");
+  },
+  get r2BucketName() {
+    return readOptionalServerEnv("R2_BUCKET_NAME");
+  },
+  get r2PublicUrl() {
+    return readOptionalServerEnv("R2_PUBLIC_URL");
+  },
+  get hasR2Config() {
+    return Boolean(
+      readOptionalServerEnv("R2_ACCOUNT_ID") &&
+        readOptionalServerEnv("R2_ACCESS_KEY_ID") &&
+        readOptionalServerEnv("R2_SECRET_ACCESS_KEY") &&
+        readOptionalServerEnv("R2_BUCKET_NAME") &&
+        readOptionalServerEnv("R2_PUBLIC_URL"),
+    );
+  },
+  get turnstileSecretKey() {
+    return readOptionalServerEnv("TURNSTILE_SECRET_KEY");
+  },
+  get hasTurnstileConfig() {
+    return Boolean(readOptionalServerEnv("TURNSTILE_SECRET_KEY"));
+  },
 } as const;

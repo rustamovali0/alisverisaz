@@ -18,6 +18,14 @@ export type CartProduct = {
   depositAmount: number;
 };
 
+export type MarketplaceProductSort = "newest" | "oldest" | "price_asc" | "price_desc";
+
+export type MarketplaceProductPage = {
+  products: CartProduct[];
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
 export type ProductImage = {
   url: string;
   isPrimary: boolean;
@@ -34,6 +42,8 @@ export type MarketplaceStore = {
   coverUrl: string | null;
   productCount: number;
   sampleProducts: CartProduct[];
+  productNextCursor?: string | null;
+  productHasMore?: boolean;
   categoryIds: string[];
 };
 
@@ -55,6 +65,7 @@ export type CheckoutActionResult =
       ok: true;
       message: string;
       orderIds: string[];
+      isGuest?: boolean;
     }
   | {
       ok: false;

@@ -10,7 +10,15 @@
     "loading": "Loading",
     "empty": "No data",
     "save": "Save",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "all": "All",
+    "status": "Status",
+    "unlimited": "Unlimited"
   },
   "home": {
     "title": "alisveris.az",
@@ -24,7 +32,13 @@
     "stock": "Stock",
     "addToCart": "Add to cart",
     "buyNow": "Buy now",
-    "sendDeposit": "Send deposit"
+    "sendDeposit": "Send deposit",
+    "allProductsShown": "All products are shown",
+    "loadingMore": "Loading more products",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -42,7 +56,96 @@
     "users": "Users",
     "stores": "Stores",
     "systemSettings": "System settings",
-    "messages": "Messages"
+    "messages": "Messages",
+    "home": "Home",
+    "catalog": "Catalog"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Register",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password",
+    "resetPassword": "Reset password",
+    "captchaRequired": "Complete the security check",
+    "genericLoginError": "Email or password is incorrect",
+    "resetRequestSent": "If an account exists for this email, a recovery link will be sent."
+  },
+  "cartUi": {
+    "title": "Cart",
+    "empty": "Your cart is empty",
+    "checkout": "Checkout",
+    "quantity": "Quantity",
+    "remove": "Remove from cart",
+    "total": "Total"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "guest": "Guest checkout",
+    "fullName": "Full name",
+    "phone": "Phone",
+    "address": "Address",
+    "notes": "Notes",
+    "placeOrder": "Place order",
+    "success": "Order created",
+    "genericError": "The order could not be completed. Please try again later."
+  },
+  "delivery": {
+    "title": "Delivery",
+    "pickup": "Store pickup",
+    "courier": "Baku courier",
+    "region": "Regional delivery",
+    "price": "Delivery fee",
+    "estimate": "Estimated time",
+    "free": "Free"
+  },
+  "dashboardUi": {
+    "customer": "Customer dashboard",
+    "seller": "Seller dashboard",
+    "admin": "Radmin panel",
+    "orders": "Orders",
+    "products": "Products",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "subscriptionUi": {
+    "title": "Subscription",
+    "currentPlan": "Current plan",
+    "businessStatus": "Status",
+    "productUsage": "Products",
+    "imagesPerProduct": "Images per product",
+    "assignedByAdmin": "Plans are assigned by radmin"
+  },
+  "settingsUi": {
+    "loaderType": "Loader type",
+    "loaderPalette": "Loader color",
+    "mobileNavbarVariant": "Mobile navbar design",
+    "showSellerSubscription": "Show subscription in seller panel"
+  },
+  "loaders": {
+    "classic": "Classic circle",
+    "dual": "Dual circle",
+    "dotsCircle": "Circular dots",
+    "movingDots": "3 moving dots",
+    "half": "Half circle",
+    "wave": "Wave circle",
+    "pulse": "Pulsing circle",
+    "clock": "Clock hand",
+    "oval": "Oval loader",
+    "gradient": "Gradient circle"
+  },
+  "errors": {
+    "accessDenied": "Access denied",
+    "notFound": "Not found",
+    "rateLimited": "Too many attempts. Please try again later.",
+    "generic": "The action could not be completed"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Enter a valid email",
+    "tooLong": "The value is too long",
+    "invalidCaptcha": "Security check failed"
   },
   "productFields": {
     "name": "Name",
@@ -62,6 +165,7 @@
     "confirmed": "Confirmed",
     "processing": "Preparing",
     "delivered": "Delivered",
-    "canceled": "Canceled"
+    "canceled": "Canceled",
+    "archived": "Archived"
   }
 }

@@ -226,7 +226,7 @@ export function AddToCartButton({
     return (
       <div
         className={cn(
-          "grid h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 bg-primary text-primary-foreground shadow-sm sm:h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
+          "grid !h-11 min-h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 bg-primary text-primary-foreground shadow-sm sm:!h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
           className,
         )}
       >
@@ -238,7 +238,7 @@ export function AddToCartButton({
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center gap-0.5 px-0.5 text-center text-[11px] font-black leading-tight text-primary-foreground min-[390px]:gap-1 min-[390px]:text-xs sm:text-sm">
+        <span className="flex min-w-0 items-center justify-center gap-0.5 px-1 text-center text-[11px] font-black leading-tight text-primary-foreground min-[360px]:text-xs min-[390px]:gap-1 sm:text-sm">
           <Check className="hidden size-4 shrink-0 stroke-[2.5] min-[390px]:block" aria-hidden="true" />
           <span className="hidden truncate sm:inline">Səbətə əlavə edilib</span>
           <span className="whitespace-nowrap sm:hidden">Səbət</span>
@@ -264,12 +264,12 @@ export function AddToCartButton({
       onClick={handleAdd}
       disabled={isUnavailable}
       className={cn(
-        "h-11 min-w-0 gap-1.5 overflow-hidden rounded-xl px-2 text-sm font-black sm:h-12 sm:gap-2 sm:px-4",
+        "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
         className,
       )}
     >
       <ShoppingCart className="mr-0 size-5 shrink-0 stroke-[2.4] sm:mr-2" aria-hidden="true" />
-      <span className="min-w-0 truncate">
+      <span className="min-w-0 whitespace-nowrap">
         <span className="sm:hidden">Səbətə</span>
         <span className="hidden sm:inline">{t("addToCart")}</span>
       </span>
@@ -290,11 +290,10 @@ export function BuyNowButton({
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
-  const [isChecking, setIsChecking] = useState(false);
   const checkoutPath = "/cart?mode=checkout";
   const isUnavailable = disabled || product.stockQuantity <= 0;
 
-  async function handleBuyNow() {
+  function handleBuyNow() {
     if (isUnavailable) {
       showToast({
         title: "Bu məhsul hazırda stokda yoxdur.",
@@ -314,23 +313,6 @@ export function BuyNowButton({
       },
     ]);
 
-    setIsChecking(true);
-    const supabase = createSupabaseBrowserClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setIsChecking(false);
-
-    if (!user) {
-      showToast({
-        title: "Giriş tələb olunur",
-        description: "Sifarişi tamamlamaq üçün zəhmət olmasa giriş edin.",
-        variant: "info",
-      });
-      router.push(`/login?next=${encodeURIComponent(checkoutPath)}`);
-      return;
-    }
-
     router.push(checkoutPath);
   }
 
@@ -338,11 +320,11 @@ export function BuyNowButton({
     <Button
       type="button"
       onClick={handleBuyNow}
-      disabled={isChecking || isUnavailable}
+      disabled={isUnavailable}
       className={cn("min-w-0", className)}
     >
       <Zap className="mr-2 size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
-      <span className="truncate">{isChecking ? "Yönləndirilir" : t("buyNow")}</span>
+      <span className="truncate">{t("buyNow")}</span>
     </Button>
   );
 }

@@ -1,12 +1,18 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
+import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
-import { canCreateListing } from "@/lib/subscriptions/data";
+import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
+import {
+  deleteR2ImageByUrl,
+  deleteR2ImagesByUrls,
+  uploadImageToR2,
+} from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -15,7 +21,8 @@ import type {
   ProductVariantInput,
 } from "@/lib/products/types";
 
-const PRODUCT_IMAGE_BUCKET = "product-images";
+const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PRODUCT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function isMissingTableError(error: unknown) {
   const value = error as { code?: string; message?: string } | null | undefined;
@@ -24,10 +31,14 @@ function isMissingTableError(error: unknown) {
   return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
 }
 
-function revalidateMarketplaceSurfaces() {
-  revalidateTag("public-marketplace", "max");
-  revalidatePath("/");
-  revalidatePath("/products");
+function revalidateMarketplaceSurfaces(input: {
+  productId?: string | null;
+  storeId?: string | null;
+  categoryId?: string | null;
+  storeSlug?: string | null;
+  homepage?: boolean;
+} = {}) {
+  invalidateProductPublicData(input);
 }
 
 function readString(formData: FormData, key: string) {
@@ -100,6 +111,117 @@ function getImageFiles(formData: FormData) {
     .filter((value): value is File => value instanceof File && value.size > 0);
 }
 
+async function uploadProductImageFiles(input: {
+  userId: string;
+  productId: string;
+  files: File[];
+}) {
+  return Promise.all(
+    input.files.map((file) =>
+      uploadImageToR2({
+        file,
+        folder: `products/${input.userId}/${input.productId}`,
+        maxSizeBytes: MAX_PRODUCT_IMAGE_SIZE,
+        allowedMimeTypes: ALLOWED_PRODUCT_IMAGE_TYPES,
+      }),
+    ),
+  );
+}
+
+function assertImageLimit(input: {
+  imagesPerProductLimit: number | null;
+  nextImageCount: number;
+}) {
+  if (
+    input.imagesPerProductLimit !== null &&
+    input.nextImageCount > input.imagesPerProductLimit
+  ) {
+    throw new Error("Məhsul şəkil limitiniz dolub.");
+  }
+}
+
+async function assertStoreImageLimit(input: {
+  storeId: string;
+  nextImageCount: number;
+}) {
+  const entitlements = await getStoreEntitlements(input.storeId);
+
+  assertImageLimit({
+    imagesPerProductLimit: entitlements.imagesPerProductLimit,
+    nextImageCount: input.nextImageCount,
+  });
+}
+
+async function assertProductImageLimitBeforeUpload(input: {
+  productId: string;
+  newImageCount: number;
+  replaceExisting: boolean;
+}) {
+  if (input.newImageCount === 0) {
+    return;
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: product } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id,store_id,listing_type")
+    .eq("id", input.productId)
+    .maybeSingle();
+
+  if (!product || product.listing_type !== "store") {
+    return;
+  }
+
+  const entitlements = await getStoreEntitlements(product.store_id);
+
+  if (input.replaceExisting) {
+    assertImageLimit({
+      imagesPerProductLimit: entitlements.imagesPerProductLimit,
+      nextImageCount: input.newImageCount,
+    });
+    return;
+  }
+
+  const { count } = await (supabaseAdmin as any)
+    .from("product_images")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("product_id", input.productId);
+
+  assertImageLimit({
+    imagesPerProductLimit: entitlements.imagesPerProductLimit,
+    nextImageCount: (count ?? 0) + input.newImageCount,
+  });
+}
+
+async function insertProductImageRows(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  productId: string;
+  productName: string;
+  existingImageCount: number;
+  images: Awaited<ReturnType<typeof uploadProductImageFiles>>;
+}) {
+  await Promise.all(
+    input.images.map((image, index) =>
+      (input.supabaseAdmin as any).from("product_images").insert({
+        product_id: input.productId,
+        url: image.url,
+        alt_text: input.productName,
+        sort_order: input.existingImageCount + index,
+        is_primary: input.existingImageCount === 0 && index === 0,
+      }),
+    ),
+  ).then((results) => {
+    const failed = results.find((result) => result.error);
+
+    if (failed?.error) {
+      throw new Error(failed.error.message);
+    }
+  });
+}
+
 async function uploadProductImages(input: {
   userId: string;
   productId: string;
@@ -110,42 +232,86 @@ async function uploadProductImages(input: {
     return;
   }
 
+  await assertProductImageLimitBeforeUpload({
+    productId: input.productId,
+    newImageCount: input.files.length,
+    replaceExisting: false,
+  });
+
+  const uploadedImages = await uploadProductImageFiles(input);
   const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingImages } = await (supabaseAdmin as any)
+    .from("product_images")
+    .select("id")
+    .eq("product_id", input.productId);
 
-  await Promise.all(
-    input.files.map(async (file, index) => {
-      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const storagePath = `${input.userId}/${input.productId}/${crypto.randomUUID()}.${extension}`;
-      const body = new Uint8Array(await file.arrayBuffer());
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from(PRODUCT_IMAGE_BUCKET)
-        .upload(storagePath, body, {
-          contentType: file.type || "image/jpeg",
-          upsert: false,
-        });
+  try {
+    await insertProductImageRows({
+      supabaseAdmin,
+      productId: input.productId,
+      productName: input.productName,
+      existingImageCount: existingImages?.length ?? 0,
+      images: uploadedImages,
+    });
+  } catch (error) {
+    await deleteR2ImagesByUrls(uploadedImages.map((image) => image.url));
+    throw error;
+  }
+}
 
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
+async function replaceProductImages(input: {
+  userId: string;
+  productId: string;
+  productName: string;
+  files: File[];
+}) {
+  if (input.files.length === 0) {
+    return [];
+  }
 
-      const { data } = supabaseAdmin.storage
-        .from(PRODUCT_IMAGE_BUCKET)
-        .getPublicUrl(storagePath);
+  await assertProductImageLimitBeforeUpload({
+    productId: input.productId,
+    newImageCount: input.files.length,
+    replaceExisting: true,
+  });
 
-      const { error: imageError } = await (supabaseAdmin as any)
-        .from("product_images")
-        .insert({
-          product_id: input.productId,
-          url: data.publicUrl,
-          alt_text: input.productName,
-          sort_order: index,
-          is_primary: index === 0,
-        });
+  const uploadedImages = await uploadProductImageFiles(input);
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingImages, error: lookupError } = await (supabaseAdmin as any)
+    .from("product_images")
+    .select("url")
+    .eq("product_id", input.productId);
 
-      if (imageError) {
-        throw new Error(imageError.message);
-      }
-    }),
+  if (lookupError) {
+    await deleteR2ImagesByUrls(uploadedImages.map((image) => image.url));
+    throw new Error(lookupError.message);
+  }
+
+  const { error: deleteError } = await (supabaseAdmin as any)
+    .from("product_images")
+    .delete()
+    .eq("product_id", input.productId);
+
+  if (deleteError) {
+    await deleteR2ImagesByUrls(uploadedImages.map((image) => image.url));
+    throw new Error(deleteError.message);
+  }
+
+  try {
+    await insertProductImageRows({
+      supabaseAdmin,
+      productId: input.productId,
+      productName: input.productName,
+      existingImageCount: 0,
+      images: uploadedImages,
+    });
+  } catch (error) {
+    await deleteR2ImagesByUrls(uploadedImages.map((image) => image.url));
+    throw error;
+  }
+
+  return ((existingImages ?? []) as Array<{ url: string | null }>).map(
+    (image) => image.url,
   );
 }
 
@@ -359,7 +525,21 @@ export async function createStoreProductAction(
   if (!limit.allowed) {
     return {
       ok: false,
-      message: "Aktiv plan yoxdur və ya elan limiti bitib.",
+      message: "Məhsul limitiniz dolub.",
+    };
+  }
+
+  const imageFiles = getImageFiles(formData);
+
+  try {
+    await assertStoreImageLimit({
+      storeId,
+      nextImageCount: imageFiles.length,
+    });
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Şəkil limiti yoxlanmadı.",
     };
   }
 
@@ -411,7 +591,7 @@ export async function createStoreProductAction(
       userId: current.user.id,
       productId: product.id,
       productName: payload.name,
-      files: getImageFiles(formData),
+      files: imageFiles,
     });
   } catch (error) {
     return {
@@ -420,8 +600,16 @@ export async function createStoreProductAction(
     };
   }
 
+  const storeSlug = stores.find((store) => store.id === storeId)?.slug ?? null;
+
   revalidatePath("/store/dashboard/products");
-  revalidateMarketplaceSurfaces();
+  revalidateMarketplaceSurfaces({
+    productId: product.id,
+    storeId,
+    categoryId: payload.categoryId,
+    storeSlug,
+    homepage: payload.status === "active",
+  });
 
   return {
     ok: true,
@@ -468,7 +656,7 @@ export async function updateProductAction(
   const supabase = await createSupabaseServerClient();
   const { data: existing } = await (supabase as any)
     .from("products")
-    .select("id,store_id,listing_type,metadata")
+    .select("id,store_id,category_id,listing_type,metadata,stores(slug)")
     .eq("id", productId)
     .maybeSingle();
 
@@ -494,6 +682,7 @@ export async function updateProductAction(
       : {
           variants: payload.variants,
         };
+  let replacedImageUrls: Array<string | null> = [];
 
   const { error } = await (supabase as any)
     .from("products")
@@ -533,7 +722,7 @@ export async function updateProductAction(
         formData,
       });
     }
-    await uploadProductImages({
+    replacedImageUrls = await replaceProductImages({
       userId: current.user.id,
       productId,
       productName: payload.name,
@@ -550,7 +739,16 @@ export async function updateProductAction(
   revalidatePath("/dashboard/listings");
   revalidatePath("/radmin/products");
   revalidatePath("/radmin/stores");
-  revalidateMarketplaceSurfaces();
+  revalidateMarketplaceSurfaces({
+    productId,
+    storeId: existing.store_id,
+    categoryId: payload.categoryId ?? existing.category_id,
+    storeSlug: Array.isArray(existing.stores)
+      ? existing.stores[0]?.slug
+      : existing.stores?.slug,
+    homepage: status === "active" || existing.metadata?.featured === true,
+  });
+  await deleteR2ImagesByUrls(replacedImageUrls);
 
   return {
     ok: true,
@@ -586,6 +784,17 @@ export async function deleteProductAction(
   }
 
   const supabase = await createSupabaseServerClient();
+  const [{ data: productImages }, { data: existing }] = await Promise.all([
+    (supabase as any)
+    .from("product_images")
+    .select("url")
+      .eq("product_id", productId),
+    (supabase as any)
+      .from("products")
+      .select("id,store_id,category_id,status,stores(slug)")
+      .eq("id", productId)
+      .maybeSingle(),
+  ]);
   const { error } = await (supabase as any)
     .from("products")
     .delete()
@@ -602,11 +811,97 @@ export async function deleteProductAction(
   revalidatePath("/dashboard/listings");
   revalidatePath("/radmin/products");
   revalidatePath("/radmin/stores");
-  revalidateMarketplaceSurfaces();
+  revalidateMarketplaceSurfaces({
+    productId,
+    storeId: existing?.store_id,
+    categoryId: existing?.category_id,
+    storeSlug: Array.isArray(existing?.stores)
+      ? existing?.stores[0]?.slug
+      : existing?.stores?.slug,
+    homepage: existing?.status === "active",
+  });
+  await deleteR2ImagesByUrls(
+    ((productImages ?? []) as Array<{ url: string | null }>).map((image) => image.url),
+  );
 
   return {
     ok: true,
     message: "Məhsul silindi.",
+  };
+}
+
+export async function deleteProductImageAction(
+  formData: FormData,
+): Promise<ProductActionResult> {
+  const current = await requireRole(
+    ["seller", "customer", "admin"],
+    "/dashboard/listings",
+  );
+  const imageId = readString(formData, "imageId");
+
+  if (!imageId) {
+    return {
+      ok: false,
+      message: "Şəkil tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: image } = await (supabaseAdmin as any)
+    .from("product_images")
+    .select("id,product_id,url")
+    .eq("id", imageId)
+    .maybeSingle();
+
+  if (!image) {
+    return {
+      ok: false,
+      message: "Şəkil tapılmadı.",
+    };
+  }
+
+  const { data: product } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id,owner_id,store_id,category_id,status,stores(slug)")
+    .eq("id", image.product_id)
+    .maybeSingle();
+
+  if (!product || (current.role !== "admin" && product.owner_id !== current.user.id)) {
+    return {
+      ok: false,
+      message: "Bu şəkli silmək icazəniz yoxdur.",
+    };
+  }
+
+  const { error } = await (supabaseAdmin as any)
+    .from("product_images")
+    .delete()
+    .eq("id", imageId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/store/dashboard/products");
+  revalidatePath("/dashboard/listings");
+  revalidatePath("/radmin/products");
+  revalidateMarketplaceSurfaces({
+    productId: image.product_id,
+    storeId: product.store_id,
+    categoryId: product.category_id,
+    storeSlug: Array.isArray(product.stores)
+      ? product.stores[0]?.slug
+      : product.stores?.slug,
+    homepage: product.status === "active",
+  });
+  await deleteR2ImageByUrl(image.url);
+
+  return {
+    ok: true,
+    message: "Şəkil silindi.",
   };
 }
 

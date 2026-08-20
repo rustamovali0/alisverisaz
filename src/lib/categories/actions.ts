@@ -1,9 +1,18 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { invalidateCategoryPublicData } from "@/lib/cache/public-cache";
+import {
+  deleteR2MediaAssetsByUrls,
+  recordImageMediaAsset,
+} from "@/lib/storage/media-assets";
+import { uploadImageToR2 } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+const MAX_CATEGORY_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_CATEGORY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 type CategoryActionResult =
   | {
@@ -31,6 +40,12 @@ function readBoolean(formData: FormData, key: string) {
   return readString(formData, key) === "on";
 }
 
+function readFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
 function slugify(value: string) {
   return (
     value
@@ -49,13 +64,11 @@ function slugify(value: string) {
   );
 }
 
-function revalidateCategorySurfaces() {
-  revalidateTag("public-categories", "max");
-  revalidatePath("/");
-  revalidatePath("/products");
+function revalidateCategorySurfaces(categoryId?: string | null) {
+  invalidateCategoryPublicData({
+    categoryId,
+  });
   revalidatePath("/radmin/categories");
-  revalidatePath("/az");
-  revalidatePath("/az/products");
   revalidatePath("/az/radmin/categories");
 }
 
@@ -89,10 +102,35 @@ async function ensureUniqueSlug(input: {
   }
 }
 
+async function uploadCategoryImage(input: {
+  file: File;
+  userId: string;
+  categoryName: string;
+}) {
+  const uploaded = await uploadImageToR2({
+    file: input.file,
+    folder: `categories/${input.userId}`,
+    maxSizeBytes: MAX_CATEGORY_IMAGE_SIZE,
+    allowedMimeTypes: ALLOWED_CATEGORY_IMAGE_TYPES,
+  });
+
+  await recordImageMediaAsset({
+    uploaded,
+    originalFileName: input.file.name,
+    altText: input.categoryName,
+    userId: input.userId,
+    metadata: {
+      source: "category",
+    },
+  });
+
+  return uploaded.url;
+}
+
 export async function createCategoryAction(
   formData: FormData,
 ): Promise<CategoryActionResult> {
-  await requireRole(["admin"], "/radmin/categories");
+  const current = await requireRole(["admin"], "/radmin/categories");
   const name = readString(formData, "name");
 
   if (!name) {
@@ -108,14 +146,34 @@ export async function createCategoryAction(
     supabase,
     slug: slugify(readString(formData, "slug") || name),
   });
-  const { error } = await (supabase as any).from("categories").insert({
+  let imageUrl: string | null = null;
+
+  try {
+    const imageFile = readFile(formData, "imageFile");
+
+    if (imageFile) {
+      imageUrl = await uploadCategoryImage({
+        file: imageFile,
+        userId: current.user.id,
+        categoryName: name,
+      });
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
+    };
+  }
+
+  const { data: category, error } = await (supabase as any).from("categories").insert({
     parent_id: parentId,
     name,
     slug,
+    image_url: imageUrl,
     description: readString(formData, "description") || null,
     sort_order: readNumber(formData, "sortOrder"),
     is_active: readBoolean(formData, "isActive"),
-  });
+  }).select("id").single();
 
   if (error) {
     return {
@@ -124,7 +182,7 @@ export async function createCategoryAction(
     };
   }
 
-  revalidateCategorySurfaces();
+  revalidateCategorySurfaces(category?.id);
 
   return {
     ok: true,
@@ -135,7 +193,7 @@ export async function createCategoryAction(
 export async function updateCategoryAction(
   formData: FormData,
 ): Promise<CategoryActionResult> {
-  await requireRole(["admin"], "/radmin/categories");
+  const current = await requireRole(["admin"], "/radmin/categories");
   const id = readString(formData, "categoryId");
   const name = readString(formData, "name");
 
@@ -153,12 +211,37 @@ export async function updateCategoryAction(
     slug: slugify(readString(formData, "slug") || name),
     ignoreId: id,
   });
+  const { data: existing } = await (supabase as any)
+    .from("categories")
+    .select("image_url")
+    .eq("id", id)
+    .maybeSingle();
+  let imageUrl = existing?.image_url ?? null;
+
+  try {
+    const imageFile = readFile(formData, "imageFile");
+
+    if (imageFile) {
+      imageUrl = await uploadCategoryImage({
+        file: imageFile,
+        userId: current.user.id,
+        categoryName: name,
+      });
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
+    };
+  }
+
   const { error } = await (supabase as any)
     .from("categories")
     .update({
       parent_id: parentId === id ? null : parentId,
       name,
       slug,
+      image_url: imageUrl,
       description: readString(formData, "description") || null,
       sort_order: readNumber(formData, "sortOrder"),
       is_active: readBoolean(formData, "isActive"),
@@ -173,7 +256,8 @@ export async function updateCategoryAction(
     };
   }
 
-  revalidateCategorySurfaces();
+  await deleteR2MediaAssetsByUrls([existing?.image_url !== imageUrl ? existing?.image_url : ""]);
+  revalidateCategorySurfaces(id);
 
   return {
     ok: true,
@@ -195,6 +279,11 @@ export async function deleteCategoryAction(
   }
 
   const supabase = createSupabaseAdminClient();
+  const { data: existing } = await (supabase as any)
+    .from("categories")
+    .select("image_url")
+    .eq("id", id)
+    .maybeSingle();
   const { error } = await (supabase as any).from("categories").delete().eq("id", id);
 
   if (error) {
@@ -204,7 +293,8 @@ export async function deleteCategoryAction(
     };
   }
 
-  revalidateCategorySurfaces();
+  await deleteR2MediaAssetsByUrls([existing?.image_url]);
+  revalidateCategorySurfaces(id);
 
   return {
     ok: true,

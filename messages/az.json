@@ -10,7 +10,15 @@
     "loading": "Yüklənir",
     "empty": "Məlumat yoxdur",
     "save": "Yadda saxla",
-    "close": "Bağla"
+    "close": "Bağla",
+    "cancel": "Ləğv et",
+    "delete": "Sil",
+    "edit": "Redaktə et",
+    "view": "Bax",
+    "search": "Axtar",
+    "all": "Hamısı",
+    "status": "Status",
+    "unlimited": "Limitsiz"
   },
   "home": {
     "title": "alisveris.az",
@@ -24,7 +32,13 @@
     "stock": "Stok",
     "addToCart": "Səbətə",
     "buyNow": "İndi al",
-    "sendDeposit": "Beh göndər"
+    "sendDeposit": "Beh göndər",
+    "allProductsShown": "Bütün məhsullar göstərildi",
+    "loadingMore": "Daha çox məhsul yüklənir",
+    "sortNewest": "Ən yeni",
+    "sortOldest": "Ən köhnə",
+    "sortPriceAsc": "Qiymət artan",
+    "sortPriceDesc": "Qiymət azalan"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -42,7 +56,96 @@
     "users": "İstifadəçilər",
     "stores": "Mağazalar",
     "systemSettings": "Sistem ayarları",
-    "messages": "Mesajlar"
+    "messages": "Mesajlar",
+    "home": "Əsas",
+    "catalog": "Kataloq"
+  },
+  "auth": {
+    "login": "Daxil ol",
+    "register": "Qeydiyyat",
+    "logout": "Çıxış",
+    "email": "Email",
+    "password": "Şifrə",
+    "forgotPassword": "Şifrəni unutdum",
+    "resetPassword": "Şifrəni yenilə",
+    "captchaRequired": "Təhlükəsizlik yoxlamasını tamamlayın",
+    "genericLoginError": "Email və ya şifrə yanlışdır",
+    "resetRequestSent": "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək."
+  },
+  "cartUi": {
+    "title": "Səbət",
+    "empty": "Səbət boşdur",
+    "checkout": "Sifarişi tamamla",
+    "quantity": "Say",
+    "remove": "Səbətdən sil",
+    "total": "Cəmi"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "guest": "Qonaq checkout",
+    "fullName": "Ad və soyad",
+    "phone": "Telefon",
+    "address": "Ünvan",
+    "notes": "Qeyd",
+    "placeOrder": "Sifarişi yarat",
+    "success": "Sifariş yaradıldı",
+    "genericError": "Sifariş tamamlanmadı. Bir az sonra yenidən yoxlayın."
+  },
+  "delivery": {
+    "title": "Çatdırılma",
+    "pickup": "Mağazadan götürmə",
+    "courier": "Bakı üzrə kuryer",
+    "region": "Region çatdırılması",
+    "price": "Çatdırılma haqqı",
+    "estimate": "Təxmini müddət",
+    "free": "Pulsuz"
+  },
+  "dashboardUi": {
+    "customer": "İstifadəçi paneli",
+    "seller": "Satıcı paneli",
+    "admin": "Radmin panel",
+    "orders": "Sifarişlər",
+    "products": "Məhsullar",
+    "settings": "Ayarlar",
+    "profile": "Profil"
+  },
+  "subscriptionUi": {
+    "title": "Abunəlik",
+    "currentPlan": "Cari plan",
+    "businessStatus": "Status",
+    "productUsage": "Məhsullar",
+    "imagesPerProduct": "Bir məhsula şəkil",
+    "assignedByAdmin": "Plan radmin tərəfindən təyin olunur"
+  },
+  "settingsUi": {
+    "loaderType": "Loader tipi",
+    "loaderPalette": "Loader rəngi",
+    "mobileNavbarVariant": "Mobile navbar dizaynı",
+    "showSellerSubscription": "Seller paneldə abunəliyi göstər"
+  },
+  "loaders": {
+    "classic": "Klassik dairə",
+    "dual": "İkili dairə",
+    "dotsCircle": "Dairəvi nöqtələr",
+    "movingDots": "3 hərəkətli nöqtə",
+    "half": "Yarım dairə",
+    "wave": "Dalğalı dairə",
+    "pulse": "Pulsing dairə",
+    "clock": "Saat əqrəbi",
+    "oval": "Oval loader",
+    "gradient": "Gradient dairə"
+  },
+  "errors": {
+    "accessDenied": "Giriş icazəsi yoxdur",
+    "notFound": "Məlumat tapılmadı",
+    "rateLimited": "Çox sayda cəhd edildi. Bir az sonra yenidən yoxlayın.",
+    "generic": "Əməliyyat tamamlanmadı"
+  },
+  "validation": {
+    "required": "Bu sahə məcburidir",
+    "invalidEmail": "Email düzgün deyil",
+    "tooLong": "Dəyər çox uzundur",
+    "invalidCaptcha": "Təhlükəsizlik yoxlaması uğursuz oldu"
   },
   "productFields": {
     "name": "Ad",
@@ -62,6 +165,7 @@
     "confirmed": "Təsdiqləndi",
     "processing": "Hazırlanır",
     "delivered": "Çatdırıldı",
-    "canceled": "Ləğv edildi"
+    "canceled": "Ləğv edildi",
+    "archived": "Arxivləndi"
   }
 }

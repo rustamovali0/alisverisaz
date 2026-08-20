@@ -1,11 +1,16 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { invalidateStorePublicData } from "@/lib/cache/public-cache";
+import {
+  deleteR2MediaAssetsByUrls,
+  recordImageMediaAsset,
+} from "@/lib/storage/media-assets";
+import { uploadImageToR2 } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-const STORE_MEDIA_BUCKET = "cms-media";
 const MAX_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -31,89 +36,32 @@ function readFile(formData: FormData, key: string) {
   return value instanceof File && value.size > 0 ? value : null;
 }
 
-function sanitizeFileName(name: string) {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9.]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function ensureStoreMediaBucket() {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data: bucket } = await supabaseAdmin.storage.getBucket(STORE_MEDIA_BUCKET);
-
-  if (bucket) {
-    return;
-  }
-
-  const { error } = await supabaseAdmin.storage.createBucket(STORE_MEDIA_BUCKET, {
-    public: true,
-    fileSizeLimit: MAX_MEDIA_SIZE,
-    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
-  });
-
-  if (error && !error.message.toLowerCase().includes("already")) {
-    throw new Error("Şəkil yükləmə yaddaşı hazır deyil. Supabase storage bucket yaradılmalıdır.");
-  }
-}
-
 async function uploadStoreMedia(input: {
   file: File;
   userId: string;
   storeId: string;
   kind: "logo" | "banner";
 }) {
-  if (input.file.size > MAX_MEDIA_SIZE) {
-    throw new Error("Şəkil maksimum 5MB ola bilər.");
-  }
-
-  if (!ALLOWED_MEDIA_TYPES.includes(input.file.type)) {
-    throw new Error("Yalnız JPG, PNG və WebP şəkillər qəbul edilir.");
-  }
-
-  const supabaseAdmin = createSupabaseAdminClient();
-  await ensureStoreMediaBucket();
-
-  const fileName = sanitizeFileName(input.file.name) || `${input.kind}.webp`;
-  const path = `stores/${input.storeId}/${input.kind}/${crypto.randomUUID()}-${fileName}`;
-  const body = new Uint8Array(await input.file.arrayBuffer());
-  const { error } = await supabaseAdmin.storage
-    .from(STORE_MEDIA_BUCKET)
-    .upload(path, body, {
-      contentType: input.file.type,
-      upsert: false,
-    });
-
-  if (error) {
-    throw new Error(
-      error.message.toLowerCase().includes("bucket")
-        ? "Şəkil yükləmə yaddaşı tapılmadı. Supabase-də cms-media bucket yaradın."
-        : error.message,
-    );
-  }
-
-  const { data } = supabaseAdmin.storage.from(STORE_MEDIA_BUCKET).getPublicUrl(path);
-
-  const { error: mediaAssetError } = await (supabaseAdmin as any).from("media_assets").insert({
-    bucket: STORE_MEDIA_BUCKET,
-    path,
-    url: data.publicUrl,
-    file_name: input.file.name,
-    mime_type: input.file.type,
-    size_bytes: input.file.size,
-    alt_text: input.kind === "logo" ? "Mağaza logosu" : "Mağaza banneri",
-    created_by: input.userId,
-    updated_by: input.userId,
+  const uploaded = await uploadImageToR2({
+    file: input.file,
+    folder: `stores/${input.storeId}/${input.kind}`,
+    maxSizeBytes: MAX_MEDIA_SIZE,
+    allowedMimeTypes: ALLOWED_MEDIA_TYPES,
   });
 
-  if (
-    mediaAssetError &&
-    !["42P01", "PGRST205"].includes(mediaAssetError.code ?? "")
-  ) {
-    throw new Error(mediaAssetError.message);
-  }
+  await recordImageMediaAsset({
+    uploaded,
+    originalFileName: input.file.name,
+    altText: input.kind === "logo" ? "Mağaza logosu" : "Mağaza banneri",
+    userId: input.userId,
+    metadata: {
+      source: "store-settings",
+      storeId: input.storeId,
+      kind: input.kind,
+    },
+  });
 
-  return data.publicUrl;
+  return uploaded.url;
 }
 
 export async function updateSellerStoreSettingsAction(
@@ -135,7 +83,7 @@ export async function updateSellerStoreSettingsAction(
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: store } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id,owner_id")
+    .select("id,owner_id,slug,logo_url,cover_url")
     .eq("id", storeId)
     .eq("owner_id", current.user.id)
     .maybeSingle();
@@ -147,10 +95,12 @@ export async function updateSellerStoreSettingsAction(
     };
   }
 
+  const replacedUrls: string[] = [];
+
   try {
     const payload: Record<string, string> = { name };
-
     if (logoFile) {
+      replacedUrls.push(store.logo_url);
       payload.logo_url = await uploadStoreMedia({
         file: logoFile,
         userId: current.user.id,
@@ -160,6 +110,7 @@ export async function updateSellerStoreSettingsAction(
     }
 
     if (bannerFile) {
+      replacedUrls.push(store.cover_url);
       payload.cover_url = await uploadStoreMedia({
         file: bannerFile,
         userId: current.user.id,
@@ -189,9 +140,11 @@ export async function updateSellerStoreSettingsAction(
 
   revalidatePath("/store/dashboard/settings");
   revalidatePath("/admin/settings");
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidateTag("public-marketplace", "max");
+  invalidateStorePublicData({
+    storeId,
+    storeSlug: store.slug,
+  });
+  await deleteR2MediaAssetsByUrls(replacedUrls);
 
   return {
     ok: true,

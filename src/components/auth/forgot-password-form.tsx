@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
+import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -14,15 +15,18 @@ import { requestPasswordResetAction } from "@/lib/auth/actions";
 export function ForgotPasswordForm() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       formData.set("identifier", identifier.trim());
+      formData.set("captchaToken", captchaToken);
       const result = await requestPasswordResetAction(formData);
 
       if (!result.ok) {
+        setCaptchaToken("");
         setServerError(result.message);
         void appAlert.error(result.message, "Link göndərilmədi");
         return;
@@ -77,6 +81,7 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           required
         />
+        <TurnstileField token={captchaToken} onTokenChange={setCaptchaToken} />
         <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
           <Mail className="mr-2 size-4" aria-hidden="true" />
           {isPending ? "Göndərilir" : "Bərpa linki göndər"}
