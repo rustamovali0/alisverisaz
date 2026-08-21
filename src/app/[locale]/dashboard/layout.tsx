@@ -49,7 +49,7 @@ export default async function CustomerDashboardLayout({
           </Button>
         </div>
       </section>
-      <div className="container py-6 md:py-6">{children}</div>
+      <div className="container hidden py-6 md:block">{children}</div>
       <div className="hidden md:block">
         <SiteFooter
           siteName={siteSettings.siteName}

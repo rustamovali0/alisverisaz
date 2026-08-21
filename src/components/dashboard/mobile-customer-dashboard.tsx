@@ -43,14 +43,14 @@ export function MobileCustomerDashboard({
 
   if (!showMenu) {
     return (
-      <section className="bg-white px-4 pb-4 pt-4 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
+      <section className="bg-white px-4 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-4 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
         {children}
       </section>
     );
   }
 
   return (
-    <section className="bg-white px-5 pb-6 pt-5 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
+    <section className="bg-white px-5 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-5 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
       <Link
         href="/dashboard/profile"
         className="mb-5 grid min-w-0 grid-cols-[60px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-border dark:bg-card"

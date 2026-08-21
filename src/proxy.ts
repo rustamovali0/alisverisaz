@@ -11,10 +11,12 @@ function copyCookies(from: NextResponse, to: NextResponse) {
 
 function resolveCookieLocale(request: NextRequest) {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+  const hasValidCookie = routing.locales.includes(cookieLocale as any);
 
-  return routing.locales.includes(cookieLocale as any)
-    ? cookieLocale
-    : routing.defaultLocale;
+  return {
+    locale: hasValidCookie ? cookieLocale : routing.defaultLocale,
+    shouldSetLocaleCookie: !hasValidCookie,
+  };
 }
 
 function setLocaleCookie(response: NextResponse, locale: string) {
@@ -22,6 +24,7 @@ function setLocaleCookie(response: NextResponse, locale: string) {
     path: "/",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 365,
+    secure: process.env.NODE_ENV === "production",
   });
 }
 
@@ -36,6 +39,7 @@ function splitLocalePath(request: NextRequest) {
       locale,
       visiblePathname: `/${rest.join("/")}`.replace(/\/$/, "") || "/",
       shouldRedirectClean: true,
+      shouldSetLocaleCookie: true,
     };
   }
 
@@ -44,13 +48,17 @@ function splitLocalePath(request: NextRequest) {
       locale: routing.defaultLocale,
       visiblePathname: `/${rest.join("/")}`.replace(/\/$/, "") || "/",
       shouldRedirectClean: true,
+      shouldSetLocaleCookie: true,
     };
   }
 
+  const resolved = resolveCookieLocale(request);
+
   return {
-    locale: resolveCookieLocale(request),
+    locale: resolved.locale,
     visiblePathname: pathname,
     shouldRedirectClean: false,
+    shouldSetLocaleCookie: resolved.shouldSetLocaleCookie,
   };
 }
 
@@ -70,7 +78,12 @@ function localizedInternalPath(locale: string, pathname: string) {
   return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
 }
 
-function createLocalizedRewrite(request: NextRequest, pathname: string, locale: string) {
+function createLocalizedRewrite(
+  request: NextRequest,
+  pathname: string,
+  locale: string,
+  shouldSetLocaleCookie: boolean,
+) {
   const url = request.nextUrl.clone();
 
   if (
@@ -95,7 +108,9 @@ function createLocalizedRewrite(request: NextRequest, pathname: string, locale: 
       headers: requestHeaders,
     },
   });
-  setLocaleCookie(response, locale);
+  if (shouldSetLocaleCookie) {
+    setLocaleCookie(response, locale);
+  }
 
   return response;
 }
@@ -122,14 +137,19 @@ async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: Ne
 }
 
 export async function proxy(request: NextRequest) {
-  const { locale, visiblePathname, shouldRedirectClean } = splitLocalePath(request);
+  const { locale, visiblePathname, shouldRedirectClean, shouldSetLocaleCookie } = splitLocalePath(request);
   const safeLocale = locale ?? routing.defaultLocale;
 
   if (shouldRedirectClean) {
     return createCleanLocaleRedirect(request, visiblePathname, safeLocale);
   }
 
-  const rewriteResponse = createLocalizedRewrite(request, visiblePathname, safeLocale);
+  const rewriteResponse = createLocalizedRewrite(
+    request,
+    visiblePathname,
+    safeLocale,
+    shouldSetLocaleCookie,
+  );
 
   if (!needsSessionCheck(visiblePathname)) {
     return rewriteResponse;

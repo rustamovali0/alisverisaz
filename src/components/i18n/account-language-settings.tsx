@@ -1,9 +1,8 @@
 "use client";
 
-import { Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { LanguageOptionList } from "@/components/i18n/language-switcher";
+import { LanguageCompactDropdown } from "@/components/i18n/language-switcher";
 import { cn } from "@/lib/utils";
 
 type AccountLanguageSettingsProps = {
@@ -13,31 +12,21 @@ type AccountLanguageSettingsProps = {
 
 export function AccountLanguageSettings({
   className,
-  embedded = false,
 }: AccountLanguageSettingsProps) {
-  const t = useTranslations("settingsUi");
+  const common = useTranslations("common");
+  const nav = useTranslations("nav");
 
   return (
-    <section
-      className={cn(
-        embedded
-          ? "grid gap-3 border-b pb-4"
-          : "premium-card grid gap-3 p-4",
-        className,
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-          <Languages className="size-5" aria-hidden="true" />
+    <section className={cn("grid gap-2 border-t pt-4", className)}>
+      <h2 className="text-sm font-black tracking-normal text-foreground">
+        {nav("settings")}
+      </h2>
+      <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2">
+        <span className="min-w-0 truncate text-sm font-semibold text-muted-foreground">
+          {common("language")}
         </span>
-        <div className="min-w-0">
-          <h2 className="text-base font-black tracking-normal">{t("languageSettings")}</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            {t("languageSettingsDescription")}
-          </p>
-        </div>
+        <LanguageCompactDropdown menuPlacement="top" />
       </div>
-      <LanguageOptionList className="rounded-lg border bg-background p-1.5" />
     </section>
   );
 }
