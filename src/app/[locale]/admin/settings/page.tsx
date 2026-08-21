@@ -1,4 +1,5 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { AccountLanguageSettings } from "@/components/i18n/account-language-settings";
 import { DepositSettingsForm } from "@/components/settings/deposit-settings-form";
 import { requireRole } from "@/lib/auth/session";
 import { getDepositSettings } from "@/lib/settings/data";
@@ -14,7 +15,10 @@ export default async function AdminSettingsPage() {
       title="Sistem ayarları"
       description="Platforma səviyyəsində qlobal ayarları idarə edin."
     >
-      <DepositSettingsForm enabled={depositSettings.enabled} />
+      <div className="grid gap-5">
+        <AccountLanguageSettings embedded />
+        <DepositSettingsForm enabled={depositSettings.enabled} />
+      </div>
     </DashboardPanel>
   );
 }

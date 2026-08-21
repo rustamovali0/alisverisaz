@@ -206,7 +206,9 @@
     "loaderType": "Loader type",
     "loaderPalette": "Loader color",
     "mobileNavbarVariant": "Mobile navbar design",
-    "showSellerSubscription": "Show subscription in seller panel"
+    "showSellerSubscription": "Show subscription in seller panel",
+    "languageSettings": "Change language",
+    "languageSettingsDescription": "Language selection keeps the URL unchanged and refreshes the current page in the selected language."
   },
   "loaders": {
     "classic": "Classic circle",

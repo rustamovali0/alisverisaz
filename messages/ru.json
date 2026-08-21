@@ -206,7 +206,9 @@
     "loaderType": "Тип loader",
     "loaderPalette": "Цвет loader",
     "mobileNavbarVariant": "Дизайн mobile navbar",
-    "showSellerSubscription": "Показывать подписку в панели продавца"
+    "showSellerSubscription": "Показывать подписку в панели продавца",
+    "languageSettings": "Сменить язык",
+    "languageSettingsDescription": "Выбор языка сохраняет URL и обновляет текущую страницу на выбранном языке."
   },
   "loaders": {
     "classic": "Классический круг",

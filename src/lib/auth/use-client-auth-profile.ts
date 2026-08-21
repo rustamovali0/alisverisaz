@@ -32,45 +32,6 @@ const emptyProfile: ClientAuthProfile = {
   avatarUrl: null,
 };
 
-type CachedClientAuthProfile = ClientAuthProfile;
-
-function readCachedProfile(): CachedClientAuthProfile | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    const raw = window.localStorage.getItem(AUTH_PROFILE_CACHE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as CachedClientAuthProfile;
-    if (
-      parsed &&
-      (parsed.status === "guest" || parsed.status === "loading" || parsed.status === "authenticated")
-    ) {
-      return parsed;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function writeCachedProfile(profile: ClientAuthProfile) {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  try {
-    window.localStorage.setItem(AUTH_PROFILE_CACHE_KEY, JSON.stringify(profile));
-  } catch {
-    // ignore storage failures
-  }
-}
-
 function normalizeRole(role: unknown): AuthRole {
   return isAuthRole(role) ? role : "customer";
 }
@@ -134,7 +95,7 @@ export function clearClientAuthProfileCache() {
 }
 
 export function useClientAuthProfile() {
-  const [profile, setProfile] = useState<ClientAuthProfile>(() => readCachedProfile() ?? emptyProfile);
+  const [profile, setProfile] = useState<ClientAuthProfile>(emptyProfile);
 
   useEffect(() => {
     let isMounted = true;
@@ -145,7 +106,6 @@ export function useClientAuthProfile() {
 
       if (isMounted) {
         setProfile(nextProfile);
-        writeCachedProfile(nextProfile);
       }
     }
 

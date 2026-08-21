@@ -206,7 +206,9 @@
     "loaderType": "Loader tipi",
     "loaderPalette": "Loader rəngi",
     "mobileNavbarVariant": "Mobile navbar dizaynı",
-    "showSellerSubscription": "Seller paneldə abunəliyi göstər"
+    "showSellerSubscription": "Seller paneldə abunəliyi göstər",
+    "languageSettings": "Dili dəyiş",
+    "languageSettingsDescription": "Dil seçimi URL-i dəyişmir və cari səhifəni seçilən dildə yeniləyir."
   },
   "loaders": {
     "classic": "Klassik dairə",

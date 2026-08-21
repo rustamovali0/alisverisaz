@@ -1,5 +1,6 @@
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
+import { AccountLanguageSettings } from "@/components/i18n/account-language-settings";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -27,5 +28,10 @@ export default async function StoreSettingsPage() {
     return <FeatureBlocked title="Mağaza tapılmadı" description="Mağaza yaradıldıqda ayarlar burada görünəcək." />;
   }
 
-  return <StoreSettingsForm store={store} />;
+  return (
+    <div className="grid gap-5">
+      <AccountLanguageSettings />
+      <StoreSettingsForm store={store} />
+    </div>
+  );
 }
