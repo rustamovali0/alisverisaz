@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { m } from "framer-motion";
 
-import { ProductGrid } from "@/components/cart/product-marketplace";
+import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ type HomeExperienceProps = {
   themeConfig?: Record<string, unknown>;
   stores: MarketplaceStore[];
   products: CartProduct[];
+  productNextCursor?: string | null;
+  productHasMore?: boolean;
   depositEnabled: boolean;
   categories: CategoryOption[];
   title: string;
@@ -223,13 +225,14 @@ export function HomeExperience({
   themeConfig,
   stores,
   products,
+  productNextCursor,
+  productHasMore,
   depositEnabled,
   categories,
   title,
   description,
   productsLabel,
 }: HomeExperienceProps) {
-  void locale;
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
@@ -438,8 +441,12 @@ export function HomeExperience({
               <Link href="/products">{productsLabel}</Link>
             </Button>
           </div>
-          <ProductGrid
-            products={products}
+          <InfiniteProductGrid
+            initialProducts={products}
+            initialCursor={productNextCursor}
+            initialHasMore={productHasMore}
+            locale={locale}
+            sort="newest"
             depositEnabled={depositEnabled}
             productCardVariant={productCardVariant}
             labels={{ stock: "Stok" }}

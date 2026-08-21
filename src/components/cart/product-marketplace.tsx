@@ -683,6 +683,101 @@ function useInfiniteProducts({
   };
 }
 
+export function ProductInfiniteGrid({
+  products,
+  hasMore,
+  isLoadingNext,
+  onLoadNext,
+  depositEnabled,
+  storeSlug,
+  storeName,
+  productCardVariant,
+  labels,
+}: {
+  products: CartProduct[];
+  hasMore: boolean;
+  isLoadingNext: boolean;
+  onLoadNext: () => void;
+  depositEnabled: boolean;
+  storeSlug?: string;
+  storeName?: string;
+  productCardVariant?: string;
+  labels: Pick<MarketplaceLabels, "stock">;
+}) {
+  return (
+    <>
+      <ProductGrid
+        products={products}
+        depositEnabled={depositEnabled}
+        storeSlug={storeSlug}
+        storeName={storeName}
+        productCardVariant={productCardVariant}
+        labels={labels}
+      />
+      <ProductInfiniteSentinel
+        disabled={!hasMore || isLoadingNext}
+        onIntersect={onLoadNext}
+      />
+      <ProductListLoader show={isLoadingNext} />
+    </>
+  );
+}
+
+export function InfiniteProductGrid({
+  initialProducts,
+  initialCursor,
+  initialHasMore,
+  locale,
+  categoryId,
+  storeId,
+  searchQuery,
+  sort = "newest",
+  depositEnabled,
+  storeSlug,
+  storeName,
+  productCardVariant,
+  labels,
+}: {
+  initialProducts: CartProduct[];
+  initialCursor?: string | null;
+  initialHasMore?: boolean;
+  locale: string;
+  categoryId?: string;
+  storeId?: string;
+  searchQuery?: string;
+  sort?: MarketplaceProductSort;
+  depositEnabled: boolean;
+  storeSlug?: string;
+  storeName?: string;
+  productCardVariant?: string;
+  labels: Pick<MarketplaceLabels, "stock">;
+}) {
+  const infinite = useInfiniteProducts({
+    initialProducts,
+    initialCursor,
+    initialHasMore,
+    locale,
+    categoryId,
+    storeId,
+    searchQuery,
+    sort,
+  });
+
+  return (
+    <ProductInfiniteGrid
+      products={infinite.products}
+      hasMore={infinite.hasMore}
+      isLoadingNext={infinite.isLoadingNext}
+      onLoadNext={infinite.loadNext}
+      depositEnabled={depositEnabled}
+      storeSlug={storeSlug}
+      storeName={storeName}
+      productCardVariant={productCardVariant}
+      labels={labels}
+    />
+  );
+}
+
 export function ProductMarketplace({
   products,
   nextCursor,
@@ -787,17 +882,15 @@ export function ProductMarketplace({
                 />
               ) : (
                 <>
-                  <ProductGrid
+                  <ProductInfiniteGrid
                     products={visibleProducts}
+                    hasMore={infinite.hasMore}
+                    isLoadingNext={infinite.isLoadingNext}
+                    onLoadNext={infinite.loadNext}
                     depositEnabled={false}
                     productCardVariant={productCardVariant}
                     labels={{ stock: labels.stock }}
                   />
-                  <ProductInfiniteSentinel
-                    disabled={!infinite.hasMore || infinite.isLoadingNext}
-                    onIntersect={infinite.loadNext}
-                  />
-                  <ProductListLoader show={infinite.isLoadingNext} />
                 </>
               )}
             </section>
@@ -808,17 +901,15 @@ export function ProductMarketplace({
                 productCounts={categoryProductCounts}
                 onSelect={selectCategory}
               />
-              <ProductGrid
+              <ProductInfiniteGrid
                 products={visibleProducts}
+                hasMore={infinite.hasMore}
+                isLoadingNext={infinite.isLoadingNext}
+                onLoadNext={infinite.loadNext}
                 depositEnabled={false}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
-              <ProductInfiniteSentinel
-                disabled={!infinite.hasMore || infinite.isLoadingNext}
-                onIntersect={infinite.loadNext}
-              />
-              <ProductListLoader show={infinite.isLoadingNext} />
             </section>
           )}
         </div>
@@ -840,17 +931,15 @@ export function ProductMarketplace({
             />
           ) : (
             <>
-              <ProductGrid
+              <ProductInfiniteGrid
                 products={visibleProducts}
+                hasMore={infinite.hasMore}
+                isLoadingNext={infinite.isLoadingNext}
+                onLoadNext={infinite.loadNext}
                 depositEnabled={false}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
-              <ProductInfiniteSentinel
-                disabled={!infinite.hasMore || infinite.isLoadingNext}
-                onIntersect={infinite.loadNext}
-              />
-              <ProductListLoader show={infinite.isLoadingNext} />
             </>
           )}
         </div>
@@ -1008,19 +1097,17 @@ export function Storefront({
               />
             </aside>
             <div className="min-w-0">
-              <ProductGrid
+              <ProductInfiniteGrid
                 products={visibleProducts}
+                hasMore={infinite.hasMore}
+                isLoadingNext={infinite.isLoadingNext}
+                onLoadNext={infinite.loadNext}
                 depositEnabled={depositEnabled}
                 storeSlug={store.slug}
                 storeName={store.name}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
-              <ProductInfiniteSentinel
-                disabled={!infinite.hasMore || infinite.isLoadingNext}
-                onIntersect={infinite.loadNext}
-              />
-              <ProductListLoader show={infinite.isLoadingNext} />
             </div>
           </div>
         </section>
