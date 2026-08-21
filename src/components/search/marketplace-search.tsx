@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ArrowRight, PackageSearch, Search, Store, Tags } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -55,26 +56,29 @@ export function MarketplaceSearch({
   className,
   inputClassName,
   buttonSize = "default",
-  buttonLabel = "Axtar",
+  buttonLabel,
   stackOnMobile = false,
 }: MarketplaceSearchProps) {
+  const common = useTranslations("common");
+  const marketplace = useTranslations("marketplace");
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
+  const resolvedButtonLabel = buttonLabel ?? common("search");
 
   const suggestions = useMemo(() => {
     const categorySuggestions: SearchSuggestion[] = categories.map((category) => ({
       key: `category-${category.id}`,
       type: "category",
       label: category.name,
-      description: "Kateqoriya",
+      description: marketplace("category"),
       href: `/products?category=${category.slug}`,
     }));
     const storeSuggestions: SearchSuggestion[] = stores.map((store) => ({
       key: `store-${store.id}`,
       type: "store",
       label: store.name,
-      description: `${store.productCount} məhsul`,
+      description: marketplace("productCount", { count: store.productCount }),
       href: `/${store.slug}`,
     }));
     const productSuggestions: SearchSuggestion[] = stores.flatMap((store) =>
@@ -102,7 +106,7 @@ export function MarketplaceSearch({
         normalize(`${suggestion.label} ${suggestion.description}`).includes(normalizedQuery),
       )
       .slice(0, 7);
-  }, [categories, query, stores]);
+  }, [categories, marketplace, query, stores]);
 
   function submitSearch(value: string) {
     if (!value) {
@@ -141,7 +145,7 @@ export function MarketplaceSearch({
       }}
     >
       <label className={cn("relative min-w-0", stackOnMobile ? "w-full sm:flex-1" : "flex-1")}>
-        <span className="sr-only">Axtarış</span>
+        <span className="sr-only">{common("search")}</span>
         <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
         <input
           autoComplete="off"
@@ -152,7 +156,7 @@ export function MarketplaceSearch({
           spellCheck={false}
           className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
           name="marketplace-search"
-          placeholder="Məhsul, mağaza və ya kateqoriya axtar"
+          placeholder={marketplace("searchPlaceholder")}
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -164,7 +168,7 @@ export function MarketplaceSearch({
         size={buttonSize}
         className={cn(stackOnMobile && "hidden w-full sm:inline-flex sm:w-auto")}
       >
-        {buttonLabel}
+        {resolvedButtonLabel}
         {buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}

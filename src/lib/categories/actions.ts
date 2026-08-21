@@ -69,7 +69,6 @@ function revalidateCategorySurfaces(categoryId?: string | null) {
     categoryId,
   });
   revalidatePath("/radmin/categories");
-  revalidatePath("/az/radmin/categories");
 }
 
 async function ensureUniqueSlug(input: {

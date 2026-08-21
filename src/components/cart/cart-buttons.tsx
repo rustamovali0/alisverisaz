@@ -86,13 +86,20 @@ function getCartQuantity(productId: string) {
   return readCart().find((item) => item.productId === productId)?.quantity ?? 0;
 }
 
-function requireCustomerRole(viewerRole?: AuthRole | null) {
+function showCustomerRoleToast(t: ReturnType<typeof useTranslations>) {
+  showToast({
+    title: t("customerAccountRequired"),
+    description: t("customerAccountRequiredDescription"),
+    variant: "info",
+  });
+}
+
+function canUseCustomerAction(
+  viewerRole: AuthRole | null | undefined,
+  t: ReturnType<typeof useTranslations>,
+) {
   if (viewerRole && viewerRole !== "customer") {
-    showToast({
-      title: "İstifadəçi hesabı lazımdır",
-      description: "Bu əməliyyat üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
-      variant: "info",
-    });
+    showCustomerRoleToast(t);
     return false;
   }
 
@@ -130,16 +137,16 @@ export function AddToCartButton({
   function emitCartToast(isSignedIn: boolean) {
     if (!isSignedIn) {
       showToast({
-        title: "Səbətə əlavə edildi",
-        description: "Alış-verişə davam etmək üçün daxil olun.",
+        title: t("cartAdded"),
+        description: t("continueAfterLogin"),
         variant: "success",
       });
       return;
     }
 
     showToast({
-      title: "Məhsul səbətə əlavə edildi",
-      description: "Məhsul səbətinizdədir.",
+      title: t("cartAdded"),
+      description: t("productInCart"),
       variant: "success",
     });
   }
@@ -167,13 +174,13 @@ export function AddToCartButton({
   function updateQuantity(nextQuantity: number) {
     if (isUnavailable) {
       showToast({
-        title: "Bu məhsul hazırda stokda yoxdur.",
+        title: t("outOfStock"),
         variant: "warning",
       });
       return;
     }
 
-    if (!requireCustomerRole(viewerRole)) {
+    if (!canUseCustomerAction(viewerRole, t)) {
       return;
     }
 
@@ -207,8 +214,8 @@ export function AddToCartButton({
   function handleAdd() {
     if (quantity >= product.stockQuantity) {
       showToast({
-        title: "Stok limiti keçilə bilməz.",
-        description: "Səbətdəki say hazırkı stok miqdarına bərabərdir.",
+        title: t("stockLimitTitle"),
+        description: t("stockLimitDescription"),
         variant: "warning",
       });
       return;
@@ -234,14 +241,14 @@ export function AddToCartButton({
           type="button"
           className="grid h-full min-h-11 place-items-center border-r border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70"
           onClick={handleDecrease}
-          aria-label="Səbətdəki sayı azalt"
+          aria-label={t("decreaseCartQuantity")}
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
         <span className="flex min-w-0 items-center justify-center gap-0.5 px-1 text-center text-[11px] font-black leading-tight text-primary-foreground min-[360px]:text-xs min-[390px]:gap-1 sm:text-sm">
           <Check className="hidden size-4 shrink-0 stroke-[2.5] min-[390px]:block" aria-hidden="true" />
-          <span className="hidden truncate sm:inline">Səbətə əlavə edilib</span>
-          <span className="whitespace-nowrap sm:hidden">Səbət</span>
+          <span className="hidden truncate sm:inline">{t("addedToCart")}</span>
+          <span className="whitespace-nowrap sm:hidden">{t("cartShort")}</span>
           <span className="shrink-0">({quantity})</span>
         </span>
         <button
@@ -249,7 +256,7 @@ export function AddToCartButton({
           className="grid h-full min-h-11 place-items-center border-l border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 disabled:cursor-not-allowed disabled:opacity-45"
           onClick={handleAdd}
           disabled={quantity >= product.stockQuantity}
-          aria-label="Səbətdəki sayı artır"
+          aria-label={t("increaseCartQuantity")}
         >
           <Plus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
@@ -270,7 +277,7 @@ export function AddToCartButton({
     >
       <ShoppingCart className="mr-0 size-5 shrink-0 stroke-[2.4] sm:mr-2" aria-hidden="true" />
       <span className="min-w-0 whitespace-nowrap">
-        <span className="sm:hidden">Səbətə</span>
+        <span className="sm:hidden">{t("addToCart")}</span>
         <span className="hidden sm:inline">{t("addToCart")}</span>
       </span>
     </Button>
@@ -296,13 +303,13 @@ export function BuyNowButton({
   function handleBuyNow() {
     if (isUnavailable) {
       showToast({
-        title: "Bu məhsul hazırda stokda yoxdur.",
+        title: t("outOfStock"),
         variant: "warning",
       });
       return;
     }
 
-    if (!requireCustomerRole(viewerRole)) {
+    if (!canUseCustomerAction(viewerRole, t)) {
       return;
     }
 

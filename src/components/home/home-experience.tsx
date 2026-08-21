@@ -9,6 +9,7 @@ import {
   Store,
 } from "lucide-react";
 import { m } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -175,6 +176,8 @@ function stringArraySetting(section: HomepageSection | undefined, key: string) {
 }
 
 function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: number }) {
+  const marketplace = useTranslations("marketplace");
+
   return (
     <m.article
       initial={{ opacity: 0, y: 16 }}
@@ -206,7 +209,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
                 {store.name}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                {store.productCount} məhsul
+                {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
             <ArrowRight className="mt-1 size-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:size-5" />
@@ -233,6 +236,8 @@ export function HomeExperience({
   description,
   productsLabel,
 }: HomeExperienceProps) {
+  const common = useTranslations("common");
+  const home = useTranslations("home");
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
@@ -280,7 +285,7 @@ export function HomeExperience({
         >
           <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
             <Sparkles className="size-4 text-primary" aria-hidden="true" />
-            Alışveriş marketplace
+            {home("marketplaceBadge")}
           </span>
           <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
             {heroTitle}
@@ -354,7 +359,7 @@ export function HomeExperience({
               color: "var(--home-button-text)",
             }}
           >
-            <p className="text-sm opacity-90">Aktiv məhsul</p>
+            <p className="text-sm opacity-90">{home("activeProducts")}</p>
             <p className="text-3xl font-black">{totalProductCount}</p>
           </div>
         </m.div>
@@ -370,11 +375,11 @@ export function HomeExperience({
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
-                {categorySection?.title || "Kateqoriyalar"}
+                {categorySection?.title || home("categories")}
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">Bütün kateqoriyalar</Link>
+              <Link href="/products">{home("allCategories")}</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -409,11 +414,11 @@ export function HomeExperience({
           <div className="mb-5 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-black">
-                {featuredSection?.title || "Seçilmiş mağazalar"}
+                {featuredSection?.title || home("featuredStores")}
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">Bütün mağazalar</Link>
+              <Link href="/products">{home("allStores")}</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -435,7 +440,7 @@ export function HomeExperience({
           <div className="container">
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <h2 className="text-2xl font-black">Məhsullar</h2>
+              <h2 className="text-2xl font-black">{common("products")}</h2>
             </div>
             <Button asChild variant="outline">
               <Link href="/products">{productsLabel}</Link>
@@ -463,9 +468,9 @@ export function HomeExperience({
         <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
           <div className="grid gap-4 md:grid-cols-3">
             {[
-              "Təhlükəsiz struktur",
-              "Mağaza paneli",
-              benefitsSection?.title || "Sürətli alış",
+              home("secureStructure"),
+              home("storePanel"),
+              benefitsSection?.title || home("quickShopping"),
             ].map((itemTitle) => (
               <div key={itemTitle} className="rounded-lg border bg-background/70 p-4">
                 <ShieldCheck className="size-5 text-primary" aria-hidden="true" />

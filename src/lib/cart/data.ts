@@ -63,15 +63,11 @@ type ProductCursor = {
   price?: number;
 };
 
-function readLocalizedText(
-  fallback: string | null,
-  translations: Record<string, string> | null | undefined,
-  locale: string,
-) {
-  return translations?.[locale] || fallback || "";
+function readOriginalContentText(fallback: string | null) {
+  return fallback || "";
 }
 
-function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
+function toCartProduct(row: ProductRow): CartProduct {
   const primary = row.product_images?.find((image) => image.is_primary);
   const first = row.product_images?.[0];
   const finalPrice = Math.max(
@@ -92,12 +88,8 @@ function toCartProduct(row: ProductRow, locale = "az"): CartProduct {
     storeSlug: row.stores?.slug ?? null,
     storeName: row.stores?.name ?? null,
     createdAt: row.created_at ?? null,
-    name: readLocalizedText(row.name, row.name_translations, locale),
-    description: readLocalizedText(
-      row.description,
-      row.description_translations,
-      locale,
-    ),
+    name: readOriginalContentText(row.name),
+    description: readOriginalContentText(row.description),
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.stock_quantity,
@@ -401,7 +393,7 @@ async function getMarketplaceProductPageUncached(
     throw new Error(error.message);
   }
 
-  const rows = ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row, locale));
+  const rows = ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row));
   const products = rows.slice(0, input.limit);
   const lastProduct = products.at(-1);
 
@@ -443,7 +435,7 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
     .in("id", productIds);
 
   return ((data ?? []) as ProductRow[])
-    .map((row) => toCartProduct(row, locale))
+    .map((row) => toCartProduct(row))
     .sort(
       (a, b) =>
         (favoriteOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
@@ -529,7 +521,7 @@ async function getMarketplaceStoresUncached(
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
-          .map((product) => toCartProduct(product, locale)),
+          .map((product) => toCartProduct(product)),
         categoryIds: Array.from(
           new Set(
             storeProducts
@@ -646,7 +638,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
   const productRows = (products ?? []) as ProductRow[];
   const pageProducts = productRows
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
-    .map((product) => toCartProduct(product, input.locale));
+    .map((product) => toCartProduct(product));
   const lastProduct = pageProducts.at(-1);
 
   return {
@@ -762,7 +754,7 @@ async function getMarketplaceProductByIdUncached(input: {
 
   return {
     product: {
-      ...toCartProduct(row, input.locale ?? "az"),
+      ...toCartProduct(row),
       images: toProductImages(row),
     },
     store: {
@@ -832,5 +824,5 @@ export async function getCartProducts(productIds: string[], locale = "az") {
     .eq("status", "active")
     .in("id", productIds);
 
-  return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row, locale));
+  return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row));
 }

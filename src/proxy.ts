@@ -9,21 +9,48 @@ function copyCookies(from: NextResponse, to: NextResponse) {
   });
 }
 
-function splitLocalePath(pathname: string) {
+function resolveCookieLocale(request: NextRequest) {
+  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+
+  return routing.locales.includes(cookieLocale as any)
+    ? cookieLocale
+    : routing.defaultLocale;
+}
+
+function setLocaleCookie(response: NextResponse, locale: string) {
+  response.cookies.set("NEXT_LOCALE", locale, {
+    path: "/",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
+function splitLocalePath(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
   const [, maybeLocale, ...rest] = pathname.split("/");
 
   if (routing.locales.includes(maybeLocale as any)) {
+    const locale = maybeLocale as string;
+
     return {
-      locale: maybeLocale,
+      locale,
       visiblePathname: `/${rest.join("/")}`.replace(/\/$/, "") || "/",
-      hadLocalePrefix: true,
+      shouldRedirectClean: true,
+    };
+  }
+
+  if (/^[a-z]{2}$/i.test(maybeLocale ?? "")) {
+    return {
+      locale: routing.defaultLocale,
+      visiblePathname: `/${rest.join("/")}`.replace(/\/$/, "") || "/",
+      shouldRedirectClean: true,
     };
   }
 
   return {
-    locale: routing.defaultLocale,
+    locale: resolveCookieLocale(request),
     visiblePathname: pathname,
-    hadLocalePrefix: false,
+    shouldRedirectClean: false,
   };
 }
 
@@ -68,26 +95,16 @@ function createLocalizedRewrite(request: NextRequest, pathname: string, locale: 
       headers: requestHeaders,
     },
   });
-  response.cookies.set("NEXT_LOCALE", locale, {
-    path: "/",
-    sameSite: "lax",
-  });
+  setLocaleCookie(response, locale);
 
   return response;
 }
 
-function createLocalizedNextResponse(request: NextRequest, pathname: string, locale: string) {
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-current-path", pathname);
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
-  response.cookies.set("NEXT_LOCALE", locale, {
-    path: "/",
-    sameSite: "lax",
-  });
+function createCleanLocaleRedirect(request: NextRequest, pathname: string, locale: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  const response = NextResponse.redirect(url, 308);
+  setLocaleCookie(response, locale);
 
   return response;
 }
@@ -105,42 +122,16 @@ async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: Ne
 }
 
 export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const { locale, visiblePathname, hadLocalePrefix } = splitLocalePath(pathname);
+  const { locale, visiblePathname, shouldRedirectClean } = splitLocalePath(request);
+  const safeLocale = locale ?? routing.defaultLocale;
 
-  if (hadLocalePrefix) {
-    if (
-      (visiblePathname === "/radmin" || visiblePathname.startsWith("/radmin/")) &&
-      visiblePathname !== "/radmin/login"
-    ) {
-      return mergeSessionIntoRewrite(
-        request,
-        createLocalizedRewrite(request, visiblePathname, locale),
-      );
-    }
-
-    if (visiblePathname === "/admin") {
-      return mergeSessionIntoRewrite(
-        request,
-        createLocalizedRewrite(request, visiblePathname, locale),
-      );
-    }
-
-    if (visiblePathname.startsWith("/admin/")) {
-      return mergeSessionIntoRewrite(
-        request,
-        createLocalizedRewrite(request, visiblePathname, locale),
-      );
-    }
-
-    return needsSessionCheck(visiblePathname)
-      ? updateSession(request, createLocalizedNextResponse(request, visiblePathname, locale))
-      : createLocalizedNextResponse(request, visiblePathname, locale);
+  if (shouldRedirectClean) {
+    return createCleanLocaleRedirect(request, visiblePathname, safeLocale);
   }
 
-  const rewriteResponse = createLocalizedRewrite(request, pathname, locale);
+  const rewriteResponse = createLocalizedRewrite(request, visiblePathname, safeLocale);
 
-  if (!needsSessionCheck(pathname)) {
+  if (!needsSessionCheck(visiblePathname)) {
     return rewriteResponse;
   }
 

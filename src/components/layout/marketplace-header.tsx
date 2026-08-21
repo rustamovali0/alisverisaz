@@ -4,9 +4,11 @@ import {
   Heart,
   ShoppingCart,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
@@ -50,6 +52,8 @@ export function MarketplaceHeader({
   mobileNavbarVariant,
   sticky = true,
 }: MarketplaceHeaderProps) {
+  const nav = useTranslations("nav");
+  const common = useTranslations("common");
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
   const isProductsActive = pathname.startsWith("/products");
@@ -86,20 +90,22 @@ export function MarketplaceHeader({
               {displaySiteName}
             </span>
           </Link>
-          <NotificationCenter
-            className="ml-auto md:hidden"
-            buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
-            iconClassName="size-7"
-          />
+          <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
+            <LanguageSwitcher compact />
+            <NotificationCenter
+              buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
+              iconClassName="size-7"
+            />
+          </div>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
               <Link href="/products" prefetch>
-                Məhsullar
+                {nav("products")}
               </Link>
             </Button>
             <Button asChild variant={isAboutActive ? "secondary" : "ghost"}>
               <Link href="/about" prefetch>
-                Haqqında
+                {nav("about")}
               </Link>
             </Button>
           </nav>
@@ -112,6 +118,7 @@ export function MarketplaceHeader({
             />
           </div>
           <div className="ml-auto hidden items-center gap-1 md:flex">
+            <LanguageSwitcher className="hidden lg:flex" />
             <NotificationCenter
               buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"
@@ -121,7 +128,7 @@ export function MarketplaceHeader({
               size="icon"
               variant="ghost"
               className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
-              aria-label="Favorilər"
+              aria-label={nav("favorites")}
             >
               <Link href="/favorites" prefetch className="grid place-items-center">
                 <Heart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
@@ -132,7 +139,7 @@ export function MarketplaceHeader({
               size="icon"
               variant="ghost"
               className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
-              aria-label="Səbət"
+              aria-label={common("cart")}
             >
               <Link href="/cart" prefetch className="grid place-items-center">
                 <ShoppingCart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />

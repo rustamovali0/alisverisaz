@@ -99,7 +99,6 @@ function readMobileNavbarVariant(formData: FormData) {
 
 function revalidateLocalizedPath(path: string, type?: "layout" | "page") {
   revalidatePath(path, type);
-  revalidatePath(`/az${path === "/" ? "" : path}`, type);
 }
 
 function parseJson(value: string, fallback: unknown) {
@@ -936,9 +935,7 @@ export async function createAnnouncementAction(
   }
 
   revalidatePath("/radmin/announcements");
-  revalidatePath("/az/radmin/announcements");
   revalidatePath("/dashboard");
-  revalidatePath("/az/dashboard");
 
   return {
     ok: true,

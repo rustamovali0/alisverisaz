@@ -8,6 +8,7 @@ import {
   useState,
   type MouseEvent,
 } from "react";
+import { useTranslations } from "next-intl";
 
 import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
@@ -180,11 +181,13 @@ function CategoryFilters({
   categories,
   selectedCategoryId,
   baseHref,
+  allLabel,
   onSelect,
 }: {
   categories: CategoryOption[];
   selectedCategoryId?: string;
   baseHref: string;
+  allLabel: string;
   onSelect?: (category?: CategoryOption) => void;
 }) {
   if (categories.length === 0) {
@@ -193,7 +196,7 @@ function CategoryFilters({
 
   const renderFilterButton = (category?: CategoryOption) => {
     const isSelected = category ? selectedCategoryId === category.id : !selectedCategoryId;
-    const label = category?.name ?? "Bütün kateqoriyalar";
+    const label = category?.name ?? allLabel;
 
     if (onSelect) {
       return (
@@ -273,12 +276,14 @@ function MobileCategoryCatalog({
   productCounts: Map<string, number>;
   onSelect: (category: CategoryOption) => void;
 }) {
+  const t = useTranslations("marketplace");
+
   if (categories.length === 0) {
     return (
       <EmptyState
         className="min-h-72 bg-background"
-        title="Kateqoriya yoxdur"
-        description="Aktiv kateqoriya tapılmadı."
+        title={t("noCategories")}
+        description={t("noActiveCategories")}
       />
     );
   }
@@ -305,7 +310,7 @@ function MobileCategoryCatalog({
                   {category.name}
                 </span>
                 <span className="text-[11px] font-medium text-muted-foreground">
-                  {productCounts.get(category.id) ?? 0} məhsul
+                  {t("productCount", { count: productCounts.get(category.id) ?? 0 })}
                 </span>
               </span>
             </button>
@@ -331,6 +336,7 @@ export function ProductGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
+  const t = useTranslations("marketplace");
   const router = useRouter();
   const isLiquidGlass = productCardVariant === "liquid-glass";
 
@@ -338,8 +344,8 @@ export function ProductGrid({
     return (
       <EmptyState
         className="min-h-80"
-        title="Bu mağazada məhsul yoxdur"
-        description="Seçilən kateqoriya üzrə aktiv məhsul tapılmadı."
+        title={t("noStoreProducts")}
+        description={t("noProductsForCategory")}
       />
     );
   }
@@ -397,7 +403,7 @@ export function ProductGrid({
           <Link
             href={detailHref}
             className="block"
-            aria-label={`${product.name} məhsul detalına keç`}
+            aria-label={t("productDetailAria", { name: product.name })}
             scroll
           >
             <div
@@ -429,7 +435,7 @@ export function ProductGrid({
                 ) : null}
                 {isNewProduct ? (
                   <span className="rounded-full bg-emerald-500 px-2 py-1 text-[11px] font-black text-white">
-                    Yeni
+                    {t("newLabel")}
                   </span>
                 ) : null}
               </div>
@@ -446,7 +452,7 @@ export function ProductGrid({
               {displayStoreName ? (
                 <span className="block min-w-0 truncate">{displayStoreName}</span>
               ) : (
-                <span>Mağaza</span>
+                <span>{t("store")}</span>
               )}
             </div>
             <h2
@@ -482,12 +488,14 @@ export function ProductGrid({
               )}
             >
               <span className="truncate">
-                {isOutOfStock ? "Stokda yoxdur" : `${labels.stock}: ${product.stockQuantity}`}
+                {isOutOfStock
+                  ? t("outOfStock")
+                  : t("stockWithCount", { count: product.stockQuantity })}
               </span>
             </p>
             <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
               <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-              Çatdırılma mağaza ilə
+              {t("deliveryWithStore")}
             </p>
             <div className="relative z-10 mt-auto grid gap-2 pt-3">
               <DepositModal
@@ -791,6 +799,7 @@ export function ProductMarketplace({
   footer,
   labels,
 }: ProductMarketplaceProps) {
+  const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const infinite = useInfiniteProducts({
     initialProducts: products,
@@ -848,10 +857,10 @@ export function ProductMarketplace({
       <div className="container max-w-full py-5 md:py-8">
         <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
-            <h1 className="text-2xl font-black tracking-normal">Bütün məhsullar</h1>
+            <h1 className="text-2xl font-black tracking-normal">{t("allProducts")}</h1>
           </div>
           <span className="rounded-md border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground">
-            {visibleProducts.length} məhsul
+            {t("productCount", { count: visibleProducts.length })}
           </span>
         </header>
 
@@ -865,14 +874,14 @@ export function ProductMarketplace({
                   className="h-9 rounded-xl px-3 text-sm"
                   onClick={() => selectCategory()}
                 >
-                  Bütün kateqoriyalar
+                  {t("allCategories")}
                 </Button>
                 <span className="shrink-0 rounded-xl border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
-                  {visibleProducts.length} məhsul
+                  {t("productCount", { count: visibleProducts.length })}
                 </span>
               </div>
               <h1 className="text-2xl font-black tracking-normal">
-                {activeCategory?.name ?? "Kateqoriya məhsulları"}
+                {activeCategory?.name ?? t("categoryProducts")}
               </h1>
               {visibleProducts.length === 0 ? (
                 <EmptyState
@@ -920,6 +929,7 @@ export function ProductMarketplace({
               categories={categories}
               selectedCategoryId={activeCategoryId}
               baseHref="/products"
+              allLabel={t("allCategories")}
               onSelect={selectCategory}
             />
           </aside>
@@ -960,6 +970,7 @@ export function Storefront({
   footer,
   labels,
 }: StorefrontProps) {
+  const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
@@ -1004,7 +1015,7 @@ export function Storefront({
       <div className="container max-w-full py-5 md:py-6">
         <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
           <Link href="/products" className="hover:text-primary">
-            Mağazalar
+            {t("stores")}
           </Link>
           <span className="mx-2">·</span>
           <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
@@ -1041,7 +1052,7 @@ export function Storefront({
                   {store.name}
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {store.productCount} məhsul
+                      {t("productCount", { count: store.productCount })}
                 </p>
                 {store.description ? (
                   <p className="mt-4 max-w-2xl break-words text-sm leading-6 text-foreground">
@@ -1071,7 +1082,7 @@ export function Storefront({
                 <Button asChild className="w-full min-w-0">
                   <a href={`tel:${store.phone.replace(/\s/g, "")}`}>
                     <Phone className="mr-2 size-4 shrink-0" aria-hidden="true" />
-                    <span className="truncate">Nömrəni göstər</span>
+                    <span className="truncate">{t("showPhone")}</span>
                   </a>
                 </Button>
               ) : null}
@@ -1084,7 +1095,7 @@ export function Storefront({
         <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
           <div className="mb-6 min-w-0">
             <h2 className="break-words text-xl font-black tracking-normal">
-              {store.name} təklifləri ({store.productCount})
+              {t("storeOffers", { storeName: store.name, count: store.productCount })}
             </h2>
           </div>
           <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
@@ -1093,6 +1104,7 @@ export function Storefront({
                 categories={categories}
                 selectedCategoryId={activeCategoryId}
                 baseHref={`/${store.slug}`}
+                allLabel={t("allCategories")}
                 onSelect={selectCategory}
               />
             </aside>

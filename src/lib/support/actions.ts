@@ -67,7 +67,6 @@ export async function createSupportMessageAction(
   }
 
   revalidatePath("/radmin/messages");
-  revalidatePath("/az/radmin/messages");
 
   return { ok: true, message: "Dəstək mesajınız göndərildi." };
 }

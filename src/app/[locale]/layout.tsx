@@ -6,7 +6,6 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { PublicNavigationShell } from "@/components/layout/public-navigation-shell";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -39,14 +38,16 @@ export const viewport: Viewport = {
 };
 
 function normalizeVisiblePath(pathname: string) {
-  const localePrefix = `/${routing.defaultLocale}`;
+  for (const locale of routing.locales) {
+    const localePrefix = `/${locale}`;
 
-  if (pathname === localePrefix) {
-    return "/";
-  }
+    if (pathname === localePrefix) {
+      return "/";
+    }
 
-  if (pathname.startsWith(`${localePrefix}/`)) {
-    return pathname.slice(localePrefix.length);
+    if (pathname.startsWith(`${localePrefix}/`)) {
+      return pathname.slice(localePrefix.length);
+    }
   }
 
   return pathname || "/";
@@ -72,6 +73,10 @@ export async function generateMetadata({
   const seoTitle = siteSettings.defaultSeoTitle || t("title");
   const seoDescription = siteSettings.defaultMetaDescription || t("description");
   const faviconUrl = siteSettings.faviconUrl || undefined;
+  const requestHeaders = await headers();
+  const visiblePathname = normalizeVisiblePath(
+    requestHeaders.get("x-current-path") ?? "/",
+  );
 
   return {
     title: {
@@ -90,15 +95,15 @@ export async function generateMetadata({
       "e-commerce platforması",
     ],
     alternates: {
-      canonical: `/${locale}`,
-      languages: Object.fromEntries(
-        routing.locales.map((nextLocale) => [nextLocale, `/${nextLocale}`]),
-      ),
+      canonical: visiblePathname,
+      languages: {
+        "x-default": visiblePathname,
+      },
     },
     openGraph: {
       type: "website",
       locale: "az_AZ",
-      url: `${siteConfig.url}/${locale}`,
+      url: `${siteConfig.url}${visiblePathname === "/" ? "" : visiblePathname}`,
       siteName: siteSettings.siteName || siteConfig.name,
       title: seoTitle,
       description: seoDescription,
@@ -139,7 +144,7 @@ export default async function LocaleLayout({
     getCategoryOptions({ rootOnly: true }),
   ]);
   const visiblePathname = normalizeVisiblePath(
-    requestHeaders.get("x-current-path") ?? `/${locale}`,
+    requestHeaders.get("x-current-path") ?? "/",
   );
   const isMaintenanceBlocked =
     siteSettings.maintenanceMode && !canBypassMaintenance(visiblePathname);
@@ -153,7 +158,6 @@ export default async function LocaleLayout({
       >
         <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
           <ThemeToggle />
-          <LanguageSwitcher />
         </div>
         <ToastViewport />
         <StructuredData />
