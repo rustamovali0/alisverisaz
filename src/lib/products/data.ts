@@ -3,7 +3,7 @@ import {
   CACHE_TTL,
   publicCache,
 } from "@/lib/cache/public-cache";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { CategoryOption, ManagedProduct, ProductStatus } from "@/lib/products/types";
 
@@ -116,7 +116,7 @@ function sortPublicRootCategories(categories: CategoryOption[]) {
 
 const getRootCategoryOptionsCached = publicCache(
   async () => {
-    const supabase = createSupabaseAdminClient();
+    const supabase = createSupabasePublicClient();
     const { data } = await (supabase as any)
       .from("categories")
       .select("id,name,slug,parent_id")

@@ -5,6 +5,7 @@ import {
   publicCache,
 } from "@/lib/cache/public-cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   CartProduct,
@@ -367,7 +368,7 @@ async function getMarketplaceProductPageUncached(
     sort: MarketplaceProductSort;
   },
 ): Promise<MarketplaceProductPage> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
   const cursor = decodeProductCursor(input.cursor);
   const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
   let query = (supabase as any)
@@ -711,7 +712,7 @@ async function getMarketplaceProductByIdUncached(input: {
   locale: string;
   storeSlug: string;
 }): Promise<MarketplaceProductDetail | null> {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabasePublicClient();
 
   let storeId: string | undefined;
 

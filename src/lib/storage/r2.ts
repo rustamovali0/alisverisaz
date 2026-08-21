@@ -1,7 +1,6 @@
 import "server-only";
 
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 
 import { serverEnv } from "@/lib/config/env.server";
 
@@ -75,6 +74,15 @@ function publicUrlForKey(key: string) {
   return `${baseUrl}/${encodedKey}`;
 }
 
+async function convertImageToWebp(input: Buffer) {
+  const sharp = (await import("sharp")).default;
+
+  return sharp(input)
+    .rotate()
+    .webp({ quality: DEFAULT_WEBP_QUALITY })
+    .toBuffer({ resolveWithObject: true });
+}
+
 function keyFromPublicUrl(url: string) {
   const baseUrl = serverEnv.r2PublicUrl.replace(/\/+$/, "");
   const prefix = `${baseUrl}/`;
@@ -105,10 +113,7 @@ export async function uploadImageToR2({
   }
 
   const input = Buffer.from(await file.arrayBuffer());
-  const converted = await sharp(input)
-    .rotate()
-    .webp({ quality: DEFAULT_WEBP_QUALITY })
-    .toBuffer({ resolveWithObject: true });
+  const converted = await convertImageToWebp(input);
   const fileName = webpFileName(file.name);
   const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${fileName}`;
 
