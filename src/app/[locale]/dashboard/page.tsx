@@ -1,21 +1,17 @@
-import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { OrderList } from "@/components/orders/order-list";
+import { CustomerAccountHome } from "@/components/customer-account/customer-account-views";
 import { requireRole } from "@/lib/auth/session";
-import { getCustomerOrders } from "@/lib/orders/data";
+import { getCustomerAccountOverview } from "@/lib/customer-account/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const current = await requireRole(["customer"], "/dashboard");
-  const orders = await getCustomerOrders(current.user.id);
+  const overview = await getCustomerAccountOverview(current.user.id);
 
-  return (
-    <DashboardPanel
-      className="hidden md:block"
-      title="Sifariş statusu"
-      description="Sifarişləriniz və cari statusları burada görünür."
-    >
-      <OrderList orders={orders} />
-    </DashboardPanel>
-  );
+  return <CustomerAccountHome profile={{
+    fullName: current.profile?.full_name ?? null,
+    email: current.profile?.email ?? current.user.email ?? null,
+    phone: current.profile?.phone ?? null,
+    avatarUrl: current.profile?.avatar_url ?? null,
+  }} overview={overview} />;
 }

@@ -39,13 +39,25 @@ export default async function CustomerDashboardLayout({
         </div>
         <div className="container flex gap-2 overflow-x-auto pb-4">
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard">Sifarişlərim</Link>
+            <Link href="/dashboard">İcmal</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/orders">Sifarişlərim</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/favorites">Sevimlilər</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/notifications">Bildirişlər</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/dashboard/addresses">Ünvanlar</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard/profile">Profil</Link>
           </Button>
           <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/messages">Mesajlar</Link>
+            <Link href="/dashboard/settings">Ayarlar</Link>
           </Button>
         </div>
       </section>

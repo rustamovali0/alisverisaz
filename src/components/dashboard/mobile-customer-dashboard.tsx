@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 import {
   ChevronRight,
-  CreditCard,
+  Bell,
+  Heart,
+  Home,
   MapPin,
-  MessageCircle,
   Package,
   Settings,
   UserRound,
@@ -23,10 +24,13 @@ type MobileCustomerDashboardProps = {
 };
 
 const accountItems = [
-  { href: "/dashboard/orders", label: "Mənim sifarişlərim", icon: Package },
-  { href: "/dashboard/messages", label: "Mesajlar", icon: MessageCircle },
-  { href: "/dashboard/payments", label: "Ödənişlər", icon: CreditCard },
-  { href: "/dashboard/profile", label: "Ünvan və profil", icon: MapPin },
+  { href: "/dashboard", label: "İcmal", icon: Home },
+  { href: "/dashboard/orders", label: "Sifarişlərim", icon: Package },
+  { href: "/dashboard/favorites", label: "Sevimlilər", icon: Heart },
+  { href: "/dashboard/notifications", label: "Bildirişlər", icon: Bell },
+  { href: "/dashboard/addresses", label: "Ünvanlar", icon: MapPin },
+  { href: "/dashboard/profile", label: "Profil", icon: UserRound },
+  { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
 ];
 
 function isDashboardRoot(pathname: string) {
@@ -100,6 +104,7 @@ export function MobileCustomerDashboard({
           <LogoutButton className="w-full justify-center rounded-2xl text-sm" />
         </div>
       </div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }

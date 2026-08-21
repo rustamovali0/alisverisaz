@@ -1,6 +1,6 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
-import { OrderList } from "@/components/orders/order-list";
+import { CustomerOrdersView } from "@/components/customer-account/customer-account-views";
 import { requireRole } from "@/lib/auth/session";
 import { getCustomerFeatureAccess } from "@/lib/cms/data";
 import { getCustomerOrders } from "@/lib/orders/data";
@@ -22,7 +22,7 @@ export default async function CustomerOrdersPage() {
       title="Sifarişlər"
       description="Checkout təsdiqindən sonra yaranan real sifarişlər"
     >
-      <OrderList orders={orders} />
+      <CustomerOrdersView orders={orders} />
     </DashboardPanel>
   );
 }

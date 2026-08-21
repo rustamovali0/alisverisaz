@@ -30,40 +30,46 @@ export type DashboardNavItem = {
 export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
   customer: [
     {
-      title: "Dashboard",
+      title: "İcmal",
       titleKey: "dashboard",
       href: "/dashboard",
       icon: "home",
     },
     {
-      title: "Elanlarım",
-      titleKey: "listings",
-      href: "/dashboard/listings",
-      icon: "package",
-    },
-    {
-      title: "Sifarişlər",
+      title: "Sifarişlərim",
       titleKey: "orders",
       href: "/dashboard/orders",
       icon: "shoppingCart",
     },
     {
-      title: "Mesajlar",
-      titleKey: "messages",
-      href: "/dashboard/messages",
-      icon: "sparkles",
-    },
-    {
-      title: "Favorilər",
+      title: "Sevimlilər",
       titleKey: "favorites",
       href: "/dashboard/favorites",
       icon: "heart",
     },
     {
-      title: "Ödənişlər",
-      titleKey: "payments",
-      href: "/dashboard/payments",
-      icon: "creditCard",
+      title: "Bildirişlər",
+      titleKey: "notifications",
+      href: "/dashboard/notifications",
+      icon: "sparkles",
+    },
+    {
+      title: "Ünvanlar",
+      titleKey: "addresses",
+      href: "/dashboard/addresses",
+      icon: "building",
+    },
+    {
+      title: "Profil",
+      titleKey: "profile",
+      href: "/dashboard/profile",
+      icon: "user",
+    },
+    {
+      title: "Ayarlar",
+      titleKey: "settings",
+      href: "/dashboard/settings",
+      icon: "settings",
     },
   ],
   seller: [
@@ -78,6 +84,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       titleKey: "products",
       href: "/store/dashboard/products",
       icon: "box",
+    },
+    {
+      title: "Yeni məhsul əlavə et",
+      href: "/store/dashboard/products#create-product",
+      icon: "package",
     },
     {
       title: "Satış nöqtələri",

@@ -5,7 +5,6 @@ import {
   Heart,
   Home,
   ShoppingCart,
-  ShieldCheck,
   Store,
   UserRound,
 } from "lucide-react";
@@ -78,15 +77,11 @@ function readCartCount() {
 }
 
 function accountPath(role: AuthRole | null) {
-  if (role === "admin") {
-    return "/radmin";
-  }
-
   if (role === "seller") {
     return "/store/dashboard";
   }
 
-  return role === "customer" ? "/dashboard/profile" : "/login?next=/dashboard/profile";
+  return role === "customer" ? "/dashboard" : "/login?next=/dashboard";
 }
 
 function scrollPageToTop() {
@@ -101,10 +96,6 @@ function scrollPageToTop() {
 }
 
 function AccountIcon({ role }: { role: AuthRole | null }) {
-  if (role === "admin") {
-    return <ShieldCheck className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
-  }
-
   if (role === "seller") {
     return <Store className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
   }
@@ -122,7 +113,8 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const [cartCount, setCartCount] = useState(0);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const isAuthLoading = profile.status === "loading";
-  const role = profile.status === "authenticated" ? profile.role : null;
+  const actualRole = profile.status === "authenticated" ? profile.role : null;
+  const role = actualRole === "admin" ? null : actualRole;
   const items = [
     { href: "/", label: nav("home"), icon: Home },
     { href: "/products", label: nav("catalog"), icon: Grid2X2 },
@@ -132,9 +124,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
     ? nav("account")
-    : role === "admin"
-      ? "Admin"
-      : role === "seller"
+    : role === "seller"
         ? nav("dashboard")
         : role
           ? nav("account")
@@ -259,17 +249,11 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
             "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            (pathname.startsWith("/dashboard") ||
-              pathname.startsWith("/admin") ||
-              pathname.startsWith("/store/dashboard") ||
-              pathname.startsWith("/radmin")) &&
+            (pathname.startsWith("/dashboard") || pathname.startsWith("/store/dashboard")) &&
               "bg-primary/10 text-primary",
           )}
           aria-current={
-            pathname.startsWith("/dashboard") ||
-            pathname.startsWith("/admin") ||
-            pathname.startsWith("/store/dashboard") ||
-            pathname.startsWith("/radmin")
+            pathname.startsWith("/dashboard") || pathname.startsWith("/store/dashboard")
               ? "page"
               : undefined
           }

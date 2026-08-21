@@ -7,6 +7,11 @@ type OrderRow = {
   order_number: string;
   status: OrderStatus;
   payment_status: string;
+  subtotal_amount: string | number;
+  shipping_amount: string | number;
+  delivery_amount: string | number | null;
+  delivery_method: string | null;
+  delivery_estimate: string | null;
   total_amount: string | number;
   currency: string;
   shipping_address:
@@ -26,7 +31,9 @@ type OrderRow = {
     id: string;
     product_id: string | null;
     product_name: string;
+    product_sku: string | null;
     quantity: number;
+    unit_price_amount: string | number;
     total_amount: string | number;
   }>;
 };
@@ -75,8 +82,12 @@ function toManagedOrder(
     orderNumber: row.order_number,
     status: row.status,
     paymentStatus: row.payment_status,
+    subtotalAmount: Number(row.subtotal_amount ?? 0),
+    shippingAmount: Number(row.delivery_amount ?? row.shipping_amount ?? 0),
     totalAmount: Number(row.total_amount),
     currency: row.currency,
+    deliveryMethod: row.delivery_method,
+    estimatedDelivery: row.delivery_estimate,
     storeName: row.stores?.name ?? "-",
     storeSlug: row.stores?.slug ?? null,
     customerName: row.shipping_address?.full_name ?? "-",
@@ -92,7 +103,8 @@ function toManagedOrder(
       storeSlug: productMap.get(item.product_id ?? "")?.stores?.slug ?? row.stores?.slug ?? null,
       description: productMap.get(item.product_id ?? "")?.description ?? null,
       imageUrl: getPrimaryImage(productMap.get(item.product_id ?? "") ?? null),
-      unitPrice: getUnitPrice(productMap.get(item.product_id ?? "") ?? null),
+      sku: item.product_sku,
+      unitPrice: Number(item.unit_price_amount ?? getUnitPrice(productMap.get(item.product_id ?? "") ?? null)),
       quantity: item.quantity,
       totalAmount: Number(item.total_amount),
     })),
@@ -102,12 +114,14 @@ function toManagedOrder(
 async function getOrders(filters: {
   userId?: string;
   storeIds?: string[];
+  orderId?: string;
+  limit?: number;
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
   let query = (supabaseAdmin as any)
     .from("orders")
     .select(
-      "id,order_number,status,payment_status,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,quantity,total_amount)",
+      "id,order_number,status,payment_status,subtotal_amount,shipping_amount,delivery_amount,delivery_method,delivery_estimate,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,product_sku,quantity,unit_price_amount,total_amount)",
     )
     .order("created_at", {
       ascending: false,
@@ -115,6 +129,10 @@ async function getOrders(filters: {
 
   if (filters.userId) {
     query = query.eq("user_id", filters.userId);
+  }
+
+  if (filters.orderId) {
+    query = query.eq("id", filters.orderId);
   }
 
   if (filters.storeIds) {
@@ -126,7 +144,7 @@ async function getOrders(filters: {
     );
   }
 
-  const { data } = await query;
+  const { data } = await query.limit(filters.limit ?? 100);
   const rows = (data ?? []) as OrderRow[];
   const productIds = Array.from(
     new Set(
@@ -157,7 +175,18 @@ async function getOrders(filters: {
 export async function getCustomerOrders(userId: string) {
   return getOrders({
     userId,
+    limit: 20,
   });
+}
+
+export async function getCustomerOrderDetail(userId: string, orderId: string) {
+  const orders = await getOrders({
+    userId,
+    orderId,
+    limit: 1,
+  });
+
+  return orders[0] ?? null;
 }
 
 export async function getSellerOrders(userId: string) {
@@ -165,6 +194,7 @@ export async function getSellerOrders(userId: string) {
 
   return getOrders({
     storeIds: stores.map((store) => store.id),
+    limit: 50,
   });
 }
 

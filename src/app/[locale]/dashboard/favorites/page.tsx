@@ -1,8 +1,8 @@
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
-import { ResourcePage } from "@/components/dashboard/resource-page";
+import { CustomerFavoritesView } from "@/components/customer-account/customer-account-views";
 import { requireRole } from "@/lib/auth/session";
 import { getCustomerFeatureAccess } from "@/lib/cms/data";
-import { getCustomerResource } from "@/lib/dashboard/data";
+import { getCustomerFavoritePreviews } from "@/lib/customer-account/data";
 
 export const dynamic = "force-dynamic";
 
@@ -14,15 +14,7 @@ export default async function FavoritesPage() {
     return <FeatureBlocked title="Favorilər" />;
   }
 
-  const resource = await getCustomerResource(current.user.id, "favorites");
+  const favorites = await getCustomerFavoritePreviews(current.user.id);
 
-  return (
-    <ResourcePage
-      title="Favorilər"
-      description="Seçilmiş məhsullarınız"
-      totalLabel="Favori sayı"
-      total={resource.total}
-      items={resource.items}
-    />
-  );
+  return <CustomerFavoritesView favorites={favorites} />;
 }

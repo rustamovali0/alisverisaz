@@ -32,8 +32,12 @@ export type ManagedOrder = {
   orderNumber: string;
   status: OrderStatus;
   paymentStatus: string;
+  subtotalAmount: number;
+  shippingAmount: number;
   totalAmount: number;
   currency: string;
+  deliveryMethod: string | null;
+  estimatedDelivery: string | null;
   storeName: string;
   storeSlug: string | null;
   customerName: string;
@@ -49,6 +53,7 @@ export type ManagedOrder = {
     storeSlug: string | null;
     description: string | null;
     imageUrl: string | null;
+    sku: string | null;
     unitPrice: number;
     quantity: number;
     totalAmount: number;
