@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronDown,
   Heart,
@@ -33,7 +34,7 @@ function getPanelPath(role: AuthRole) {
   if (role === "admin") {
     return {
       href: "/radmin",
-      label: "RAdmin panel",
+      labelKey: "adminPanel",
       icon: ShieldCheck,
     };
   }
@@ -41,28 +42,16 @@ function getPanelPath(role: AuthRole) {
   if (role === "seller") {
     return {
       href: "/store/dashboard",
-      label: "Satıcı paneli",
+      labelKey: "sellerPanel",
       icon: Store,
     };
   }
 
   return {
     href: "/dashboard",
-    label: "Hesabım",
+    labelKey: "account",
     icon: UserRound,
   };
-}
-
-function getRoleLabel(role: AuthRole) {
-  if (role === "admin") {
-    return "Əsas admin";
-  }
-
-  if (role === "seller") {
-    return "Satıcı";
-  }
-
-  return "İstifadəçi";
 }
 
 function createNextHref(pathname: string, target: "/login" | "/register") {
@@ -77,6 +66,9 @@ export function clearHeaderAccountCache() {
 }
 
 export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
+  const auth = useTranslations("auth");
+  const nav = useTranslations("nav");
+  const roles = useTranslations("roles");
   const profile = useClientAuthProfile();
   const pathname = usePathname();
   const router = useRouter();
@@ -111,13 +103,13 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
       const result = await logoutAction();
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Çıxış alınmadı");
+        void appAlert.error(result.message, auth("logoutFailed"));
         return;
       }
 
       clearHeaderAccountCache();
       setIsOpen(false);
-      void appAlert.success("Çıxış edildi", result.message);
+      void appAlert.success(auth("loggedOut"), result.message);
       router.replace("/");
       router.refresh();
     });
@@ -141,13 +133,13 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         <Button asChild variant="ghost">
           <Link href={createNextHref(pathname, "/login")}>
             <LogIn className="mr-2 size-4" aria-hidden="true" />
-            Daxil ol
+            {auth("login")}
           </Link>
         </Button>
         <Button asChild variant="outline">
           <Link href={createNextHref(pathname, "/register")}>
             <UserPlus className="mr-2 size-4" aria-hidden="true" />
-            Qeydiyyat
+            {auth("register")}
           </Link>
         </Button>
       </div>
@@ -184,7 +176,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
           {initials}
         </span>
         <span className="hidden max-w-28 truncate text-left xl:inline">
-          {profile.fullName ?? profile.email ?? getRoleLabel(role)}
+          {profile.fullName ?? profile.email ?? roles(role)}
         </span>
         <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
       </Button>
@@ -196,9 +188,9 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         >
           <div className="border-b px-3 py-2">
             <p className="truncate text-sm font-semibold">
-              {profile.fullName ?? profile.email ?? "Hesab"}
+              {profile.fullName ?? profile.email ?? nav("account")}
             </p>
-            <p className="text-xs text-muted-foreground">{getRoleLabel(role)}</p>
+            <p className="text-xs text-muted-foreground">{roles(role)}</p>
           </div>
           <Link
             href={panel.href}
@@ -207,7 +199,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
             onClick={() => setIsOpen(false)}
           >
             <PanelIcon className="size-4" aria-hidden="true" />
-            {panel.label}
+            {nav(panel.labelKey)}
           </Link>
           {role === "customer" ? (
             <>
@@ -218,7 +210,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
                 onClick={() => setIsOpen(false)}
               >
                 <Heart className="size-4" aria-hidden="true" />
-                Sevimlilər
+                {nav("favorites")}
               </Link>
               <Link
                 href="/dashboard/orders"
@@ -227,7 +219,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
                 onClick={() => setIsOpen(false)}
               >
                 <Package className="size-4" aria-hidden="true" />
-                Sifarişlər
+                {nav("orders")}
               </Link>
             </>
           ) : null}
@@ -239,7 +231,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
               onClick={() => setIsOpen(false)}
             >
               <LayoutDashboard className="size-4" aria-hidden="true" />
-              Məhsullar
+              {nav("products")}
             </Link>
           ) : null}
           <button
@@ -250,7 +242,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
             role="menuitem"
           >
             <LogOut className="size-4" aria-hidden="true" />
-            {isPending ? "Çıxılır" : "Çıxış"}
+            {isPending ? auth("loggingOut") : auth("logout")}
           </button>
         </div>
       ) : null}

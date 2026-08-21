@@ -91,7 +91,6 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
-            <LanguageSwitcher compact />
             <NotificationCenter
               buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
               iconClassName="size-7"

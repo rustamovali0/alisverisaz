@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -118,43 +119,45 @@ type HelpSidebarProps = {
   supportPhone?: string;
 };
 
-const sidebarGroups = [
-  {
-    title: "Sənədlər",
-    items: [
-      { href: "/help", label: "Kömək mərkəzi" },
-      { href: "/faq", label: "FAQ" },
-      { href: "/terms", label: "İstifadəçi razılaşması" },
-      { href: "/privacy", label: "Məxfilik siyasəti" },
-      { href: "/rules", label: "Marketplace qaydaları" },
-    ],
-  },
-  {
-    title: "Təlimatlar",
-    items: [
-      { href: "/help/articles", label: "Məqalələr" },
-      { href: "/guide/new-listing", label: "Yeni elan" },
-      { href: "/guide/seller", label: "Satıcı" },
-      { href: "/guide/buyer", label: "Alıcı" },
-      { href: "/about", label: "Layihə haqqında" },
-      { href: "/contact", label: "Əlaqə və dəstək" },
-    ],
-  },
-] as const;
-
 export function HelpSidebar({
   currentPath,
   supportEmail,
   supportPhone,
 }: HelpSidebarProps) {
+  const footer = useTranslations("footer");
+  const help = useTranslations("helpUi");
+  const sidebarGroups = [
+    {
+      title: help("documents"),
+      items: [
+        { href: "/help", label: footer("helpCenter") },
+        { href: "/faq", label: "FAQ" },
+        { href: "/terms", label: footer("terms") },
+        { href: "/privacy", label: footer("privacy") },
+        { href: "/rules", label: footer("rules") },
+      ],
+    },
+    {
+      title: help("guides"),
+      items: [
+        { href: "/help/articles", label: help("articles") },
+        { href: "/guide/new-listing", label: help("newListing") },
+        { href: "/guide/seller", label: help("seller") },
+        { href: "/guide/buyer", label: help("buyer") },
+        { href: "/about", label: help("aboutProject") },
+        { href: "/contact", label: footer("contactSupport") },
+      ],
+    },
+  ];
+
   return (
     <div className="space-y-4 rounded-md border bg-card p-4">
       <div>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-foreground">
-          Sürətli keçidlər
+          {help("quickLinks")}
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
-          Lazımi bölməni tez tapmaq üçün qısa siyahı.
+          {help("quickLinksDescription")}
         </p>
       </div>
 
@@ -190,11 +193,11 @@ export function HelpSidebar({
       </div>
 
       <div className="rounded-md border bg-background p-3">
-        <h3 className="text-sm font-semibold text-foreground">Dəstək</h3>
+        <h3 className="text-sm font-semibold text-foreground">{footer("support")}</h3>
         <div className="mt-2 grid gap-1 text-sm leading-6 text-muted-foreground">
           {supportEmail ? <div>Email: {supportEmail}</div> : null}
-          {supportPhone ? <div>Telefon: {supportPhone}</div> : null}
-          <div>Mesaj və şikayətlər əlaqə səhifəsi ilə yönləndirilir.</div>
+          {supportPhone ? <div>{help("phone")}: {supportPhone}</div> : null}
+          <div>{help("contactRedirect")}</div>
         </div>
       </div>
     </div>
@@ -292,4 +295,3 @@ export function HelpFaqList({ items }: HelpFaqListProps) {
     </div>
   );
 }
-

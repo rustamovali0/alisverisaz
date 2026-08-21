@@ -18,7 +18,9 @@
     "search": "Поиск",
     "all": "Все",
     "status": "Статус",
-    "unlimited": "Без лимита"
+    "unlimited": "Без лимита",
+    "language": "Язык",
+    "back": "Назад"
   },
   "home": {
     "title": "alisveris.az",
@@ -99,7 +101,43 @@
     "messages": "Сообщения",
     "home": "Главная",
     "catalog": "Каталог",
-    "about": "О нас"
+    "about": "О нас",
+    "account": "Аккаунт",
+    "adminPanel": "Панель RAdmin",
+    "sellerPanel": "Панель продавца",
+    "mobileNavigation": "Мобильная навигация",
+    "accountMenuDescription": "Профиль и ссылки панели",
+    "guestAccountMenuDescription": "Войдите, зарегистрируйтесь или смените язык"
+  },
+  "roles": {
+    "admin": "Главный админ",
+    "seller": "Продавец",
+    "customer": "Покупатель"
+  },
+  "footer": {
+    "platform": "Платформа",
+    "account": "Аккаунт",
+    "support": "Поддержка",
+    "openStore": "Открыть магазин",
+    "goToPanel": "Перейти в панель",
+    "helpCenter": "Центр помощи",
+    "contactSupport": "Контакты и поддержка",
+    "terms": "Пользовательское соглашение",
+    "privacy": "Политика конфиденциальности",
+    "rules": "Правила marketplace"
+  },
+  "helpUi": {
+    "documents": "Документы",
+    "guides": "Инструкции",
+    "articles": "Статьи",
+    "newListing": "Новое объявление",
+    "seller": "Продавец",
+    "buyer": "Покупатель",
+    "aboutProject": "О проекте",
+    "quickLinks": "Быстрые ссылки",
+    "quickLinksDescription": "Короткий список, чтобы быстро найти нужный раздел.",
+    "phone": "Телефон",
+    "contactRedirect": "Сообщения и жалобы направляются через страницу контактов."
   },
   "auth": {
     "login": "Войти",
@@ -109,6 +147,9 @@
     "password": "Пароль",
     "forgotPassword": "Забыли пароль",
     "resetPassword": "Сбросить пароль",
+    "loggingOut": "Выход",
+    "logoutFailed": "Не удалось выйти",
+    "loggedOut": "Вы вышли",
     "captchaRequired": "Пройдите проверку безопасности",
     "genericLoginError": "Email или пароль неверны",
     "resetRequestSent": "Если аккаунт с этим email существует, ссылка восстановления будет отправлена."
@@ -119,7 +160,10 @@
     "checkout": "Оформить заказ",
     "quantity": "Количество",
     "remove": "Удалить из корзины",
-    "total": "Итого"
+    "total": "Итого",
+    "addProductFirst": "Добавьте товар перед подтверждением заказа.",
+    "browseProducts": "Посмотреть товары",
+    "confirmOrder": "Подтвердить заказ"
   },
   "checkout": {
     "title": "Checkout",

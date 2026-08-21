@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Instagram } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 import { Link } from "@/i18n/navigation";
@@ -60,6 +61,10 @@ export function SiteFooter({
   siteName = "Alışveriş",
   socialLinks,
 }: SiteFooterProps) {
+  const common = useTranslations("common");
+  const nav = useTranslations("nav");
+  const footer = useTranslations("footer");
+  const auth = useTranslations("auth");
   const displaySiteName = formatBrandName(siteName);
   const [role, setRole] = useState<AuthRole | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -156,66 +161,66 @@ export function SiteFooter({
         </div>
         <div className="min-w-0">
           <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
-            Platforma
+            {footer("platform")}
           </h2>
           <div className="mt-2 grid gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-3 md:text-sm">
             <Link href="/products" className="hover:text-primary">
-              Mağazalar
+              {nav("stores")}
             </Link>
             <Link href="/products" className="hover:text-primary">
-              Məhsullar
+              {nav("products")}
             </Link>
             <Link href="/register" className="hover:text-primary">
-              Mağaza aç
+              {footer("openStore")}
             </Link>
           </div>
         </div>
         <div className="min-w-0">
           <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
-            Hesab
+            {footer("account")}
           </h2>
           <div className="mt-2 grid gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-3 md:text-sm">
             {isChecked && role ? (
               <Link href={getAccountHref(role)} className="hover:text-primary">
-                {role === "seller" ? "Panelə keç" : "Hesabım"}
+                {role === "seller" ? footer("goToPanel") : nav("account")}
               </Link>
             ) : isChecked ? (
               <>
                 <Link href="/login" className="hover:text-primary">
-                  Daxil ol
+                  {auth("login")}
                 </Link>
                 <Link href="/register" className="hover:text-primary">
-                  Qeydiyyatdan keç
+                  {auth("register")}
                 </Link>
               </>
             ) : null}
             <Link href="/cart" className="hover:text-primary">
-              Səbət
+              {common("cart")}
             </Link>
           </div>
         </div>
         <div className="col-span-2 min-w-0 md:col-span-1">
           <h2 className="text-xs font-black uppercase tracking-normal text-foreground md:text-sm">
-            Dəstək
+            {footer("support")}
           </h2>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted-foreground md:mt-4 md:grid-cols-1 md:gap-3 md:text-sm">
             <Link href="/help" className="hover:text-primary">
-              Kömək mərkəzi
+              {footer("helpCenter")}
             </Link>
             <Link href="/faq" className="hover:text-primary">
               FAQ
             </Link>
             <Link href="/contact" className="hover:text-primary">
-              Əlaqə və dəstək
+              {footer("contactSupport")}
             </Link>
             <Link href="/terms" className="hover:text-primary">
-              İstifadəçi razılaşması
+              {footer("terms")}
             </Link>
             <Link href="/privacy" className="hover:text-primary">
-              Məxfilik siyasəti
+              {footer("privacy")}
             </Link>
             <Link href="/rules" className="hover:text-primary">
-              Marketplace qaydaları
+              {footer("rules")}
             </Link>
           </div>
         </div>

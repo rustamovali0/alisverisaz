@@ -18,7 +18,9 @@
     "search": "Axtar",
     "all": "Hamısı",
     "status": "Status",
-    "unlimited": "Limitsiz"
+    "unlimited": "Limitsiz",
+    "language": "Dil",
+    "back": "Geri"
   },
   "home": {
     "title": "alisveris.az",
@@ -99,7 +101,43 @@
     "messages": "Mesajlar",
     "home": "Əsas",
     "catalog": "Kataloq",
-    "about": "Haqqında"
+    "about": "Haqqında",
+    "account": "Hesabım",
+    "adminPanel": "RAdmin panel",
+    "sellerPanel": "Satıcı paneli",
+    "mobileNavigation": "Mobil naviqasiya",
+    "accountMenuDescription": "Profil və panel keçidləri",
+    "guestAccountMenuDescription": "Daxil olun, qeydiyyatdan keçin və ya dili dəyişin"
+  },
+  "roles": {
+    "admin": "Əsas admin",
+    "seller": "Satıcı",
+    "customer": "İstifadəçi"
+  },
+  "footer": {
+    "platform": "Platforma",
+    "account": "Hesab",
+    "support": "Dəstək",
+    "openStore": "Mağaza aç",
+    "goToPanel": "Panelə keç",
+    "helpCenter": "Kömək mərkəzi",
+    "contactSupport": "Əlaqə və dəstək",
+    "terms": "İstifadəçi razılaşması",
+    "privacy": "Məxfilik siyasəti",
+    "rules": "Marketplace qaydaları"
+  },
+  "helpUi": {
+    "documents": "Sənədlər",
+    "guides": "Təlimatlar",
+    "articles": "Məqalələr",
+    "newListing": "Yeni elan",
+    "seller": "Satıcı",
+    "buyer": "Alıcı",
+    "aboutProject": "Layihə haqqında",
+    "quickLinks": "Sürətli keçidlər",
+    "quickLinksDescription": "Lazımi bölməni tez tapmaq üçün qısa siyahı.",
+    "phone": "Telefon",
+    "contactRedirect": "Mesaj və şikayətlər əlaqə səhifəsi ilə yönləndirilir."
   },
   "auth": {
     "login": "Daxil ol",
@@ -109,6 +147,9 @@
     "password": "Şifrə",
     "forgotPassword": "Şifrəni unutdum",
     "resetPassword": "Şifrəni yenilə",
+    "loggingOut": "Çıxılır",
+    "logoutFailed": "Çıxış alınmadı",
+    "loggedOut": "Çıxış edildi",
     "captchaRequired": "Təhlükəsizlik yoxlamasını tamamlayın",
     "genericLoginError": "Email və ya şifrə yanlışdır",
     "resetRequestSent": "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək."
@@ -119,7 +160,10 @@
     "checkout": "Sifarişi tamamla",
     "quantity": "Say",
     "remove": "Səbətdən sil",
-    "total": "Cəmi"
+    "total": "Cəmi",
+    "addProductFirst": "Sifarişi təsdiqləmək üçün əvvəlcə məhsul əlavə edin.",
+    "browseProducts": "Məhsullara bax",
+    "confirmOrder": "Sifarişi təsdiqlə"
   },
   "checkout": {
     "title": "Checkout",

@@ -4,13 +4,18 @@ import {
   Grid2X2,
   Heart,
   Home,
+  LogIn,
+  Package,
   ShoppingCart,
   ShieldCheck,
   Store,
   UserRound,
+  UserPlus,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { LanguageOptionList } from "@/components/i18n/language-switcher";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
@@ -88,18 +93,6 @@ function accountPath(role: AuthRole | null) {
   return role ? "/dashboard" : "/login?next=/dashboard";
 }
 
-function accountLabel(role: AuthRole | null) {
-  if (role === "admin") {
-    return "Admin";
-  }
-
-  if (role === "seller") {
-    return "Panel";
-  }
-
-  return role ? "Hesabım" : "Giriş";
-}
-
 function scrollPageToTop() {
   if (typeof window === "undefined") {
     return;
@@ -124,19 +117,32 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
 }
 
 export function MobileBottomNav({ className, variant = "classic" }: MobileBottomNavProps) {
+  const common = useTranslations("common");
+  const nav = useTranslations("nav");
+  const auth = useTranslations("auth");
   const profile = useClientAuthProfile();
   const pathname = usePathname();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const role = profile.status === "authenticated" ? profile.role : null;
   const items = [
-    { href: "/", label: "Əsas", icon: Home },
-    { href: "/products", label: "Kataloq", icon: Grid2X2 },
-    { href: "/favorites", label: "Seçilmişlər", icon: Heart },
-    { href: "/cart", label: "Səbət", icon: ShoppingCart, badge: cartCount },
+    { href: "/", label: nav("home"), icon: Home },
+    { href: "/products", label: nav("catalog"), icon: Grid2X2 },
+    { href: "/favorites", label: nav("favorites"), icon: Heart },
+    { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
   ];
   const accountHref = accountPath(role);
+  const accountText =
+    role === "admin"
+      ? "Admin"
+      : role === "seller"
+        ? nav("dashboard")
+        : role
+          ? nav("account")
+          : auth("login");
 
   const isCurrentRoute = useCallback(
     (href: string) => {
@@ -165,6 +171,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
       lastNavigationRef.current = { href, at: now };
       router.push(href, { scroll: true });
       scrollPageToTop();
+      setIsAccountOpen(false);
     },
     [isCurrentRoute, router],
   );
@@ -184,15 +191,97 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
     };
   }, []);
 
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsAccountOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  const accountLinks = role
+    ? [
+        {
+          href: accountHref,
+          label: role === "admin" ? nav("adminPanel") : role === "seller" ? nav("sellerPanel") : nav("account"),
+          icon: UserRound,
+        },
+        ...(role === "customer"
+          ? [
+              { href: "/dashboard/profile", label: nav("profile"), icon: UserRound },
+              { href: "/dashboard/orders", label: nav("orders"), icon: Package },
+              { href: "/dashboard/favorites", label: nav("favorites"), icon: Heart },
+            ]
+          : []),
+        ...(role === "seller"
+          ? [
+              { href: "/store/dashboard/orders", label: nav("orders"), icon: Package },
+              { href: "/store/dashboard/products", label: nav("products"), icon: Grid2X2 },
+            ]
+          : []),
+      ]
+    : [
+        { href: "/login?next=/dashboard", label: auth("login"), icon: LogIn },
+        { href: "/register", label: auth("register"), icon: UserPlus },
+      ];
+
   return (
     <nav
+      ref={accountMenuRef}
       className={cn(
         "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
         navVariantClass[variant],
         className,
       )}
-      aria-label="Mobil naviqasiya"
+      aria-label={nav("mobileNavigation")}
     >
+      {isAccountOpen ? (
+        <div className="absolute inset-x-0 bottom-[calc(100%+0.5rem)] mx-2 max-h-[70vh] overflow-y-auto rounded-2xl border bg-popover p-3 text-popover-foreground shadow-2xl">
+          <div className="border-b pb-2">
+            <p className="text-left text-sm font-black">{nav("account")}</p>
+            <p className="text-left text-xs text-muted-foreground">
+              {role ? nav("accountMenuDescription") : nav("guestAccountMenuDescription")}
+            </p>
+          </div>
+          <div className="mt-2 grid gap-1">
+            {accountLinks.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.href}
+                  type="button"
+                  onClick={() => navigate(item.href)}
+                  className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-accent"
+                >
+                  <Icon className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 border-t pt-3">
+            <p className="px-3 pb-1 text-left text-xs font-black uppercase text-muted-foreground">
+              {common("language")}
+            </p>
+            <LanguageOptionList onSelect={() => setIsAccountOpen(false)} />
+          </div>
+        </div>
+      ) : null}
       <div className="grid w-full min-w-0 grid-cols-5 items-center text-center">
         {items.map((item) => {
           const Icon = item.icon;
@@ -239,13 +328,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         })}
         <button
           type="button"
-          onPointerUp={(event) => {
-            if (event.pointerType === "touch") {
-              event.preventDefault();
-              navigate(accountHref);
-            }
-          }}
-          onClick={() => navigate(accountHref)}
+          onClick={() => setIsAccountOpen((value) => !value)}
           className={cn(
             "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
@@ -254,6 +337,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
               pathname.startsWith("/store/dashboard") ||
               pathname.startsWith("/radmin")) &&
               "bg-primary/10 text-primary",
+            isAccountOpen && "bg-primary/10 text-primary",
           )}
           aria-current={
             pathname.startsWith("/dashboard") ||
@@ -263,10 +347,12 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
               ? "page"
               : undefined
           }
-          aria-label={role ? accountLabel(role) : "Kabinet"}
+          aria-haspopup="menu"
+          aria-expanded={isAccountOpen}
+          aria-label={accountText}
         >
           <AccountIcon role={role} />
-          <span className="max-w-full truncate leading-none">{role ? accountLabel(role) : "Kabinet"}</span>
+          <span className="max-w-full truncate leading-none">{accountText}</span>
         </button>
       </div>
     </nav>

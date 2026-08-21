@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,8 @@ export function CartCheckout({
   locale = "az",
   checkoutOnly = false,
 }: CartCheckoutProps) {
+  const common = useTranslations("common");
+  const cartUi = useTranslations("cartUi");
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<CartProduct[]>(initialProducts);
@@ -164,11 +167,11 @@ export function CartCheckout({
             <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
               <Link href={returnHref}>
                 <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
-                Geri
+                {common("back")}
               </Link>
             </Button>
             <h1 className="text-center text-3xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
-              Səbət
+              {common("cart")}
             </h1>
           </div>
           <div className="mt-2 divide-y bg-white md:mt-6 md:bg-transparent">
@@ -190,7 +193,7 @@ export function CartCheckout({
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
                   <ShoppingCart className="size-7" aria-hidden="true" />
                 </span>
-                <p>Səbət boşdur.</p>
+                <p>{cartUi("empty")}</p>
               </div>
             ) : (
               visibleItems.map(({ item, product }) => (
@@ -287,12 +290,12 @@ export function CartCheckout({
 
         {checkoutOnly && isEmptyCart ? (
           <section className="w-full max-w-xl rounded-md border bg-card p-6 text-center text-card-foreground shadow-sm">
-            <h1 className="text-xl font-semibold tracking-normal">Səbət boşdur</h1>
+            <h1 className="text-xl font-semibold tracking-normal">{cartUi("empty")}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sifarişi təsdiqləmək üçün əvvəlcə məhsul əlavə edin.
+              {cartUi("addProductFirst")}
             </p>
             <Button asChild className="mt-5">
-              <Link href="/products">Məhsullara bax</Link>
+              <Link href="/products">{cartUi("browseProducts")}</Link>
             </Button>
           </section>
         ) : null}
@@ -314,7 +317,7 @@ export function CartCheckout({
               </Link>
             </Button>
           ) : null}
-          <h2 className="text-lg font-semibold tracking-normal">Sifarişi təsdiqlə</h2>
+          <h2 className="text-lg font-semibold tracking-normal">{cartUi("confirmOrder")}</h2>
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <div className="mt-4 grid gap-4">

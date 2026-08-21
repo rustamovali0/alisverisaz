@@ -18,7 +18,9 @@
     "search": "Search",
     "all": "All",
     "status": "Status",
-    "unlimited": "Unlimited"
+    "unlimited": "Unlimited",
+    "language": "Language",
+    "back": "Back"
   },
   "home": {
     "title": "alisveris.az",
@@ -99,7 +101,43 @@
     "messages": "Messages",
     "home": "Home",
     "catalog": "Catalog",
-    "about": "About"
+    "about": "About",
+    "account": "My account",
+    "adminPanel": "RAdmin panel",
+    "sellerPanel": "Seller panel",
+    "mobileNavigation": "Mobile navigation",
+    "accountMenuDescription": "Profile and dashboard links",
+    "guestAccountMenuDescription": "Log in, register, or change language"
+  },
+  "roles": {
+    "admin": "Primary admin",
+    "seller": "Seller",
+    "customer": "Customer"
+  },
+  "footer": {
+    "platform": "Platform",
+    "account": "Account",
+    "support": "Support",
+    "openStore": "Open a store",
+    "goToPanel": "Go to panel",
+    "helpCenter": "Help center",
+    "contactSupport": "Contact and support",
+    "terms": "User agreement",
+    "privacy": "Privacy policy",
+    "rules": "Marketplace rules"
+  },
+  "helpUi": {
+    "documents": "Documents",
+    "guides": "Guides",
+    "articles": "Articles",
+    "newListing": "New listing",
+    "seller": "Seller",
+    "buyer": "Buyer",
+    "aboutProject": "About the project",
+    "quickLinks": "Quick links",
+    "quickLinksDescription": "A short list to help you find the right section quickly.",
+    "phone": "Phone",
+    "contactRedirect": "Messages and complaints are routed through the contact page."
   },
   "auth": {
     "login": "Log in",
@@ -109,6 +147,9 @@
     "password": "Password",
     "forgotPassword": "Forgot password",
     "resetPassword": "Reset password",
+    "loggingOut": "Logging out",
+    "logoutFailed": "Could not log out",
+    "loggedOut": "Logged out",
     "captchaRequired": "Complete the security check",
     "genericLoginError": "Email or password is incorrect",
     "resetRequestSent": "If an account exists for this email, a recovery link will be sent."
@@ -119,7 +160,10 @@
     "checkout": "Checkout",
     "quantity": "Quantity",
     "remove": "Remove from cart",
-    "total": "Total"
+    "total": "Total",
+    "addProductFirst": "Add a product before confirming the order.",
+    "browseProducts": "Browse products",
+    "confirmOrder": "Confirm order"
   },
   "checkout": {
     "title": "Checkout",
