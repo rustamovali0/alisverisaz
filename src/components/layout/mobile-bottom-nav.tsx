@@ -1,9 +1,12 @@
 "use client";
 
 import {
+  Bell,
   Grid2X2,
   Heart,
   Home,
+  Package,
+  Settings,
   ShoppingCart,
   Store,
   UserRound,
@@ -78,7 +81,7 @@ function readCartCount() {
 
 function accountPath(role: AuthRole | null) {
   if (role === "seller") {
-    return "/store/dashboard";
+    return "/store/dashboard/settings";
   }
 
   return role === "customer" ? "/dashboard" : "/login?next=/dashboard";
@@ -115,17 +118,25 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const isAuthLoading = profile.status === "loading";
   const actualRole = profile.status === "authenticated" ? profile.role : null;
   const role = actualRole === "admin" ? null : actualRole;
-  const items = [
-    { href: "/", label: nav("home"), icon: Home },
-    { href: "/products", label: nav("catalog"), icon: Grid2X2 },
-    { href: "/favorites", label: nav("favorites"), icon: Heart },
-    { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
-  ];
+  const isSeller = role === "seller";
+  const items = isSeller
+    ? [
+        { href: "/store/dashboard", label: "İcmal", icon: Home },
+        { href: "/store/dashboard/products", label: nav("products"), icon: Grid2X2 },
+        { href: "/store/dashboard/orders", label: nav("orders"), icon: Package },
+        { href: "/store/dashboard/messages", label: nav("notifications"), icon: Bell },
+      ]
+    : [
+        { href: "/", label: nav("home"), icon: Home },
+        { href: "/products", label: nav("catalog"), icon: Grid2X2 },
+        { href: "/favorites", label: nav("favorites"), icon: Heart },
+        { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
+      ];
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
     ? nav("account")
     : role === "seller"
-        ? nav("dashboard")
+        ? nav("settings")
         : role
           ? nav("account")
           : auth("login");
@@ -161,6 +172,21 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
     [isCurrentRoute, router],
   );
 
+  const isNavItemActive = useCallback(
+    (href: string) => {
+      if (href === "/") {
+        return pathname === "/";
+      }
+
+      if (href === "/store/dashboard") {
+        return pathname === href;
+      }
+
+      return pathname === href || pathname.startsWith(`${href}/`);
+    },
+    [pathname],
+  );
+
   useEffect(() => {
     function syncCartCount() {
       setCartCount(readCartCount());
@@ -189,10 +215,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const isActive = isNavItemActive(item.href);
 
           return (
             <button
@@ -249,18 +272,24 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
             "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            (pathname.startsWith("/dashboard") || pathname.startsWith("/store/dashboard")) &&
+            ((role === "seller" && pathname.startsWith("/store/dashboard/settings")) ||
+              (role !== "seller" && pathname.startsWith("/dashboard"))) &&
               "bg-primary/10 text-primary",
           )}
           aria-current={
-            pathname.startsWith("/dashboard") || pathname.startsWith("/store/dashboard")
+            (role === "seller" && pathname.startsWith("/store/dashboard/settings")) ||
+            (role !== "seller" && pathname.startsWith("/dashboard"))
               ? "page"
               : undefined
           }
           aria-disabled={isAuthLoading}
           aria-label={accountText}
         >
-          <AccountIcon role={role} />
+          {role === "seller" ? (
+            <Settings className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />
+          ) : (
+            <AccountIcon role={role} />
+          )}
           <span className="max-w-full truncate leading-none">{accountText}</span>
         </button>
       </div>

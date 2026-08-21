@@ -35,6 +35,28 @@ export function AppDashboardShell({
   const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
 
+  function resetDashboardScroll() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelectorAll<HTMLElement>("[data-dashboard-scroll-root]").forEach((element) => {
+      element.scrollTop = 0;
+    });
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.querySelectorAll<HTMLElement>("[data-dashboard-scroll-root]").forEach((element) => {
+        element.scrollTop = 0;
+      });
+    });
+  }
+
+  function handleDashboardLinkClick() {
+    setIsOpen(false);
+    resetDashboardScroll();
+  }
+
   function isActive(href: string) {
     if (href === "/admin" || href === "/radmin" || href === "/dashboard") {
       return pathname === href;
@@ -51,12 +73,12 @@ export function AppDashboardShell({
         </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{userLabel}</p>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3" data-dashboard-scroll-root>
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            onClick={() => setIsOpen(false)}
+            onClick={handleDashboardLinkClick}
             className={cn(
               "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-all duration-200",
               isActive(item.href)
@@ -88,7 +110,7 @@ export function AppDashboardShell({
           a
         </button>
       </div>
-      <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3">
+      <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3" data-dashboard-scroll-root>
         {navItems.map((item) => {
           const active = isActive(item.href);
 
@@ -96,6 +118,7 @@ export function AppDashboardShell({
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleDashboardLinkClick}
               title={item.titleKey ? t(item.titleKey as any) : item.title}
               aria-label={item.titleKey ? t(item.titleKey as any) : item.title}
               className={cn(
@@ -166,7 +189,7 @@ export function AppDashboardShell({
             </div>
             {returnHref ? (
               <Button asChild variant="outline" size="sm" className="shrink-0">
-                <Link href={returnHref}>{returnLabel}</Link>
+                <Link href={returnHref} onClick={handleDashboardLinkClick}>{returnLabel}</Link>
               </Button>
             ) : null}
           </div>

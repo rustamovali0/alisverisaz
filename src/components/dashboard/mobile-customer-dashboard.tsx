@@ -37,6 +37,23 @@ function isDashboardRoot(pathname: string) {
   return pathname === "/dashboard" || pathname.endsWith("/dashboard");
 }
 
+function resetDashboardScroll() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  document.querySelectorAll<HTMLElement>("[data-dashboard-scroll-root]").forEach((element) => {
+    element.scrollTop = 0;
+  });
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelectorAll<HTMLElement>("[data-dashboard-scroll-root]").forEach((element) => {
+      element.scrollTop = 0;
+    });
+  });
+}
+
 export function MobileCustomerDashboard({
   userLabel,
   userContact,
@@ -57,6 +74,7 @@ export function MobileCustomerDashboard({
     <section className="bg-white px-5 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-5 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
       <Link
         href="/dashboard/profile"
+        onClick={resetDashboardScroll}
         className="mb-5 grid min-w-0 grid-cols-[60px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-border dark:bg-card"
       >
         <span className="relative grid size-14 place-items-center rounded-full bg-slate-100 text-slate-500">
@@ -80,6 +98,7 @@ export function MobileCustomerDashboard({
             <Link
               key={item.href}
               href={item.href}
+              onClick={resetDashboardScroll}
               className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 text-[hsl(var(--marketplace-navy))] dark:border-border dark:text-foreground"
             >
               <Icon className="size-7" strokeWidth={2.1} aria-hidden="true" />
