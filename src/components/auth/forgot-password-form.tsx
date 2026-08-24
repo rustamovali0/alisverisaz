@@ -20,6 +20,13 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
+    if (!captchaToken) {
+      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
+      setServerError(message);
+      void appAlert.error(message, "Link göndərilmədi");
+      return;
+    }
+
     startTransition(async () => {
       formData.set("identifier", identifier.trim());
       formData.set("captchaToken", captchaToken);
@@ -86,7 +93,11 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
           onTokenChange={setCaptchaToken}
           siteKey={turnstileSiteKey}
         />
-        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
+        <Button
+          type="submit"
+          disabled={isPending || !captchaToken}
+          className="h-12 w-full rounded-xl"
+        >
           <Mail className="mr-2 size-4" aria-hidden="true" />
           {isPending ? "Göndərilir" : "Bərpa linki göndər"}
         </Button>

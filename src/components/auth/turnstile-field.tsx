@@ -31,7 +31,59 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedWidgetIdRef = useRef<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const normalizedSiteKey = siteKey.trim();
+  const [runtimeSiteKey, setRuntimeSiteKey] = useState(siteKey.trim());
+  const [isResolvingSiteKey, setIsResolvingSiteKey] = useState(!siteKey.trim());
+  const normalizedSiteKey = runtimeSiteKey.trim();
+
+  useEffect(() => {
+    if (window.turnstile) {
+      setIsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const providedSiteKey = siteKey.trim();
+
+    if (providedSiteKey) {
+      setRuntimeSiteKey(providedSiteKey);
+      setIsResolvingSiteKey(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setIsResolvingSiteKey(true);
+
+    fetch("/api/security/turnstile-site-key", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          return "";
+        }
+
+        const data = (await response.json()) as { siteKey?: unknown };
+
+        return typeof data.siteKey === "string" ? data.siteKey.trim() : "";
+      })
+      .then((nextSiteKey) => {
+        if (!controller.signal.aborted) {
+          setRuntimeSiteKey(nextSiteKey);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setRuntimeSiteKey("");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setIsResolvingSiteKey(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [siteKey]);
 
   useEffect(() => {
     if (!isReady || !normalizedSiteKey || !containerRef.current || renderedWidgetIdRef.current) {
@@ -55,6 +107,14 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
       window.turnstile.reset(renderedWidgetIdRef.current);
     }
   }, [token]);
+
+  if (!normalizedSiteKey && isResolvingSiteKey) {
+    return (
+      <div className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+        CAPTCHA hazırlanır...
+      </div>
+    );
+  }
 
   if (!normalizedSiteKey) {
     return (

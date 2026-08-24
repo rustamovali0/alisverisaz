@@ -76,6 +76,13 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       return;
     }
 
+    if (!captchaToken) {
+      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
+      setServerError(message);
+      void appAlert.error(message, "Giriş alınmadı");
+      return;
+    }
+
     formData.set("identifier", identifier.trim());
     formData.set("password", password);
     formData.set("rememberMe", rememberMe ? "on" : "");
@@ -100,6 +107,13 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
 
   function handleGoogleSubmit(formData: FormData) {
     if (isGooglePending) {
+      return;
+    }
+
+    if (!captchaToken) {
+      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
+      setServerError(message);
+      void appAlert.error(message, "Google girişi alınmadı");
       return;
     }
 
@@ -225,7 +239,11 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           onTokenChange={setCaptchaToken}
           siteKey={turnstileSiteKey}
         />
-        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
+        <Button
+          type="submit"
+          disabled={isPending || !captchaToken}
+          className="h-12 w-full rounded-xl"
+        >
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>
       </form>
@@ -241,7 +259,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
               type="submit"
               variant="outline"
               className="h-12 w-full rounded-xl"
-              disabled={isGooglePending}
+              disabled={isGooglePending || !captchaToken}
             >
               <Chrome className="mr-2 size-4" aria-hidden="true" />
               {isGooglePending ? "Google açılır" : "Google ilə davam et"}
