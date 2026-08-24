@@ -8,7 +8,7 @@ import { getCustomerOrders } from "@/lib/orders/data";
 export const dynamic = "force-dynamic";
 
 export default async function CustomerOrdersPage() {
-  const current = await requireRole(["customer"], "/dashboard/orders");
+  const current = await requireRole(["customer", "seller"], "/dashboard/orders");
   const enabled = await getCustomerFeatureAccess("orders");
 
   if (!enabled) {

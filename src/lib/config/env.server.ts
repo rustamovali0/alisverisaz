@@ -13,8 +13,7 @@ export const serverEnv = {
   get supabaseSecretKey() {
     return (
       readOptionalServerEnv("SUPABASE_SECRET_KEY") ||
-      readOptionalServerEnv("SUPABASE_SERVICE_ROLE_KEY") ||
-      clientEnv.supabasePublishableKey
+      readOptionalServerEnv("SUPABASE_SERVICE_ROLE_KEY")
     );
   },
   get hasSupabaseSecretKey() {
@@ -48,9 +47,17 @@ export const serverEnv = {
     );
   },
   get turnstileSecretKey() {
-    return readOptionalServerEnv("TURNSTILE_SECRET_KEY");
+    if (typeof window !== "undefined") {
+      throw new Error("Server environment variables cannot be read in the browser.");
+    }
+
+    return process.env.TURNSTILE_SECRET_KEY ?? "";
   },
   get hasTurnstileConfig() {
-    return Boolean(readOptionalServerEnv("TURNSTILE_SECRET_KEY"));
+    if (typeof window !== "undefined") {
+      throw new Error("Server environment variables cannot be read in the browser.");
+    }
+
+    return Boolean(process.env.TURNSTILE_SECRET_KEY);
   },
 } as const;

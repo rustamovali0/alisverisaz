@@ -34,6 +34,9 @@ export default async function StoreProductsPage() {
   const productLocationRecord = Object.fromEntries(productLocationMap);
   const firstStore = stores[0];
   const limit = firstStore ? await canCreateListing(firstStore.id) : null;
+  const productLimit = limit?.subscription?.productLimit ?? 100;
+  const remainingListings = limit?.subscription?.remainingListings ?? 0;
+  const imageLimit = limit?.subscription?.imagesPerProductLimit ?? 5;
 
   return (
     <div className="space-y-6">
@@ -45,10 +48,10 @@ export default async function StoreProductsPage() {
         <div className="mb-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">
           {firstStore
             ? limit?.allowed
-              ? limit.subscription?.productLimit === null
+              ? productLimit === null
                 ? "Məhsul limiti limitsizdir."
-                : `Qalan məhsul limiti: ${limit.subscription?.remainingListings ?? 0}`
-              : "Məhsul limitiniz dolub."
+                : `${remainingListings} elan limitiniz qalıb`
+              : "Limitiniz dolub"
             : "Məhsul əlavə etmək üçün əvvəl mağaza yaradılmalıdır."}
         </div>
         <ProductForm
@@ -57,6 +60,7 @@ export default async function StoreProductsPage() {
           stores={stores}
           locations={locations}
           disabled={!firstStore || !limit?.allowed}
+          imageLimit={imageLimit}
         />
       </DashboardPanel>
 
@@ -69,6 +73,7 @@ export default async function StoreProductsPage() {
           categories={categories}
           locations={locations}
           productLocationMap={productLocationRecord}
+          imageLimit={imageLimit}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
             limit?.allowed

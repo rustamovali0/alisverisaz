@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { getSiteSettings } from "@/lib/cms/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type {
   AdminSubscriptionAssignment,
@@ -108,6 +109,12 @@ function readNullableLimit(value: unknown) {
   }
 
   return null;
+}
+
+function readObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 export async function getSubscriptionPlans(includeInactive = false) {
@@ -236,7 +243,7 @@ export async function canCreateListing(storeId: string) {
 
 export async function getStoreEntitlements(storeId: string): Promise<StoreEntitlements> {
   const supabaseAdmin = createSupabaseAdminClient();
-  const [{ data: limits }, { count }] = await Promise.all([
+  const [{ data: limits }, { count }, { data: store }, siteSettings] = await Promise.all([
     (supabaseAdmin as any).rpc("get_store_effective_limits", {
       store_uuid: storeId,
     }),
@@ -249,10 +256,33 @@ export async function getStoreEntitlements(storeId: string): Promise<StoreEntitl
       .eq("store_id", storeId)
       .eq("listing_type", "store")
       .in("status", ["draft", "active"]),
+    (supabaseAdmin as any)
+      .from("stores")
+      .select("settings")
+      .eq("id", storeId)
+      .maybeSingle(),
+    getSiteSettings(),
   ]);
   const row = Array.isArray(limits) ? limits[0] : limits;
-  const productLimit = readNullableLimit(row?.product_limit);
-  const imagesPerProductLimit = readNullableLimit(row?.images_per_product_limit);
+  const storeSettings = readObject(store?.settings);
+  const storeProductLimitOverride = readNullableLimit(
+    storeSettings.product_limit_override,
+  );
+  const defaultProductLimit = siteSettings.subscriptionLimits.defaultProductLimit ?? 100;
+  const defaultImagesPerProductLimit =
+    siteSettings.subscriptionLimits.defaultImagesPerProductLimit ?? 5;
+  const rpcProductLimit = readNullableLimit(row?.product_limit);
+  const rpcImagesPerProductLimit = readNullableLimit(row?.images_per_product_limit);
+  const productLimit =
+    storeProductLimitOverride ??
+    (siteSettings.subscriptionsDisabledForSellers
+      ? defaultProductLimit
+      : rpcProductLimit ?? defaultProductLimit);
+  const imagesPerProductLimit =
+    readNullableLimit(storeSettings.images_per_product_limit_override) ??
+    (siteSettings.subscriptionsDisabledForSellers
+      ? defaultImagesPerProductLimit
+      : rpcImagesPerProductLimit ?? defaultImagesPerProductLimit);
   const productCount = count ?? 0;
 
   return {
@@ -270,7 +300,7 @@ export async function getAdminSubscriptionAssignments() {
   const [{ data: stores }, { data: subscriptions }] = await Promise.all([
     (supabaseAdmin as any)
       .from("stores")
-      .select("id,name,slug,owner_id,profiles(email,full_name)")
+      .select("id,name,slug,owner_id,settings,profiles(email,full_name)")
       .order("created_at", {
         ascending: false,
       }),
@@ -293,11 +323,12 @@ export async function getAdminSubscriptionAssignments() {
     }
   }
 
-  return ((stores ?? []) as Array<{
+  return Promise.all(((stores ?? []) as Array<{
     id: string;
     name: string;
     slug: string | null;
     owner_id: string;
+    settings?: Record<string, unknown> | null;
     profiles:
       | {
           email: string | null;
@@ -306,14 +337,18 @@ export async function getAdminSubscriptionAssignments() {
       | Array<{
           email: string | null;
           full_name: string | null;
-        }>
+      }>
       | null;
-  }>).map((store): AdminSubscriptionAssignment => {
+  }>).map(async (store): Promise<AdminSubscriptionAssignment> => {
     const owner = Array.isArray(store.profiles)
       ? store.profiles[0]
       : store.profiles;
     const subscription = subscriptionByStoreId.get(store.id) ?? null;
     const plan = subscription ? readJoinedPlan(subscription) : null;
+    const entitlements = await getStoreEntitlements(store.id);
+    const productLimitOverride = readNullableLimit(
+      readObject(store.settings).product_limit_override,
+    );
 
     return {
       storeId: store.id,
@@ -322,6 +357,10 @@ export async function getAdminSubscriptionAssignments() {
       ownerId: store.owner_id,
       ownerName: owner?.full_name ?? null,
       ownerEmail: owner?.email ?? null,
+      productLimitOverride,
+      effectiveProductLimit: entitlements.productLimit,
+      productCount: entitlements.productCount,
+      remainingProducts: entitlements.remainingProducts,
       subscription: subscription
         ? {
             id: subscription.id,
@@ -344,5 +383,5 @@ export async function getAdminSubscriptionAssignments() {
           }
         : null,
     };
-  });
+  }));
 }

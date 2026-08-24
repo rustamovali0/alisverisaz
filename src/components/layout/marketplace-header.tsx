@@ -62,7 +62,7 @@ export function MarketplaceHeader({
   return (
     <>
       <header
-        className={sticky ? "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0" : "relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
+        className={sticky ? "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0" : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">

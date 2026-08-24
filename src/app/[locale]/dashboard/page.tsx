@@ -5,7 +5,7 @@ import { getCustomerAccountOverview } from "@/lib/customer-account/data";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const current = await requireRole(["customer"], "/dashboard");
+  const current = await requireRole(["customer", "seller"], "/dashboard");
   const overview = await getCustomerAccountOverview(current.user.id);
 
   return <CustomerAccountHome profile={{

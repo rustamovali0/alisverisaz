@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { m } from "framer-motion";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -65,6 +65,85 @@ export function AppDashboardShell({
     return pathname === href || pathname.startsWith(`${href}/`);
   }
 
+  function adminGroupTitle(href: string) {
+    if (!href.startsWith("/radmin")) {
+      return null;
+    }
+
+    if (href === "/radmin" || href.includes("activity") || href.includes("audit")) {
+      return "ÜMUMİ";
+    }
+
+    if (href.includes("orders") || href.includes("payments")) {
+      return "SATIŞ";
+    }
+
+    if (href.includes("products") || href.includes("categories") || href.includes("reviews")) {
+      return "KATALOQ";
+    }
+
+    if (href.includes("stores") || href.includes("users") || href.includes("subscriptions")) {
+      return "SATICILAR";
+    }
+
+    if (
+      href.includes("site-management") ||
+      href.includes("homepage") ||
+      href.includes("menus") ||
+      href.includes("themes") ||
+      href.includes("media") ||
+      href.includes("locations") ||
+      href.includes("settings") ||
+      href.includes("panel-management")
+    ) {
+      return "SAYT İDARƏETMƏSİ";
+    }
+
+    return "SİSTEM";
+  }
+
+  function renderNavItems({ compact = false }: { compact?: boolean } = {}) {
+    let previousGroup: string | null = null;
+
+    return navItems.map((item) => {
+      const active = isActive(item.href);
+      const group = adminGroupTitle(item.href);
+      const showGroup = Boolean(group && group !== previousGroup);
+      previousGroup = group;
+
+      return (
+        <Fragment key={item.href}>
+          {showGroup && !compact ? (
+            <p className="px-3 pt-3 text-[11px] font-black uppercase tracking-[0.18em] text-muted-foreground first:pt-0">
+              {group}
+            </p>
+          ) : null}
+          <Link
+            href={item.href}
+            onClick={handleDashboardLinkClick}
+            title={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
+            aria-label={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
+            className={cn(
+              compact
+                ? "grid size-11 place-items-center rounded-xl border text-muted-foreground transition-all duration-200"
+                : "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-all duration-200",
+              active
+                ? compact
+                  ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                  : "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : compact
+                  ? "border-transparent bg-background/70 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/10 hover:text-foreground"
+                  : "text-muted-foreground hover:translate-x-0.5 hover:bg-primary/10 hover:text-foreground",
+            )}
+          >
+            <DashboardIconView name={item.icon} className={compact ? "size-5 shrink-0" : "size-4 shrink-0"} />
+            {compact ? null : <span>{item.titleKey ? t(item.titleKey as any) : item.title}</span>}
+          </Link>
+        </Fragment>
+      );
+    });
+  }
+
   const sidebar = (
     <aside className="glass-panel flex h-full w-72 max-w-[calc(100vw-4rem)] flex-col border-r">
       <div className="border-b px-5 py-5">
@@ -74,22 +153,7 @@ export function AppDashboardShell({
         <p className="mt-1 truncate text-sm text-muted-foreground">{userLabel}</p>
       </div>
       <nav className="flex-1 space-y-1 overflow-y-auto p-3" data-dashboard-scroll-root>
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={handleDashboardLinkClick}
-            className={cn(
-              "flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium transition-all duration-200",
-              isActive(item.href)
-                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                : "text-muted-foreground hover:translate-x-0.5 hover:bg-primary/10 hover:text-foreground",
-            )}
-          >
-            <DashboardIconView name={item.icon} className="size-4 shrink-0" />
-            <span>{item.titleKey ? t(item.titleKey as any) : item.title}</span>
-          </Link>
-        ))}
+        {renderNavItems()}
       </nav>
       <div className="border-t p-3">
         <LogoutButton />
@@ -111,27 +175,7 @@ export function AppDashboardShell({
         </button>
       </div>
       <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3" data-dashboard-scroll-root>
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={handleDashboardLinkClick}
-              title={item.titleKey ? t(item.titleKey as any) : item.title}
-              aria-label={item.titleKey ? t(item.titleKey as any) : item.title}
-              className={cn(
-                "grid size-11 place-items-center rounded-xl border text-muted-foreground transition-all duration-200",
-                active
-                  ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                  : "border-transparent bg-background/70 hover:-translate-y-0.5 hover:border-primary/20 hover:bg-primary/10 hover:text-foreground",
-              )}
-            >
-              <DashboardIconView name={item.icon} className="size-5 shrink-0" />
-            </Link>
-          );
-        })}
+        {renderNavItems({ compact: true })}
       </nav>
       <div className="border-t p-2">
         <LogoutButton compact />
@@ -140,7 +184,7 @@ export function AppDashboardShell({
   );
 
   return (
-    <div className="min-h-screen bg-background soft-grid-bg">
+    <div className="app-dashboard-shell min-h-screen bg-background soft-grid-bg">
       <div className="hidden min-h-screen lg:fixed lg:inset-y-0 lg:flex">
         {sidebar}
       </div>

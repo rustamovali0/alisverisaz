@@ -1,18 +1,30 @@
 "use client";
 
-import { useTransition } from "react";
+import { Monitor, RotateCcw, Save, Smartphone, UploadCloud } from "lucide-react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   defaultHomeThemeColors,
   homeThemeColorPresets,
 } from "@/lib/cms/defaults";
-import { publishThemeAction, updateThemeDraftAction } from "@/lib/cms/actions";
-import type { ThemeSetting } from "@/lib/cms/types";
+import {
+  publishThemeAction,
+  updateDesignSettingsAction,
+  updateThemeDraftAction,
+} from "@/lib/cms/actions";
+import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
+import {
+  designPresetOptions,
+  type DesignPresetKey,
+  type SiteDesignSettings,
+} from "@/lib/design/presets";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { cn } from "@/lib/utils";
 
 type ThemeManagerProps = {
   themes: ThemeSetting[];
+  siteSettings: SiteSettings;
 };
 
 type HomeThemeColors = Record<keyof typeof defaultHomeThemeColors, string>;
@@ -48,6 +60,53 @@ const colorGroups: Array<{
       { key: "storesBackground", name: "storesBackgroundColor", label: "Mağaza fonu" },
       { key: "productsBackground", name: "productsBackgroundColor", label: "Məhsul fonu" },
       { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Info blok fonu" },
+    ],
+  },
+];
+
+const designGroups: Array<{
+  title: string;
+  description: string;
+  fields: Array<{
+    key: DesignPresetKey;
+    label: string;
+  }>;
+}> = [
+  {
+    title: "Ümumi Tema",
+    description: "Rənglər, səthlər, radius və əsas marketplace tonu.",
+    fields: [
+      { key: "themePreset", label: "Tema" },
+      { key: "spacingPreset", label: "Spacing" },
+      { key: "typographyPreset", label: "Typography" },
+    ],
+  },
+  {
+    title: "Public Marketplace",
+    description: "Navbar, ana səhifə, məhsul kartı və məhsul səhifəsi variantları.",
+    fields: [
+      { key: "navbarPreset", label: "Navbar" },
+      { key: "homepagePreset", label: "Ana səhifə" },
+      { key: "productCardPreset", label: "Məhsul kartları" },
+      { key: "productDetailPreset", label: "Məhsul səhifəsi" },
+    ],
+  },
+  {
+    title: "Panellər",
+    description: "Seller, customer və radmin panel görünüşləri.",
+    fields: [
+      { key: "sellerPanelPreset", label: "Seller panel" },
+      { key: "customerPanelPreset", label: "Customer panel" },
+      { key: "adminPanelPreset", label: "Admin panel" },
+    ],
+  },
+  {
+    title: "UI Elementləri",
+    description: "Button, input və card presetləri.",
+    fields: [
+      { key: "buttonPreset", label: "Buttons" },
+      { key: "inputPreset", label: "Inputs" },
+      { key: "cardPreset", label: "Cards" },
     ],
   },
 ];
@@ -113,7 +172,174 @@ function setThemeUpdatePayload(
   formData.set("config", JSON.stringify(nextConfig));
 }
 
-export function ThemeManager({ themes }: ThemeManagerProps) {
+function DesignPresetManager({ settings }: { settings: SiteSettings }) {
+  const [isPending, startTransition] = useTransition();
+  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [preview, setPreview] = useState<SiteDesignSettings>(settings.design);
+
+  function handleDesignSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await updateDesignSettingsAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Dizayn saxlanmadı");
+        return;
+      }
+
+      void appAlert.success("Dizayn yeniləndi", result.message);
+    });
+  }
+
+  return (
+    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="grid gap-0 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="border-b bg-muted/35 p-4 xl:border-b-0 xl:border-r xl:p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Design system
+              </p>
+              <h3 className="mt-2 text-2xl font-black tracking-normal">Dizayn</h3>
+              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                Theme, navbar, homepage, product card/detail və panel presetləri
+                eyni global settings-dən idarə olunur.
+              </p>
+            </div>
+            <div className="inline-flex rounded-md border bg-background p-1">
+              <button
+                type="button"
+                onClick={() => setPreviewMode("desktop")}
+                className={cn(
+                  "grid size-9 place-items-center rounded-md text-muted-foreground",
+                  previewMode === "desktop" && "bg-primary text-primary-foreground",
+                )}
+                aria-label="Desktop preview"
+              >
+                <Monitor className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewMode("mobile")}
+                className={cn(
+                  "grid size-9 place-items-center rounded-md text-muted-foreground",
+                  previewMode === "mobile" && "bg-primary text-primary-foreground",
+                )}
+                aria-label="Mobile preview"
+              >
+                <Smartphone className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              "mx-auto mt-5 overflow-hidden rounded-xl border bg-background shadow-sm",
+              previewMode === "mobile" ? "max-w-[260px]" : "max-w-xl",
+            )}
+          >
+            <div className="flex items-center gap-2 border-b px-3 py-2">
+              <span className="grid size-8 place-items-center rounded-md bg-primary text-xs font-black text-primary-foreground">
+                a
+              </span>
+              <div className="h-8 flex-1 rounded-md bg-muted" />
+              <span className="size-8 rounded-md border bg-card" />
+            </div>
+            <div className="space-y-3 p-3">
+              <div className="rounded-lg border bg-card p-3">
+                <div className="h-3 w-28 rounded-full bg-primary/25" />
+                <div className="mt-3 h-8 w-3/4 rounded-md bg-foreground/10" />
+                <div className="mt-3 h-10 rounded-md bg-muted" />
+              </div>
+              <div
+                className={cn(
+                  "grid gap-2",
+                  previewMode === "desktop" ? "grid-cols-3" : "grid-cols-2",
+                )}
+              >
+                {[1, 2, 3, 4, 5, 6].map((item) => (
+                  <div key={item} className="product-card rounded-lg border bg-card p-2">
+                    <div className="aspect-[4/3] rounded-md bg-muted" />
+                    <div className="mt-2 h-3 rounded-full bg-foreground/10" />
+                    <div className="mt-2 h-4 w-2/3 rounded-full bg-primary/25" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Preview lokal vizual nümunədir; publish etdikdən sonra eyni settings public
+            və dashboard səthlərinə tətbiq olunur.
+          </p>
+        </div>
+
+        <form action={handleDesignSubmit} className="grid gap-5 p-4 xl:p-5">
+          {designGroups.map((group) => (
+            <div key={group.title} className="grid gap-3 rounded-lg border bg-background/70 p-4">
+              <div>
+                <h4 className="text-sm font-bold">{group.title}</h4>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  {group.description}
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                {group.fields.map((field) => (
+                  <label key={field.key} className="grid gap-2 text-sm font-medium">
+                    {field.label}
+                    <select
+                      name={field.key}
+                      value={preview[field.key]}
+                      onChange={(event) =>
+                        setPreview((current) => ({
+                          ...current,
+                          [field.key]: event.target.value,
+                        }))
+                      }
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {designPresetOptions[field.key].map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              type="submit"
+              name="intent"
+              value="reset"
+              variant="outline"
+              disabled={isPending}
+            >
+              <RotateCcw className="mr-2 size-4" aria-hidden="true" />
+              Reset default
+            </Button>
+            <Button
+              type="submit"
+              name="intent"
+              value="draft"
+              variant="secondary"
+              disabled={isPending}
+            >
+              <Save className="mr-2 size-4" aria-hidden="true" />
+              Save draft
+            </Button>
+            <Button type="submit" name="intent" value="publish" disabled={isPending}>
+              <UploadCloud className="mr-2 size-4" aria-hidden="true" />
+              Publish
+            </Button>
+          </div>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
   const totalThemes = themes.length;
 
@@ -177,7 +403,8 @@ export function ThemeManager({ themes }: ThemeManagerProps) {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-5">
+      <DesignPresetManager settings={siteSettings} />
       {themes.map((theme) => {
         const colors = readThemeColors(theme);
 

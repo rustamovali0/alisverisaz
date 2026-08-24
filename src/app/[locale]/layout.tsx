@@ -14,6 +14,7 @@ import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { siteConfig } from "@/lib/config/site";
+import { buildDesignCssVariables } from "@/lib/design/presets";
 import { getCategoryOptions } from "@/lib/products/data";
 
 type LocaleLayoutProps = {
@@ -155,6 +156,20 @@ export default async function LocaleLayout({
         className="global-loader-root min-h-screen"
         data-loader-type={siteSettings.globalLoader.type}
         data-loader-palette={siteSettings.globalLoader.palette}
+        data-design-theme={siteSettings.design.themePreset}
+        data-navbar-preset={siteSettings.design.navbarPreset}
+        data-homepage-preset={siteSettings.design.homepagePreset}
+        data-product-card-preset={siteSettings.design.productCardPreset}
+        data-product-detail-preset={siteSettings.design.productDetailPreset}
+        data-seller-panel-preset={siteSettings.design.sellerPanelPreset}
+        data-customer-panel-preset={siteSettings.design.customerPanelPreset}
+        data-admin-panel-preset={siteSettings.design.adminPanelPreset}
+        data-button-preset={siteSettings.design.buttonPreset}
+        data-input-preset={siteSettings.design.inputPreset}
+        data-card-preset={siteSettings.design.cardPreset}
+        data-spacing-preset={siteSettings.design.spacingPreset}
+        data-typography-preset={siteSettings.design.typographyPreset}
+        style={buildDesignCssVariables(siteSettings.design)}
       >
         <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
           <ThemeToggle />

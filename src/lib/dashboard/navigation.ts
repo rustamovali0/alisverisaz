@@ -102,12 +102,6 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "shoppingCart",
     },
     {
-      title: "Beh sifarişləri",
-      titleKey: "deposits",
-      href: "/store/dashboard/deposits",
-      icon: "creditCard",
-    },
-    {
       title: "Müştərilər",
       titleKey: "customers",
       href: "/store/dashboard/customers",
@@ -184,12 +178,6 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "shoppingCart",
     },
     {
-      title: "Beh sifarişləri",
-      titleKey: "deposits",
-      href: "/radmin/deposits",
-      icon: "creditCard",
-    },
-    {
       title: "Abunəliklər",
       titleKey: "subscription",
       href: "/radmin/subscriptions",
@@ -237,7 +225,7 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "menu",
     },
     {
-      title: "Temalar",
+      title: "Dizayn",
       href: "/radmin/themes",
       icon: "palette",
     },

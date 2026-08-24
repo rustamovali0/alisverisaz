@@ -49,7 +49,6 @@ export default async function PublicFavoritesPage({ params }: PublicFavoritesPag
         {products.length > 0 ? (
           <ProductGrid
             products={products}
-            depositEnabled={false}
             productCardVariant={activeTheme.productCardVariant}
             labels={{ stock: marketplace("stock") }}
           />

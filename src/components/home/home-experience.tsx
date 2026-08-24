@@ -35,7 +35,6 @@ type HomeExperienceProps = {
   products: CartProduct[];
   productNextCursor?: string | null;
   productHasMore?: boolean;
-  depositEnabled: boolean;
   categories: CategoryOption[];
   title: string;
   description: string;
@@ -230,7 +229,6 @@ export function HomeExperience({
   products,
   productNextCursor,
   productHasMore,
-  depositEnabled,
   categories,
   title,
   description,
@@ -270,6 +268,7 @@ export function HomeExperience({
   return (
     <main
       className="min-h-screen w-full max-w-full overflow-x-clip pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0"
+      data-homepage-preset={siteSettings.design.homepagePreset}
       style={themeStyle}
     >
       <section
@@ -368,6 +367,7 @@ export function HomeExperience({
 
       {activeCategories.length > 0 ? (
         <section
+          data-home-categories
           className="py-6 md:py-10"
           style={{ backgroundColor: "var(--home-categories-bg)" }}
         >
@@ -452,7 +452,6 @@ export function HomeExperience({
             initialHasMore={productHasMore}
             locale={locale}
             sort="newest"
-            depositEnabled={depositEnabled}
             productCardVariant={productCardVariant}
             labels={{ stock: "Stok" }}
           />

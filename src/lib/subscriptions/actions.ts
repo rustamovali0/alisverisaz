@@ -54,6 +54,7 @@ function revalidateSubscriptionPaths() {
   revalidatePath("/radmin/subscriptions");
   revalidatePath("/admin/subscriptions");
   revalidatePath("/store/dashboard");
+  revalidatePath("/store/dashboard/products");
 }
 
 export async function activateFreePlanAction(
@@ -310,5 +311,68 @@ export async function assignStorePlanAction(
   return {
     ok: true,
     message: "Plan mağazaya manual təyin edildi.",
+  };
+}
+
+export async function updateStoreProductLimitAction(
+  formData: FormData,
+): Promise<SubscriptionActionResult> {
+  await requireRole(["admin"], "/radmin/subscriptions");
+
+  const storeId = readString(formData, "storeId");
+  const productLimitOverride = readOptionalLimit(formData, "productLimitOverride");
+
+  if (!storeId) {
+    return {
+      ok: false,
+      message: "Mağaza seçimi mütləqdir.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: store } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,settings")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (!store) {
+    return {
+      ok: false,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  const settings =
+    store.settings && typeof store.settings === "object" && !Array.isArray(store.settings)
+      ? { ...(store.settings as Record<string, unknown>) }
+      : {};
+
+  if (productLimitOverride === null) {
+    delete settings.product_limit_override;
+  } else {
+    settings.product_limit_override = productLimitOverride;
+  }
+
+  const { error } = await (supabaseAdmin as any)
+    .from("stores")
+    .update({ settings })
+    .eq("id", storeId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidateSubscriptionPaths();
+
+  return {
+    ok: true,
+    message:
+      productLimitOverride === null
+        ? "Mağaza limiti global default-a qaytarıldı."
+        : "Mağaza üçün fərdi elan limiti yeniləndi.",
   };
 }

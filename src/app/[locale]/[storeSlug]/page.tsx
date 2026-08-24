@@ -8,7 +8,6 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
-import { getDepositSettings } from "@/lib/settings/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 type StorePageProps = {
@@ -98,13 +97,10 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
-  const [store, depositSettings] = await Promise.all([
-    getMarketplaceStoreBySlug({
-      slug: storeSlug,
-      locale,
-    }),
-    getDepositSettings(),
-  ]);
+  const store = await getMarketplaceStoreBySlug({
+    slug: storeSlug,
+    locale,
+  });
 
   if (!store) {
     notFound();
@@ -138,7 +134,6 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         selectedCategoryId={selectedCategory?.id}
         locale={locale}
         productCardVariant={activeTheme.productCardVariant}
-        depositEnabled={depositSettings.enabled}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,
           description: siteSettings.defaultMetaDescription,

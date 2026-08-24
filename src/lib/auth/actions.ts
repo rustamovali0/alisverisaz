@@ -175,36 +175,47 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+  const supabase = await createSupabaseServerClient();
+  const redirectTo = new URL("/auth/callback", clientEnv.appUrl);
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: fullName,
-      phone,
-      requested_role: role,
-      seller_application_status: role === "seller" ? "pending" : "active",
+    options: {
+      emailRedirectTo: redirectTo.toString(),
+      data: {
+        full_name: fullName,
+        phone,
+        requested_role: role,
+        seller_application_status: role === "seller" ? "pending" : "active",
+      },
     },
   });
 
   if (error) {
+    const lowerMessage = error.message.toLowerCase();
+
     return {
       ok: false,
       message:
-        error.message.toLowerCase().includes("already")
+        lowerMessage.includes("already") || lowerMessage.includes("registered")
           ? "Bu email ilə hesab artıq mövcuddur."
-          : error.message,
+          : lowerMessage.includes("password")
+            ? "Şifrə təhlükəsizlik tələblərinə uyğun deyil."
+            : "Qeydiyyat tamamlanmadı. Məlumatları yoxlayıb yenidən cəhd edin.",
     };
   }
 
-  if (!data.user) {
+  if (
+    !data.user ||
+    (Array.isArray(data.user.identities) && data.user.identities.length === 0)
+  ) {
     return {
       ok: false,
-      message: "İstifadəçi yaradılarkən xəta baş verdi.",
+      message: "Bu email ilə hesab artıq mövcuddur.",
     };
   }
 
+  const supabaseAdmin = createSupabaseAdminClient();
   let avatarUrl: string | null = null;
   let bannerUrl: string | null = null;
 
@@ -255,7 +266,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   if (profileError) {
     return {
       ok: false,
-      message: profileError.message,
+      message: "Profil yaradıla bilmədi. Yenidən cəhd edin.",
     };
   }
 
@@ -278,8 +289,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     ok: true,
     message:
       role === "seller"
-        ? "Satıcı müraciətiniz göndərildi. Əsas admin təsdiqləyəndən sonra hesab aktiv olacaq."
-        : "Qeydiyyat tamamlandı. Hesabınıza giriş edə bilərsiniz.",
+        ? "Satıcı müraciətiniz göndərildi. Email təsdiqindən və əsas admin təsdiqindən sonra hesab aktiv olacaq."
+        : "Qeydiyyat tamamlandı. Hesabınızı aktivləşdirmək üçün email təsdiq linkini açın.",
     redirectTo: "/login",
   };
 }
@@ -679,7 +690,7 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
   if (error) {
     return {
       ok: false,
-      message: error.message,
+      message: "Şifrə təhlükəsizlik tələblərinə uyğun deyil.",
     };
   }
 
@@ -691,7 +702,7 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
 }
 
 export async function updateCustomerProfileAction(formData: FormData): Promise<AuthResult> {
-  const current = await requireRole(["customer"], "/dashboard/profile");
+  const current = await requireRole(["customer", "seller"], "/dashboard/profile");
   const fullName = readString(formData, "fullName");
   const email = readString(formData, "email").toLowerCase();
   const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));

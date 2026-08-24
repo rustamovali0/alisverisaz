@@ -1,4 +1,5 @@
 import type { DashboardNavItem } from "@/lib/dashboard/navigation";
+import type { SiteDesignSettings } from "@/lib/design/presets";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -54,6 +55,7 @@ export type SiteSettings = {
   storeRegistrationEnabled: boolean;
   depositEnabled: boolean;
   showSubscriptionInSellerPanel: boolean;
+  subscriptionsDisabledForSellers: boolean;
   globalLoader: {
     type: GlobalLoaderType;
     palette: GlobalLoaderPalette;
@@ -63,6 +65,7 @@ export type SiteSettings = {
     defaultProductLimit: number | null;
     defaultImagesPerProductLimit: number | null;
   };
+  design: SiteDesignSettings;
   activeHomeTheme: string;
   defaultThemeMode: ThemeMode;
 };

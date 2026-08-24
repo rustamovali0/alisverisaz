@@ -92,6 +92,15 @@ async function ensureCustomer(input: {
 export async function createDepositAction(
   formData: FormData,
 ): Promise<DepositActionResult> {
+  const depositsEnabled = false;
+
+  if (!depositsEnabled) {
+    return {
+      ok: false,
+      message: "Beh sistemi hazırda deaktivdir.",
+    };
+  }
+
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },

@@ -446,9 +446,9 @@ function readProductPayload(formData: FormData) {
   };
   const status = readStatus(readString(formData, "status"));
   const variants = parseVariants(readString(formData, "variants"));
-  const depositEnabled = readString(formData, "depositEnabled") === "on";
-  const depositType = readDepositType(readString(formData, "depositType"));
-  const depositValue = readNumber(formData, "depositValue");
+  const depositEnabled = false;
+  const depositType = "fixed";
+  const depositValue = 0;
 
   return {
     name,

@@ -1,21 +1,12 @@
-function readRequiredPublicEnv(name: string, fallback?: string): string {
+function readRequiredPublicEnv(name: string): string {
   const value = process.env[name];
 
   if (value) {
     return value;
   }
 
-  if (fallback) {
-    return fallback;
-  }
-
   throw new Error(`Missing required environment variable: ${name}`);
 }
-
-const fallbackSupabaseProjectId = "titvhysupzvhqrjmliye";
-const fallbackSupabaseUrl = `https://${fallbackSupabaseProjectId}.supabase.co`;
-const fallbackSupabasePublishableKey =
-  "sb_publishable_ekZpLk1D53KOzduR8tOdHQ_u8-GGcEI";
 
 function readSupabaseProjectId(supabaseUrl: string) {
   const explicitProjectId = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID;
@@ -35,13 +26,12 @@ function readSupabaseProjectId(supabaseUrl: string) {
     // The URL is validated by the Supabase client when it is used.
   }
 
-  return fallbackSupabaseProjectId;
+  throw new Error(
+    "Missing required environment variable: NEXT_PUBLIC_SUPABASE_PROJECT_ID",
+  );
 }
 
-const supabaseUrl = readRequiredPublicEnv(
-  "NEXT_PUBLIC_SUPABASE_URL",
-  fallbackSupabaseUrl,
-);
+const supabaseUrl = readRequiredPublicEnv("NEXT_PUBLIC_SUPABASE_URL");
 
 export const clientEnv = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
@@ -49,7 +39,6 @@ export const clientEnv = {
   supabaseUrl,
   supabasePublishableKey: readRequiredPublicEnv(
     "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    fallbackSupabasePublishableKey,
   ),
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
 } as const;

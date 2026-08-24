@@ -18,7 +18,7 @@ export default async function CustomerDashboardLayout({
   children,
 }: CustomerDashboardLayoutProps) {
   const [current, siteSettings] = await Promise.all([
-    requireRole(["customer"], "/dashboard"),
+    requireRole(["customer", "seller"], "/dashboard"),
     getSiteSettings(),
   ]);
   const userLabel = current.profile?.full_name ?? current.user.email ?? "İstifadəçi";

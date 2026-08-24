@@ -7,7 +7,7 @@ import { getCustomerFeatureAccess } from "@/lib/cms/data";
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  const current = await requireRole(["customer"], "/dashboard/profile");
+  const current = await requireRole(["customer", "seller"], "/dashboard/profile");
   const enabled = await getCustomerFeatureAccess("profile");
 
   if (!enabled) {

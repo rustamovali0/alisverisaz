@@ -19,6 +19,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { defaultThemeSettings } from "@/lib/cms/defaults";
 import type { CmsActionResult } from "@/lib/cms/types";
+import {
+  defaultDesignSettings,
+  designPresetOptions,
+  normalizeDesignSettings,
+  type DesignPresetKey,
+} from "@/lib/design/presets";
 
 const MAX_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -95,6 +101,21 @@ function readMobileNavbarVariant(formData: FormData) {
   ].includes(value)
     ? value
     : "classic";
+}
+
+function readDesignSettings(formData: FormData) {
+  const next = { ...defaultDesignSettings };
+
+  for (const key of Object.keys(designPresetOptions) as DesignPresetKey[]) {
+    const value = readString(formData, key);
+    const allowed = new Set(designPresetOptions[key].map(([optionValue]) => optionValue));
+
+    if (allowed.has(value as never)) {
+      (next as Record<string, string>)[key] = value;
+    }
+  }
+
+  return next;
 }
 
 function revalidateLocalizedPath(path: string, type?: "layout" | "page") {
@@ -235,6 +256,11 @@ export async function updateSiteSettingsAction(
   }
 
   const value = {
+    ...((await (supabaseAdmin as any)
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "site")
+      .maybeSingle()).data?.value ?? {}),
     site_name: readString(formData, "siteName"),
     short_name: readString(formData, "shortName"),
     logo_url: logoUrl,
@@ -252,8 +278,12 @@ export async function updateSiteSettingsAction(
     maintenance_mode: readBoolean(formData, "maintenanceMode"),
     user_registration_enabled: readBoolean(formData, "userRegistrationEnabled"),
     store_registration_enabled: readBoolean(formData, "storeRegistrationEnabled"),
-    deposit_enabled: readBoolean(formData, "depositEnabled"),
+    deposit_enabled: false,
     show_subscription_in_seller_panel: readBoolean(
+      formData,
+      "showSubscriptionInSellerPanel",
+    ),
+    subscriptions_disabled_for_sellers: !readBoolean(
       formData,
       "showSubscriptionInSellerPanel",
     ),
@@ -292,6 +322,68 @@ export async function updateSiteSettingsAction(
   return {
     ok: true,
     message: "Sayt ayarları yeniləndi.",
+  };
+}
+
+export async function updateDesignSettingsAction(
+  formData: FormData,
+): Promise<CmsActionResult> {
+  await audit("update_design_settings", "platform_settings", {
+    key: "site",
+    intent: readString(formData, "intent") || "publish",
+  });
+  const supabaseAdmin = createSupabaseAdminClient();
+  const intent = readString(formData, "intent") || "publish";
+  const { data: siteSettingsRow } = await (supabaseAdmin as any)
+    .from("platform_settings")
+    .select("value")
+    .eq("key", "site")
+    .maybeSingle();
+  const currentValue =
+    siteSettingsRow?.value &&
+    typeof siteSettingsRow.value === "object" &&
+    !Array.isArray(siteSettingsRow.value)
+      ? siteSettingsRow.value
+      : {};
+  const currentDesign = normalizeDesignSettings(currentValue.design);
+  const nextDesign =
+    intent === "reset" ? defaultDesignSettings : readDesignSettings(formData);
+  const value =
+    intent === "draft"
+      ? {
+          ...currentValue,
+          design: currentDesign,
+          design_draft: nextDesign,
+        }
+      : {
+          ...currentValue,
+          design: nextDesign,
+          design_draft: nextDesign,
+        };
+
+  const { error } = await (supabaseAdmin as any).from("platform_settings").upsert({
+    key: "site",
+    value,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  invalidatePublicSiteSettings();
+  revalidateLocalizedPath("/radmin/themes");
+
+  return {
+    ok: true,
+    message:
+      intent === "draft"
+        ? "Dizayn draft saxlanıldı."
+        : intent === "reset"
+          ? "Dizayn default vəziyyətə qaytarıldı."
+          : "Dizayn publish edildi.",
   };
 }
 

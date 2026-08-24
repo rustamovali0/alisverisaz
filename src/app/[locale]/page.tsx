@@ -2,7 +2,6 @@ import { HomeExperience } from "@/components/home/home-experience";
 import { getHomepageSections, getSiteSettings, getActiveHomeThemeSetting } from "@/lib/cms/data";
 import { getMarketplaceProductPage, getMarketplaceStores } from "@/lib/cart/data";
 import { getCategoryOptions } from "@/lib/products/data";
-import { getDepositSettings } from "@/lib/settings/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 type HomePageProps = {
@@ -16,7 +15,7 @@ export default async function HomePage({ params }: HomePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("home");
   const common = await getTranslations("common");
-  const [siteSettings, sections, activeTheme, stores, productPage, categories, depositSettings] =
+  const [siteSettings, sections, activeTheme, stores, productPage, categories] =
     await Promise.all([
       getSiteSettings(),
       getHomepageSections(),
@@ -24,7 +23,6 @@ export default async function HomePage({ params }: HomePageProps) {
       getMarketplaceStores({ locale, limit: 120 }),
       getMarketplaceProductPage(locale, { limit: 20 }),
       getCategoryOptions({ rootOnly: true }),
-      getDepositSettings(),
     ]);
 
   return (
@@ -38,7 +36,6 @@ export default async function HomePage({ params }: HomePageProps) {
       products={productPage.products}
       productNextCursor={productPage.nextCursor}
       productHasMore={productPage.hasMore}
-      depositEnabled={depositSettings.enabled}
       categories={categories}
       title={t("title")}
       description={t("description")}

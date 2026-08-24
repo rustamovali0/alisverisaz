@@ -33,7 +33,7 @@ const protectedRoutes: Array<{
   },
   {
     prefix: "/dashboard",
-    roles: ["customer"],
+    roles: ["customer", "seller"],
   },
 ];
 

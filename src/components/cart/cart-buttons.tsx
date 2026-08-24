@@ -98,7 +98,7 @@ function canUseCustomerAction(
   viewerRole: AuthRole | null | undefined,
   t: ReturnType<typeof useTranslations>,
 ) {
-  if (viewerRole && viewerRole !== "customer") {
+  if (viewerRole && viewerRole !== "customer" && viewerRole !== "seller") {
     showCustomerRoleToast(t);
     return false;
   }

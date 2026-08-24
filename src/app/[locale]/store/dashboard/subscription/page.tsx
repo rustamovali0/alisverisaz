@@ -20,7 +20,10 @@ export default async function StoreSubscriptionPage() {
   const current = await requireRole(["seller"], "/store/dashboard");
   const settings = await getSiteSettings();
 
-  if (!settings.showSubscriptionInSellerPanel) {
+  if (
+    settings.subscriptionsDisabledForSellers ||
+    !settings.showSubscriptionInSellerPanel
+  ) {
     notFound();
   }
 

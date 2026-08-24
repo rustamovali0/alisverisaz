@@ -40,6 +40,7 @@ export type MarketplaceStore = {
   phone: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  updatedAt?: string | null;
   productCount: number;
   sampleProducts: CartProduct[];
   productNextCursor?: string | null;

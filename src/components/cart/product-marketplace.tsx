@@ -13,7 +13,6 @@ import { useTranslations } from "next-intl";
 import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { EmptyState } from "@/components/common/empty-state";
 import { GlobalLoader } from "@/components/common/global-loader";
-import { DepositModal } from "@/components/deposits/deposit-modal";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
@@ -82,7 +81,6 @@ type StorefrontProps = {
   selectedCategoryId?: string;
   locale: string;
   productCardVariant?: string;
-  depositEnabled: boolean;
   footer?: FooterProps;
   labels: MarketplaceLabels;
 };
@@ -323,14 +321,12 @@ function MobileCategoryCatalog({
 
 export function ProductGrid({
   products,
-  depositEnabled,
   storeSlug,
   storeName,
   productCardVariant,
   labels,
 }: {
   products: CartProduct[];
-  depositEnabled: boolean;
   storeSlug?: string;
   storeName?: string;
   productCardVariant?: string;
@@ -395,7 +391,7 @@ export function ProductGrid({
             }
           }}
           className={cn(
-            "group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
           )}
@@ -407,6 +403,7 @@ export function ProductGrid({
             scroll
           >
             <div
+              data-product-card-image
               className={cn(
                 "relative aspect-[4/3] overflow-hidden bg-white",
                 isLiquidGlass && "liquid-glass-product-image-shell",
@@ -447,7 +444,7 @@ export function ProductGrid({
             compact
             className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-sm"
           />
-          <div className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
             <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
               {displayStoreName ? (
                 <span className="block min-w-0 truncate">{displayStoreName}</span>
@@ -498,11 +495,6 @@ export function ProductGrid({
               {t("deliveryWithStore")}
             </p>
             <div className="relative z-10 mt-auto grid gap-2 pt-3">
-              <DepositModal
-                product={product}
-                enabled={depositEnabled && !isOutOfStock}
-                className="hidden h-9 w-full px-2 text-xs md:inline-flex"
-              />
               <AddToCartButton
                 product={product}
                 disabled={isOutOfStock}
@@ -696,7 +688,6 @@ export function ProductInfiniteGrid({
   hasMore,
   isLoadingNext,
   onLoadNext,
-  depositEnabled,
   storeSlug,
   storeName,
   productCardVariant,
@@ -706,7 +697,6 @@ export function ProductInfiniteGrid({
   hasMore: boolean;
   isLoadingNext: boolean;
   onLoadNext: () => void;
-  depositEnabled: boolean;
   storeSlug?: string;
   storeName?: string;
   productCardVariant?: string;
@@ -716,7 +706,6 @@ export function ProductInfiniteGrid({
     <>
       <ProductGrid
         products={products}
-        depositEnabled={depositEnabled}
         storeSlug={storeSlug}
         storeName={storeName}
         productCardVariant={productCardVariant}
@@ -740,7 +729,6 @@ export function InfiniteProductGrid({
   storeId,
   searchQuery,
   sort = "newest",
-  depositEnabled,
   storeSlug,
   storeName,
   productCardVariant,
@@ -754,7 +742,6 @@ export function InfiniteProductGrid({
   storeId?: string;
   searchQuery?: string;
   sort?: MarketplaceProductSort;
-  depositEnabled: boolean;
   storeSlug?: string;
   storeName?: string;
   productCardVariant?: string;
@@ -777,7 +764,6 @@ export function InfiniteProductGrid({
       hasMore={infinite.hasMore}
       isLoadingNext={infinite.isLoadingNext}
       onLoadNext={infinite.loadNext}
-      depositEnabled={depositEnabled}
       storeSlug={storeSlug}
       storeName={storeName}
       productCardVariant={productCardVariant}
@@ -896,7 +882,6 @@ export function ProductMarketplace({
                     hasMore={infinite.hasMore}
                     isLoadingNext={infinite.isLoadingNext}
                     onLoadNext={infinite.loadNext}
-                    depositEnabled={false}
                     productCardVariant={productCardVariant}
                     labels={{ stock: labels.stock }}
                   />
@@ -915,7 +900,6 @@ export function ProductMarketplace({
                 hasMore={infinite.hasMore}
                 isLoadingNext={infinite.isLoadingNext}
                 onLoadNext={infinite.loadNext}
-                depositEnabled={false}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
@@ -946,7 +930,6 @@ export function ProductMarketplace({
                 hasMore={infinite.hasMore}
                 isLoadingNext={infinite.isLoadingNext}
                 onLoadNext={infinite.loadNext}
-                depositEnabled={false}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
@@ -966,7 +949,6 @@ export function Storefront({
   selectedCategoryId,
   locale,
   productCardVariant,
-  depositEnabled,
   footer,
   labels,
 }: StorefrontProps) {
@@ -1114,7 +1096,6 @@ export function Storefront({
                 hasMore={infinite.hasMore}
                 isLoadingNext={infinite.isLoadingNext}
                 onLoadNext={infinite.loadNext}
-                depositEnabled={depositEnabled}
                 storeSlug={store.slug}
                 storeName={store.name}
                 productCardVariant={productCardVariant}

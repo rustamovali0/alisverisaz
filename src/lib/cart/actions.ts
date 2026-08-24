@@ -178,13 +178,32 @@ function parseCheckoutResponse(value: unknown) {
   };
 }
 
+async function containsOwnStoreProduct(input: {
+  userId: string;
+  productIds: string[];
+}) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id,stores(owner_id)")
+    .in("id", input.productIds);
+
+  return ((data ?? []) as Array<{
+    stores?: { owner_id?: string | null } | Array<{ owner_id?: string | null }> | null;
+  }>).some((row) => {
+    const store = Array.isArray(row.stores) ? row.stores[0] : row.stores;
+
+    return store?.owner_id === input.userId;
+  });
+}
+
 export async function createCheckoutOrdersAction(
   formData: FormData,
 ): Promise<CheckoutActionResult> {
   const current = await getCurrentUserProfile();
   const isGuestCheckout = !current;
 
-  if (current && current.role !== "customer") {
+  if (current && current.role !== "customer" && current.role !== "seller") {
     return {
       ok: false,
       message: "Sifariş üçün istifadəçi hesabı lazımdır.",
@@ -236,6 +255,19 @@ export async function createCheckoutOrdersAction(
       message: cart.tooManyItems
         ? "Bir sifarişdə maksimum 50 məhsul ola bilər."
         : "Səbət boşdur.",
+    };
+  }
+
+  if (
+    current?.role === "seller" &&
+    (await containsOwnStoreProduct({
+      userId: current.user.id,
+      productIds: items.map((item) => item.productId),
+    }))
+  ) {
+    return {
+      ok: false,
+      message: "Öz mağazanızdan məhsul almaq mümkün deyil.",
     };
   }
 

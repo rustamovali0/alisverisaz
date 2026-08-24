@@ -49,6 +49,7 @@ type StoreRow = {
   description: string | null;
   logo_url: string | null;
   cover_url: string | null;
+  updated_at?: string | null;
   settings?: Record<string, unknown> | null;
 };
 
@@ -452,7 +453,7 @@ async function getMarketplaceStoresUncached(
   const supabase = createSupabaseAdminClient();
   const { data: stores, error: storesError } = await (supabase as any)
     .from("stores")
-    .select("id,name,slug,description,logo_url,cover_url,settings")
+    .select("id,name,slug,description,logo_url,cover_url,updated_at,settings")
     .eq("status", "active")
     .order("created_at", {
       ascending: false,
@@ -650,6 +651,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     phone: readSetting(store.settings, "phone"),
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
+    updatedAt: store.updated_at ?? null,
     productCount: count ?? pageProducts.length,
     sampleProducts: pageProducts,
     productHasMore: productRows.length > DEFAULT_PRODUCT_PAGE_LIMIT,
@@ -726,7 +728,7 @@ async function getMarketplaceProductByIdUncached(input: {
   let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,settings)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)",
     )
     .eq("status", "active");
 
@@ -751,6 +753,14 @@ async function getMarketplaceProductByIdUncached(input: {
   const row = data as ProductRow & {
     stores: StoreRow;
   };
+  const { count: storeProductCount } = await (supabase as any)
+    .from("products")
+    .select("id", {
+      count: "exact",
+      head: true,
+    })
+    .eq("store_id", row.stores.id)
+    .eq("status", "active");
 
   return {
     product: {
@@ -766,7 +776,8 @@ async function getMarketplaceProductByIdUncached(input: {
       phone: readSetting(row.stores.settings, "phone"),
       logoUrl: row.stores.logo_url,
       coverUrl: row.stores.cover_url,
-      productCount: 0,
+      updatedAt: row.stores.updated_at ?? null,
+      productCount: storeProductCount ?? 0,
       sampleProducts: [],
       categoryIds: row.category_id ? [row.category_id] : [],
     },

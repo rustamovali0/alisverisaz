@@ -16,7 +16,6 @@ type PanelSettingsFormProps = {
 const storeFeatures = [
   ["products", "Məhsullar"],
   ["orders", "Sifarişlər"],
-  ["deposits", "Beh sifarişləri"],
   ["customers", "Müştərilər"],
   ["messages", "Mesajlar"],
   ["analytics", "Analitika"],

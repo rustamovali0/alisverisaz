@@ -10,6 +10,7 @@ type ImageDropzoneProps = {
   files: File[];
   onFilesChange: (files: File[]) => void;
   disabled?: boolean;
+  maxFiles?: number | null;
 };
 
 function FilePreview({ file, alt }: { file: File; alt: string }) {
@@ -91,15 +92,26 @@ export function ImageDropzone({
   files,
   onFilesChange,
   disabled = false,
+  maxFiles = 5,
 }: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
 
   async function addFiles(nextFiles: FileList | File[]) {
+    const incomingFiles = Array.from(nextFiles);
+    const allowedFiles =
+      maxFiles === null
+        ? incomingFiles
+        : incomingFiles.slice(0, Math.max(maxFiles - files.length, 0));
+
+    if (allowedFiles.length === 0) {
+      return;
+    }
+
     setIsConverting(true);
     try {
-      const converted = await Promise.all(Array.from(nextFiles).map(convertToWebp));
+      const converted = await Promise.all(allowedFiles.map(convertToWebp));
       onFilesChange([...files, ...converted]);
     } finally {
       setIsConverting(false);
@@ -135,6 +147,11 @@ export function ImageDropzone({
         <span className="mt-1 text-sm text-muted-foreground">
           JPG və PNG avtomatik WebP formatına çevrilir
         </span>
+        {maxFiles !== null ? (
+          <span className="mt-2 text-xs font-semibold text-muted-foreground">
+            {files.length}/{maxFiles} şəkil
+          </span>
+        ) : null}
       </button>
       <input
         ref={inputRef}

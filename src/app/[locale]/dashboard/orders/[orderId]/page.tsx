@@ -18,7 +18,7 @@ export default async function CustomerOrderDetailPage({
 }: CustomerOrderDetailPageProps) {
   const [{ orderId }, current, enabled] = await Promise.all([
     params,
-    requireRole(["customer"], "/dashboard/orders"),
+    requireRole(["customer", "seller"], "/dashboard/orders"),
     getCustomerFeatureAccess("orders"),
   ]);
 

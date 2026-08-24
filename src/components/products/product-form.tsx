@@ -29,6 +29,7 @@ type ProductFormProps = {
   locations?: StoreLocation[];
   productLocations?: ProductLocationAvailability[];
   disabled?: boolean;
+  imageLimit?: number | null;
 };
 
 function variantsToText(product?: ManagedProduct) {
@@ -64,6 +65,7 @@ export function ProductForm({
   locations = [],
   productLocations = [],
   disabled = false,
+  imageLimit = 5,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -251,44 +253,9 @@ export function ProductForm({
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-md border bg-background p-4">
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input
-            name="depositEnabled"
-            type="checkbox"
-            defaultChecked={product?.depositEnabled ?? false}
-            className="size-4 rounded border-input"
-            disabled={disabled}
-          />
-          Beh aktivdir
-        </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-medium">
-            Beh tipi
-            <select
-              name="depositType"
-              defaultValue={product?.depositType ?? "fixed"}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              disabled={disabled}
-            >
-              <option value="fixed">Sabit məbləğ</option>
-              <option value="percent">Faiz</option>
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-medium">
-            Beh dəyəri
-            <input
-              name="depositValue"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={product?.depositValue ?? 0}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              disabled={disabled}
-            />
-          </label>
-        </div>
-      </div>
+      <input type="hidden" name="depositEnabled" value="off" />
+      <input type="hidden" name="depositType" value="fixed" />
+      <input type="hidden" name="depositValue" value="0" />
 
       <label className="grid gap-2 text-sm font-medium">
         Variantlar
@@ -361,7 +328,13 @@ export function ProductForm({
           files={imageFiles}
           onFilesChange={setImageFiles}
           disabled={disabled}
+          maxFiles={imageLimit}
         />
+        <span className="text-xs font-medium text-muted-foreground">
+          {imageLimit === null
+            ? "Şəkil limiti limitsizdir."
+            : `Maksimum ${imageLimit} şəkil`}
+        </span>
       </label>
 
       {mode === "personal-create" ? (

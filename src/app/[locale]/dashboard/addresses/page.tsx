@@ -5,7 +5,7 @@ import { getCustomerAddresses } from "@/lib/customer-account/data";
 export const dynamic = "force-dynamic";
 
 export default async function CustomerAddressesPage() {
-  const current = await requireRole(["customer"], "/dashboard/addresses");
+  const current = await requireRole(["customer", "seller"], "/dashboard/addresses");
   const addresses = await getCustomerAddresses(current.user.id);
 
   return <CustomerAddressesView addresses={addresses} />;

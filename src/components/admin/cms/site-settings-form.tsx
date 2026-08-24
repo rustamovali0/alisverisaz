@@ -546,9 +546,9 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
 
       <section className="grid gap-4 rounded-md border bg-background p-4 md:grid-cols-2">
         <div className="md:col-span-2">
-          <p className="text-sm font-semibold">Global subscription limit default-ları</p>
+          <p className="text-sm font-semibold">Seller elan limitləri</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Plan təyin edilməyən mağazalar üçün istifadə olunur. Boş dəyər limitsizdir.
+            Fərdi mağaza limiti təyin edilməyibsə bu default dəyərlər istifadə olunur.
           </p>
         </div>
         <LimitField
@@ -665,11 +665,11 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
             "Mağaza qeydiyyatı",
             settings.storeRegistrationEnabled,
           ],
-          ["depositEnabled", "Beh sistemi", settings.depositEnabled],
           [
             "showSubscriptionInSellerPanel",
             "Seller paneldə abunəliyi göstər",
-            settings.showSubscriptionInSellerPanel,
+            settings.showSubscriptionInSellerPanel &&
+              !settings.subscriptionsDisabledForSellers,
           ],
         ].map(([name, label, checked]) => (
           <label key={String(name)} className="flex items-center gap-2 text-sm font-medium">

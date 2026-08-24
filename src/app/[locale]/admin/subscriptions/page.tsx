@@ -2,6 +2,7 @@ import {
   AdminPlanCreateForm,
   AdminPlanForm,
   AdminStorePlanAssignmentForm,
+  AdminStoreProductLimitForm,
 } from "@/components/subscriptions/admin-plan-form";
 import { EmptyState } from "@/components/common/empty-state";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
@@ -10,15 +11,18 @@ import {
   getAdminSubscriptionAssignments,
   getSubscriptionPlans,
 } from "@/lib/subscriptions/data";
+import { getSiteSettings } from "@/lib/cms/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSubscriptionsPage() {
   await requireRole(["admin"], "/radmin/subscriptions");
-  const [plans, assignments] = await Promise.all([
+  const [plans, assignments, settings] = await Promise.all([
     getSubscriptionPlans(true),
     getAdminSubscriptionAssignments(),
+    getSiteSettings(),
   ]);
+  const defaultProductLimit = settings.subscriptionLimits.defaultProductLimit ?? 100;
 
   return (
     <div className="space-y-6">
@@ -61,7 +65,7 @@ export default async function AdminSubscriptionsPage() {
               {assignments.map((assignment) => (
                 <div
                   key={assignment.storeId}
-                  className="grid gap-3 p-3 text-sm md:grid-cols-[1.2fr_1fr_1fr]"
+                  className="grid gap-3 p-3 text-sm md:grid-cols-[1.1fr_0.9fr_0.9fr_1.2fr]"
                 >
                   <div>
                     <p className="font-semibold text-foreground">
@@ -82,6 +86,24 @@ export default async function AdminSubscriptionsPage() {
                   <div className="text-muted-foreground">
                     <p>Provider: {assignment.subscription?.paymentProvider ?? "-"}</p>
                     <p>Payment status: {assignment.subscription?.paymentStatus ?? "-"}</p>
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="text-muted-foreground">
+                      <p>
+                        Elan: {assignment.productCount} /{" "}
+                        {assignment.effectiveProductLimit ?? "Limitsiz"}
+                      </p>
+                      <p>
+                        Qalan:{" "}
+                        {assignment.remainingProducts === null
+                          ? "Limitsiz"
+                          : assignment.remainingProducts}
+                      </p>
+                    </div>
+                    <AdminStoreProductLimitForm
+                      assignment={assignment}
+                      defaultProductLimit={defaultProductLimit}
+                    />
                   </div>
                 </div>
               ))}

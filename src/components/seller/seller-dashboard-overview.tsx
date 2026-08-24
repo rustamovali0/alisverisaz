@@ -91,9 +91,12 @@ function LimitWarning({
   }
 
   if (!usageRatio || usageRatio < 0.8) {
+    const remaining = Math.max(limit - usage, 0);
+
     return (
       <div className="rounded-lg border bg-card p-4 text-sm font-semibold text-muted-foreground">
-        Məhsullar: {usage} / {limit}
+        <p>{usage} / {limit} elan istifadə olunub</p>
+        <p className="mt-1">{remaining} elan limitiniz qalıb</p>
       </div>
     );
   }
@@ -105,7 +108,12 @@ function LimitWarning({
       <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
       <div>
         <p className="text-sm font-black">{isFull ? "Məhsul limitiniz dolub." : "Məhsul limitinizə yaxınlaşırsınız."}</p>
-        <p className="mt-1 text-sm">{usage} / {limit}</p>
+        <p className="mt-1 text-sm">
+          {usage} / {limit} elan istifadə olunub
+        </p>
+        <p className="mt-1 text-sm">
+          {Math.max(limit - usage, 0)} elan limitiniz qalıb
+        </p>
       </div>
     </div>
   );

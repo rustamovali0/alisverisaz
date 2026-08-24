@@ -1,4 +1,5 @@
 import type { DashboardNavItem } from "@/lib/dashboard/navigation";
+import { defaultDesignSettings } from "@/lib/design/presets";
 import type { SiteSettings } from "@/lib/cms/types";
 
 export const homeThemeKeys = [
@@ -8,6 +9,10 @@ export const homeThemeKeys = [
   "minimal-storefront",
   "bold-catalog",
   "liquid-glass",
+  "soft-commerce",
+  "corporate",
+  "elegant",
+  "compact",
 ] as const;
 
 export const defaultHomeThemeColors = {
@@ -82,6 +87,46 @@ export const homeThemeColorPresets = {
     buttonBackground: "#0891b2",
     border: "#bdebf3",
   },
+  "soft-commerce": {
+    ...defaultHomeThemeColors,
+    pageBackground: "#fbfdfc",
+    heroBackground: "#eefbf7",
+    productsBackground: "#f6faf8",
+    primary: "#0d9488",
+    accent: "#eab308",
+    buttonBackground: "#0d9488",
+    border: "#dde8e5",
+  },
+  corporate: {
+    ...defaultHomeThemeColors,
+    pageBackground: "#f8fafc",
+    heroBackground: "#eef6fb",
+    productsBackground: "#f8fafc",
+    primary: "#155e75",
+    accent: "#0ea5e9",
+    buttonBackground: "#155e75",
+    border: "#d6dee8",
+  },
+  elegant: {
+    ...defaultHomeThemeColors,
+    pageBackground: "#fafafa",
+    heroBackground: "#f7f7f5",
+    productsBackground: "#ffffff",
+    primary: "#115e59",
+    accent: "#a16207",
+    buttonBackground: "#115e59",
+    border: "#e4e4e7",
+  },
+  compact: {
+    ...defaultHomeThemeColors,
+    pageBackground: "#f8fafc",
+    heroBackground: "#f1f5f9",
+    productsBackground: "#f8fafc",
+    primary: "#0f766e",
+    accent: "#f59e0b",
+    buttonBackground: "#0f766e",
+    border: "#d7dde5",
+  },
 } as const;
 
 export const defaultSiteSettings: SiteSettings = {
@@ -104,17 +149,19 @@ export const defaultSiteSettings: SiteSettings = {
   maintenanceMode: false,
   userRegistrationEnabled: true,
   storeRegistrationEnabled: true,
-  depositEnabled: true,
+  depositEnabled: false,
   showSubscriptionInSellerPanel: false,
+  subscriptionsDisabledForSellers: true,
   globalLoader: {
     type: "classic",
     palette: "primary",
   },
   mobileNavbarVariant: "classic",
   subscriptionLimits: {
-    defaultProductLimit: null,
-    defaultImagesPerProductLimit: null,
+    defaultProductLimit: 100,
+    defaultImagesPerProductLimit: 5,
   },
+  design: defaultDesignSettings,
   activeHomeTheme: "default",
   defaultThemeMode: "system",
 };
@@ -289,6 +336,50 @@ export const defaultThemeSettings = [
     productCardVariant: "liquid-glass",
     sectionOrder: ["hero", "featured_products", "categories", "new_products", "benefits"],
     config: { colors: homeThemeColorPresets["liquid-glass"] },
+  },
+  {
+    themeKey: "soft-commerce",
+    name: "Soft Commerce",
+    status: "published",
+    isActive: false,
+    previewImageUrl: "",
+    heroVariant: "default",
+    productCardVariant: "classic",
+    sectionOrder: ["hero", "categories", "featured_products", "new_products", "benefits"],
+    config: { colors: homeThemeColorPresets["soft-commerce"] },
+  },
+  {
+    themeKey: "corporate",
+    name: "Corporate",
+    status: "published",
+    isActive: false,
+    previewImageUrl: "",
+    heroVariant: "minimal",
+    productCardVariant: "compact",
+    sectionOrder: ["hero", "categories", "featured_products", "benefits", "new_products"],
+    config: { colors: homeThemeColorPresets.corporate },
+  },
+  {
+    themeKey: "elegant",
+    name: "Elegant",
+    status: "published",
+    isActive: false,
+    previewImageUrl: "",
+    heroVariant: "premium",
+    productCardVariant: "borderless",
+    sectionOrder: ["hero", "featured_products", "categories", "benefits", "new_products"],
+    config: { colors: homeThemeColorPresets.elegant },
+  },
+  {
+    themeKey: "compact",
+    name: "Compact",
+    status: "published",
+    isActive: false,
+    previewImageUrl: "",
+    heroVariant: "minimal",
+    productCardVariant: "dense-marketplace",
+    sectionOrder: ["hero", "categories", "new_products", "featured_products", "benefits"],
+    config: { colors: homeThemeColorPresets.compact },
   },
 ] as const;
 

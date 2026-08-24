@@ -22,6 +22,7 @@ import type {
   ThemeSetting,
 } from "@/lib/cms/types";
 import { dashboardNavigation, type DashboardNavItem } from "@/lib/dashboard/navigation";
+import { normalizeDesignSettings } from "@/lib/design/presets";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -144,6 +145,10 @@ function normalizeSiteSettings(value: any): SiteSettings {
       value?.show_subscription_in_seller_panel,
       defaultSiteSettings.showSubscriptionInSellerPanel,
     ),
+    subscriptionsDisabledForSellers: readBoolean(
+      value?.subscriptions_disabled_for_sellers,
+      defaultSiteSettings.subscriptionsDisabledForSellers,
+    ),
     globalLoader: {
       type: readGlobalLoaderType(globalLoader.type),
       palette: readGlobalLoaderPalette(globalLoader.palette),
@@ -159,6 +164,7 @@ function normalizeSiteSettings(value: any): SiteSettings {
         defaultSiteSettings.subscriptionLimits.defaultImagesPerProductLimit,
       ),
     },
+    design: normalizeDesignSettings(value?.design),
     activeHomeTheme: readString(
       value?.active_home_theme,
       defaultSiteSettings.activeHomeTheme,
@@ -490,24 +496,25 @@ async function applyDashboardFeatureFilters(
   role: "seller" | "customer" | "admin",
   items: DashboardNavItem[],
 ) {
+  if (role === "admin") {
+    return items.filter(
+      (item) => item.titleKey !== "deposits" && !item.href.includes("/deposits"),
+    );
+  }
+
   if (role !== "seller") {
     return items;
   }
 
-  const [siteSettings, panelSettings] = await Promise.all([
-    getSiteSettings(),
-    getPanelSettings("store"),
-  ]);
-  const depositsEnabled =
-    siteSettings.depositEnabled !== false &&
-    panelSettings.features.deposits !== false &&
-    panelSettings.features.deposit !== false;
-  const subscriptionVisible = siteSettings.showSubscriptionInSellerPanel === true;
+  const siteSettings = await getSiteSettings();
+  const subscriptionVisible =
+    siteSettings.subscriptionsDisabledForSellers !== true &&
+    siteSettings.showSubscriptionInSellerPanel === true;
 
   return items.filter((item) => {
     if (
-      !depositsEnabled &&
-      (item.titleKey === "deposits" || item.href.includes("/deposits"))
+      item.titleKey === "deposits" ||
+      item.href.includes("/deposits")
     ) {
       return false;
     }

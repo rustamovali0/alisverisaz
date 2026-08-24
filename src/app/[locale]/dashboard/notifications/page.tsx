@@ -7,7 +7,7 @@ import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 export const dynamic = "force-dynamic";
 
 export default async function CustomerNotificationsPage() {
-  const current = await requireRole(["customer"], "/dashboard/notifications");
+  const current = await requireRole(["customer", "seller"], "/dashboard/notifications");
   const enabled = await getCustomerFeatureAccess("notifications");
 
   if (!enabled) {

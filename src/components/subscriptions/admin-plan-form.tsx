@@ -8,6 +8,7 @@ import { appAlert } from "@/lib/alerts/app-alert";
 import {
   assignStorePlanAction,
   createPlanAction,
+  updateStoreProductLimitAction,
   updatePlanAction,
 } from "@/lib/subscriptions/actions";
 import type {
@@ -300,6 +301,52 @@ export function AdminStorePlanAssignmentForm({
       </div>
       <Button type="submit" disabled={isPending}>
         {isPending ? "Təyin edilir" : "Planı mağazaya təyin et"}
+      </Button>
+    </form>
+  );
+}
+
+export function AdminStoreProductLimitForm({
+  assignment,
+  defaultProductLimit,
+}: {
+  assignment: AdminSubscriptionAssignment;
+  defaultProductLimit: number;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      const result = await updateStoreProductLimitAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Limit yenilənmədi");
+        return;
+      }
+
+      void appAlert.success("Limit yeniləndi", result.message);
+      router.refresh();
+    });
+  }
+
+  return (
+    <form action={handleSubmit} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+      <input type="hidden" name="storeId" value={assignment.storeId} />
+      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+        Fərdi elan limiti
+        <input
+          name="productLimitOverride"
+          type="number"
+          min="0"
+          step="1"
+          placeholder={`Default: ${defaultProductLimit}`}
+          defaultValue={assignment.productLimitOverride ?? ""}
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </label>
+      <Button type="submit" size="sm" className="self-end" disabled={isPending}>
+        {isPending ? "Saxlanılır" : "Saxla"}
       </Button>
     </form>
   );

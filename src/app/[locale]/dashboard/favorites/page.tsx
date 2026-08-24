@@ -7,7 +7,7 @@ import { getCustomerFavoritePreviews } from "@/lib/customer-account/data";
 export const dynamic = "force-dynamic";
 
 export default async function FavoritesPage() {
-  const current = await requireRole(["customer"], "/dashboard/favorites");
+  const current = await requireRole(["customer", "seller"], "/dashboard/favorites");
   const enabled = await getCustomerFeatureAccess("favorites");
 
   if (!enabled) {

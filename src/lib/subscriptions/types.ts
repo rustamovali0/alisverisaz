@@ -47,6 +47,10 @@ export type AdminSubscriptionAssignment = {
   ownerId: string;
   ownerName: string | null;
   ownerEmail: string | null;
+  productLimitOverride: number | null;
+  effectiveProductLimit: number | null;
+  productCount: number;
+  remainingProducts: number | null;
   subscription: StoreSubscription | null;
 };
 

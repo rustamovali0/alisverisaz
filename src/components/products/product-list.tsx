@@ -22,6 +22,7 @@ type ProductListProps = {
   allowPaymentActivation?: boolean;
   locations?: StoreLocation[];
   productLocationMap?: Record<string, ProductLocationAvailability[]>;
+  imageLimit?: number | null;
 };
 
 function formatMoney(value: number) {
@@ -80,6 +81,7 @@ export function ProductList({
   allowPaymentActivation = false,
   locations = [],
   productLocationMap = {},
+  imageLimit = 5,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -150,6 +152,7 @@ export function ProductList({
                   (location) => location.storeId === product.storeId,
                 )}
                 productLocations={productLocationMap[product.id] ?? []}
+                imageLimit={imageLimit}
               />
             </div>
           </details>

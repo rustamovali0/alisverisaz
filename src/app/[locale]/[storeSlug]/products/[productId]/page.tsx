@@ -1,11 +1,10 @@
-import { MessageCircle, Star } from "lucide-react";
+import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
-import { DepositModal } from "@/components/deposits/deposit-modal";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
@@ -38,7 +37,6 @@ import {
   getReviewSummary,
   hasUserPurchasedProduct,
 } from "@/lib/reviews/data";
-import { getDepositSettings } from "@/lib/settings/data";
 import { setRequestLocale } from "next-intl/server";
 
 type ProductDetailPageProps = {
@@ -48,6 +46,47 @@ type ProductDetailPageProps = {
     productId: string;
   }>;
 };
+
+function getLocationMapUrl(location: ProductLocationAvailability["location"]) {
+  if (location.mapLink) {
+    return location.mapLink;
+  }
+
+  if (location.latitude !== null && location.longitude !== null) {
+    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  }
+
+  const query = [location.city, location.district, location.address]
+    .filter(Boolean)
+    .join(", ");
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function formatShortLocation(location: ProductLocationAvailability["location"] | null) {
+  if (!location) {
+    return null;
+  }
+
+  return [location.city, location.district, location.address].filter(Boolean).join(", ");
+}
+
+function formatLastActive(value?: string | null) {
+  if (!value) {
+    return "Son aktiv: bu yaxınlarda";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Son aktiv: bu yaxınlarda";
+  }
+
+  return `Son aktiv: ${new Intl.DateTimeFormat("az-AZ", {
+    day: "2-digit",
+    month: "short",
+  }).format(date)}`;
+}
 
 export async function generateMetadata({
   params,
@@ -72,13 +111,12 @@ export async function generateMetadata({
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { locale, storeSlug, productId } = await params;
   setRequestLocale(locale);
-  const [detail, depositSettings, siteSettings, current] = await Promise.all([
+  const [detail, siteSettings, current] = await Promise.all([
     getMarketplaceProductById({
       productId,
       locale,
       storeSlug,
     }),
-    getDepositSettings(),
     getSiteSettings(),
     getCurrentUserProfile(),
   ]);
@@ -134,6 +172,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             isAvailable: canBuy,
             location,
           }));
+  const sellerLocation =
+    visibleProductLocations.find((item) => item.location.showAddress)?.location ??
+    visibleProductLocations[0]?.location ??
+    null;
+  const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
+  const sellerMapUrl = sellerLocation
+    ? getLocationMapUrl(sellerLocation)
+    : sellerAddress
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sellerAddress)}`
+      : null;
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -215,12 +263,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 {detail.product.description}
               </p>
             ) : null}
-            <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
-              <DepositModal
-                product={detail.product}
-                enabled={depositSettings.enabled && canBuy}
-                className="w-full"
-              />
+            <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-2">
               <BuyNowButton
                 product={detail.product}
                 viewerRole={viewerRole}
@@ -234,9 +277,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 className="w-full"
               />
             </div>
-            <div className="mt-5 min-w-0 rounded-lg border bg-background p-4">
+            <div className="mt-5 min-w-0 rounded-lg border bg-background p-3">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
+                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
                   {detail.store.logoUrl ? (
                     <img
                       src={detail.store.logoUrl}
@@ -249,16 +292,40 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                     </span>
                   )}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground">Mağaza</p>
-                  <h2 className="truncate text-base font-black tracking-normal">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
+                  <h2 className="truncate text-base font-black leading-5 tracking-normal">
                     {detail.store.name}
                   </h2>
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <Package className="size-3.5" aria-hidden="true" />
+                      {detail.store.productCount} məhsul
+                    </span>
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <Clock3 className="size-3.5 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{formatLastActive(detail.store.updatedAt)}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
-              <Button asChild variant="outline" className="mt-4 w-full">
+              {sellerAddress ? (
+                <p className="mt-3 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                  <span className="truncate">{sellerAddress}</span>
+                </p>
+              ) : null}
+              <Button asChild variant="outline" className="mt-3 w-full">
                 <Link href={`/${detail.store.slug}`}>Mağazaya keç</Link>
               </Button>
+              {sellerMapUrl ? (
+                <Button asChild variant="secondary" className="mt-2 w-full">
+                  <a href={sellerMapUrl} target="_blank" rel="noreferrer">
+                    Xəritədə göstər
+                    <ExternalLink className="ml-2 size-4" aria-hidden="true" />
+                  </a>
+                </Button>
+              ) : null}
             </div>
           </div>
         </section>
