@@ -197,7 +197,7 @@ export function RadminDashboardShell({
   const sidebarWidth = isCollapsed ? "lg:pl-24" : "lg:pl-80";
 
   return (
-    <div className="min-h-screen bg-slate-100 text-foreground dark:bg-slate-950">
+    <div className="min-h-screen max-w-full overflow-x-hidden bg-slate-100 text-foreground dark:bg-slate-950">
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 hidden border-r border-slate-800/90 bg-slate-950 text-slate-100 transition-all duration-200 lg:flex",
@@ -321,7 +321,7 @@ export function RadminDashboardShell({
             aria-label="Sidebari bağla"
             onClick={() => setIsDrawerOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-[min(82vw,20rem)] bg-slate-950 text-slate-100 shadow-2xl">
+          <div className="absolute inset-y-0 left-0 w-[min(88vw,20rem)] max-w-full bg-slate-950 text-slate-100 shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
               <Link href="/radmin" className="flex items-center gap-3">
                 <span className="grid size-9 place-items-center rounded-xl bg-primary text-sm font-black text-primary-foreground">
@@ -366,14 +366,14 @@ export function RadminDashboardShell({
         </div>
       ) : null}
 
-      <div className={cn("min-h-screen", sidebarWidth)}>
+      <div className={cn("min-h-screen min-w-0 max-w-full overflow-x-hidden", sidebarWidth)}>
         <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-          <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="lg:hidden"
+              className="grid size-11 shrink-0 place-items-center rounded-xl border bg-background text-foreground shadow-sm lg:hidden"
               onClick={() => setIsDrawerOpen(true)}
               aria-label="Sidebari aç"
             >
@@ -420,8 +420,8 @@ export function RadminDashboardShell({
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:px-6 lg:px-8">
-          <div className="rounded-xl border border-border/70 bg-background p-4 shadow-sm sm:p-6">
+        <main className="min-w-0 max-w-full overflow-x-hidden px-3 py-5 sm:px-6 lg:px-8">
+          <div className="min-w-0 max-w-full overflow-x-hidden rounded-xl border border-border/70 bg-background p-3 shadow-sm sm:p-6">
             {children}
           </div>
         </main>

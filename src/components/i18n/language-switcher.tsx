@@ -15,9 +15,42 @@ export const languages: Record<string, { code: string; flag: string; name: strin
   en: { code: "EN", flag: "🇬🇧", name: "English" },
   ru: { code: "RU", flag: "🇷🇺", name: "Русский" },
 };
+const localeCookieName = "NEXT_LOCALE";
+const localeCookieMaxAge = 60 * 60 * 24 * 365;
 
 function isSupportedLocale(locale: string): locale is Locale {
   return routing.locales.includes(locale as Locale);
+}
+
+function getClientLocaleCookieDomain() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+
+  if (hostname === "alisveris.az" || hostname.endsWith(".alisveris.az")) {
+    return "domain=.alisveris.az";
+  }
+
+  return "";
+}
+
+function writeClientLocaleCookie(locale: Locale) {
+  if (typeof document === "undefined" || typeof window === "undefined") {
+    return;
+  }
+
+  document.cookie = [
+    `${localeCookieName}=${locale}`,
+    "path=/",
+    `max-age=${localeCookieMaxAge}`,
+    "samesite=lax",
+    window.location.protocol === "https:" ? "secure" : "",
+    getClientLocaleCookieDomain(),
+  ]
+    .filter(Boolean)
+    .join("; ");
 }
 
 function useLocaleSelection({
@@ -50,14 +83,18 @@ function useLocaleSelection({
       setPendingLocale(nextLocale);
       onLocaleChange?.(nextLocale);
       onSelect?.();
+      writeClientLocaleCookie(nextLocale);
+      router.refresh();
 
       startTransition(async () => {
-        const persistedLocale = await setUserLocale(nextLocale);
+        try {
+          const persistedLocale = await setUserLocale(nextLocale);
 
-        setSelectedLocale(persistedLocale);
-        setPendingLocale(null);
-        onLocaleChange?.(persistedLocale);
-        router.refresh();
+          setSelectedLocale(persistedLocale);
+          onLocaleChange?.(persistedLocale);
+        } finally {
+          setPendingLocale(null);
+        }
       });
     },
     [onLocaleChange, onSelect, router],

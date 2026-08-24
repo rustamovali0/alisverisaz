@@ -40,23 +40,14 @@ export function PublicStoreLocationSection({
   }
 
   return (
-    <section className="mx-auto mt-4 w-full max-w-5xl rounded-lg border bg-card p-3 shadow-sm md:mt-6 md:p-5">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary md:size-9">
-          <MapPin className="size-4" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <h2 className="break-words text-base font-black tracking-normal md:text-xl">
-            Ünvan və nəqliyyat
-          </h2>
-        </div>
-      </div>
+    <section className="mx-auto mt-4 w-full max-w-5xl rounded-xl border border-primary/15 bg-card p-3 shadow-sm md:mt-6 md:p-4">
+      <h2 className="sr-only">Ünvan və nəqliyyat</h2>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2">
         {activeLocations.map((location) => (
           <article
             key={location.id}
-            className="grid min-w-0 gap-2.5 rounded-lg border bg-background p-3 md:gap-3"
+            className="grid min-w-0 gap-2.5 rounded-xl border border-primary/15 bg-primary/[0.035] p-3 dark:bg-primary/10 md:gap-3"
           >
             <div className="flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0">
@@ -71,7 +62,7 @@ export function PublicStoreLocationSection({
                 ) : null}
               </div>
               {location.showMap ? (
-                <Button asChild variant="outline" size="sm" className="h-8 shrink-0 px-2 text-xs">
+                <Button asChild variant="outline" size="sm" className="h-8 shrink-0 rounded-full border-primary/20 bg-background px-2 text-xs">
                   <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
                     Xəritə
                     <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />

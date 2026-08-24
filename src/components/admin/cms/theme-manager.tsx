@@ -446,16 +446,16 @@ function PresetCardGrid({
   onChange: (key: DesignPresetKey, value: string) => void;
 }) {
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       {fields.map((field) => (
-        <section key={field.key} className="grid gap-3">
+        <section key={field.key} className="grid min-w-0 gap-3">
           <div>
             <h3 className="text-base font-bold">{field.title}</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Variantı seçin və yuxarıdakı action bar-dan saxlayın.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
             {designPresetOptions[field.key].map(([value, label]) => {
               const active = values[field.key] === value;
 
@@ -597,7 +597,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
               </div>
               <PreviewToggle value={previewMode} onChange={setPreviewMode} />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
               {themes.map((theme) => {
                 const colors = readThemeColors(theme);
                 const selected = selectedTheme?.themeKey === theme.themeKey;
@@ -688,7 +688,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           {group.title}
                         </p>
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                           {group.fields.map((field) => (
                             <label
                               key={field.key}
@@ -819,10 +819,10 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
   }
 
   return (
-    <div className="grid gap-4">
-      <div className="sticky top-16 z-20 rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0 overflow-x-auto">
+    <div className="grid min-w-0 max-w-full gap-4 overflow-hidden">
+      <div className="sticky top-16 z-20 min-w-0 max-w-full overflow-hidden rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur">
+        <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+          <div className="min-w-0 max-w-full overflow-x-auto pb-1">
             <div className="flex w-max gap-2">
               {sectionTabs.map((tab) => (
                 <button
@@ -841,10 +841,10 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
           </div>
 
           {activeSection === "theme" && selectedTheme ? (
-            <div className="flex shrink-0 flex-wrap justify-end gap-2">
-              <form action={handleResetColors}>
+            <div className="grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+              <form action={handleResetColors} className="min-w-0">
                 <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-                <Button type="submit" variant="outline" disabled={isPending}>
+                <Button type="submit" variant="outline" disabled={isPending} className="w-full sm:w-auto">
                   <RotateCcw className="mr-2 size-4" aria-hidden="true" />
                   Dəyişiklikləri sıfırla
                 </Button>
@@ -854,21 +854,22 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
                 form={colorFormId}
                 variant="secondary"
                 disabled={isPending || !colorFormId}
+                className="w-full sm:w-auto"
               >
                 <Save className="mr-2 size-4" aria-hidden="true" />
                 Draft saxla
               </Button>
-              <form action={handlePublish}>
+              <form action={handlePublish} className="min-w-0">
                 <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-                <Button type="submit" disabled={isPending || selectedTheme.isActive}>
+                <Button type="submit" disabled={isPending || selectedTheme.isActive} className="w-full sm:w-auto">
                   <UploadCloud className="mr-2 size-4" aria-hidden="true" />
                   {selectedTheme.isActive ? "Aktiv temadır" : "Publish"}
                 </Button>
               </form>
             </div>
           ) : (
-            <div className="flex shrink-0 flex-wrap justify-end gap-2">
-              <form id="design-settings-form" action={handleDesignSubmit} className="contents">
+            <div className="min-w-0">
+              <form id="design-settings-form" action={handleDesignSubmit} className="grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:justify-end">
                 {Object.entries(design).map(([key, value]) => (
                   <input key={key} type="hidden" name={key} value={value} />
                 ))}
@@ -878,6 +879,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
                   value="reset"
                   variant="outline"
                   disabled={isPending}
+                  className="w-full sm:w-auto"
                 >
                   <RotateCcw className="mr-2 size-4" aria-hidden="true" />
                   Dəyişiklikləri sıfırla
@@ -888,11 +890,12 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
                   value="draft"
                   variant="secondary"
                   disabled={isPending}
+                  className="w-full sm:w-auto"
                 >
                   <Save className="mr-2 size-4" aria-hidden="true" />
                   Draft saxla
                 </Button>
-                <Button type="submit" name="intent" value="publish" disabled={isPending}>
+                <Button type="submit" name="intent" value="publish" disabled={isPending} className="w-full sm:w-auto">
                   <UploadCloud className="mr-2 size-4" aria-hidden="true" />
                   Publish
                 </Button>
@@ -902,7 +905,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
         </div>
       </div>
 
-      {renderSection()}
+      <div className="min-w-0 max-w-full overflow-hidden">{renderSection()}</div>
     </div>
   );
 }

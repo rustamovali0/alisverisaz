@@ -296,9 +296,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               buyerPhone={current?.profile?.phone ?? ""}
               disabled={!canBuy}
             />
-            <div className="mt-5 min-w-0 rounded-lg border bg-background p-3">
+            <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">
+                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
                   {detail.store.logoUrl ? (
                     <img
                       src={detail.store.logoUrl}
@@ -334,17 +334,19 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   <span className="truncate">{sellerAddress}</span>
                 </p>
               ) : null}
-              <Button asChild variant="outline" className="mt-3 w-full">
-                <Link href={storeBaseHref}>Mağazaya keç</Link>
-              </Button>
-              {sellerMapUrl ? (
-                <Button asChild variant="secondary" className="mt-2 w-full">
-                  <a href={sellerMapUrl} target="_blank" rel="noreferrer">
-                    Xəritədə göstər
-                    <ExternalLink className="ml-2 size-4" aria-hidden="true" />
-                  </a>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Button asChild variant="outline" className="h-11 w-full border-primary/20 bg-background hover:bg-primary/5">
+                  <Link href={storeBaseHref}>Mağazaya keç</Link>
                 </Button>
-              ) : null}
+                {sellerMapUrl ? (
+                  <Button asChild variant="outline" className="h-11 w-full border-primary/20 bg-background text-primary hover:bg-primary/5">
+                    <a href={sellerMapUrl} target="_blank" rel="noreferrer">
+                      Xəritədə göstər
+                      <ExternalLink className="ml-2 size-4" aria-hidden="true" />
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>

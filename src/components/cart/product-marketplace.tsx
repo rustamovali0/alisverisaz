@@ -1043,8 +1043,8 @@ export function Storefront({
           <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
         </nav>
 
-        <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
-          <div className="relative h-24 bg-primary/10 sm:h-44 lg:h-56">
+        <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+          <div className="relative h-20 bg-primary/10 sm:h-44 lg:h-56">
             {store.coverUrl ? (
               <div className="absolute inset-0 overflow-hidden">
                 <img
@@ -1063,30 +1063,30 @@ export function Storefront({
                 </div>
               </div>
             )}
-            <div className="absolute bottom-0 left-4 z-20 translate-y-1/2 md:left-8">
-              <StoreLogo store={store} className="size-16 shadow-sm sm:size-24" />
+            <div className="absolute bottom-0 left-3 z-20 translate-y-1/2 md:left-8">
+              <StoreLogo store={store} className="size-14 shadow-sm sm:size-24" />
             </div>
           </div>
-          <div className="grid min-w-0 gap-4 p-4 pt-10 md:grid-cols-[minmax(0,1fr)_260px] md:gap-5 md:p-7 md:pt-14">
+          <div className="grid min-w-0 gap-3 p-3 pt-9 md:grid-cols-[minmax(0,1fr)_260px] md:gap-5 md:p-7 md:pt-14">
             <div className="flex min-w-0 gap-3 md:gap-4">
               <div className="min-w-0">
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h1 className="line-clamp-2 break-words text-[26px] font-black leading-tight tracking-normal md:text-3xl">
+                  <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal md:text-3xl">
                     {store.name}
                   </h1>
-                  <p className="text-sm font-semibold text-muted-foreground">
+                  <p className="text-sm font-semibold text-muted-foreground md:text-base">
                       {t("productCount", { count: store.productCount })}
                   </p>
                 </div>
                 {store.description ? (
-                  <p className="mt-2 line-clamp-2 max-w-2xl break-words text-sm leading-6 text-muted-foreground md:mt-3 md:text-foreground">
+                  <p className="mt-2 hidden max-w-2xl break-words text-sm leading-6 text-muted-foreground md:mt-3 md:line-clamp-2 md:block md:text-foreground">
                     {store.description}
                   </p>
                 ) : null}
-                <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-sm text-muted-foreground md:mt-4">
+                <div className="mt-2 flex min-w-0 flex-wrap gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-2 md:text-sm">
                   {primaryAddress ? (
-                    <span className="inline-flex max-w-full items-center gap-2 rounded-full border bg-background px-3 py-1.5">
-                      <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-background px-2.5 py-1.5 md:gap-2 md:px-3">
+                      <MapPin className="size-3.5 shrink-0 text-primary md:size-4" aria-hidden="true" />
                       <span className="min-w-0 truncate">{primaryAddress}</span>
                     </span>
                   ) : null}
@@ -1148,21 +1148,21 @@ export function Storefront({
                 </div>
               </div>
             </div>
-            <div className="grid min-w-0 content-start gap-2.5 md:gap-3">
+            <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-1 md:content-start md:gap-3">
               {primaryPhone ? (
-                <Button asChild className="h-11 w-full min-w-0 md:h-10">
+                <Button asChild className="h-10 w-full min-w-0 rounded-xl text-xs md:h-10 md:text-sm">
                   <a href={`tel:${primaryPhone.replace(/\s/g, "")}`}>
-                    <Phone className="mr-2 size-4 shrink-0" aria-hidden="true" />
+                    <Phone className="mr-1.5 size-4 shrink-0 md:mr-2" aria-hidden="true" />
                     <span className="truncate">{t("showPhone")}</span>
                   </a>
                 </Button>
               ) : null}
               {primaryMapUrl ? (
-                <Button asChild variant="outline" className="h-11 w-full min-w-0 md:h-10">
+                <Button asChild variant="outline" className="h-10 w-full min-w-0 rounded-xl border-primary/20 bg-background text-xs hover:bg-primary/5 md:h-10 md:text-sm">
                   <a href={primaryMapUrl} target="_blank" rel="noreferrer">
-                    <MapPin className="mr-2 size-4 shrink-0" aria-hidden="true" />
+                    <MapPin className="mr-1.5 size-4 shrink-0 md:mr-2" aria-hidden="true" />
                     <span className="truncate">Xəritədə göstər</span>
-                    <ExternalLink className="ml-2 size-4 shrink-0" aria-hidden="true" />
+                    <ExternalLink className="ml-1.5 size-4 shrink-0 md:ml-2" aria-hidden="true" />
                   </a>
                 </Button>
               ) : null}

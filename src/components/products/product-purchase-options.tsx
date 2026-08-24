@@ -104,11 +104,16 @@ export function ProductPurchaseOptions({
   return (
     <div className="mt-5 grid min-w-0 gap-4">
       {visibleOptions.length > 0 ? (
-        <div className="grid gap-3 rounded-lg border bg-background p-3">
-          <p className="text-sm font-black">Seçimlər</p>
+        <div className="grid gap-3 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <p className="text-sm font-black">Seçimlər</p>
+            <span className="shrink-0 rounded-full bg-background px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
+              Məhsul variantı
+            </span>
+          </div>
           {visibleOptions.map((option) => (
             <div key={option.type} className="grid gap-2">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 {option.name}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -133,10 +138,10 @@ export function ProductPurchaseOptions({
                         }))
                       }
                       className={cn(
-                        "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm font-semibold transition",
+                        "inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-bold shadow-sm transition",
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-card text-foreground hover:border-primary/60",
+                          : "border-primary/15 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
                         !isAvailable && "cursor-not-allowed opacity-40",
                       )}
                     >
@@ -169,7 +174,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="w-full"
+          className="h-12 w-full rounded-xl shadow-sm"
         />
         <AddToCartButton
           product={product}
@@ -177,7 +182,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="w-full"
+          className="w-full border-primary/20 bg-background hover:bg-primary/5"
         />
       </div>
       {showWhatsappOrderButton && sellerPhone ? (

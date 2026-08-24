@@ -469,20 +469,20 @@
   .global-loader {
     position: relative;
     display: inline-grid;
-    width: 28px;
-    height: 28px;
+    width: 34px;
+    height: 34px;
     place-items: center;
     color: var(--global-loader-color);
   }
 
   .global-loader-root[data-loader-size="small"] .global-loader {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
 
   .global-loader-root[data-loader-size="large"] .global-loader {
-    width: 38px;
-    height: 38px;
+    width: 46px;
+    height: 46px;
   }
 
   .global-loader-root[data-loader-speed="slow"] .global-loader span:not(.sr-only) {

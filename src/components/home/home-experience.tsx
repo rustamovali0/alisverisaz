@@ -8,7 +8,6 @@ import {
   Sparkles,
   Store,
 } from "lucide-react";
-import { m } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
@@ -174,16 +173,11 @@ function stringArraySetting(section: HomepageSection | undefined, key: string) {
   return [];
 }
 
-function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: number }) {
+function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const marketplace = useTranslations("marketplace");
 
   return (
-    <m.article
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.28 }}
-      className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10"
-    >
+    <article className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
       <Link href={`/${store.slug}`} className="block h-full min-w-0">
         <div className="border-b bg-muted/60 p-2.5">
           <div className="grid h-28 place-items-center overflow-hidden rounded-md bg-background sm:h-32 lg:h-36">
@@ -215,7 +209,7 @@ function HomeStoreCard({ store, index }: { store: MarketplaceStore; index: numbe
           </div>
         </div>
       </Link>
-    </m.article>
+    </article>
   );
 }
 
@@ -276,12 +270,7 @@ export function HomeExperience({
         style={{ backgroundColor: "var(--home-hero-bg)" }}
       >
         <div className="container grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
-        <m.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="min-w-0 max-w-2xl"
-        >
+        <div className="min-w-0 max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
             <Sparkles className="size-4 text-primary" aria-hidden="true" />
             {home("marketplaceBadge")}
@@ -308,14 +297,9 @@ export function HomeExperience({
               </Link>
             ))}
           </div>
-        </m.div>
+        </div>
 
-        <m.div
-          initial={{ opacity: 0, scale: 0.96, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.38, ease: "easeOut" }}
-          className="relative hidden lg:block"
-        >
+        <div className="relative hidden lg:block">
           <div className="overflow-hidden rounded-lg border bg-card shadow-2xl shadow-slate-900/12">
             <div className="relative aspect-[4/3] bg-muted">
               {hero?.imageUrl ? (
@@ -361,7 +345,7 @@ export function HomeExperience({
             <p className="text-sm opacity-90">{home("activeProducts")}</p>
             <p className="text-3xl font-black">{totalProductCount}</p>
           </div>
-        </m.div>
+        </div>
         </div>
       </section>
 
@@ -383,13 +367,9 @@ export function HomeExperience({
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {activeCategories.map((category, index) => (
-              <m.div
+            {activeCategories.map((category) => (
+              <div
                 key={category.id}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: Math.min(index * 0.04, 0.24), duration: 0.26 }}
               >
                 <Link
                   href={`/products?category=${category.slug}`}
@@ -398,7 +378,7 @@ export function HomeExperience({
                   <span className="line-clamp-2 min-w-0 break-words text-sm font-bold sm:text-base">{category.name}</span>
                   <ArrowRight className="size-4 text-muted-foreground" />
                 </Link>
-              </m.div>
+              </div>
             ))}
           </div>
           </div>
@@ -424,7 +404,7 @@ export function HomeExperience({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {featuredStores.map((store, index) => (
               <div key={store.id} className={cn(index >= 4 && "hidden md:block")}>
-                <HomeStoreCard store={store} index={index} />
+                <HomeStoreCard store={store} />
               </div>
             ))}
           </div>
