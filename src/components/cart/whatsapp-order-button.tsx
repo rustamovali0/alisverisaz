@@ -9,6 +9,13 @@ import { appAlert } from "@/lib/alerts/app-alert";
 import { createCheckoutOrdersAction } from "@/lib/cart/actions";
 import type { CartProduct } from "@/lib/cart/types";
 import type { AuthRole } from "@/lib/auth/types";
+import {
+  findMatchingProductVariant,
+  formatProductVariantSelection,
+  getProductVariantKey,
+  getProductVariantUnitPrice,
+  normalizeProductVariantSelection,
+} from "@/lib/products/variant-utils";
 import { cn } from "@/lib/utils";
 
 type WhatsAppOrderButtonProps = {
@@ -18,6 +25,8 @@ type WhatsAppOrderButtonProps = {
   viewerRole?: AuthRole | null;
   buyerName?: string;
   buyerPhone?: string;
+  selectedOptions?: Record<string, string>;
+  selectionReady?: boolean;
   className?: string;
   disabled?: boolean;
 };
@@ -60,23 +69,40 @@ export function WhatsAppOrderButton({
   viewerRole,
   buyerName = "",
   buyerPhone = "",
+  selectedOptions,
+  selectionReady = true,
   className,
   disabled = false,
 }: WhatsAppOrderButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [checkoutRequestId, setCheckoutRequestId] = useState(() => crypto.randomUUID());
   const quantity = 1;
-  const unitPrice = Math.max(product.priceAmount - product.discountAmount, 0);
+  const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
+  const selectedVariant = findMatchingProductVariant(
+    product.variantCombinations ?? [],
+    normalizedSelection,
+  );
+  const unitPrice = getProductVariantUnitPrice({
+    priceAmount: product.priceAmount,
+    discountAmount: product.discountAmount,
+    variants: product.variantCombinations,
+    selection: normalizedSelection,
+  });
   const total = unitPrice * quantity;
   const whatsappPhone = toWhatsAppPhone(sellerPhone);
-  const isUnavailable = disabled || product.stockQuantity <= 0 || !whatsappPhone;
+  const stockLimit = selectedVariant?.stockQuantity ?? product.stockQuantity;
+  const isUnavailable = disabled || stockLimit <= 0 || !whatsappPhone;
+  const variantLabels = formatProductVariantSelection(
+    product.options,
+    normalizedSelection,
+  );
 
   function buildMessage(orderNumber: string) {
     const lines = [
       "Salam. Alisveris.az yeni sifaris.",
       orderNumber ? `Sifariş: ${orderNumber}` : "",
       `Məhsul: ${product.name}`,
-      "Rəng: Seçilməyib",
+      ...variantLabels,
       `Say: ${quantity}`,
       `Qiymət: ${formatMoney(unitPrice)}`,
       `Cəmi: ${formatMoney(total)}`,
@@ -96,6 +122,14 @@ export function WhatsAppOrderButton({
           ? "Məhsul stokda yoxdur."
           : "Satıcının WhatsApp nömrəsi təyin edilməyib.",
         "WhatsApp sifarişi alınmadı",
+      );
+      return;
+    }
+
+    if (!selectionReady) {
+      void appAlert.error(
+        "WhatsApp sifarişi üçün məhsul seçimlərini tamamlayın.",
+        "Variant seçin",
       );
       return;
     }
@@ -122,13 +156,23 @@ export function WhatsAppOrderButton({
     const note = [
       "WhatsApp sifarişi",
       `Məhsul: ${product.name}`,
-      "Rəng: Seçilməyib",
+      ...variantLabels,
       `Say: ${quantity}`,
       `Qiymət: ${formatMoney(unitPrice)}`,
     ].join(" · ");
     const formData = new FormData();
 
-    formData.set("items", JSON.stringify([{ productId: product.id, quantity }]));
+    formData.set(
+      "items",
+      JSON.stringify([
+        {
+          productId: product.id,
+          quantity,
+          selectedOptions: normalizedSelection,
+          variantKey: getProductVariantKey(product.id, normalizedSelection),
+        },
+      ]),
+    );
     formData.set("checkoutRequestId", requestId);
     formData.set("fullName", buyerName.trim());
     formData.set("phone", buyerPhone.trim());

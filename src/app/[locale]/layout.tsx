@@ -156,6 +156,11 @@ export default async function LocaleLayout({
         className="global-loader-root min-h-screen"
         data-loader-type={siteSettings.globalLoader.type}
         data-loader-palette={siteSettings.globalLoader.palette}
+        data-loading-preset={siteSettings.design.loadingPreset}
+        data-loader-size={siteSettings.design.loaderSize}
+        data-loader-speed={siteSettings.design.loaderSpeed}
+        data-loader-text={siteSettings.design.loaderText}
+        data-loader-overlay={siteSettings.design.loaderOverlay}
         data-design-theme={siteSettings.design.themePreset}
         data-navbar-preset={siteSettings.design.navbarPreset}
         data-homepage-preset={siteSettings.design.homepagePreset}

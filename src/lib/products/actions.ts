@@ -17,9 +17,17 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ProductActionResult,
+  ProductOptionInput,
+  ProductOptionType,
+  ProductVariantCombinationInput,
   ProductStatus,
   ProductVariantInput,
 } from "@/lib/products/types";
+import {
+  PRODUCT_OPTION_TYPES,
+  getEnabledProductOptions,
+  normalizeProductOptions,
+} from "@/lib/products/variant-utils";
 
 const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_PRODUCT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -103,6 +111,181 @@ function parseVariants(value: string): ProductVariantInput[] {
         stockQuantity: Math.max(Math.trunc(Number(stock) || 0), 0),
       };
     });
+}
+
+function isOptionType(value: unknown): value is ProductOptionType {
+  return typeof value === "string" && PRODUCT_OPTION_TYPES.includes(value as ProductOptionType);
+}
+
+function readJsonObject(value: string) {
+  if (!value || value.length > 50_000) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseVariantConfig(formData: FormData) {
+  const parsed = readJsonObject(readString(formData, "variantConfig")) as {
+    options?: unknown;
+    combinations?: unknown;
+  } | null;
+
+  if (!parsed) {
+    const legacyVariants = parseVariants(readString(formData, "variants"));
+
+    return {
+      options: [],
+      combinations: [],
+      legacyVariants,
+    };
+  }
+
+  const options = Array.isArray(parsed.options)
+    ? parsed.options
+        .map((option, index): ProductOptionInput | null => {
+          const row = option as {
+            type?: unknown;
+            name?: unknown;
+            isEnabled?: unknown;
+            values?: unknown;
+          };
+
+          if (!isOptionType(row.type)) {
+            return null;
+          }
+
+          const name = typeof row.name === "string" ? row.name.trim().slice(0, 60) : "";
+          const values = Array.isArray(row.values)
+            ? row.values
+                .map((value, valueIndex) => {
+                  const valueRow = value as {
+                    value?: unknown;
+                    colorHex?: unknown;
+                  };
+                  const text =
+                    typeof valueRow.value === "string"
+                      ? valueRow.value.trim().slice(0, 80)
+                      : "";
+                  const colorHex =
+                    typeof valueRow.colorHex === "string" &&
+                    /^#[0-9a-f]{6}$/i.test(valueRow.colorHex)
+                      ? valueRow.colorHex
+                      : null;
+
+                  return text
+                    ? {
+                        value: text,
+                        colorHex,
+                        sortOrder: valueIndex,
+                      }
+                    : null;
+                })
+                .filter((value): value is NonNullable<typeof value> => Boolean(value))
+                .slice(0, 40)
+            : [];
+
+          return {
+            type: row.type,
+            name:
+              name ||
+              (row.type === "color"
+                ? "Rəng"
+                : row.type === "size"
+                  ? "Ölçü"
+                  : `Seçim ${index + 1}`),
+            isEnabled: Boolean(row.isEnabled) && values.length > 0,
+            sortOrder: index,
+            values,
+          };
+        })
+        .filter((option): option is ProductOptionInput => Boolean(option))
+    : [];
+  const normalizedOptions = normalizeProductOptions(options);
+  const enabledOptions = getEnabledProductOptions(normalizedOptions);
+  const allowedValues = new Map(
+    enabledOptions.map((option) => [
+      option.type,
+      new Set(option.values.map((value) => value.value)),
+    ]),
+  );
+  const combinations = Array.isArray(parsed.combinations)
+    ? parsed.combinations
+        .map((combination): ProductVariantCombinationInput | null => {
+          const row = combination as {
+            combination?: unknown;
+            sku?: unknown;
+            priceOverrideAmount?: unknown;
+            stockQuantity?: unknown;
+            isEnabled?: unknown;
+          };
+          const values =
+            row.combination && typeof row.combination === "object"
+              ? (row.combination as Record<string, unknown>)
+              : {};
+          const safeCombination = PRODUCT_OPTION_TYPES.reduce<Record<string, string>>(
+            (next, type) => {
+              const value =
+                typeof values[type] === "string"
+                  ? values[type].trim().slice(0, 80)
+                  : "";
+
+              if (value && allowedValues.get(type)?.has(value)) {
+                next[type] = value;
+              }
+
+              return next;
+            },
+            {},
+          );
+
+          if (Object.keys(safeCombination).length !== enabledOptions.length) {
+            return null;
+          }
+
+          const priceOverride =
+            row.priceOverrideAmount === null ||
+            row.priceOverrideAmount === undefined ||
+            row.priceOverrideAmount === ""
+              ? null
+              : Math.max(Number(row.priceOverrideAmount) || 0, 0);
+
+          return {
+            combination: safeCombination,
+            sku:
+              typeof row.sku === "string" && row.sku.trim()
+                ? row.sku.trim().slice(0, 80)
+                : null,
+            priceOverrideAmount: priceOverride,
+            stockQuantity: Math.max(Math.trunc(Number(row.stockQuantity) || 0), 0),
+            isEnabled: row.isEnabled !== false,
+          };
+        })
+        .filter((combination): combination is ProductVariantCombinationInput =>
+          Boolean(combination),
+        )
+        .slice(0, 200)
+    : [];
+  const legacyVariants = enabledOptions.flatMap((option) =>
+    option.values.map((value) => ({
+      name: option.name,
+      value: value.value,
+      priceDeltaAmount: 0,
+      stockQuantity: 0,
+    })),
+  );
+
+  return {
+    options: normalizedOptions,
+    combinations,
+    legacyVariants,
+  };
 }
 
 function getImageFiles(formData: FormData) {
@@ -315,25 +498,100 @@ async function replaceProductImages(input: {
   );
 }
 
-async function replaceVariants(productId: string, variants: ProductVariantInput[]) {
+async function replaceVariants(input: {
+  productId: string;
+  options: ProductOptionInput[];
+  combinations: ProductVariantCombinationInput[];
+  legacyVariants: ProductVariantInput[];
+}) {
   const supabaseAdmin = createSupabaseAdminClient();
+
+  await (supabaseAdmin as any)
+    .from("product_options")
+    .delete()
+    .eq("product_id", input.productId);
 
   await (supabaseAdmin as any)
     .from("product_variants")
     .delete()
-    .eq("product_id", productId);
+    .eq("product_id", input.productId);
 
-  if (variants.length === 0) {
+  const enabledOptions = getEnabledProductOptions(input.options);
+
+  for (const option of input.options.filter((item) => item.isEnabled)) {
+    const { data: optionRow, error: optionError } = await (supabaseAdmin as any)
+      .from("product_options")
+      .insert({
+        product_id: input.productId,
+        name: option.name,
+        type: option.type,
+        is_enabled: option.isEnabled,
+        sort_order: option.sortOrder ?? 0,
+      })
+      .select("id")
+      .single();
+
+    if (optionError || !optionRow) {
+      throw new Error(optionError?.message ?? "Variant seçimi saxlanmadı.");
+    }
+
+    if (option.values.length > 0) {
+      const { error: valuesError } = await (supabaseAdmin as any)
+        .from("product_option_values")
+        .insert(
+          option.values.map((value, index) => ({
+            option_id: optionRow.id,
+            value: value.value,
+            color_hex: value.colorHex ?? null,
+            sort_order: value.sortOrder ?? index,
+          })),
+        );
+
+      if (valuesError) {
+        throw new Error(valuesError.message);
+      }
+    }
+  }
+
+  if (input.combinations.length > 0) {
+    const { error } = await (supabaseAdmin as any).from("product_variants").insert(
+      input.combinations.map((variant) => ({
+        product_id: input.productId,
+        name: enabledOptions
+          .map((option) => `${option.name}: ${variant.combination[option.type]}`)
+          .join(" / "),
+        value: Object.values(variant.combination).join(" / "),
+        price_delta_amount: 0,
+        stock_quantity: variant.stockQuantity,
+        combination: variant.combination,
+        sku: variant.sku ?? null,
+        price_override_amount: variant.priceOverrideAmount ?? null,
+        is_enabled: variant.isEnabled !== false,
+      })),
+    );
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    return;
+  }
+
+  if (input.legacyVariants.length === 0) {
     return;
   }
 
   const { error } = await (supabaseAdmin as any).from("product_variants").insert(
-    variants.map((variant) => ({
-      product_id: productId,
+    input.legacyVariants.map((variant) => ({
+      product_id: input.productId,
       name: variant.name,
       value: variant.value,
       price_delta_amount: variant.priceDeltaAmount,
       stock_quantity: variant.stockQuantity,
+      combination: variant.combination ?? {},
+      sku: variant.sku ?? null,
+      price_override_amount: variant.priceOverrideAmount ?? null,
+      is_enabled: variant.isEnabled !== false,
     })),
   );
 
@@ -445,7 +703,8 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "seo_description_ru"),
   };
   const status = readStatus(readString(formData, "status"));
-  const variants = parseVariants(readString(formData, "variants"));
+  const variantConfig = parseVariantConfig(formData);
+  const variants = variantConfig.legacyVariants;
   const depositEnabled = false;
   const depositType = "fixed";
   const depositValue = 0;
@@ -464,6 +723,8 @@ function readProductPayload(formData: FormData) {
     seoDescriptionTranslations,
     status,
     variants,
+    variantOptions: variantConfig.options,
+    variantCombinations: variantConfig.combinations,
     depositEnabled,
     depositType,
     depositValue,
@@ -568,6 +829,8 @@ export async function createStoreProductAction(
       deposit_value: payload.depositValue,
       metadata: {
         variants: payload.variants,
+        variant_options: payload.variantOptions,
+        variant_combinations: payload.variantCombinations,
       },
     })
     .select("id")
@@ -581,7 +844,12 @@ export async function createStoreProductAction(
   }
 
   try {
-    await replaceVariants(product.id, payload.variants);
+    await replaceVariants({
+      productId: product.id,
+      options: payload.variantOptions,
+      combinations: payload.variantCombinations,
+      legacyVariants: payload.variants,
+    });
     await replaceProductLocations({
       productId: product.id,
       storeId,
@@ -656,7 +924,7 @@ export async function updateProductAction(
   const supabase = await createSupabaseServerClient();
   const { data: existing } = await (supabase as any)
     .from("products")
-    .select("id,store_id,category_id,listing_type,metadata,stores(slug)")
+    .select("id,store_id,owner_id,category_id,listing_type,metadata,stores(slug,owner_id)")
     .eq("id", productId)
     .maybeSingle();
 
@@ -664,6 +932,21 @@ export async function updateProductAction(
     return {
       ok: false,
       message: "Məhsul tapılmadı.",
+    };
+  }
+
+  const existingStore = Array.isArray(existing.stores)
+    ? existing.stores[0]
+    : existing.stores;
+
+  if (
+    current.role !== "admin" &&
+    existing.owner_id !== current.user.id &&
+    existingStore?.owner_id !== current.user.id
+  ) {
+    return {
+      ok: false,
+      message: "Bu məhsul üzərində icazəniz yoxdur.",
     };
   }
 
@@ -678,9 +961,13 @@ export async function updateProductAction(
       ? {
           ...(existing.metadata ?? {}),
           variants: payload.variants,
+          variant_options: payload.variantOptions,
+          variant_combinations: payload.variantCombinations,
         }
       : {
           variants: payload.variants,
+          variant_options: payload.variantOptions,
+          variant_combinations: payload.variantCombinations,
         };
   let replacedImageUrls: Array<string | null> = [];
 
@@ -714,7 +1001,12 @@ export async function updateProductAction(
   }
 
   try {
-    await replaceVariants(productId, payload.variants);
+    await replaceVariants({
+      productId,
+      options: payload.variantOptions,
+      combinations: payload.variantCombinations,
+      legacyVariants: payload.variants,
+    });
     if (existing.listing_type === "store") {
       await replaceProductLocations({
         productId,
@@ -743,9 +1035,7 @@ export async function updateProductAction(
     productId,
     storeId: existing.store_id,
     categoryId: payload.categoryId ?? existing.category_id,
-    storeSlug: Array.isArray(existing.stores)
-      ? existing.stores[0]?.slug
-      : existing.stores?.slug,
+    storeSlug: existingStore?.slug,
     homepage: status === "active" || existing.metadata?.featured === true,
   });
   await deleteR2ImagesByUrls(replacedImageUrls);
@@ -1061,6 +1351,8 @@ export async function createPersonalListingAction(
           payment_status: "pending",
           listing_fee_amount: 1,
           variants: payload.variants,
+          variant_options: payload.variantOptions,
+          variant_combinations: payload.variantCombinations,
         },
       })
       .select("id")
@@ -1070,7 +1362,12 @@ export async function createPersonalListingAction(
       throw new Error(productError?.message ?? "Elan yaradıla bilmədi.");
     }
 
-    await replaceVariants(product.id, payload.variants);
+    await replaceVariants({
+      productId: product.id,
+      options: payload.variantOptions,
+      combinations: payload.variantCombinations,
+      legacyVariants: payload.variants,
+    });
     await uploadProductImages({
       userId: current.user.id,
       productId: product.id,

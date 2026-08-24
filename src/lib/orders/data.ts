@@ -35,6 +35,14 @@ type OrderRow = {
     quantity: number;
     unit_price_amount: string | number;
     total_amount: string | number;
+    metadata?: {
+      variant_snapshot?: Array<{
+        name?: unknown;
+        value?: unknown;
+        type?: unknown;
+        colorHex?: unknown;
+      }>;
+    } | null;
   }>;
 };
 
@@ -107,6 +115,17 @@ function toManagedOrder(
       unitPrice: Number(item.unit_price_amount ?? getUnitPrice(productMap.get(item.product_id ?? "") ?? null)),
       quantity: item.quantity,
       totalAmount: Number(item.total_amount),
+      variantSnapshot: Array.isArray(item.metadata?.variant_snapshot)
+        ? item.metadata.variant_snapshot
+            .map((variant) => ({
+              name: typeof variant.name === "string" ? variant.name : "",
+              value: typeof variant.value === "string" ? variant.value : "",
+              type: typeof variant.type === "string" ? variant.type : undefined,
+              colorHex:
+                typeof variant.colorHex === "string" ? variant.colorHex : null,
+            }))
+            .filter((variant) => variant.name && variant.value)
+        : [],
     })),
   };
 }
@@ -121,7 +140,7 @@ async function getOrders(filters: {
   let query = (supabaseAdmin as any)
     .from("orders")
     .select(
-      "id,order_number,status,payment_status,subtotal_amount,shipping_amount,delivery_amount,delivery_method,delivery_estimate,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,product_sku,quantity,unit_price_amount,total_amount)",
+      "id,order_number,status,payment_status,subtotal_amount,shipping_amount,delivery_amount,delivery_method,delivery_estimate,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,product_sku,quantity,unit_price_amount,total_amount,metadata)",
     )
     .order("created_at", {
       ascending: false,

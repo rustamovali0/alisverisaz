@@ -301,6 +301,18 @@ function OrderProductItem({
             {item.description}
           </p>
         ) : null}
+        {item.variantSnapshot.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {item.variantSnapshot.map((variant) => (
+              <span
+                key={`${variant.name}-${variant.value}`}
+                className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+              >
+                {variant.name}: {variant.value}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <p className="mt-2 text-xs font-medium text-muted-foreground">
           Miqdar: {item.quantity} · Bir məhsul: {formatMoney(item.unitPrice, currency)}
         </p>

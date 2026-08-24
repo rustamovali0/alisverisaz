@@ -14,6 +14,12 @@ import type {
   MarketplaceProductSort,
   MarketplaceStore,
 } from "@/lib/cart/types";
+import type {
+  ProductOptionInput,
+  ProductOptionType,
+  ProductVariantCombinationInput,
+} from "@/lib/products/types";
+import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
 
 type ProductRow = {
   id: string;
@@ -36,11 +42,38 @@ type ProductRow = {
     is_primary: boolean;
     sort_order?: number | null;
   }>;
+  product_options?: Array<{
+    id: string;
+    name: string;
+    type: ProductOptionType;
+    is_enabled: boolean;
+    sort_order: number | null;
+    product_option_values?: Array<{
+      id: string;
+      value: string;
+      color_hex: string | null;
+      sort_order: number | null;
+    }>;
+  }>;
+  product_variants?: Array<{
+    id?: string;
+    name?: string | null;
+    value?: string | null;
+    price_delta_amount?: string | number | null;
+    stock_quantity: number;
+    combination?: Record<string, string> | null;
+    sku?: string | null;
+    price_override_amount?: string | number | null;
+    is_enabled?: boolean | null;
+  }>;
   stores?: {
     name?: string | null;
     slug: string | null;
   } | null;
 };
+
+const PUBLIC_PRODUCT_SELECT =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)";
 
 type StoreRow = {
   id: string;
@@ -81,6 +114,42 @@ function toCartProduct(row: ProductRow): CartProduct {
       ? Math.round(finalPrice * (depositValue / 100) * 100) / 100
       : depositValue;
 
+  const options = normalizeProductOptions(
+    (row.product_options ?? [])
+      .filter((option) => PRODUCT_OPTION_TYPES.includes(option.type))
+      .map(
+        (option): ProductOptionInput => ({
+          id: option.id,
+          type: option.type,
+          name: option.name,
+          isEnabled: option.is_enabled,
+          sortOrder: option.sort_order ?? 0,
+          values: (option.product_option_values ?? []).map((value) => ({
+            id: value.id,
+            value: value.value,
+            colorHex: value.color_hex,
+            sortOrder: value.sort_order ?? 0,
+          })),
+        }),
+      ),
+  );
+  const variantCombinations = (row.product_variants ?? [])
+    .filter((variant) => variant.combination && Object.keys(variant.combination).length > 0)
+    .map(
+      (variant): ProductVariantCombinationInput => ({
+        id: variant.id,
+        combination: variant.combination ?? {},
+        sku: variant.sku ?? null,
+        priceOverrideAmount:
+          variant.price_override_amount === null ||
+          variant.price_override_amount === undefined
+            ? null
+            : Number(variant.price_override_amount),
+        stockQuantity: Number(variant.stock_quantity ?? 0),
+        isEnabled: variant.is_enabled !== false,
+      }),
+    );
+
   return {
     id: row.id,
     slug: row.slug ?? row.id,
@@ -99,6 +168,8 @@ function toCartProduct(row: ProductRow): CartProduct {
     depositType: row.deposit_type,
     depositValue,
     depositAmount,
+    options,
+    variantCombinations,
   };
 }
 
@@ -366,9 +437,7 @@ async function getMarketplaceProductPageUncached(
   const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
   let query = (supabase as any)
     .from("products")
-    .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
-    )
+    .select(PUBLIC_PRODUCT_SELECT)
     .eq("status", "active");
 
   if (input.categoryId && isUuid(input.categoryId)) {
@@ -430,7 +499,7 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
+      PUBLIC_PRODUCT_SELECT,
     )
     .eq("status", "active")
     .in("id", productIds);
@@ -474,7 +543,7 @@ async function getMarketplaceStoresUncached(
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
     )
     .eq("status", "active")
     .in("store_id", storeIds)
@@ -612,7 +681,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
   let productQuery = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
       { count: "exact" },
     )
     .eq("store_id", store.id)
@@ -728,7 +797,7 @@ async function getMarketplaceProductByIdUncached(input: {
   let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)",
+      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)",
     )
     .eq("status", "active");
 
@@ -830,7 +899,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   const { data } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),stores(name,slug)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)",
     )
     .eq("status", "active")
     .in("id", productIds);

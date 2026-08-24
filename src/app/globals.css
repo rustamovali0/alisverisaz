@@ -425,6 +425,24 @@
     color: var(--global-loader-color);
   }
 
+  .global-loader-root[data-loader-size="small"] .global-loader {
+    width: 20px;
+    height: 20px;
+  }
+
+  .global-loader-root[data-loader-size="large"] .global-loader {
+    width: 38px;
+    height: 38px;
+  }
+
+  .global-loader-root[data-loader-speed="slow"] .global-loader span:not(.sr-only) {
+    animation-duration: 1.25s !important;
+  }
+
+  .global-loader-root[data-loader-speed="fast"] .global-loader span:not(.sr-only) {
+    animation-duration: 0.52s !important;
+  }
+
   .global-loader span:not(.sr-only) {
     position: absolute;
     display: block;
@@ -588,6 +606,167 @@
     background: hsl(var(--background));
   }
 
+  .global-loader-root[data-loading-preset="classic-spinner"] .global-loader span:first-child {
+    inset: 0;
+    border: 3px solid color-mix(in srgb, var(--global-loader-color) 22%, transparent);
+    border-top-color: var(--global-loader-color);
+    border-radius: 999px;
+    animation: global-loader-spin 0.75s linear infinite;
+  }
+
+  .global-loader-root[data-loading-preset="dual-ring"] .global-loader span:first-child,
+  .global-loader-root[data-loading-preset="dual-ring"] .global-loader span:nth-child(2) {
+    inset: 0;
+    border: 3px solid transparent;
+    border-top-color: var(--global-loader-color);
+    border-radius: 999px;
+    animation: global-loader-spin 0.85s linear infinite;
+  }
+
+  .global-loader-root[data-loading-preset="dual-ring"] .global-loader span:nth-child(2) {
+    inset: 6px;
+    border-top-color: var(--global-loader-accent);
+    animation-direction: reverse;
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader span:not(.sr-only),
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader span:not(.sr-only) {
+    top: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--global-loader-color);
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader,
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader {
+    width: 44px;
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader span:first-child,
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader span:first-child {
+    left: 5px;
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader span:nth-child(2),
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader span:nth-child(2) {
+    left: 18px;
+    animation-delay: 0.12s;
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader span:nth-child(3),
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader span:nth-child(3) {
+    left: 31px;
+    animation-delay: 0.24s;
+  }
+
+  .global-loader-root[data-loading-preset="dots-pulse"] .global-loader span:not(.sr-only) {
+    animation: global-loader-pulse 0.9s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="dots-bounce"] .global-loader span:not(.sr-only) {
+    animation: global-loader-bounce 0.75s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="orbit"] .global-loader span:first-child {
+    inset: 2px;
+    border: 2px solid color-mix(in srgb, var(--global-loader-color) 28%, transparent);
+    border-radius: 999px;
+  }
+
+  .global-loader-root[data-loading-preset="orbit"] .global-loader span:nth-child(2) {
+    top: 0;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--global-loader-color);
+    transform-origin: 0 14px;
+    animation: global-loader-spin 0.82s linear infinite;
+  }
+
+  .global-loader-root[data-loading-preset="bars-wave"] .global-loader {
+    width: 38px;
+  }
+
+  .global-loader-root[data-loading-preset="bars-wave"] .global-loader span:not(.sr-only) {
+    bottom: 5px;
+    width: 5px;
+    border-radius: 999px;
+    background: var(--global-loader-color);
+    animation: global-loader-wave 0.82s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="bars-wave"] .global-loader span:first-child {
+    left: 7px;
+  }
+
+  .global-loader-root[data-loading-preset="bars-wave"] .global-loader span:nth-child(2) {
+    left: 16px;
+    animation-delay: 0.1s;
+  }
+
+  .global-loader-root[data-loading-preset="bars-wave"] .global-loader span:nth-child(3) {
+    left: 25px;
+    animation-delay: 0.2s;
+  }
+
+  .global-loader-root[data-loading-preset="circle-pulse"] .global-loader span:first-child {
+    inset: 4px;
+    border-radius: 999px;
+    background: var(--global-loader-color);
+    animation: global-loader-pulse 0.82s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="logo-loader"] .global-loader span:first-child {
+    inset: 2px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--global-loader-color);
+    animation: global-loader-pulse 0.9s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="logo-loader"] .global-loader span:first-child::after {
+    content: "a";
+    color: hsl(var(--primary-foreground));
+    font-size: 14px;
+    font-weight: 900;
+  }
+
+  .global-loader-root[data-loading-preset="minimal-line"] .global-loader {
+    width: 46px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--global-loader-color) 18%, transparent);
+  }
+
+  .global-loader-root[data-loading-preset="minimal-line"] .global-loader span:first-child {
+    inset: 0 auto 0 0;
+    width: 40%;
+    border-radius: 999px;
+    background: var(--global-loader-color);
+    animation: global-loader-line 0.82s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loading-preset="skeleton-spinner"] .global-loader {
+    width: 54px;
+    height: 28px;
+  }
+
+  .global-loader-root[data-loading-preset="skeleton-spinner"] .global-loader span:first-child {
+    inset: 5px 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, hsl(var(--muted)), hsl(var(--primary) / 0.22), hsl(var(--muted)));
+    background-size: 180% 100%;
+    animation: global-loader-skeleton 1s ease-in-out infinite;
+  }
+
+  .global-loader-root[data-loader-text="hide"] .global-loader .sr-only {
+    display: none;
+  }
+
   @keyframes global-loader-spin {
     to {
       transform: rotate(360deg);
@@ -615,6 +794,26 @@
 
     50% {
       height: 22px;
+    }
+  }
+
+  @keyframes global-loader-line {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(250%);
+    }
+  }
+
+  @keyframes global-loader-skeleton {
+    0% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0 50%;
     }
   }
 }

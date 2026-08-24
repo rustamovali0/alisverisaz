@@ -57,6 +57,12 @@ export type ManagedOrder = {
     unitPrice: number;
     quantity: number;
     totalAmount: number;
+    variantSnapshot: Array<{
+      name: string;
+      value: string;
+      type?: string;
+      colorHex?: string | null;
+    }>;
   }>;
 };
 

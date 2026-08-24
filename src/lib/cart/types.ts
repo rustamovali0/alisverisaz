@@ -1,3 +1,8 @@
+import type {
+  ProductOptionInput,
+  ProductVariantCombinationInput,
+} from "@/lib/products/types";
+
 export type CartProduct = {
   id: string;
   slug: string;
@@ -16,6 +21,8 @@ export type CartProduct = {
   depositType: "fixed" | "percent";
   depositValue: number;
   depositAmount: number;
+  options?: ProductOptionInput[];
+  variantCombinations?: ProductVariantCombinationInput[];
 };
 
 export type MarketplaceProductSort = "newest" | "oldest" | "price_asc" | "price_desc";
@@ -59,6 +66,8 @@ export type MarketplaceProductDetail = {
 export type CartItem = {
   productId: string;
   quantity: number;
+  selectedOptions?: Record<string, string>;
+  variantKey?: string;
 };
 
 export type CheckoutActionResult =

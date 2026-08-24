@@ -15,11 +15,35 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { getCartProducts } from "@/lib/cart/data";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
+import type { ProductOptionType } from "@/lib/products/types";
+import {
+  findMatchingProductVariant,
+  formatProductVariantSelection,
+  getAutoProductVariantSelection,
+  getEnabledProductOptions,
+  getProductVariantKey,
+  getProductVariantUnitPrice,
+  normalizeProductVariantSelection,
+} from "@/lib/products/variant-utils";
 
 const MAX_CHECKOUT_ITEMS = 50;
 const MAX_CHECKOUT_QUANTITY = 1000;
 const DELIVERY_METHODS = ["pickup", "courier", "region"] as const;
 type DeliveryMethod = (typeof DELIVERY_METHODS)[number];
+type ValidatedCartVariantItem = CartItem & {
+  product: Awaited<ReturnType<typeof getCartProducts>>[number];
+  selectedVariant: NonNullable<
+    Awaited<ReturnType<typeof getCartProducts>>[number]["variantCombinations"]
+  >[number] | null;
+  unitPrice: number;
+  variantLabels: string[];
+  variantSnapshot: Array<{
+    type: ProductOptionType;
+    name: string;
+    value: string;
+    colorHex: string | null;
+  }>;
+};
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -40,7 +64,7 @@ function isValidNormalizedPhone(value: string) {
 function parseCartItems(value: string) {
   try {
     const parsed = JSON.parse(value) as unknown;
-    const grouped = new Map<string, number>();
+    const grouped = new Map<string, CartItem>();
 
     if (!Array.isArray(parsed)) {
       return {
@@ -69,6 +93,9 @@ function parseCartItems(value: string) {
 
       const productId = (item as CartItem).productId;
       const quantity = (item as CartItem).quantity;
+      const selectedOptions = normalizeProductVariantSelection(
+        (item as CartItem).selectedOptions,
+      );
 
       if (
         typeof productId !== "string" ||
@@ -84,7 +111,9 @@ function parseCartItems(value: string) {
         };
       }
 
-      const nextQuantity = (grouped.get(productId) ?? 0) + quantity;
+      const itemKey = getProductVariantKey(productId, selectedOptions);
+      const current = grouped.get(itemKey);
+      const nextQuantity = (current?.quantity ?? 0) + quantity;
 
       if (nextQuantity > MAX_CHECKOUT_QUANTITY) {
         return {
@@ -94,14 +123,16 @@ function parseCartItems(value: string) {
         };
       }
 
-      grouped.set(productId, nextQuantity);
+      grouped.set(itemKey, {
+        productId,
+        quantity: nextQuantity,
+        selectedOptions,
+        variantKey: itemKey,
+      });
     }
 
     return {
-      items: Array.from(grouped, ([productId, quantity]) => ({
-        productId,
-        quantity,
-      })),
+      items: Array.from(grouped.values()),
       tooManyItems: false,
       invalidItems: false,
     };
@@ -111,6 +142,250 @@ function parseCartItems(value: string) {
       tooManyItems: false,
       invalidItems: true,
     };
+  }
+}
+
+async function validateCartVariantSelections(items: CartItem[]) {
+  const products = await getCartProducts(
+    Array.from(new Set(items.map((item) => item.productId))),
+    "az",
+  );
+  const productMap = new Map(products.map((product) => [product.id, product]));
+  const validated = [];
+
+  for (const item of items) {
+    const product = productMap.get(item.productId);
+
+    if (!product) {
+      return {
+        ok: false as const,
+        message: "Səbətdə aktiv olmayan məhsul var.",
+      };
+    }
+
+    const selection = {
+      ...getAutoProductVariantSelection(product.options ?? []),
+      ...normalizeProductVariantSelection(item.selectedOptions),
+    };
+    const enabledOptions = getEnabledProductOptions(product.options ?? []);
+
+    for (const option of enabledOptions) {
+      if (option.values.length === 0) {
+        continue;
+      }
+
+      const selectedValue = selection[option.type];
+
+      if (option.values.length > 1 && !selectedValue) {
+        return {
+          ok: false as const,
+          message: "Məhsul variantı seçilməyib.",
+        };
+      }
+
+      if (
+        selectedValue &&
+        !option.values.some((value) => value.value === selectedValue)
+      ) {
+        return {
+          ok: false as const,
+          message: "Məhsul variantı yanlışdır.",
+        };
+      }
+    }
+
+    const selectedVariant = findMatchingProductVariant(
+      product.variantCombinations ?? [],
+      selection,
+    );
+
+    if (
+      (product.variantCombinations ?? []).length > 0 &&
+      enabledOptions.length > 0 &&
+      !selectedVariant
+    ) {
+      return {
+        ok: false as const,
+        message: "Bu variant kombinasiyası mövcud deyil.",
+      };
+    }
+
+    if (selectedVariant && selectedVariant.stockQuantity < item.quantity) {
+      return {
+        ok: false as const,
+        message: "Seçilmiş variant üçün stok kifayət deyil.",
+      };
+    }
+
+    const unitPrice = getProductVariantUnitPrice({
+      priceAmount: product.priceAmount,
+      discountAmount: product.discountAmount,
+      variants: product.variantCombinations,
+      selection,
+    });
+    const variantLabels = formatProductVariantSelection(product.options, selection);
+
+    validated.push({
+      ...item,
+      selectedOptions: selection,
+      variantKey: getProductVariantKey(item.productId, selection),
+      product,
+      selectedVariant,
+      unitPrice,
+      variantLabels,
+      variantSnapshot: enabledOptions.reduce<
+        Array<{
+          type: ProductOptionType;
+          name: string;
+          value: string;
+          colorHex: string | null;
+        }>
+      >((snapshot, option) => {
+          const value = option.values.find(
+            (optionValue) => optionValue.value === selection[option.type],
+          );
+
+          if (value) {
+            snapshot.push({
+                type: option.type,
+                name: option.name,
+                value: value.value,
+                colorHex: value.colorHex ?? null,
+            });
+          }
+
+          return snapshot;
+        }, []),
+    });
+  }
+
+  return {
+    ok: true as const,
+    items: validated,
+  };
+}
+
+async function applyOrderVariantSnapshots(input: {
+  orderIds: string[];
+  items: ValidatedCartVariantItem[];
+}) {
+  if (input.orderIds.length === 0 || input.items.length === 0) {
+    return;
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: orders } = await (supabaseAdmin as any)
+    .from("orders")
+    .select(
+      "id,store_id,delivery_amount,shipping_amount,order_items(id,product_id,quantity,metadata)",
+    )
+    .in("id", input.orderIds);
+
+  for (const order of (orders ?? []) as Array<{
+    id: string;
+    store_id: string;
+    delivery_amount?: string | number | null;
+    shipping_amount?: string | number | null;
+    order_items?: Array<{
+      id: string;
+      product_id: string | null;
+      quantity: number;
+      metadata?: Record<string, unknown> | null;
+    }>;
+  }>) {
+    const existingHasVariantSnapshot = (order.order_items ?? []).some((item) =>
+      Boolean(item.metadata?.variant_key),
+    );
+
+    if (existingHasVariantSnapshot) {
+      continue;
+    }
+
+    let subtotal = 0;
+
+    for (const orderItem of order.order_items ?? []) {
+      const desiredItems = input.items.filter(
+        (item) =>
+          item.productId === orderItem.product_id &&
+          item.product.storeId === order.store_id,
+      );
+
+      if (desiredItems.length === 0) {
+        continue;
+      }
+
+      const [first, ...rest] = desiredItems;
+      const firstTotal = first.unitPrice * first.quantity;
+      subtotal += firstTotal;
+
+      await (supabaseAdmin as any)
+        .from("order_items")
+        .update({
+          quantity: first.quantity,
+          unit_price_amount: first.unitPrice,
+          total_amount: firstTotal,
+          product_sku: first.selectedVariant?.sku ?? null,
+          metadata: {
+            ...(orderItem.metadata ?? {}),
+            variant_key: first.variantKey,
+            selected_options: first.selectedOptions,
+            variant_snapshot: first.variantSnapshot,
+          },
+        })
+        .eq("id", orderItem.id);
+
+      for (const item of rest) {
+        const lineTotal = item.unitPrice * item.quantity;
+        subtotal += lineTotal;
+
+        await (supabaseAdmin as any).from("order_items").insert({
+          order_id: order.id,
+          product_id: item.productId,
+          product_name: item.product.name,
+          product_sku: item.selectedVariant?.sku ?? null,
+          quantity: item.quantity,
+          unit_price_amount: item.unitPrice,
+          total_amount: lineTotal,
+          metadata: {
+            variant_key: item.variantKey,
+            selected_options: item.selectedOptions,
+            variant_snapshot: item.variantSnapshot,
+          },
+        });
+      }
+
+      for (const item of desiredItems) {
+        if (!item.selectedVariant?.id) {
+          continue;
+        }
+
+        const { data: variantRow } = await (supabaseAdmin as any)
+          .from("product_variants")
+          .select("stock_quantity")
+          .eq("id", item.selectedVariant.id)
+          .maybeSingle();
+        const currentStock = Number(variantRow?.stock_quantity ?? 0);
+
+        await (supabaseAdmin as any)
+          .from("product_variants")
+          .update({
+            stock_quantity: Math.max(currentStock - item.quantity, 0),
+          })
+          .eq("id", item.selectedVariant.id);
+      }
+    }
+
+    const deliveryAmount = Number(order.delivery_amount ?? order.shipping_amount ?? 0);
+
+    if (subtotal > 0) {
+      await (supabaseAdmin as any)
+        .from("orders")
+        .update({
+          subtotal_amount: subtotal,
+          total_amount: subtotal + deliveryAmount,
+        })
+        .eq("id", order.id);
+    }
   }
 }
 
@@ -258,11 +533,20 @@ export async function createCheckoutOrdersAction(
     };
   }
 
+  const validatedVariants = await validateCartVariantSelections(items);
+
+  if (!validatedVariants.ok) {
+    return {
+      ok: false,
+      message: validatedVariants.message,
+    };
+  }
+
   if (
     current?.role === "seller" &&
     (await containsOwnStoreProduct({
       userId: current.user.id,
-      productIds: items.map((item) => item.productId),
+      productIds: Array.from(new Set(items.map((item) => item.productId))),
     }))
   ) {
     return {
@@ -337,6 +621,11 @@ export async function createCheckoutOrdersAction(
   }
 
   const checkout = parseCheckoutResponse(data);
+
+  await applyOrderVariantSnapshots({
+    orderIds: checkout.orderIds,
+    items: validatedVariants.items,
+  });
 
   await Promise.all(
     checkout.orders.map((order) =>

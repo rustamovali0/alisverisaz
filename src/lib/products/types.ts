@@ -5,6 +5,37 @@ export type ProductVariantInput = {
   value: string;
   priceDeltaAmount: number;
   stockQuantity: number;
+  combination?: Record<string, string>;
+  sku?: string | null;
+  priceOverrideAmount?: number | null;
+  isEnabled?: boolean;
+};
+
+export type ProductOptionType = "color" | "size" | "custom1" | "custom2";
+
+export type ProductOptionValueInput = {
+  id?: string;
+  value: string;
+  colorHex?: string | null;
+  sortOrder?: number;
+};
+
+export type ProductOptionInput = {
+  id?: string;
+  type: ProductOptionType;
+  name: string;
+  isEnabled: boolean;
+  sortOrder?: number;
+  values: ProductOptionValueInput[];
+};
+
+export type ProductVariantCombinationInput = {
+  id?: string;
+  combination: Record<string, string>;
+  sku?: string | null;
+  priceOverrideAmount?: number | null;
+  stockQuantity: number;
+  isEnabled?: boolean;
 };
 
 export type ProductActionResult =
@@ -43,6 +74,8 @@ export type ManagedProduct = {
     altText: string | null;
   }>;
   variants: ProductVariantInput[];
+  options: ProductOptionInput[];
+  variantCombinations: ProductVariantCombinationInput[];
 };
 
 export type CategoryOption = {

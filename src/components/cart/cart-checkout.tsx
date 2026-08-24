@@ -10,6 +10,12 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { createCheckoutOrdersAction, getCartProductsAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
+import {
+  findMatchingProductVariant,
+  formatProductVariantSelection,
+  getProductVariantKey,
+  getProductVariantUnitPrice,
+} from "@/lib/products/variant-utils";
 
 const CART_KEY = "alisveris_cart";
 
@@ -74,10 +80,12 @@ export function CartCheckout({
       Boolean(entry.product),
     );
   const total = visibleItems.reduce((sum, entry) => {
-    const unit = Math.max(
-      entry.product.priceAmount - entry.product.discountAmount,
-      0,
-    );
+    const unit = getProductVariantUnitPrice({
+      priceAmount: entry.product.priceAmount,
+      discountAmount: entry.product.discountAmount,
+      variants: entry.product.variantCombinations,
+      selection: entry.item.selectedOptions,
+    });
 
     return sum + unit * entry.item.quantity;
   }, 0);
@@ -199,9 +207,28 @@ export function CartCheckout({
                 <p>{cartUi("empty")}</p>
               </div>
             ) : (
-              visibleItems.map(({ item, product }) => (
-                <div
-                  key={product.id}
+              visibleItems.map(({ item, product }) => {
+                const itemKey = getProductVariantKey(product.id, item.selectedOptions);
+                const selectedVariantLabel = formatProductVariantSelection(
+                  product.options,
+                  item.selectedOptions,
+                );
+                const unitPrice = getProductVariantUnitPrice({
+                  priceAmount: product.priceAmount,
+                  discountAmount: product.discountAmount,
+                  variants: product.variantCombinations,
+                  selection: item.selectedOptions,
+                });
+                const selectedVariant = findMatchingProductVariant(
+                  product.variantCombinations,
+                  item.selectedOptions,
+                );
+                const stockLimit =
+                  selectedVariant?.stockQuantity ?? product.stockQuantity;
+
+                return (
+                  <div
+                  key={itemKey}
                   className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-5 sm:flex sm:flex-row sm:items-center"
                 >
                   <div className="size-24 overflow-hidden rounded-md bg-white sm:size-20 sm:border sm:bg-muted">
@@ -218,10 +245,20 @@ export function CartCheckout({
                       {product.name}
                     </h2>
                     <p className="mt-2 text-lg font-black text-[hsl(var(--marketplace-primary))] sm:mt-1 sm:text-sm sm:font-normal sm:text-muted-foreground">
-                      {formatMoney(
-                        Math.max(product.priceAmount - product.discountAmount, 0),
-                      )}
+                      {formatMoney(unitPrice)}
                     </p>
+                    {selectedVariantLabel.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {selectedVariantLabel.map((label) => (
+                          <span
+                            key={label}
+                            className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="col-start-2 flex items-center gap-1.5 sm:gap-2">
                     <Button
@@ -232,7 +269,10 @@ export function CartCheckout({
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
-                            nextItem.productId === product.id
+                            getProductVariantKey(
+                              nextItem.productId,
+                              nextItem.selectedOptions,
+                            ) === itemKey
                               ? {
                                   ...nextItem,
                                   quantity: Math.max(nextItem.quantity - 1, 1),
@@ -255,12 +295,15 @@ export function CartCheckout({
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
-                            nextItem.productId === product.id
+                            getProductVariantKey(
+                              nextItem.productId,
+                              nextItem.selectedOptions,
+                            ) === itemKey
                               ? {
                                   ...nextItem,
                                   quantity: Math.min(
                                     nextItem.quantity + 1,
-                                    product.stockQuantity,
+                                    stockLimit,
                                   ),
                                 }
                               : nextItem,
@@ -277,15 +320,22 @@ export function CartCheckout({
                       className="ml-auto size-11 text-destructive hover:text-destructive sm:ml-0 sm:size-14"
                       onClick={() => {
                         updateItems(
-                          items.filter((nextItem) => nextItem.productId !== product.id),
+                          items.filter(
+                            (nextItem) =>
+                              getProductVariantKey(
+                                nextItem.productId,
+                                nextItem.selectedOptions,
+                              ) !== itemKey,
+                          ),
                         );
                       }}
                     >
                       <Trash2 className="size-5" aria-hidden="true" />
                     </Button>
                   </div>
-                </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </div>
         </section>

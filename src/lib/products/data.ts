@@ -5,7 +5,15 @@ import {
 } from "@/lib/cache/public-cache";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CategoryOption, ManagedProduct, ProductStatus } from "@/lib/products/types";
+import type {
+  CategoryOption,
+  ManagedProduct,
+  ProductOptionInput,
+  ProductOptionType,
+  ProductStatus,
+  ProductVariantCombinationInput,
+} from "@/lib/products/types";
+import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
 
 type ProductRow = {
   id: string;
@@ -34,6 +42,8 @@ type ProductRow = {
       priceDeltaAmount: number;
       stockQuantity: number;
     }>;
+    variant_options?: ProductOptionInput[];
+    variant_combinations?: ProductVariantCombinationInput[];
   } | null;
   product_images?: Array<{
     id: string;
@@ -41,10 +51,28 @@ type ProductRow = {
     alt_text: string | null;
   }>;
   product_variants?: Array<{
+    id?: string;
     name: string;
     value: string;
-    price_delta_amount: string | number;
+    price_delta_amount?: string | number | null;
     stock_quantity: number;
+    combination?: Record<string, string> | null;
+    sku?: string | null;
+    price_override_amount?: string | number | null;
+    is_enabled?: boolean | null;
+  }>;
+  product_options?: Array<{
+    id: string;
+    name: string;
+    type: ProductOptionType;
+    is_enabled: boolean;
+    sort_order: number | null;
+    product_option_values?: Array<{
+      id: string;
+      value: string;
+      color_hex: string | null;
+      sort_order: number | null;
+    }>;
   }>;
 };
 
@@ -64,6 +92,52 @@ const publicRootCategorySlugs = [
 ];
 
 function toManagedProduct(row: ProductRow): ManagedProduct {
+  const optionsFromRows = (row.product_options ?? [])
+    .filter((option) => PRODUCT_OPTION_TYPES.includes(option.type))
+    .map(
+      (option): ProductOptionInput => ({
+        id: option.id,
+        type: option.type,
+        name: option.name,
+        isEnabled: option.is_enabled,
+        sortOrder: option.sort_order ?? 0,
+        values: (option.product_option_values ?? []).map((value) => ({
+          id: value.id,
+          value: value.value,
+          colorHex: value.color_hex,
+          sortOrder: value.sort_order ?? 0,
+        })),
+      }),
+    );
+  const optionSource =
+    optionsFromRows.length > 0
+      ? optionsFromRows
+      : row.metadata?.variant_options ?? [];
+  const variantCombinations = (row.product_variants ?? [])
+    .filter((variant) => variant.combination && Object.keys(variant.combination).length > 0)
+    .map(
+      (variant): ProductVariantCombinationInput => ({
+        id: variant.id,
+        combination: variant.combination ?? {},
+        sku: variant.sku ?? null,
+        priceOverrideAmount:
+          variant.price_override_amount === null ||
+          variant.price_override_amount === undefined
+            ? null
+            : Number(variant.price_override_amount),
+        stockQuantity: Number(variant.stock_quantity ?? 0),
+        isEnabled: variant.is_enabled !== false,
+      }),
+    );
+  const flatVariants = row.product_variants
+    ? row.product_variants.map((variant) => ({
+        name: variant.name,
+        value: variant.value,
+        priceDeltaAmount: Number(variant.price_delta_amount ?? 0),
+        stockQuantity: Number(variant.stock_quantity ?? 0),
+      }))
+    : row.metadata?.variants ?? [];
+
   return {
     id: row.id,
     storeId: row.store_id,
@@ -89,18 +163,17 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
       url: image.url,
       altText: image.alt_text,
     })),
-    variants: (row.product_variants ?? row.metadata?.variants ?? []).map((variant) => ({
+    variants: flatVariants.map((variant) => ({
       name: variant.name,
       value: variant.value,
-      priceDeltaAmount: Number(
-        "price_delta_amount" in variant
-          ? variant.price_delta_amount
-          : variant.priceDeltaAmount,
-      ),
-      stockQuantity: Number(
-        "stock_quantity" in variant ? variant.stock_quantity : variant.stockQuantity,
-      ),
+      priceDeltaAmount: Number(variant.priceDeltaAmount ?? 0),
+      stockQuantity: Number(variant.stockQuantity ?? 0),
     })),
+    options: normalizeProductOptions(optionSource),
+    variantCombinations:
+      variantCombinations.length > 0
+        ? variantCombinations
+        : row.metadata?.variant_combinations ?? [],
   };
 }
 
@@ -161,7 +234,7 @@ export async function getManagedProducts(filters: {
   let query = (supabase as any)
     .from("products")
     .select(
-      "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_variants(name,value,price_delta_amount,stock_quantity)",
+      "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
     )
     .order("created_at", {
       ascending: false,

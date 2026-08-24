@@ -7,7 +7,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
-import type { CartProduct } from "@/lib/cart/types";
+import type { CartItem, CartProduct } from "@/lib/cart/types";
+import {
+  findMatchingProductVariant,
+  getProductVariantKey,
+  getRequiredSelectableProductOptions,
+  normalizeProductVariantSelection,
+} from "@/lib/products/variant-utils";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -58,22 +64,19 @@ function useSharedAuthState() {
   return hasUser;
 }
 
-function readCart() {
+function readCart(): CartItem[] {
   if (typeof window === "undefined") {
     return [];
   }
 
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
-      productId: string;
-      quantity: number;
-    }>;
+    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
   } catch {
     return [];
   }
 }
 
-function writeCart(items: Array<{ productId: string; quantity: number }>) {
+function writeCart(items: CartItem[]) {
   if (typeof window === "undefined") {
     return;
   }
@@ -82,8 +85,14 @@ function writeCart(items: Array<{ productId: string; quantity: number }>) {
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
-function getCartQuantity(productId: string) {
-  return readCart().find((item) => item.productId === productId)?.quantity ?? 0;
+function getCartQuantity(productId: string, selectedOptions?: Record<string, string>) {
+  const key = getProductVariantKey(productId, selectedOptions);
+
+  return (
+    readCart().find(
+      (item) => getProductVariantKey(item.productId, item.selectedOptions) === key,
+    )?.quantity ?? 0
+  );
 }
 
 function showCustomerRoleToast(t: ReturnType<typeof useTranslations>) {
@@ -109,30 +118,45 @@ function canUseCustomerAction(
 export function AddToCartButton({
   product,
   viewerRole,
+  selectedOptions,
+  selectionReady = true,
+  forceDetailSelection = false,
   className,
   disabled = false,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
+  selectedOptions?: Record<string, string>;
+  selectionReady?: boolean;
+  forceDetailSelection?: boolean;
   className?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const [quantity, setQuantity] = useState(0);
   const hasUser = useSharedAuthState();
-  const isUnavailable = disabled || product.stockQuantity <= 0;
+  const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
+  const selectedVariant = findMatchingProductVariant(
+    product.variantCombinations ?? [],
+    normalizedSelection,
+  );
+  const stockLimit = selectedVariant ? selectedVariant.stockQuantity : product.stockQuantity;
+  const requiresSelection =
+    forceDetailSelection ||
+    getRequiredSelectableProductOptions(product.options ?? []).length > 0;
+  const isUnavailable = disabled || stockLimit <= 0;
 
   useEffect(() => {
-    setQuantity(getCartQuantity(product.id));
+    setQuantity(getCartQuantity(product.id, normalizedSelection));
 
     function handleCartUpdate() {
-      setQuantity(getCartQuantity(product.id));
+      setQuantity(getCartQuantity(product.id, normalizedSelection));
     }
 
     window.addEventListener("alisveris-cart-updated", handleCartUpdate);
 
     return () => window.removeEventListener("alisveris-cart-updated", handleCartUpdate);
-  }, [product.id]);
+  }, [product.id, selectedOptions]);
 
   function emitCartToast(isSignedIn: boolean) {
     if (!isSignedIn) {
@@ -184,12 +208,36 @@ export function AddToCartButton({
       return;
     }
 
-    const safeQuantity = Math.max(0, Math.min(nextQuantity, product.stockQuantity));
+    if (!selectionReady) {
+      showToast({
+        title: "Variant seçin",
+        description: "Məhsulu səbətə əlavə etmək üçün seçimləri tamamlayın.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    if (requiresSelection && Object.keys(normalizedSelection).length === 0) {
+      const href =
+        product.storeSlug && product.slug
+          ? `/${product.storeSlug}/products/${product.slug}`
+          : `/products/${product.slug}`;
+
+      window.location.href = href;
+      return;
+    }
+
+    const safeQuantity = Math.max(0, Math.min(nextQuantity, stockLimit));
     const items = readCart();
-    const existingIndex = items.findIndex((item) => item.productId === product.id);
+    const itemKey = getProductVariantKey(product.id, normalizedSelection);
+    const existingIndex = items.findIndex(
+      (item) => getProductVariantKey(item.productId, item.selectedOptions) === itemKey,
+    );
 
     if (safeQuantity === 0) {
-      const nextItems = items.filter((item) => item.productId !== product.id);
+      const nextItems = items.filter(
+        (item) => getProductVariantKey(item.productId, item.selectedOptions) !== itemKey,
+      );
       writeCart(nextItems);
       setQuantity(0);
       return;
@@ -204,6 +252,8 @@ export function AddToCartButton({
       items.push({
         productId: product.id,
         quantity: safeQuantity,
+        selectedOptions: normalizedSelection,
+        variantKey: itemKey,
       });
     }
 
@@ -212,7 +262,7 @@ export function AddToCartButton({
   }
 
   function handleAdd() {
-    if (quantity >= product.stockQuantity) {
+    if (quantity >= stockLimit) {
       showToast({
         title: t("stockLimitTitle"),
         description: t("stockLimitDescription"),
@@ -253,7 +303,7 @@ export function AddToCartButton({
           type="button"
           className="grid h-full min-h-11 place-items-center border-l border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 disabled:cursor-not-allowed disabled:opacity-45"
           onClick={handleAdd}
-          disabled={quantity >= product.stockQuantity}
+          disabled={quantity >= stockLimit}
           aria-label={t("increaseCartQuantity")}
         >
           <Plus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
@@ -285,18 +335,28 @@ export function AddToCartButton({
 export function BuyNowButton({
   product,
   viewerRole,
+  selectedOptions,
+  selectionReady = true,
   className,
   disabled = false,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
+  selectedOptions?: Record<string, string>;
+  selectionReady?: boolean;
   className?: string;
   disabled?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
   const checkoutPath = "/cart?mode=checkout";
-  const isUnavailable = disabled || product.stockQuantity <= 0;
+  const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
+  const selectedVariant = findMatchingProductVariant(
+    product.variantCombinations ?? [],
+    normalizedSelection,
+  );
+  const stockLimit = selectedVariant ? selectedVariant.stockQuantity : product.stockQuantity;
+  const isUnavailable = disabled || stockLimit <= 0;
 
   function handleBuyNow() {
     if (isUnavailable) {
@@ -311,10 +371,21 @@ export function BuyNowButton({
       return;
     }
 
+    if (!selectionReady) {
+      showToast({
+        title: "Variant seçin",
+        description: "Sifariş üçün seçimləri tamamlayın.",
+        variant: "warning",
+      });
+      return;
+    }
+
     writeCart([
       {
         productId: product.id,
         quantity: 1,
+        selectedOptions: normalizedSelection,
+        variantKey: getProductVariantKey(product.id, normalizedSelection),
       },
     ]);
 

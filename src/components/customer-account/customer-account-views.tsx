@@ -366,6 +366,18 @@ export async function CustomerOrderDetailView({ order }: { order: ManagedOrder }
                 <div className="min-w-0 flex-1">
                   <p className="font-bold">{item.productName}</p>
                   {item.sku ? <p className="mt-1 text-xs text-muted-foreground">SKU: {item.sku}</p> : null}
+                  {item.variantSnapshot.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {item.variantSnapshot.map((variant) => (
+                        <span
+                          key={`${variant.name}-${variant.value}`}
+                          className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                        >
+                          {variant.name}: {variant.value}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                   <p className="mt-1 text-sm text-muted-foreground">{item.quantity} x {formatMoney(item.unitPrice, order.currency)}</p>
                 </div>
                 <p className="font-black">{formatMoney(item.totalAmount, order.currency)}</p>

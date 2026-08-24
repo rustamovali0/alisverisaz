@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,18 @@ import type {
   ProductLocationAvailability,
   StoreLocation,
 } from "@/lib/locations/types";
-import type { CategoryOption, ManagedProduct } from "@/lib/products/types";
+import type {
+  CategoryOption,
+  ManagedProduct,
+  ProductOptionInput,
+  ProductOptionType,
+  ProductVariantCombinationInput,
+} from "@/lib/products/types";
+import {
+  DEFAULT_PRODUCT_OPTIONS,
+  getEnabledProductOptions,
+  normalizeProductOptions,
+} from "@/lib/products/variant-utils";
 
 type ProductFormMode = "store-create" | "personal-create" | "edit";
 
@@ -39,6 +50,391 @@ function variantsToText(product?: ManagedProduct) {
         `${variant.name}|${variant.value}|${variant.priceDeltaAmount}|${variant.stockQuantity}`,
     )
     .join("\n");
+}
+
+function optionFallbackLabel(type: ProductOptionType) {
+  if (type === "color") {
+    return "Rəng";
+  }
+
+  if (type === "size") {
+    return "Ölçü";
+  }
+
+  return type === "custom1" ? "Custom seçim 1" : "Custom seçim 2";
+}
+
+function getInitialOptions(product?: ManagedProduct) {
+  const normalized = normalizeProductOptions(product?.options ?? []);
+
+  if (getEnabledProductOptions(normalized).length > 0) {
+    return normalized;
+  }
+
+  const legacyGroups = new Map<string, string[]>();
+
+  (product?.variants ?? []).forEach((variant) => {
+    const values = legacyGroups.get(variant.name) ?? [];
+
+    if (variant.value && !values.includes(variant.value)) {
+      values.push(variant.value);
+    }
+
+    legacyGroups.set(variant.name, values);
+  });
+
+  if (legacyGroups.size === 0) {
+    return normalized;
+  }
+
+  const firstLegacy = Array.from(legacyGroups.entries())[0];
+
+  return normalized.map((option) =>
+    option.type === "custom1"
+      ? {
+          ...option,
+          name: firstLegacy[0],
+          isEnabled: true,
+          values: firstLegacy[1].map((value, index) => ({
+            value,
+            sortOrder: index,
+          })),
+        }
+      : option,
+  );
+}
+
+function getCombinationKey(combination: Record<string, string>) {
+  return DEFAULT_PRODUCT_OPTIONS.map((option) =>
+    combination[option.type] ? `${option.type}:${combination[option.type]}` : "",
+  )
+    .filter(Boolean)
+    .join("|");
+}
+
+function buildCombinations(options: ProductOptionInput[]) {
+  const enabled = getEnabledProductOptions(options);
+
+  if (enabled.length === 0) {
+    return [];
+  }
+
+  return enabled.reduce<Array<Record<string, string>>>(
+    (combinations, option) =>
+      combinations.flatMap((combination) =>
+        option.values.map((value) => ({
+          ...combination,
+          [option.type]: value.value,
+        })),
+      ),
+    [{}],
+  );
+}
+
+function ProductVariantEditor({
+  product,
+  disabled,
+}: {
+  product?: ManagedProduct;
+  disabled?: boolean;
+}) {
+  const [options, setOptions] = useState<ProductOptionInput[]>(() =>
+    getInitialOptions(product),
+  );
+  const [variantRows, setVariantRows] = useState<
+    ProductVariantCombinationInput[]
+  >(() => product?.variantCombinations ?? []);
+  const combinations = useMemo(() => buildCombinations(options), [options]);
+  const rowMap = useMemo(
+    () =>
+      new Map(
+        variantRows.map((row) => [getCombinationKey(row.combination), row]),
+      ),
+    [variantRows],
+  );
+  const variantConfig = useMemo(
+    () =>
+      JSON.stringify({
+        options,
+        combinations: combinations.map((combination) => {
+          const existing = rowMap.get(getCombinationKey(combination));
+
+          return {
+            combination,
+            sku: existing?.sku ?? "",
+            priceOverrideAmount: existing?.priceOverrideAmount ?? null,
+            stockQuantity: existing?.stockQuantity ?? 0,
+            isEnabled: existing?.isEnabled !== false,
+          };
+        }),
+      }),
+    [combinations, options, rowMap],
+  );
+
+  function updateOption(type: ProductOptionType, next: Partial<ProductOptionInput>) {
+    setOptions((current) =>
+      current.map((option) =>
+        option.type === type
+          ? {
+              ...option,
+              ...next,
+            }
+          : option,
+      ),
+    );
+  }
+
+  function updateOptionValue(
+    type: ProductOptionType,
+    index: number,
+    key: "value" | "colorHex",
+    value: string,
+  ) {
+    setOptions((current) =>
+      current.map((option) =>
+        option.type === type
+          ? {
+              ...option,
+              values: option.values.map((item, itemIndex) =>
+                itemIndex === index ? { ...item, [key]: value } : item,
+              ),
+            }
+          : option,
+      ),
+    );
+  }
+
+  function addOptionValue(type: ProductOptionType) {
+    setOptions((current) =>
+      current.map((option) =>
+        option.type === type
+          ? {
+              ...option,
+              values: [
+                ...option.values,
+                {
+                  value: "",
+                  colorHex: type === "color" ? "#111827" : null,
+                  sortOrder: option.values.length,
+                },
+              ],
+            }
+          : option,
+      ),
+    );
+  }
+
+  function removeOptionValue(type: ProductOptionType, index: number) {
+    setOptions((current) =>
+      current.map((option) =>
+        option.type === type
+          ? {
+              ...option,
+              values: option.values.filter((_, itemIndex) => itemIndex !== index),
+            }
+          : option,
+      ),
+    );
+  }
+
+  function updateCombination(
+    combination: Record<string, string>,
+    next: Partial<ProductVariantCombinationInput>,
+  ) {
+    const key = getCombinationKey(combination);
+
+    setVariantRows((current) => {
+      const withoutRow = current.filter(
+        (row) => getCombinationKey(row.combination) !== key,
+      );
+      const existing = current.find((row) => getCombinationKey(row.combination) === key);
+
+      return [
+        ...withoutRow,
+        {
+          combination,
+          stockQuantity: 0,
+          isEnabled: true,
+          ...existing,
+          ...next,
+        },
+      ];
+    });
+  }
+
+  return (
+    <div className="grid gap-4 rounded-md border bg-background p-4">
+      <input type="hidden" name="variantConfig" value={variantConfig} />
+      <textarea name="variants" value={variantsToText(product)} readOnly hidden />
+      <div>
+        <p className="text-sm font-semibold">Məhsul variantları</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Seçim yoxdursa public səhifədə görünmür. Bir seçim varsa avtomatik
+          seçilir.
+        </p>
+      </div>
+      <div className="grid gap-3">
+        {options.map((option) => (
+          <div key={option.type} className="rounded-md border bg-card p-3">
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={option.isEnabled}
+                disabled={disabled}
+                onChange={(event) =>
+                  updateOption(option.type, {
+                    isEnabled: event.target.checked,
+                    name: option.name || optionFallbackLabel(option.type),
+                  })
+                }
+                className="size-4 rounded border-input"
+              />
+              {optionFallbackLabel(option.type)}
+            </label>
+            {option.isEnabled ? (
+              <div className="mt-3 grid gap-3">
+                <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                  Seçim adı
+                  <input
+                    value={option.name}
+                    onChange={(event) =>
+                      updateOption(option.type, { name: event.target.value })
+                    }
+                    disabled={disabled || option.type === "color" || option.type === "size"}
+                    placeholder={optionFallbackLabel(option.type)}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
+                  />
+                </label>
+                <div className="grid gap-2">
+                  {option.values.map((value, index) => (
+                    <div
+                      key={`${option.type}-${index}`}
+                      className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
+                    >
+                      {option.type === "color" ? (
+                        <input
+                          type="color"
+                          value={value.colorHex ?? "#111827"}
+                          onChange={(event) =>
+                            updateOptionValue(
+                              option.type,
+                              index,
+                              "colorHex",
+                              event.target.value,
+                            )
+                          }
+                          disabled={disabled}
+                          className="size-9 rounded-md border border-input bg-background p-1"
+                          aria-label="Rəng kodu"
+                        />
+                      ) : (
+                        <span className="hidden sm:block" />
+                      )}
+                      <input
+                        value={value.value}
+                        onChange={(event) =>
+                          updateOptionValue(option.type, index, "value", event.target.value)
+                        }
+                        disabled={disabled}
+                        placeholder={
+                          option.type === "color"
+                            ? "Qara"
+                            : option.type === "size"
+                              ? "M"
+                              : "Dəyər"
+                        }
+                        className="h-9 min-w-0 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeOptionValue(option.type, index)}
+                        disabled={disabled}
+                      >
+                        Sil
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => addOptionValue(option.type)}
+                  disabled={disabled}
+                >
+                  Dəyər əlavə et
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {combinations.length > 0 ? (
+        <div className="grid gap-3 rounded-md border bg-muted/30 p-3">
+          <div>
+            <p className="text-sm font-semibold">Kombinasiya stok və qiymət</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Boş qiymət əsas məhsul qiymətindən istifadə edir.
+            </p>
+          </div>
+          <div className="grid gap-2">
+            {combinations.slice(0, 80).map((combination) => {
+              const key = getCombinationKey(combination);
+              const row = rowMap.get(key);
+
+              return (
+                <div
+                  key={key}
+                  className="grid gap-2 rounded-md border bg-card p-2 text-sm md:grid-cols-[minmax(0,1fr)_120px_150px]"
+                >
+                  <p className="min-w-0 truncate font-medium">
+                    {Object.values(combination).join(" / ")}
+                  </p>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={row?.stockQuantity ?? 0}
+                    onChange={(event) =>
+                      updateCombination(combination, {
+                        stockQuantity: Math.max(
+                          Math.trunc(Number(event.target.value) || 0),
+                          0,
+                        ),
+                      })
+                    }
+                    disabled={disabled}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Stok"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={row?.priceOverrideAmount ?? ""}
+                    onChange={(event) =>
+                      updateCombination(combination, {
+                        priceOverrideAmount:
+                          event.target.value === ""
+                            ? null
+                            : Math.max(Number(event.target.value) || 0, 0),
+                      })
+                    }
+                    disabled={disabled}
+                    placeholder="Qiymət override"
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function getButtonLabel(mode: ProductFormMode, isPending: boolean) {
@@ -257,16 +653,7 @@ export function ProductForm({
       <input type="hidden" name="depositType" value="fixed" />
       <input type="hidden" name="depositValue" value="0" />
 
-      <label className="grid gap-2 text-sm font-medium">
-        Variantlar
-        <textarea
-          name="variants"
-          defaultValue={variantsToText(product)}
-          placeholder="Rəng|Qara|0|5"
-          className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-          disabled={disabled}
-        />
-      </label>
+      <ProductVariantEditor product={product} disabled={disabled} />
 
       {showLocationSection ? (
         <div className="grid gap-4 rounded-md border bg-background p-4">

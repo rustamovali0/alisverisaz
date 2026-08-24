@@ -1,8 +1,9 @@
 "use client";
 
 import { Monitor, RotateCcw, Save, Smartphone, UploadCloud } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
+import { GlobalLoader } from "@/components/common/global-loader";
 import { Button } from "@/components/ui/button";
 import {
   defaultHomeThemeColors,
@@ -29,6 +30,29 @@ type ThemeManagerProps = {
 
 type HomeThemeColors = Record<keyof typeof defaultHomeThemeColors, string>;
 type HomeThemeColorKey = keyof HomeThemeColors;
+type PreviewMode = "desktop" | "mobile";
+type DesignSection =
+  | "theme"
+  | "navbar"
+  | "homepage"
+  | "product-cards"
+  | "product-detail"
+  | "panels"
+  | "ui-elements"
+  | "loading"
+  | "typography-spacing";
+
+const sectionTabs: Array<{ key: DesignSection; label: string }> = [
+  { key: "theme", label: "Ümumi tema" },
+  { key: "navbar", label: "Navbar" },
+  { key: "homepage", label: "Ana səhifə" },
+  { key: "product-cards", label: "Məhsul kartları" },
+  { key: "product-detail", label: "Məhsul səhifəsi" },
+  { key: "panels", label: "Panellər" },
+  { key: "ui-elements", label: "UI elementləri" },
+  { key: "loading", label: "Loading" },
+  { key: "typography-spacing", label: "Typography & spacing" },
+];
 
 const colorGroups: Array<{
   title: string;
@@ -39,77 +63,119 @@ const colorGroups: Array<{
   }>;
 }> = [
   {
-    title: "Ümumi rənglər",
+    title: "Əsas rənglər",
     fields: [
-      { key: "pageBackground", name: "pageBackgroundColor", label: "Səhifə fonu" },
-      { key: "cardBackground", name: "cardBackgroundColor", label: "Kart fonu" },
-      { key: "text", name: "textColor", label: "Əsas mətn" },
-      { key: "mutedText", name: "mutedTextColor", label: "Köməkçi mətn" },
+      { key: "pageBackground", name: "pageBackgroundColor", label: "Page background" },
+      { key: "cardBackground", name: "cardBackgroundColor", label: "Card background" },
+      { key: "text", name: "textColor", label: "Text" },
+      { key: "mutedText", name: "mutedTextColor", label: "Muted text" },
       { key: "border", name: "borderColor", label: "Border" },
-      { key: "primary", name: "primaryColor", label: "Əsas rəng" },
-      { key: "accent", name: "accentColor", label: "Vurğu rəngi" },
-      { key: "buttonBackground", name: "buttonBackgroundColor", label: "Button fonu" },
-      { key: "buttonText", name: "buttonTextColor", label: "Button mətni" },
+      { key: "primary", name: "primaryColor", label: "Primary" },
+      { key: "accent", name: "accentColor", label: "Accent" },
+      { key: "buttonBackground", name: "buttonBackgroundColor", label: "Button background" },
+      { key: "buttonText", name: "buttonTextColor", label: "Button text" },
     ],
   },
   {
-    title: "Ana səhifə bölmə fonları",
+    title: "Bölmə fonları",
     fields: [
-      { key: "heroBackground", name: "heroBackgroundColor", label: "Hero fonu" },
-      { key: "categoriesBackground", name: "categoriesBackgroundColor", label: "Kateqoriya fonu" },
-      { key: "storesBackground", name: "storesBackgroundColor", label: "Mağaza fonu" },
-      { key: "productsBackground", name: "productsBackgroundColor", label: "Məhsul fonu" },
-      { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Info blok fonu" },
+      { key: "heroBackground", name: "heroBackgroundColor", label: "Hero" },
+      { key: "categoriesBackground", name: "categoriesBackgroundColor", label: "Categories" },
+      { key: "storesBackground", name: "storesBackgroundColor", label: "Stores" },
+      { key: "productsBackground", name: "productsBackgroundColor", label: "Products" },
+      { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Info" },
     ],
   },
 ];
 
-const designGroups: Array<{
-  title: string;
-  description: string;
-  fields: Array<{
-    key: DesignPresetKey;
-    label: string;
-  }>;
-}> = [
-  {
-    title: "Ümumi Tema",
-    description: "Rənglər, səthlər, radius və əsas marketplace tonu.",
-    fields: [
-      { key: "themePreset", label: "Tema" },
-      { key: "spacingPreset", label: "Spacing" },
-      { key: "typographyPreset", label: "Typography" },
-    ],
-  },
-  {
-    title: "Public Marketplace",
-    description: "Navbar, ana səhifə, məhsul kartı və məhsul səhifəsi variantları.",
-    fields: [
-      { key: "navbarPreset", label: "Navbar" },
-      { key: "homepagePreset", label: "Ana səhifə" },
-      { key: "productCardPreset", label: "Məhsul kartları" },
-      { key: "productDetailPreset", label: "Məhsul səhifəsi" },
-    ],
-  },
-  {
-    title: "Panellər",
-    description: "Seller, customer və radmin panel görünüşləri.",
-    fields: [
-      { key: "sellerPanelPreset", label: "Seller panel" },
-      { key: "customerPanelPreset", label: "Customer panel" },
-      { key: "adminPanelPreset", label: "Admin panel" },
-    ],
-  },
-  {
-    title: "UI Elementləri",
-    description: "Button, input və card presetləri.",
-    fields: [
-      { key: "buttonPreset", label: "Buttons" },
-      { key: "inputPreset", label: "Inputs" },
-      { key: "cardPreset", label: "Cards" },
-    ],
-  },
-];
+const presetDescriptions: Record<string, string> = {
+  "default-marketplace": "Clean marketplace, teal accent",
+  minimal: "Quiet, simple commerce UI",
+  modern: "Fresh cyan and green surfaces",
+  premium: "Polished marketplace palette",
+  "marketplace-pro": "Dense catalog-friendly layout",
+  "dark-premium": "Dark premium dashboard look",
+  "soft-commerce": "Soft surfaces and calm commerce",
+  corporate: "Structured business marketplace",
+  elegant: "Refined neutral commerce",
+  compact: "Dense and space-saving",
+  classic: "Familiar balanced navigation",
+  marketplace: "Search-first marketplace header",
+  "centered-search": "Search centered in header",
+  "mega-menu": "Category-heavy desktop header",
+  "two-row": "More space for search and menus",
+  "category-first": "Categories as primary action",
+  "mobile-focused": "Optimized for mobile actions",
+  "hero-marketplace": "Hero plus marketplace grid",
+  "marketplace-grid": "Products and sections first",
+  "minimal-commerce": "Reduced sections and spacing",
+  "premium-editorial": "Larger visual storytelling",
+  "category-heavy": "Categories take priority",
+  "deals-first": "Promotion-friendly ordering",
+  "store-discovery": "Stores are emphasized",
+  "compact-commerce": "Shorter sections, faster scan",
+  "image-heavy": "More product image focus",
+  "premium-hover": "Premium hover polish",
+  borderless: "Cleaner card edge",
+  "dense-marketplace": "More products per view",
+  "gallery-left": "Gallery left, purchase right",
+  "large-gallery": "Larger media presentation",
+  "compact-marketplace": "Compact purchase detail",
+  "sticky-purchase-panel": "Purchase panel emphasis",
+  default: "Balanced dashboard layout",
+  cards: "Card-based account layout",
+  sidebar: "Sidebar account navigation",
+  saas: "Professional seller dashboard",
+  "dark-sidebar": "Dark admin sidebar",
+  "light-sidebar": "Light admin sidebar",
+  enterprise: "Structured admin workspace",
+  rounded: "Balanced rounded buttons",
+  soft: "Soft pill-like corners",
+  square: "Sharper enterprise controls",
+  pill: "Fully rounded buttons",
+  filled: "Filled input surfaces",
+  outline: "Classic outlined inputs",
+  underline: "Minimal underline inputs",
+  "soft-shadow": "Subtle commerce shadow",
+  flat: "No shadow, pure border",
+  elevated: "Slightly lifted cards",
+  "glass-lite": "Light glass effect",
+  "classic-spinner": "Simple circular spinner",
+  "dual-ring": "Two light circular rings",
+  "dots-pulse": "Three pulsing dots",
+  "dots-bounce": "Three bouncing dots",
+  orbit: "Small orbiting dot",
+  "bars-wave": "Lightweight wave bars",
+  "circle-pulse": "Soft pulsing circle",
+  "logo-loader": "Compact branded loader",
+  "minimal-line": "Thin loading line",
+  "skeleton-spinner": "Skeleton shimmer style",
+  small: "Small inline loading",
+  medium: "Default balanced size",
+  large: "Large page loading",
+  slow: "Slow animation speed",
+  normal: "Default animation speed",
+  fast: "Fast animation speed",
+  off: "No fullscreen overlay",
+  subtle: "Light overlay when needed",
+  solid: "Solid overlay when needed",
+  show: "Show loading label",
+  hide: "Hide loading label",
+  spacious: "More breathing room",
+};
+
+const loadingPresetToLoaderType: Record<string, string> = {
+  "classic-spinner": "classic",
+  "dual-ring": "dual",
+  "dots-pulse": "moving-dots",
+  "dots-bounce": "moving-dots",
+  orbit: "clock",
+  "bars-wave": "wave",
+  "circle-pulse": "pulse",
+  "logo-loader": "pulse",
+  "minimal-line": "classic",
+  "skeleton-spinner": "gradient",
+};
 
 function getThemeDefaults(themeKey: string): HomeThemeColors {
   const preset = (homeThemeColorPresets as Record<string, Partial<HomeThemeColors>>)[
@@ -159,23 +225,284 @@ function setThemeUpdatePayload(
   theme: ThemeSetting,
   colors: HomeThemeColors,
 ) {
-  const nextConfig = {
-    ...theme.config,
-    colors,
-  };
-
   formData.set("name", theme.name);
   formData.set("previewImageUrl", theme.previewImageUrl);
   formData.set("heroVariant", theme.heroVariant);
   formData.set("productCardVariant", theme.productCardVariant);
   formData.set("sectionOrder", JSON.stringify(theme.sectionOrder));
-  formData.set("config", JSON.stringify(nextConfig));
+  formData.set("config", JSON.stringify({ ...theme.config, colors }));
 }
 
-function DesignPresetManager({ settings }: { settings: SiteSettings }) {
+function Badge({
+  children,
+  tone = "muted",
+}: {
+  children: string;
+  tone?: "active" | "published" | "draft" | "muted";
+}) {
+  return (
+    <span
+      className={cn(
+        "rounded-full px-2.5 py-1 text-[11px] font-bold",
+        tone === "active" && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200",
+        tone === "published" && "bg-primary/10 text-primary",
+        tone === "draft" && "bg-amber-500/10 text-amber-700 dark:text-amber-200",
+        tone === "muted" && "bg-muted text-muted-foreground",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function PreviewToggle({
+  value,
+  onChange,
+}: {
+  value: PreviewMode;
+  onChange: (value: PreviewMode) => void;
+}) {
+  return (
+    <div className="inline-flex rounded-md border bg-background p-1">
+      <button
+        type="button"
+        onClick={() => onChange("desktop")}
+        className={cn(
+          "grid size-9 place-items-center rounded-md text-muted-foreground",
+          value === "desktop" && "bg-primary text-primary-foreground",
+        )}
+        aria-label="Desktop preview"
+      >
+        <Monitor className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("mobile")}
+        className={cn(
+          "grid size-9 place-items-center rounded-md text-muted-foreground",
+          value === "mobile" && "bg-primary text-primary-foreground",
+        )}
+        aria-label="Mobile preview"
+      >
+        <Smartphone className="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function ThemePreview({
+  colors,
+  mode,
+  compact = false,
+}: {
+  colors: HomeThemeColors;
+  mode: PreviewMode;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-lg border shadow-sm",
+        mode === "mobile" ? "mx-auto max-w-[280px]" : "w-full",
+      )}
+      style={{
+        backgroundColor: colors.pageBackground,
+        borderColor: colors.border,
+        color: colors.text,
+      }}
+    >
+      <div
+        className="flex items-center gap-2 border-b px-3 py-2"
+        style={{ borderColor: colors.border, backgroundColor: colors.cardBackground }}
+      >
+        <span
+          className="grid size-7 place-items-center rounded-md text-xs font-black"
+          style={{ backgroundColor: colors.buttonBackground, color: colors.buttonText }}
+        >
+          a
+        </span>
+        <div
+          className="h-7 flex-1 rounded-md border"
+          style={{ borderColor: colors.border, backgroundColor: colors.pageBackground }}
+        />
+        <span className="size-7 rounded-md border" style={{ borderColor: colors.border }} />
+      </div>
+      <div className={compact ? "space-y-2 p-3" : "space-y-3 p-4"}>
+        <div className="rounded-lg border p-3" style={{ borderColor: colors.border, backgroundColor: colors.heroBackground }}>
+          <div className="h-2 w-16 rounded-full" style={{ backgroundColor: colors.accent }} />
+          <div className="mt-3 h-6 w-2/3 rounded-md" style={{ backgroundColor: colors.text, opacity: 0.1 }} />
+          <div className="mt-3 flex gap-2">
+            <div className="h-8 flex-1 rounded-md border" style={{ borderColor: colors.border, backgroundColor: colors.cardBackground }} />
+            <div className="h-8 w-20 rounded-md" style={{ backgroundColor: colors.buttonBackground }} />
+          </div>
+        </div>
+        <div className={cn("grid gap-2", mode === "desktop" ? "grid-cols-3" : "grid-cols-2")}>
+          {[colors.categoriesBackground, colors.storesBackground, colors.productsBackground].map((backgroundColor, index) => (
+            <div key={`${backgroundColor}-${index}`} className="rounded-md border p-2" style={{ borderColor: colors.border, backgroundColor }}>
+              <div className="aspect-[4/3] rounded bg-white/70" />
+              <div className="mt-2 h-2 rounded-full" style={{ backgroundColor: colors.mutedText, opacity: 0.18 }} />
+              <div className="mt-2 h-3 w-2/3 rounded-full" style={{ backgroundColor: colors.primary, opacity: 0.26 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PresetPreview({
+  type,
+  value,
+}: {
+  type: DesignPresetKey;
+  value: string;
+}) {
+  if (type === "loadingPreset") {
+    return (
+      <div
+        className="global-loader-root grid h-20 place-items-center rounded-lg border bg-background"
+        data-loading-preset={value}
+        data-loader-type={loadingPresetToLoaderType[value] ?? "classic"}
+        data-loader-palette="cyan"
+      >
+        <GlobalLoader />
+      </div>
+    );
+  }
+
+  if (type === "buttonPreset") {
+    return (
+      <div className="grid h-20 place-items-center rounded-lg border bg-background">
+        <span className={cn("rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground", value === "pill" && "rounded-full", value === "square" && "rounded-sm")}>
+          Səbətə at
+        </span>
+      </div>
+    );
+  }
+
+  if (type === "inputPreset") {
+    return (
+      <div className="grid h-20 place-items-center rounded-lg border bg-background px-4">
+        <span className={cn("w-full rounded-md border px-3 py-2 text-sm text-muted-foreground", value === "filled" && "bg-muted", value === "underline" && "rounded-none border-x-0 border-t-0")}>
+          Axtar...
+        </span>
+      </div>
+    );
+  }
+
+  if (type === "cardPreset") {
+    return (
+      <div className="grid h-20 place-items-center rounded-lg border bg-background p-3">
+        <span className={cn("block h-full w-full rounded-md border bg-card", value === "soft-shadow" && "shadow-md", value === "elevated" && "shadow-lg", value === "glass-lite" && "bg-white/70 shadow-sm")}>
+          <span className="mx-3 mt-3 block h-2 w-1/2 rounded-full bg-primary/30" />
+          <span className="mx-3 mt-2 block h-2 w-3/4 rounded-full bg-muted" />
+        </span>
+      </div>
+    );
+  }
+
+  if (type === "typographyPreset") {
+    return (
+      <div className="grid h-20 content-center rounded-lg border bg-background p-3">
+        <p className={cn("font-black", value === "editorial" ? "text-xl" : value === "compact" ? "text-base" : "text-lg")}>Heading</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">Body text preview</p>
+      </div>
+    );
+  }
+
+  if (type === "spacingPreset") {
+    return (
+      <div className="grid h-20 place-items-center rounded-lg border bg-background p-3">
+        <span className={cn("grid w-full rounded-md border bg-card", value === "compact" ? "gap-1 p-2" : value === "spacious" ? "gap-3 p-4" : "gap-2 p-3")}>
+          <span className="h-2 rounded bg-primary/30" />
+          <span className="h-2 w-2/3 rounded bg-muted" />
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-20 rounded-lg border bg-background p-3">
+      <div className="flex items-center gap-2 border-b pb-2">
+        <span className="size-6 rounded-md bg-primary/20" />
+        <span className="h-3 flex-1 rounded-full bg-muted" />
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        <span className="h-8 rounded bg-muted" />
+        <span className="h-8 rounded bg-primary/15" />
+        <span className="h-8 rounded bg-muted" />
+      </div>
+    </div>
+  );
+}
+
+function PresetCardGrid({
+  fields,
+  values,
+  onChange,
+}: {
+  fields: Array<{ key: DesignPresetKey; title: string }>;
+  values: SiteDesignSettings;
+  onChange: (key: DesignPresetKey, value: string) => void;
+}) {
+  return (
+    <div className="grid gap-6">
+      {fields.map((field) => (
+        <section key={field.key} className="grid gap-3">
+          <div>
+            <h3 className="text-base font-bold">{field.title}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Variantı seçin və yuxarıdakı action bar-dan saxlayın.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {designPresetOptions[field.key].map(([value, label]) => {
+              const active = values[field.key] === value;
+
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onChange(field.key, value)}
+                  className={cn(
+                    "min-w-0 rounded-xl border bg-card p-3 text-left shadow-sm transition hover:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    active && "border-primary ring-2 ring-primary/15",
+                  )}
+                >
+                  <PresetPreview type={field.key} value={value} />
+                  <div className="mt-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">{label}</p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                        {presetDescriptions[value] ?? "Preset preview"}
+                      </p>
+                    </div>
+                    {active ? <Badge tone="active">Aktiv</Badge> : <Badge>Seç</Badge>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
-  const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
-  const [preview, setPreview] = useState<SiteDesignSettings>(settings.design);
+  const [activeSection, setActiveSection] = useState<DesignSection>("theme");
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
+  const [design, setDesign] = useState<SiteDesignSettings>(siteSettings.design);
+  const activeTheme = useMemo(
+    () => themes.find((theme) => theme.isActive) ?? themes[0] ?? null,
+    [themes],
+  );
+  const [selectedThemeKey, setSelectedThemeKey] = useState(activeTheme?.themeKey ?? "");
+  const selectedTheme =
+    themes.find((theme) => theme.themeKey === selectedThemeKey) ?? activeTheme;
+  const selectedColors = selectedTheme ? readThemeColors(selectedTheme) : null;
+  const colorFormId = selectedTheme ? `theme-editor-${selectedTheme.id}` : undefined;
 
   function handleDesignSubmit(formData: FormData) {
     startTransition(async () => {
@@ -189,159 +516,6 @@ function DesignPresetManager({ settings }: { settings: SiteSettings }) {
       void appAlert.success("Dizayn yeniləndi", result.message);
     });
   }
-
-  return (
-    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className="grid gap-0 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="border-b bg-muted/35 p-4 xl:border-b-0 xl:border-r xl:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Design system
-              </p>
-              <h3 className="mt-2 text-2xl font-black tracking-normal">Dizayn</h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                Theme, navbar, homepage, product card/detail və panel presetləri
-                eyni global settings-dən idarə olunur.
-              </p>
-            </div>
-            <div className="inline-flex rounded-md border bg-background p-1">
-              <button
-                type="button"
-                onClick={() => setPreviewMode("desktop")}
-                className={cn(
-                  "grid size-9 place-items-center rounded-md text-muted-foreground",
-                  previewMode === "desktop" && "bg-primary text-primary-foreground",
-                )}
-                aria-label="Desktop preview"
-              >
-                <Monitor className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode("mobile")}
-                className={cn(
-                  "grid size-9 place-items-center rounded-md text-muted-foreground",
-                  previewMode === "mobile" && "bg-primary text-primary-foreground",
-                )}
-                aria-label="Mobile preview"
-              >
-                <Smartphone className="size-4" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              "mx-auto mt-5 overflow-hidden rounded-xl border bg-background shadow-sm",
-              previewMode === "mobile" ? "max-w-[260px]" : "max-w-xl",
-            )}
-          >
-            <div className="flex items-center gap-2 border-b px-3 py-2">
-              <span className="grid size-8 place-items-center rounded-md bg-primary text-xs font-black text-primary-foreground">
-                a
-              </span>
-              <div className="h-8 flex-1 rounded-md bg-muted" />
-              <span className="size-8 rounded-md border bg-card" />
-            </div>
-            <div className="space-y-3 p-3">
-              <div className="rounded-lg border bg-card p-3">
-                <div className="h-3 w-28 rounded-full bg-primary/25" />
-                <div className="mt-3 h-8 w-3/4 rounded-md bg-foreground/10" />
-                <div className="mt-3 h-10 rounded-md bg-muted" />
-              </div>
-              <div
-                className={cn(
-                  "grid gap-2",
-                  previewMode === "desktop" ? "grid-cols-3" : "grid-cols-2",
-                )}
-              >
-                {[1, 2, 3, 4, 5, 6].map((item) => (
-                  <div key={item} className="product-card rounded-lg border bg-card p-2">
-                    <div className="aspect-[4/3] rounded-md bg-muted" />
-                    <div className="mt-2 h-3 rounded-full bg-foreground/10" />
-                    <div className="mt-2 h-4 w-2/3 rounded-full bg-primary/25" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Preview lokal vizual nümunədir; publish etdikdən sonra eyni settings public
-            və dashboard səthlərinə tətbiq olunur.
-          </p>
-        </div>
-
-        <form action={handleDesignSubmit} className="grid gap-5 p-4 xl:p-5">
-          {designGroups.map((group) => (
-            <div key={group.title} className="grid gap-3 rounded-lg border bg-background/70 p-4">
-              <div>
-                <h4 className="text-sm font-bold">{group.title}</h4>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  {group.description}
-                </p>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {group.fields.map((field) => (
-                  <label key={field.key} className="grid gap-2 text-sm font-medium">
-                    {field.label}
-                    <select
-                      name={field.key}
-                      value={preview[field.key]}
-                      onChange={(event) =>
-                        setPreview((current) => ({
-                          ...current,
-                          [field.key]: event.target.value,
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      {designPresetOptions[field.key].map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button
-              type="submit"
-              name="intent"
-              value="reset"
-              variant="outline"
-              disabled={isPending}
-            >
-              <RotateCcw className="mr-2 size-4" aria-hidden="true" />
-              Reset default
-            </Button>
-            <Button
-              type="submit"
-              name="intent"
-              value="draft"
-              variant="secondary"
-              disabled={isPending}
-            >
-              <Save className="mr-2 size-4" aria-hidden="true" />
-              Save draft
-            </Button>
-            <Button type="submit" name="intent" value="publish" disabled={isPending}>
-              <UploadCloud className="mr-2 size-4" aria-hidden="true" />
-              Publish
-            </Button>
-          </div>
-        </form>
-      </div>
-    </section>
-  );
-}
-
-export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
-  const [isPending, startTransition] = useTransition();
-  const totalThemes = themes.length;
 
   function handlePublish(formData: FormData) {
     startTransition(async () => {
@@ -375,7 +549,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
         return;
       }
 
-      void appAlert.success("Rənglər saxlandı", result.message);
+      void appAlert.success("Draft saxlandı", result.message);
     });
   }
 
@@ -398,185 +572,337 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
         return;
       }
 
-      void appAlert.success("Rənglər default vəziyyətə qaytarıldı.", result.message);
+      void appAlert.success("Rənglər sıfırlandı", result.message);
     });
   }
 
-  return (
-    <div className="grid gap-5">
-      <DesignPresetManager settings={siteSettings} />
-      {themes.map((theme) => {
-        const colors = readThemeColors(theme);
+  function updateDesignValue(key: DesignPresetKey, value: string) {
+    setDesign((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
 
-        return (
-          <section
-            key={theme.id}
-            className="overflow-hidden rounded-xl border bg-card shadow-sm"
-          >
-            <div className="grid gap-0 xl:grid-cols-[0.95fr_1.05fr]">
-              <div
-                className="border-b p-4 xl:border-b-0 xl:border-r xl:p-5"
-                style={{
-                  backgroundColor: colors.pageBackground,
-                  borderColor: colors.border,
-                  color: colors.text,
-                }}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p style={{ color: colors.mutedText }} className="text-xs font-semibold uppercase tracking-[0.24em]">
-                      Theme preview
-                    </p>
-                    <h3 className="mt-2 text-2xl font-black tracking-normal">{theme.name}</h3>
-                    <p className="mt-1 text-sm" style={{ color: colors.mutedText }}>
-                      {theme.themeKey} · {theme.status}
-                    </p>
-                  </div>
-                  {theme.isActive ? (
-                    <span
-                      className="rounded-full px-3 py-1 text-xs font-semibold"
-                      style={{
-                        backgroundColor: colors.buttonBackground,
-                        color: colors.buttonText,
-                      }}
-                    >
-                      Aktiv
-                    </span>
-                  ) : null}
-                </div>
+  function renderSection() {
+    if (activeSection === "theme") {
+      return (
+        <div className="grid gap-5">
+          <section className="grid gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold">Theme seçimi</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Bir tema seçin, önizləyin və aktiv edin.
+                </p>
+              </div>
+              <PreviewToggle value={previewMode} onChange={setPreviewMode} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {themes.map((theme) => {
+                const colors = readThemeColors(theme);
+                const selected = selectedTheme?.themeKey === theme.themeKey;
 
-                <div
-                  className="mt-5 overflow-hidden rounded-xl border shadow-sm"
-                  style={{
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.border,
-                  }}
-                >
-                  <div
-                    className="border-b px-4 py-4"
-                    style={{
-                      backgroundColor: colors.heroBackground,
-                      borderColor: colors.border,
-                    }}
+                return (
+                  <article
+                    key={theme.id}
+                    className={cn(
+                      "min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition",
+                      theme.isActive && "border-emerald-500 ring-2 ring-emerald-500/15",
+                      selected && !theme.isActive && "border-primary ring-2 ring-primary/15",
+                    )}
                   >
-                    <div
-                      className="h-2 w-20 rounded-full"
-                      style={{ backgroundColor: colors.accent }}
-                    />
-                    <div
-                      className="mt-3 h-7 w-2/3 rounded-lg"
-                      style={{ backgroundColor: colors.text, opacity: 0.08 }}
-                    />
-                    <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
-                      <div
-                        className="h-10 rounded-lg border"
-                        style={{
-                          backgroundColor: colors.cardBackground,
-                          borderColor: colors.border,
-                        }}
-                      />
-                      <div
-                        className="h-10 w-24 rounded-lg"
-                        style={{ backgroundColor: colors.buttonBackground }}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-3 p-4 sm:grid-cols-3">
-                    {[
-                      colors.categoriesBackground,
-                      colors.storesBackground,
-                      colors.productsBackground,
-                    ].map((backgroundColor, index) => (
-                      <div
-                        key={`${backgroundColor}-${index}`}
-                        className="min-h-24 rounded-lg border p-3"
-                        style={{
-                          backgroundColor,
-                          borderColor: colors.border,
-                        }}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedThemeKey(theme.themeKey)}
+                      className="block w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <ThemePreview colors={colors} mode="desktop" compact />
+                      <div className="mt-3 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="truncate text-sm font-black">{theme.name}</h4>
+                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
+                            {presetDescriptions[theme.themeKey] ?? "Marketplace theme"}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          {theme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
+                          <Badge tone={theme.status === "published" ? "published" : "draft"}>
+                            {theme.status === "published" ? "Published" : "Draft"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </button>
+                    <div className="flex gap-2 border-t bg-muted/25 p-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setSelectedThemeKey(theme.themeKey)}
                       >
-                        <div
-                          className="h-3 w-1/2 rounded-full"
-                          style={{ backgroundColor: colors.text, opacity: 0.16 }}
-                        />
-                        <div
-                          className="mt-3 h-3 w-full rounded-full"
-                          style={{ backgroundColor: colors.mutedText, opacity: 0.16 }}
-                        />
-                        <div
-                          className="mt-2 h-3 w-4/5 rounded-full"
-                          style={{ backgroundColor: colors.mutedText, opacity: 0.12 }}
-                        />
+                        Önizlə
+                      </Button>
+                      <form action={handlePublish} className="flex-1">
+                        <input type="hidden" name="themeKey" value={theme.themeKey} />
+                        <Button type="submit" className="w-full" disabled={isPending || theme.isActive}>
+                          {theme.isActive ? "Aktiv temadır" : "Aktiv et"}
+                        </Button>
+                      </form>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          {selectedTheme && selectedColors ? (
+            <section className="grid gap-4 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-black">{selectedTheme.name}</h3>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedTheme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
+                    <Badge tone={selectedTheme.status === "published" ? "published" : "draft"}>
+                      {selectedTheme.status === "published" ? "Published" : "Draft"}
+                    </Badge>
+                  </div>
+                </div>
+                <PreviewToggle value={previewMode} onChange={setPreviewMode} />
+              </div>
+
+              <ThemePreview colors={selectedColors} mode={previewMode} />
+
+              <form
+                key={selectedTheme.id}
+                id={colorFormId}
+                action={handleSaveColors}
+                className="grid gap-4"
+              >
+                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
+                <details className="rounded-lg border bg-background">
+                  <summary className="cursor-pointer px-4 py-3 text-sm font-bold">
+                    Advanced rənglər
+                  </summary>
+                  <div className="grid gap-5 border-t p-4">
+                    {colorGroups.map((group) => (
+                      <div key={group.title} className="grid gap-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                          {group.title}
+                        </p>
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {group.fields.map((field) => (
+                            <label
+                              key={field.key}
+                              className="grid gap-2 text-xs font-semibold text-muted-foreground"
+                            >
+                              {field.label}
+                              <div className="flex min-w-0 items-center gap-2">
+                                <input
+                                  name={field.name}
+                                  type="color"
+                                  defaultValue={selectedColors[field.key]}
+                                  disabled={isPending}
+                                  className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
+                                />
+                                <span className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
+                                  {selectedColors[field.key]}
+                                </span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
+                </details>
+              </form>
+            </section>
+          ) : null}
+        </div>
+      );
+    }
 
-              <div className="grid gap-4 p-4 xl:p-5">
-                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-background p-4 shadow-sm">
-                  <div>
-                    <p className="text-sm font-semibold">Tema kimliyi</p>
-                    <p className="text-xs text-muted-foreground">
-                      {theme.themeKey} · {theme.status} · {totalThemes} tema
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <form action={handleResetColors}>
-                      <input type="hidden" name="themeKey" value={theme.themeKey} />
-                      <Button type="submit" variant="outline" disabled={isPending}>
-                        Sıfırla
-                      </Button>
-                    </form>
-                    <form action={handlePublish}>
-                      <input type="hidden" name="themeKey" value={theme.themeKey} />
-                      <Button type="submit" disabled={isPending || theme.isActive}>
-                        {theme.isActive ? "Aktiv temadır" : "Aktiv et"}
-                      </Button>
-                    </form>
-                  </div>
-                </div>
+    if (activeSection === "navbar") {
+      return (
+        <PresetCardGrid
+          fields={[{ key: "navbarPreset", title: "Navbar variantları" }]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
 
-                <form action={handleSaveColors} className="grid gap-4 rounded-xl border bg-background p-4 shadow-sm">
-                  <input type="hidden" name="themeKey" value={theme.themeKey} />
-                  {colorGroups.map((group) => (
-                    <div key={group.title} className="grid gap-3">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                        {group.title}
-                      </p>
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        {group.fields.map((field) => (
-                          <label
-                            key={field.key}
-                            className="grid gap-2 text-xs font-semibold text-muted-foreground"
-                          >
-                            {field.label}
-                            <div className="flex min-w-0 items-center gap-2">
-                              <input
-                                name={field.name}
-                                type="color"
-                                defaultValue={colors[field.key]}
-                                disabled={isPending}
-                                className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
-                              />
-                              <span className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
-                                {colors[field.key]}
-                              </span>
-                            </div>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  <Button type="submit" disabled={isPending}>
-                    Rəngləri saxla
-                  </Button>
-                </form>
-              </div>
+    if (activeSection === "homepage") {
+      return (
+        <PresetCardGrid
+          fields={[{ key: "homepagePreset", title: "Ana səhifə layoutları" }]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    if (activeSection === "product-cards") {
+      return (
+        <PresetCardGrid
+          fields={[{ key: "productCardPreset", title: "Məhsul kartı variantları" }]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    if (activeSection === "product-detail") {
+      return (
+        <PresetCardGrid
+          fields={[{ key: "productDetailPreset", title: "Məhsul səhifəsi variantları" }]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    if (activeSection === "panels") {
+      return (
+        <PresetCardGrid
+          fields={[
+            { key: "sellerPanelPreset", title: "Seller panel" },
+            { key: "customerPanelPreset", title: "Customer panel" },
+            { key: "adminPanelPreset", title: "Admin panel" },
+          ]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    if (activeSection === "ui-elements") {
+      return (
+        <PresetCardGrid
+          fields={[
+            { key: "buttonPreset", title: "Buttons" },
+            { key: "inputPreset", title: "Inputs" },
+            { key: "cardPreset", title: "Cards" },
+          ]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    if (activeSection === "loading") {
+      return (
+        <PresetCardGrid
+          fields={[
+            { key: "loadingPreset", title: "Loading presetləri" },
+            { key: "loaderSize", title: "Loader ölçüsü" },
+            { key: "loaderSpeed", title: "Loader sürəti" },
+            { key: "loaderOverlay", title: "Fullscreen overlay" },
+            { key: "loaderText", title: "Loading text" },
+          ]}
+          values={design}
+          onChange={updateDesignValue}
+        />
+      );
+    }
+
+    return (
+      <PresetCardGrid
+        fields={[
+          { key: "typographyPreset", title: "Typography presetləri" },
+          { key: "spacingPreset", title: "Spacing presetləri" },
+          { key: "themePreset", title: "Global rəng presetləri" },
+        ]}
+        values={design}
+        onChange={updateDesignValue}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-4">
+      <div className="sticky top-16 z-20 rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 overflow-x-auto">
+            <div className="flex w-max gap-2">
+              {sectionTabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveSection(tab.key)}
+                  className={cn(
+                    "rounded-full border px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-foreground",
+                    activeSection === tab.key && "border-primary bg-primary text-primary-foreground",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
-          </section>
-        );
-      })}
+          </div>
+
+          {activeSection === "theme" && selectedTheme ? (
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <form action={handleResetColors}>
+                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
+                <Button type="submit" variant="outline" disabled={isPending}>
+                  <RotateCcw className="mr-2 size-4" aria-hidden="true" />
+                  Dəyişiklikləri sıfırla
+                </Button>
+              </form>
+              <Button
+                type="submit"
+                form={colorFormId}
+                variant="secondary"
+                disabled={isPending || !colorFormId}
+              >
+                <Save className="mr-2 size-4" aria-hidden="true" />
+                Draft saxla
+              </Button>
+              <form action={handlePublish}>
+                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
+                <Button type="submit" disabled={isPending || selectedTheme.isActive}>
+                  <UploadCloud className="mr-2 size-4" aria-hidden="true" />
+                  {selectedTheme.isActive ? "Aktiv temadır" : "Publish"}
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              <form id="design-settings-form" action={handleDesignSubmit} className="contents">
+                {Object.entries(design).map(([key, value]) => (
+                  <input key={key} type="hidden" name={key} value={value} />
+                ))}
+                <Button
+                  type="submit"
+                  name="intent"
+                  value="reset"
+                  variant="outline"
+                  disabled={isPending}
+                >
+                  <RotateCcw className="mr-2 size-4" aria-hidden="true" />
+                  Dəyişiklikləri sıfırla
+                </Button>
+                <Button
+                  type="submit"
+                  name="intent"
+                  value="draft"
+                  variant="secondary"
+                  disabled={isPending}
+                >
+                  <Save className="mr-2 size-4" aria-hidden="true" />
+                  Draft saxla
+                </Button>
+                <Button type="submit" name="intent" value="publish" disabled={isPending}>
+                  <UploadCloud className="mr-2 size-4" aria-hidden="true" />
+                  Publish
+                </Button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {renderSection()}
     </div>
   );
 }

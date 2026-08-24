@@ -1,17 +1,23 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { AddToCartButton } from "@/components/cart/cart-buttons";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import type { ProductImage } from "@/lib/cart/types";
+import type { AuthRole } from "@/lib/auth/types";
+import type { CartProduct, ProductImage } from "@/lib/cart/types";
+import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
+import { getRequiredSelectableProductOptions } from "@/lib/products/variant-utils";
 import { cn } from "@/lib/utils";
 
 type ProductDetailGalleryProps = {
   images: ProductImage[];
   fallbackImageUrl: string | null;
+  product: CartProduct;
   productName: string;
+  viewerRole?: AuthRole | null;
 };
 
 export function ProductBackButton() {
@@ -33,7 +39,9 @@ export function ProductBackButton() {
 export function ProductDetailGallery({
   images,
   fallbackImageUrl,
+  product,
   productName,
+  viewerRole,
 }: ProductDetailGalleryProps) {
   const galleryImages = useMemo(() => {
     if (images.length > 0) {
@@ -54,25 +62,22 @@ export function ProductDetailGallery({
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const activeImage = galleryImages[activeIndex];
   const hasMultipleImages = galleryImages.length > 1;
+  const canGoPrevious = hasMultipleImages && activeIndex > 0;
+  const canGoNext = hasMultipleImages && activeIndex < galleryImages.length - 1;
+  const hasDiscount = product.discountAmount > 0;
+  const currentPrice = formatAznDiscountedPrice(
+    product.priceAmount,
+    product.discountAmount,
+  );
+  const requiredOptions = getRequiredSelectableProductOptions(product.options ?? []);
+  const cartSelectionReady = requiredOptions.length === 0;
 
   const goToPrevious = useCallback(() => {
-    if (!hasMultipleImages) {
-      return;
-    }
-
-    setActiveIndex((index) =>
-      index === 0 ? galleryImages.length - 1 : index - 1,
-    );
-  }, [galleryImages.length, hasMultipleImages]);
+    setActiveIndex((index) => Math.max(index - 1, 0));
+  }, []);
 
   const goToNext = useCallback(() => {
-    if (!hasMultipleImages) {
-      return;
-    }
-
-    setActiveIndex((index) =>
-      index === galleryImages.length - 1 ? 0 : index + 1,
-    );
+    setActiveIndex((index) => Math.min(index + 1, galleryImages.length - 1));
   }, [galleryImages.length, hasMultipleImages]);
 
   useEffect(() => {
@@ -81,7 +86,19 @@ export function ProductDetailGallery({
     }
 
     const previousOverflow = document.body.style.overflow;
+    const previousPosition = document.body.style.position;
+    const previousTop = document.body.style.top;
+    const previousWidth = document.body.style.width;
+    const previousTouchAction = document.body.style.touchAction;
+    const previousOverscrollBehavior = document.documentElement.style.overscrollBehavior;
+    const scrollY = window.scrollY;
+
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.touchAction = "none";
+    document.documentElement.style.overscrollBehavior = "none";
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -89,10 +106,12 @@ export function ProductDetailGallery({
       }
 
       if (event.key === "ArrowLeft") {
+        event.preventDefault();
         goToPrevious();
       }
 
       if (event.key === "ArrowRight") {
+        event.preventDefault();
         goToNext();
       }
     }
@@ -101,6 +120,12 @@ export function ProductDetailGallery({
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.style.position = previousPosition;
+      document.body.style.top = previousTop;
+      document.body.style.width = previousWidth;
+      document.body.style.touchAction = previousTouchAction;
+      document.documentElement.style.overscrollBehavior = previousOverscrollBehavior;
+      window.scrollTo(0, scrollY);
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [goToNext, goToPrevious, isOpen]);
@@ -173,25 +198,69 @@ export function ProductDetailGallery({
 
       {isOpen && activeImage ? (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-background/90 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background/95 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label={`${productName} şəkli`}
           onClick={() => setIsOpen(false)}
+          onWheel={(event) => event.preventDefault()}
+          onTouchMove={(event) => event.preventDefault()}
         >
-          <button
-            type="button"
-            className="absolute right-4 top-4 inline-flex size-11 items-center justify-center rounded-lg border bg-card"
-            onClick={() => setIsOpen(false)}
-            aria-label="Bağla"
+          <div
+            className="z-10 flex min-h-[76px] shrink-0 items-center gap-3 border-b bg-card/98 px-3 py-2 shadow-sm sm:min-h-[86px] sm:px-5"
+            onClick={(event) => event.stopPropagation()}
           >
-            <X className="size-6" aria-hidden="true" />
-          </button>
-          {hasMultipleImages ? (
-            <>
+            <div className="size-12 shrink-0 overflow-hidden rounded-md border bg-muted sm:size-14">
+              <img
+                src={activeImage.url}
+                alt={productName}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-sm font-black leading-5 sm:text-base">
+                {productName}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+              <div className="hidden text-right sm:block">
+                <p className="text-sm font-black text-foreground">{currentPrice}</p>
+                {hasDiscount ? (
+                  <p className="text-xs text-muted-foreground line-through">
+                    {formatAznPrice(product.priceAmount)}
+                  </p>
+                ) : null}
+              </div>
+              <AddToCartButton
+                product={product}
+                viewerRole={viewerRole}
+                selectionReady={cartSelectionReady}
+                disabled={product.stockQuantity <= 0}
+                className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
+              />
               <button
                 type="button"
-                className="absolute left-3 top-1/2 hidden size-12 -translate-y-1/2 items-center justify-center rounded-lg border bg-card/95 shadow-lg md:inline-flex"
+                className="grid size-10 shrink-0 place-items-center rounded-lg border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-11"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setIsOpen(false);
+                }}
+                aria-label="Bağla"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+          <div
+            className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-3 sm:px-5 sm:py-5"
+            onClick={(event) => event.stopPropagation()}
+            onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
+            onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
+          >
+            {canGoPrevious ? (
+              <button
+                type="button"
+                className="absolute left-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border bg-card/95 text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-4 sm:size-12"
                 onClick={(event) => {
                   event.stopPropagation();
                   goToPrevious();
@@ -200,9 +269,17 @@ export function ProductDetailGallery({
               >
                 <ChevronLeft className="size-7" aria-hidden="true" />
               </button>
+            ) : null}
+            <img
+              src={activeImage.url}
+              alt={productName}
+              className="max-h-full max-w-full select-none object-contain"
+              draggable={false}
+            />
+            {canGoNext ? (
               <button
                 type="button"
-                className="absolute right-3 top-1/2 hidden size-12 -translate-y-1/2 items-center justify-center rounded-lg border bg-card/95 shadow-lg md:inline-flex"
+                className="absolute right-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border bg-card/95 text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:right-4 sm:size-12"
                 onClick={(event) => {
                   event.stopPropagation();
                   goToNext();
@@ -211,34 +288,6 @@ export function ProductDetailGallery({
               >
                 <ChevronRight className="size-7" aria-hidden="true" />
               </button>
-            </>
-          ) : null}
-          <div
-            className="flex max-h-[86vh] max-w-[94vw] touch-pan-x flex-col items-center gap-3"
-            onClick={(event) => event.stopPropagation()}
-            onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
-            onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
-          >
-            <img
-              src={activeImage.url}
-              alt={productName}
-              className="max-h-[80vh] max-w-[94vw] rounded-lg object-contain shadow-2xl"
-            />
-            {hasMultipleImages ? (
-              <div className="flex items-center justify-center gap-2 md:hidden">
-                {galleryImages.map((image, index) => (
-                  <button
-                    key={`${image.url}-${index}-dot`}
-                    type="button"
-                    className={cn(
-                      "size-2.5 rounded-full transition",
-                      index === activeIndex ? "bg-primary" : "bg-muted-foreground/35",
-                    )}
-                    onClick={() => setActiveIndex(index)}
-                    aria-label={`${index + 1}. şəkil`}
-                  />
-                ))}
-              </div>
             ) : null}
           </div>
         </div>
