@@ -89,7 +89,17 @@
     "sortNewest": "Сначала новые",
     "sortOldest": "Сначала старые",
     "sortPriceAsc": "Цена: по возрастанию",
-    "sortPriceDesc": "Цена: по убыванию"
+    "sortPriceDesc": "Цена: по убыванию",
+    "filters": "Фильтры",
+    "sortFilter": "Сортировка",
+    "colorFilter": "Цвет",
+    "sizeFilter": "Размер",
+    "allColors": "Все цвета",
+    "allSizes": "Все размеры",
+    "minPrice": "Минимальная цена",
+    "maxPrice": "Максимальная цена",
+    "inStockOnly": "Только в наличии",
+    "clearFilters": "Очистить фильтры"
   },
   "nav": {
     "dashboard": "Панель",

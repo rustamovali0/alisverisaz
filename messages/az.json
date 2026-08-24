@@ -89,7 +89,17 @@
     "sortNewest": "Ən yeni",
     "sortOldest": "Ən köhnə",
     "sortPriceAsc": "Qiymət artan",
-    "sortPriceDesc": "Qiymət azalan"
+    "sortPriceDesc": "Qiymət azalan",
+    "filters": "Filtrlər",
+    "sortFilter": "Sıralama",
+    "colorFilter": "Rəng",
+    "sizeFilter": "Ölçü",
+    "allColors": "Bütün rənglər",
+    "allSizes": "Bütün ölçülər",
+    "minPrice": "Minimum qiymət",
+    "maxPrice": "Maksimum qiymət",
+    "inStockOnly": "Yalnız stokda olanlar",
+    "clearFilters": "Filtrləri təmizlə"
   },
   "nav": {
     "dashboard": "Dashboard",

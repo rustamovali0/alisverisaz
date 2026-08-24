@@ -89,7 +89,17 @@
     "sortNewest": "Newest",
     "sortOldest": "Oldest",
     "sortPriceAsc": "Price: low to high",
-    "sortPriceDesc": "Price: high to low"
+    "sortPriceDesc": "Price: high to low",
+    "filters": "Filters",
+    "sortFilter": "Sort",
+    "colorFilter": "Color",
+    "sizeFilter": "Size",
+    "allColors": "All colors",
+    "allSizes": "All sizes",
+    "minPrice": "Minimum price",
+    "maxPrice": "Maximum price",
+    "inStockOnly": "Only in stock",
+    "clearFilters": "Clear filters"
   },
   "nav": {
     "dashboard": "Dashboard",

@@ -266,7 +266,6 @@ function CategoryFilters({
 function MarketplaceFilterBar({
   categories,
   selectedCategoryId,
-  sort,
   colors,
   sizes,
   color,
@@ -275,7 +274,6 @@ function MarketplaceFilterBar({
   maxPrice,
   inStockOnly,
   onCategory,
-  onSort,
   onColor,
   onSize,
   onMinPrice,
@@ -285,7 +283,6 @@ function MarketplaceFilterBar({
 }: {
   categories: CategoryOption[];
   selectedCategoryId?: string;
-  sort: MarketplaceProductSort;
   colors: string[];
   sizes: string[];
   color: string;
@@ -294,7 +291,6 @@ function MarketplaceFilterBar({
   maxPrice: string;
   inStockOnly: boolean;
   onCategory: (category?: CategoryOption) => void;
-  onSort: (sort: MarketplaceProductSort) => void;
   onColor: (value: string) => void;
   onSize: (value: string) => void;
   onMinPrice: (value: string) => void;
@@ -306,7 +302,7 @@ function MarketplaceFilterBar({
   const [categoryOpen, setCategoryOpen] = useState(false);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
   const hasActiveFilters = Boolean(
-    selectedCategoryId || color || size || minPrice || maxPrice || inStockOnly || sort !== "newest",
+    selectedCategoryId || color || size || minPrice || maxPrice || inStockOnly,
   );
 
   return (
@@ -357,18 +353,6 @@ function MarketplaceFilterBar({
             </div>
           ) : null}
         </div>
-
-        <select
-          value={sort}
-          onChange={(event) => onSort(event.target.value as MarketplaceProductSort)}
-          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
-          aria-label={t("sortFilter")}
-        >
-          <option value="newest">{t("sortNewest")}</option>
-          <option value="oldest">{t("sortOldest")}</option>
-          <option value="price_asc">{t("sortPriceAsc")}</option>
-          <option value="price_desc">{t("sortPriceDesc")}</option>
-        </select>
 
         <select
           value={color}
@@ -1127,7 +1111,6 @@ export function ProductMarketplace({
     <MarketplaceFilterBar
       categories={categories}
       selectedCategoryId={activeCategoryId}
-      sort={activeSort}
       colors={variantFilterValues.colors}
       sizes={variantFilterValues.sizes}
       color={colorFilter}
@@ -1136,7 +1119,6 @@ export function ProductMarketplace({
       maxPrice={maxPrice}
       inStockOnly={inStockOnly}
       onCategory={selectCategory}
-      onSort={selectSort}
       onColor={setColorFilter}
       onSize={setSizeFilter}
       onMinPrice={setMinPrice}
@@ -1165,23 +1147,38 @@ export function ProductMarketplace({
     )
   );
 
+  const sortControl = (
+    <select
+      value={activeSort}
+      onChange={(event) => selectSort(event.target.value as MarketplaceProductSort)}
+      className="h-10 min-w-44 rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
+      aria-label={t("sortFilter")}
+    >
+      <option value="newest">{t("sortNewest")}</option>
+      <option value="oldest">{t("sortOldest")}</option>
+      <option value="price_asc">{t("sortPriceAsc")}</option>
+      <option value="price_desc">{t("sortPriceDesc")}</option>
+    </select>
+  );
+
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <div className="container max-w-full py-5 md:py-8">
+      <div className="container mx-auto max-w-[1480px] py-5 md:py-8">
         <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
             <h1 className="text-2xl font-black tracking-normal">{t("allProducts")}</h1>
           </div>
         </header>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-7">
+        <div className="grid items-start gap-5 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-7">
           <aside className="min-w-0 lg:sticky lg:top-24">{filterBar}</aside>
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
-            {activeCategoryId ? (
-              <h1 className="text-2xl font-black tracking-normal">
-                {activeCategory?.name ?? t("categoryProducts")}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm">
+              <h1 className="text-xl font-black tracking-normal sm:text-2xl">
+                {activeCategoryId ? activeCategory?.name ?? t("categoryProducts") : t("allProducts")}
               </h1>
-            ) : null}
+              {sortControl}
+            </div>
             {productGrid}
           </section>
         </div>
