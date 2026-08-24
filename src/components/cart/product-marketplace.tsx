@@ -369,29 +369,25 @@ function MarketplaceFilterBar({
           <option value="price_desc">{t("sortPriceDesc")}</option>
         </select>
 
-        {colors.length > 0 ? (
-          <select
-            value={color}
-            onChange={(event) => onColor(event.target.value)}
-            className="h-10 min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
-            aria-label={t("colorFilter")}
-          >
-            <option value="">{t("allColors")}</option>
-            {colors.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        ) : null}
+        <select
+          value={color}
+          onChange={(event) => onColor(event.target.value)}
+          className="h-10 min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          aria-label={t("colorFilter")}
+        >
+          <option value="">{t("allColors")}</option>
+          {colors.map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
 
-        {sizes.length > 0 ? (
-          <select
-            value={size}
-            onChange={(event) => onSize(event.target.value)}
-            className="h-10 min-w-[7rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
-            aria-label={t("sizeFilter")}
-          >
-            <option value="">{t("allSizes")}</option>
-            {sizes.map((value) => <option key={value} value={value}>{value}</option>)}
-          </select>
-        ) : null}
+        <select
+          value={size}
+          onChange={(event) => onSize(event.target.value)}
+          className="h-10 min-w-[7rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          aria-label={t("sizeFilter")}
+        >
+          <option value="">{t("allSizes")}</option>
+          {sizes.map((value) => <option key={value} value={value}>{value}</option>)}
+        </select>
 
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
           <input
