@@ -32,13 +32,17 @@ import {
   Baby,
   BookOpen,
   BriefcaseBusiness,
+  Bus,
   Car,
   Clock,
   Dumbbell,
+  ExternalLink,
   Home as HomeIcon,
   Laptop,
   MapPin,
+  Navigation,
   PackageSearch,
+  PackageCheck,
   PawPrint,
   Phone,
   Shirt,
@@ -112,6 +116,24 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
       {store.name.slice(0, 1).toUpperCase()}
     </span>
   );
+}
+
+function getStoreLocationMapUrl(location: StoreLocation | null, fallbackAddress?: string | null) {
+  if (location?.mapLink) {
+    return location.mapLink;
+  }
+
+  if (location?.latitude !== null && location?.longitude !== null && location?.latitude !== undefined && location?.longitude !== undefined) {
+    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  }
+
+  const query = location
+    ? [location.city, location.district, location.address].filter(Boolean).join(", ")
+    : fallbackAddress;
+
+  return query
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    : null;
 }
 
 function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
@@ -972,6 +994,8 @@ export function Storefront({
           .filter(Boolean)
           .join(", ")
       : store.address;
+  const primaryPhone = primaryLocation?.phone || store.phone;
+  const primaryMapUrl = getStoreLocationMapUrl(primaryLocation, primaryAddress);
   const visibleProducts = infinite.products;
 
   function selectCategory(category?: CategoryOption) {
@@ -1027,44 +1051,102 @@ export function Storefront({
               <StoreLogo store={store} className="size-20 shadow-sm sm:size-24" />
             </div>
           </div>
-          <div className="grid min-w-0 gap-6 p-4 pt-12 md:grid-cols-[minmax(0,1fr)_260px] md:p-8 md:pt-14">
+          <div className="grid min-w-0 gap-5 p-4 pt-12 md:grid-cols-[minmax(0,1fr)_260px] md:p-7 md:pt-14">
             <div className="flex min-w-0 gap-4">
               <div className="min-w-0">
-                <h1 className="line-clamp-2 break-words text-2xl font-black tracking-normal md:text-3xl">
-                  {store.name}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <div className="flex min-w-0 flex-wrap items-end gap-x-3 gap-y-1">
+                  <h1 className="line-clamp-2 break-words text-2xl font-black tracking-normal md:text-3xl">
+                    {store.name}
+                  </h1>
+                  <p className="text-sm font-medium text-muted-foreground">
                       {t("productCount", { count: store.productCount })}
-                </p>
+                  </p>
+                </div>
                 {store.description ? (
-                  <p className="mt-4 max-w-2xl break-words text-sm leading-6 text-foreground">
+                  <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-foreground">
                     {store.description}
                   </p>
                 ) : null}
-                <div className="mt-4 flex min-w-0 flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="mt-4 flex min-w-0 flex-wrap gap-2 text-sm text-muted-foreground">
                   {primaryAddress ? (
-                    <span className="inline-flex min-w-0 items-center gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
                       <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">{primaryAddress}</span>
                     </span>
                   ) : null}
+                  {primaryLocation?.showMetro && primaryLocation.nearestMetro ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                      <Navigation className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">
+                        {primaryLocation.nearestMetro}
+                        {primaryLocation.metroWalkMinutes
+                          ? ` · ${primaryLocation.metroWalkMinutes} dəq. piyada`
+                          : ""}
+                        {primaryLocation.metroDistanceMeters
+                          ? ` · ${primaryLocation.metroDistanceMeters} m`
+                          : ""}
+                      </span>
+                    </span>
+                  ) : null}
+                  {primaryLocation?.showBus &&
+                  (primaryLocation.busStopName || primaryLocation.busRoutes.length) ? (
+                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                      <Bus className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">
+                        {primaryLocation.busStopName ?? "Avtobus"}
+                        {primaryLocation.busRoutes.length
+                          ? ` · ${primaryLocation.busRoutes.join(", ")}`
+                          : ""}
+                      </span>
+                    </span>
+                  ) : null}
                   {primaryLocation?.workingHours ? (
-                    <span className="inline-flex min-w-0 items-center gap-2">
+                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
                       <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">
                         {primaryLocation.workingHours}
                       </span>
                     </span>
                   ) : null}
+                  {primaryPhone ? (
+                    <a
+                      href={`tel:${primaryPhone.replace(/\s/g, "")}`}
+                      className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 transition hover:border-primary/40 hover:text-primary"
+                    >
+                      <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">{primaryPhone}</span>
+                    </a>
+                  ) : null}
+                  {primaryLocation?.pickupAvailable ? (
+                    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                      <PackageCheck className="size-3.5 shrink-0" aria-hidden="true" />
+                      Özün götürmə
+                    </span>
+                  ) : null}
+                  {primaryLocation?.deliveryAvailable ? (
+                    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                      <Truck className="size-3.5 shrink-0" aria-hidden="true" />
+                      Çatdırılma
+                    </span>
+                  ) : null}
                 </div>
               </div>
             </div>
             <div className="grid min-w-0 content-start gap-3">
-              {store.phone ? (
+              {primaryPhone ? (
                 <Button asChild className="w-full min-w-0">
-                  <a href={`tel:${store.phone.replace(/\s/g, "")}`}>
+                  <a href={`tel:${primaryPhone.replace(/\s/g, "")}`}>
                     <Phone className="mr-2 size-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("showPhone")}</span>
+                  </a>
+                </Button>
+              ) : null}
+              {primaryMapUrl ? (
+                <Button asChild variant="outline" className="w-full min-w-0">
+                  <a href={primaryMapUrl} target="_blank" rel="noreferrer">
+                    <MapPin className="mr-2 size-4 shrink-0" aria-hidden="true" />
+                    <span className="truncate">Xəritədə göstər</span>
+                    <ExternalLink className="ml-2 size-4 shrink-0" aria-hidden="true" />
                   </a>
                 </Button>
               ) : null}

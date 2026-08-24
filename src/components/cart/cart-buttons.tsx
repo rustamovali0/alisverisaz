@@ -233,7 +233,7 @@ export function AddToCartButton({
     return (
       <div
         className={cn(
-          "grid !h-11 min-h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 bg-primary text-primary-foreground shadow-sm sm:!h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
+          "grid !h-11 min-h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 !bg-primary !text-primary-foreground shadow-sm sm:!h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
           className,
         )}
       >
@@ -245,11 +245,9 @@ export function AddToCartButton({
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center gap-0.5 px-1 text-center text-[11px] font-black leading-tight text-primary-foreground min-[360px]:text-xs min-[390px]:gap-1 sm:text-sm">
+        <span className="flex min-w-0 items-center justify-center gap-0.5 px-1 text-center text-[11px] font-black leading-tight !text-primary-foreground min-[360px]:text-xs min-[390px]:gap-1 sm:text-sm">
           <Check className="hidden size-4 shrink-0 stroke-[2.5] min-[390px]:block" aria-hidden="true" />
-          <span className="hidden truncate sm:inline">{t("addedToCart")}</span>
-          <span className="whitespace-nowrap sm:hidden">{t("cartShort")}</span>
-          <span className="shrink-0">({quantity})</span>
+          <span className="whitespace-nowrap">{t("addedToCart")}</span>
         </span>
         <button
           type="button"
