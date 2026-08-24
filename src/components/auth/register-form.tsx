@@ -14,6 +14,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
+import { isRealImageFile } from "@/lib/images/client-file-validation";
 
 type RegisterFormProps = {
   userRegistrationEnabled: boolean;
@@ -42,6 +43,7 @@ function SellerImageDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     return () => {
@@ -51,11 +53,27 @@ function SellerImageDropzone({
     };
   }, [preview]);
 
-  function handleFiles(files: FileList | null) {
+  async function handleFiles(files: FileList | null) {
     const file = files?.[0];
 
     if (!file) {
       return;
+    }
+
+    if (!(await isRealImageFile(file))) {
+      setError("Yalnız real şəkil faylları qəbul edilir.");
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      setPreview("");
+      return;
+    }
+
+    setError("");
+    if (inputRef.current) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      inputRef.current.files = dataTransfer.files;
     }
 
     const nextPreview = URL.createObjectURL(file);
@@ -85,7 +103,7 @@ function SellerImageDropzone({
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          handleFiles(event.dataTransfer.files);
+          void handleFiles(event.dataTransfer.files);
         }}
       >
         {preview ? (
@@ -101,10 +119,11 @@ function SellerImageDropzone({
         ref={inputRef}
         type="file"
         name={name}
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
         className="sr-only"
-        onChange={(event) => handleFiles(event.target.files)}
+        onChange={(event) => void handleFiles(event.target.files)}
       />
+      {error ? <span className="text-xs font-medium text-destructive">{error}</span> : null}
     </div>
   );
 }

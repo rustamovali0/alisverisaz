@@ -29,7 +29,7 @@ import {
 } from "@/lib/auth/types";
 
 const MAX_AUTH_MEDIA_SIZE = 5 * 1024 * 1024;
-const ALLOWED_AUTH_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_AUTH_MEDIA_TYPES = ["image/*"];
 const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
 const GENERIC_RESET_RESPONSE =
   "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";

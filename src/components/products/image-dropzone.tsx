@@ -4,6 +4,7 @@ import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { isRealImageFile } from "@/lib/images/client-file-validation";
 import { cn } from "@/lib/utils";
 
 type ImageDropzoneProps = {
@@ -28,12 +29,6 @@ function FilePreview({ file, alt }: { file: File; alt: string }) {
   ) : null;
 }
 
-function isAcceptedImageFile(file: File) {
-  const type = file.type.trim().toLowerCase();
-
-  return !type || (type.startsWith("image/") && type !== "image/svg+xml");
-}
-
 export function ImageDropzone({
   files,
   onFilesChange,
@@ -42,19 +37,28 @@ export function ImageDropzone({
 }: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
-  function addFiles(nextFiles: FileList | File[]) {
+  async function addFiles(nextFiles: FileList | File[]) {
     const incomingFiles = Array.from(nextFiles);
     const allowedFiles =
       maxFiles === null
         ? incomingFiles
         : incomingFiles.slice(0, Math.max(maxFiles - files.length, 0));
-    const imageFiles = allowedFiles.filter(isAcceptedImageFile);
+    const imageChecks = await Promise.all(allowedFiles.map(async (file) => ({
+      file,
+      isImage: await isRealImageFile(file),
+    })));
+    const imageFiles = imageChecks
+      .filter((item) => item.isImage)
+      .map((item) => item.file);
 
     if (imageFiles.length === 0) {
+      setValidationError("Yalnız real şəkil faylları qəbul edilir.");
       return;
     }
 
+    setValidationError("");
     onFilesChange([...files, ...imageFiles]);
   }
 
@@ -72,7 +76,7 @@ export function ImageDropzone({
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          addFiles(event.dataTransfer.files);
+          void addFiles(event.dataTransfer.files);
         }}
         className={cn(
           "flex min-h-36 flex-col items-center justify-center rounded-md border border-dashed bg-background p-6 text-center transition-colors",
@@ -100,11 +104,14 @@ export function ImageDropzone({
         disabled={disabled}
         onChange={(event) => {
           if (event.target.files) {
-            addFiles(event.target.files);
+            void addFiles(event.target.files);
           }
           event.target.value = "";
         }}
       />
+      {validationError ? (
+        <p className="text-sm font-medium text-destructive">{validationError}</p>
+      ) : null}
       {files.length > 0 ? (
         <div className="grid gap-3">
           <div className="max-w-md overflow-hidden rounded-lg border bg-card">
