@@ -62,6 +62,24 @@ function canBypassMaintenance(pathname: string) {
   );
 }
 
+function shouldLoadPublicNavigation(pathname: string) {
+  const hiddenExactPaths = new Set([
+    "/forgot-password",
+    "/login",
+    "/logout",
+    "/register",
+    "/reset-password",
+  ]);
+
+  if (hiddenExactPaths.has(pathname)) {
+    return false;
+  }
+
+  return !["/admin", "/radmin", "/store/dashboard"].some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
+
 export async function generateMetadata({
   params,
 }: LocaleLayoutProps): Promise<Metadata> {
@@ -135,18 +153,23 @@ export default async function LocaleLayout({
   }
 
   setRequestLocale(locale);
-  const [messages, siteSettings, requestHeaders, navStores, navCategories] = await Promise.all([
+  const requestHeaders = await headers();
+  const visiblePathname = normalizeVisiblePath(
+    requestHeaders.get("x-current-path") ?? "/",
+  );
+  const loadPublicNavigation = shouldLoadPublicNavigation(visiblePathname);
+  const [messages, siteSettings, navStores, navCategories] = await Promise.all([
     getMessages({
       locale,
     }),
     getSiteSettings(),
-    headers(),
-    getMarketplaceStores({ locale, limit: 24 }),
-    getCategoryOptions({ rootOnly: true }),
+    loadPublicNavigation
+      ? getMarketplaceStores({ locale, limit: 24 })
+      : Promise.resolve([]),
+    loadPublicNavigation
+      ? getCategoryOptions({ rootOnly: true })
+      : Promise.resolve([]),
   ]);
-  const visiblePathname = normalizeVisiblePath(
-    requestHeaders.get("x-current-path") ?? "/",
-  );
   const isMaintenanceBlocked =
     siteSettings.maintenanceMode && !canBypassMaintenance(visiblePathname);
 

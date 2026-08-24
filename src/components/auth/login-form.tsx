@@ -13,7 +13,7 @@ import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 type LoginFormProps = {
   mode?: "public" | "admin";
@@ -30,6 +30,7 @@ function getInitialIdentifier(params: URLSearchParams) {
 }
 
 export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
@@ -91,7 +92,17 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
     formData.set("captchaToken", captchaToken);
 
     startTransition(async () => {
-      const result = await loginAction(formData);
+      let result;
+
+      try {
+        result = await loginAction(formData);
+      } catch {
+        const message = "Giriş zamanı texniki xəta baş verdi. Yenidən cəhd edin.";
+        setCaptchaToken("");
+        setServerError(message);
+        void appAlert.error(message, "Giriş alınmadı");
+        return;
+      }
 
       if (!result.ok) {
         setCaptchaToken("");
@@ -104,7 +115,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         dedupeKey: "login-success",
         persistAcrossNavigation: true,
       });
-      window.location.assign(result.redirectTo);
+      router.replace(result.redirectTo);
     });
   }
 

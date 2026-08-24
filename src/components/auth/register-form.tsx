@@ -233,6 +233,10 @@ export function RegisterForm({
   }
 
   function handleSubmit(formData: FormData) {
+    if (isPending) {
+      return;
+    }
+
     startTransition(async () => {
       if (!validate()) {
         return;
@@ -267,7 +271,6 @@ export function RegisterForm({
 
       void appAlert.success("Qeydiyyat uğurludur", result.message);
       router.replace(result.redirectTo);
-      router.refresh();
     });
   }
 

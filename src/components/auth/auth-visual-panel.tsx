@@ -32,7 +32,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
         src="/auth/auth-banner.png"
         alt="Alisveris marketplace auth banner"
         fill
-        priority
+        quality={70}
         sizes="(min-width: 1280px) 560px, 100vw"
         className="object-cover object-center"
       />
