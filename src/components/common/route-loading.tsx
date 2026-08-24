@@ -64,3 +64,41 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
     </main>
   );
 }
+
+export function ProductDetailLoading() {
+  return (
+    <main className="min-h-screen bg-muted/40 px-4 py-5 md:py-8" role="status" aria-live="polite">
+      <span className="sr-only">Səhifə açılır</span>
+      <div className="container grid max-w-full gap-5">
+        <div className="h-9 w-72 animate-pulse rounded-lg bg-muted" />
+        <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
+            <div className="aspect-[4/3] animate-pulse bg-muted md:max-h-[460px]" />
+            <div className="flex gap-2 border-t bg-background p-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="size-14 animate-pulse rounded-md bg-muted" />
+              ))}
+            </div>
+          </div>
+          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
+            <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+            <div className="mt-3 h-10 w-4/5 animate-pulse rounded bg-muted" />
+            <div className="mt-5 h-10 w-40 animate-pulse rounded bg-muted" />
+            <div className="mt-3 h-4 w-24 animate-pulse rounded bg-muted" />
+            <div className="mt-5 h-24 animate-pulse rounded-xl bg-muted" />
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="h-11 animate-pulse rounded-lg bg-muted" />
+              <div className="h-11 animate-pulse rounded-lg bg-muted" />
+            </div>
+            <div className="mt-5 h-28 animate-pulse rounded-xl bg-muted" />
+          </div>
+        </section>
+        <div className="mx-auto h-44 w-full max-w-4xl animate-pulse rounded-lg border bg-card" />
+        <div className="grid gap-5 lg:grid-cols-2">
+          <div className="h-64 animate-pulse rounded-lg border bg-card" />
+          <div className="h-64 animate-pulse rounded-lg border bg-card" />
+        </div>
+      </div>
+    </main>
+  );
+}

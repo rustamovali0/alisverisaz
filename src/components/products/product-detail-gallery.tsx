@@ -164,7 +164,7 @@ export function ProductDetailGallery({
             <img
               src={activeImage.url}
               alt={productName}
-              className="h-full w-full object-cover transition duration-300 md:group-hover:scale-[1.02]"
+              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
             />
           ) : (
             <div className="grid h-full place-items-center text-muted-foreground">
@@ -253,7 +253,7 @@ export function ProductDetailGallery({
           </div>
           <div
             className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-3 sm:px-5 sm:py-5"
-            onClick={(event) => event.stopPropagation()}
+            onClick={() => setIsOpen(false)}
             onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
             onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
           >
@@ -275,6 +275,7 @@ export function ProductDetailGallery({
               alt={productName}
               className="max-h-full max-w-full select-none object-contain"
               draggable={false}
+              onClick={(event) => event.stopPropagation()}
             />
             {canGoNext ? (
               <button

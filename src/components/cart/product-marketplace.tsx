@@ -263,6 +263,179 @@ function CategoryFilters({
   );
 }
 
+function MarketplaceFilterBar({
+  categories,
+  selectedCategoryId,
+  sort,
+  colors,
+  sizes,
+  color,
+  size,
+  minPrice,
+  maxPrice,
+  inStockOnly,
+  onCategory,
+  onSort,
+  onColor,
+  onSize,
+  onMinPrice,
+  onMaxPrice,
+  onStockOnly,
+  onReset,
+}: {
+  categories: CategoryOption[];
+  selectedCategoryId?: string;
+  sort: MarketplaceProductSort;
+  colors: string[];
+  sizes: string[];
+  color: string;
+  size: string;
+  minPrice: string;
+  maxPrice: string;
+  inStockOnly: boolean;
+  onCategory: (category?: CategoryOption) => void;
+  onSort: (sort: MarketplaceProductSort) => void;
+  onColor: (value: string) => void;
+  onSize: (value: string) => void;
+  onMinPrice: (value: string) => void;
+  onMaxPrice: (value: string) => void;
+  onStockOnly: (value: boolean) => void;
+  onReset: () => void;
+}) {
+  const t = useTranslations("marketplace");
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+  const hasActiveFilters = Boolean(
+    selectedCategoryId || color || size || minPrice || maxPrice || inStockOnly || sort !== "newest",
+  );
+
+  return (
+    <section className="relative z-20 mb-5 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[11rem] flex-1 sm:flex-none">
+          <button
+            type="button"
+            className="flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-3 text-left text-sm font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-expanded={categoryOpen}
+            onClick={() => setCategoryOpen((open) => !open)}
+          >
+            <span className="truncate">{selectedCategory?.name ?? t("allCategories")}</span>
+            <span className="text-muted-foreground" aria-hidden="true">⌄</span>
+          </button>
+          {categoryOpen ? (
+            <div className="absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl">
+              <button
+                type="button"
+                className={cn(
+                  "w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
+                  !selectedCategoryId && "bg-primary/10 font-semibold text-primary",
+                )}
+                onClick={() => {
+                  onCategory();
+                  setCategoryOpen(false);
+                }}
+              >
+                {t("allCategories")}
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className={cn(
+                    "w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
+                    selectedCategoryId === category.id && "bg-primary/10 font-semibold text-primary",
+                  )}
+                  onClick={() => {
+                    onCategory(category);
+                    setCategoryOpen(false);
+                  }}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <select
+          value={sort}
+          onChange={(event) => onSort(event.target.value as MarketplaceProductSort)}
+          className="h-10 min-w-[9.5rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          aria-label={t("sortFilter")}
+        >
+          <option value="newest">{t("sortNewest")}</option>
+          <option value="oldest">{t("sortOldest")}</option>
+          <option value="price_asc">{t("sortPriceAsc")}</option>
+          <option value="price_desc">{t("sortPriceDesc")}</option>
+        </select>
+
+        {colors.length > 0 ? (
+          <select
+            value={color}
+            onChange={(event) => onColor(event.target.value)}
+            className="h-10 min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+            aria-label={t("colorFilter")}
+          >
+            <option value="">{t("allColors")}</option>
+            {colors.map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        ) : null}
+
+        {sizes.length > 0 ? (
+          <select
+            value={size}
+            onChange={(event) => onSize(event.target.value)}
+            className="h-10 min-w-[7rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+            aria-label={t("sizeFilter")}
+          >
+            <option value="">{t("allSizes")}</option>
+            {sizes.map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+        ) : null}
+
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+          <input
+            type="number"
+            min="0"
+            inputMode="decimal"
+            value={minPrice}
+            onChange={(event) => onMinPrice(event.target.value)}
+            placeholder={t("minPrice")}
+            aria-label={t("minPrice")}
+            className="h-10 min-w-0 w-1/2 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+          />
+          <input
+            type="number"
+            min="0"
+            inputMode="decimal"
+            value={maxPrice}
+            onChange={(event) => onMaxPrice(event.target.value)}
+            placeholder={t("maxPrice")}
+            aria-label={t("maxPrice")}
+            className="h-10 min-w-0 w-1/2 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+          />
+        </div>
+
+        <label className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm font-semibold text-foreground">
+          <input
+            type="checkbox"
+            checked={inStockOnly}
+            onChange={(event) => onStockOnly(event.target.checked)}
+            className="size-4 accent-[hsl(var(--primary))]"
+          />
+          {t("inStockOnly")}
+        </label>
+
+        {hasActiveFilters ? (
+          <Button type="button" variant="ghost" className="h-10 px-3 text-sm text-primary" onClick={onReset}>
+            {t("clearFilters")}
+          </Button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 const CATEGORY_ICON_STYLES = [
   "bg-cyan-50 text-cyan-700 ring-cyan-100 dark:bg-cyan-950/30 dark:text-cyan-200 dark:ring-cyan-900/40",
   "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-900/40",
@@ -296,11 +469,9 @@ function getCategoryIcon(category: CategoryOption): LucideIcon {
 
 function MobileCategoryCatalog({
   categories,
-  productCounts,
   onSelect,
 }: {
   categories: CategoryOption[];
-  productCounts: Map<string, number>;
   onSelect: (category: CategoryOption) => void;
 }) {
   const t = useTranslations("marketplace");
@@ -332,14 +503,11 @@ function MobileCategoryCatalog({
               <span className={cn("grid size-16 place-items-center rounded-2xl ring-1", iconStyle)}>
                 <Icon className="size-8 stroke-[2.2]" aria-hidden="true" />
               </span>
-              <span className="grid min-w-0 gap-0.5">
-                <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
-                  {category.name}
+                <span className="grid min-w-0 gap-0.5">
+                  <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
+                    {category.name}
+                  </span>
                 </span>
-                <span className="text-[11px] font-medium text-muted-foreground">
-                  {t("productCount", { count: productCounts.get(category.id) ?? 0 })}
-                </span>
-              </span>
             </button>
           );
         })}
@@ -485,7 +653,7 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 group-hover:text-primary dark:text-foreground sm:min-h-10 sm:text-sm sm:leading-5",
+                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-foreground group-hover:text-primary sm:min-h-10 sm:text-sm sm:leading-5",
                 isLiquidGlass && "font-black group-hover:text-cyan-700 dark:group-hover:text-cyan-200",
               )}
             >
@@ -498,7 +666,7 @@ export function ProductGrid({
               <span className="ml-1 text-xs text-muted-foreground">(0)</span>
             </div>
             <div className="mt-1.5 min-w-0 sm:mt-2">
-              <p className="truncate text-base font-black text-[hsl(var(--marketplace-navy))] dark:text-foreground sm:text-lg">
+              <p className="truncate text-base font-black text-foreground sm:text-lg">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
               {hasDiscount ? (
@@ -530,7 +698,7 @@ export function ProductGrid({
                 product={product}
                 disabled={isOutOfStock}
                 className={cn(
-                  "h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent",
+                  "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[13px] font-black uppercase text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:text-sm sm:font-medium sm:normal-case",
                   isLiquidGlass &&
                     "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                 )}
@@ -824,6 +992,12 @@ export function ProductMarketplace({
 }: ProductMarketplaceProps) {
   const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const [activeSort, setActiveSort] = useState<MarketplaceProductSort>(sort);
+  const [colorFilter, setColorFilter] = useState("");
+  const [sizeFilter, setSizeFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
   const infinite = useInfiniteProducts({
     initialProducts: products,
     initialCursor: nextCursor,
@@ -831,28 +1005,74 @@ export function ProductMarketplace({
     locale,
     categoryId: activeCategoryId,
     searchQuery,
-    sort,
+    sort: activeSort,
   });
   const activeCategory = useMemo(
     () => categories.find((category) => category.id === activeCategoryId),
     [activeCategoryId, categories],
   );
-  const categoryProductCounts = useMemo(() => {
-    const counts = new Map<string, number>();
+  const variantFilterValues = useMemo(() => {
+    const values = {
+      color: new Set<string>(),
+      size: new Set<string>(),
+    };
 
     infinite.products.forEach((product) => {
-      if (product.categoryId) {
-        counts.set(product.categoryId, (counts.get(product.categoryId) ?? 0) + 1);
-      }
+      product.options?.forEach((option) => {
+        if (option.type !== "color" && option.type !== "size") {
+          return;
+        }
+
+        option.values.forEach((value) => {
+          if (option.type === "color") {
+            values.color.add(value.value);
+          } else {
+            values.size.add(value.value);
+          }
+        });
+      });
     });
 
-    return counts;
+    return {
+      colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
+      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+    };
   }, [infinite.products]);
-  const visibleProducts = infinite.products;
+  const visibleProducts = useMemo(() => {
+    const min = minPrice.trim() ? Number(minPrice) : null;
+    const max = maxPrice.trim() ? Number(maxPrice) : null;
+
+    return infinite.products.filter((product) => {
+      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
+      const values = product.options?.flatMap((option) => option.values.map((value) => ({
+        type: option.type,
+        value: value.value,
+      }))) ?? [];
+
+      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
+        return false;
+      }
+
+      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
+        return false;
+      }
+
+      if (min !== null && Number.isFinite(min) && finalPrice < min) {
+        return false;
+      }
+
+      if (max !== null && Number.isFinite(max) && finalPrice > max) {
+        return false;
+      }
+
+      return !inStockOnly || product.stockQuantity > 0;
+    });
+  }, [colorFilter, infinite.products, inStockOnly, maxPrice, minPrice, sizeFilter]);
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
-  }, [selectedCategoryId]);
+    setActiveSort(sort);
+  }, [selectedCategoryId, sort]);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -875,6 +1095,76 @@ export function ProductMarketplace({
     });
   }
 
+  function selectSort(nextSort: MarketplaceProductSort) {
+    setActiveSort(nextSort);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    if (nextSort === "newest") {
+      url.searchParams.delete("sort");
+    } else {
+      url.searchParams.set("sort", nextSort);
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+  }
+
+  function resetFilters() {
+    setColorFilter("");
+    setSizeFilter("");
+    setMinPrice("");
+    setMaxPrice("");
+    setInStockOnly(false);
+    selectCategory();
+    selectSort("newest");
+  }
+
+  const filterBar = (
+    <MarketplaceFilterBar
+      categories={categories}
+      selectedCategoryId={activeCategoryId}
+      sort={activeSort}
+      colors={variantFilterValues.colors}
+      sizes={variantFilterValues.sizes}
+      color={colorFilter}
+      size={sizeFilter}
+      minPrice={minPrice}
+      maxPrice={maxPrice}
+      inStockOnly={inStockOnly}
+      onCategory={selectCategory}
+      onSort={selectSort}
+      onColor={setColorFilter}
+      onSize={setSizeFilter}
+      onMinPrice={setMinPrice}
+      onMaxPrice={setMaxPrice}
+      onStockOnly={setInStockOnly}
+      onReset={resetFilters}
+    />
+  );
+
+  const productGrid = (
+    visibleProducts.length === 0 && !infinite.hasMore && !infinite.isLoadingNext ? (
+      <EmptyState
+        className="min-h-96"
+        title={labels.emptyTitle}
+        description={labels.emptyDescription}
+      />
+    ) : (
+      <ProductInfiniteGrid
+        products={visibleProducts}
+        hasMore={infinite.hasMore}
+        isLoadingNext={infinite.isLoadingNext}
+        onLoadNext={infinite.loadNext}
+        productCardVariant={productCardVariant}
+        labels={{ stock: labels.stock }}
+      />
+    )
+  );
+
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
       <div className="container max-w-full py-5 md:py-8">
@@ -882,96 +1172,27 @@ export function ProductMarketplace({
           <div className="min-w-0">
             <h1 className="text-2xl font-black tracking-normal">{t("allProducts")}</h1>
           </div>
-          <span className="rounded-md border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground">
-            {t("productCount", { count: visibleProducts.length })}
-          </span>
         </header>
+
+        {filterBar}
 
         <div className="md:hidden">
           {activeCategoryId ? (
             <section className="space-y-3">
-              <div className="flex min-w-0 items-center justify-between gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-9 rounded-xl px-3 text-sm"
-                  onClick={() => selectCategory()}
-                >
-                  {t("allCategories")}
-                </Button>
-                <span className="shrink-0 rounded-xl border bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
-                  {t("productCount", { count: visibleProducts.length })}
-                </span>
-              </div>
               <h1 className="text-2xl font-black tracking-normal">
                 {activeCategory?.name ?? t("categoryProducts")}
               </h1>
-              {visibleProducts.length === 0 ? (
-                <EmptyState
-                  className="min-h-72 bg-background"
-                  title={labels.emptyTitle}
-                  description={labels.emptyDescription}
-                />
-              ) : (
-                <>
-                  <ProductInfiniteGrid
-                    products={visibleProducts}
-                    hasMore={infinite.hasMore}
-                    isLoadingNext={infinite.isLoadingNext}
-                    onLoadNext={infinite.loadNext}
-                    productCardVariant={productCardVariant}
-                    labels={{ stock: labels.stock }}
-                  />
-                </>
-              )}
+              {productGrid}
             </section>
           ) : (
             <section className="space-y-5">
-              <MobileCategoryCatalog
-                categories={categories}
-                productCounts={categoryProductCounts}
-                onSelect={selectCategory}
-              />
-              <ProductInfiniteGrid
-                products={visibleProducts}
-                hasMore={infinite.hasMore}
-                isLoadingNext={infinite.isLoadingNext}
-                onLoadNext={infinite.loadNext}
-                productCardVariant={productCardVariant}
-                labels={{ stock: labels.stock }}
-              />
+              {productGrid}
             </section>
           )}
         </div>
 
-        <div className="hidden min-w-0 items-start gap-5 md:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-          <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-            <CategoryFilters
-              categories={categories}
-              selectedCategoryId={activeCategoryId}
-              baseHref="/products"
-              allLabel={t("allCategories")}
-              onSelect={selectCategory}
-            />
-          </aside>
-          {visibleProducts.length === 0 ? (
-            <EmptyState
-              className="min-h-96"
-              title={labels.emptyTitle}
-              description={labels.emptyDescription}
-            />
-          ) : (
-            <>
-              <ProductInfiniteGrid
-                products={visibleProducts}
-                hasMore={infinite.hasMore}
-                isLoadingNext={infinite.isLoadingNext}
-                onLoadNext={infinite.loadNext}
-                productCardVariant={productCardVariant}
-                labels={{ stock: labels.stock }}
-              />
-            </>
-          )}
+        <div className="hidden min-w-0 md:block">
+          {productGrid}
         </div>
       </div>
       <SiteFooter {...footer} />
