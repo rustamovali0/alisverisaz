@@ -310,9 +310,10 @@ function MarketplaceFilterBar({
   );
 
   return (
-    <section className="relative z-20 mb-5 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[11rem] flex-1 sm:flex-none">
+    <section className="relative z-20 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
+      <h2 className="mb-3 text-sm font-bold text-foreground">{t("filters")}</h2>
+      <div className="space-y-3">
+        <div className="relative w-full">
           <button
             type="button"
             className="flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-3 text-left text-sm font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -360,7 +361,7 @@ function MarketplaceFilterBar({
         <select
           value={sort}
           onChange={(event) => onSort(event.target.value as MarketplaceProductSort)}
-          className="h-10 min-w-[9.5rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-semibold outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
           aria-label={t("sortFilter")}
         >
           <option value="newest">{t("sortNewest")}</option>
@@ -372,7 +373,7 @@ function MarketplaceFilterBar({
         <select
           value={color}
           onChange={(event) => onColor(event.target.value)}
-          className="h-10 min-w-[8rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
           aria-label={t("colorFilter")}
         >
           <option value="">{t("allColors")}</option>
@@ -382,14 +383,14 @@ function MarketplaceFilterBar({
         <select
           value={size}
           onChange={(event) => onSize(event.target.value)}
-          className="h-10 min-w-[7rem] flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:flex-none"
+          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
           aria-label={t("sizeFilter")}
         >
           <option value="">{t("allSizes")}</option>
           {sizes.map((value) => <option key={value} value={value}>{value}</option>)}
         </select>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
+        <div className="flex min-w-0 items-center gap-2">
           <input
             type="number"
             min="0"
@@ -412,7 +413,7 @@ function MarketplaceFilterBar({
           />
         </div>
 
-        <label className="inline-flex h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 text-sm font-semibold text-foreground">
+        <label className="flex min-h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-semibold text-foreground">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -423,7 +424,7 @@ function MarketplaceFilterBar({
         </label>
 
         {hasActiveFilters ? (
-          <Button type="button" variant="ghost" className="h-10 px-3 text-sm text-primary" onClick={onReset}>
+          <Button type="button" variant="ghost" className="h-10 w-full px-3 text-sm text-primary" onClick={onReset}>
             {t("clearFilters")}
           </Button>
         ) : null}
@@ -1064,6 +1065,9 @@ export function ProductMarketplace({
       return !inStockOnly || product.stockQuantity > 0;
     });
   }, [colorFilter, infinite.products, inStockOnly, maxPrice, minPrice, sizeFilter]);
+  const hasLocalFilters = Boolean(
+    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
+  );
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
@@ -1152,8 +1156,8 @@ export function ProductMarketplace({
     ) : (
       <ProductInfiniteGrid
         products={visibleProducts}
-        hasMore={infinite.hasMore}
-        isLoadingNext={infinite.isLoadingNext}
+        hasMore={!hasLocalFilters && infinite.hasMore}
+        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
         onLoadNext={infinite.loadNext}
         productCardVariant={productCardVariant}
         labels={{ stock: labels.stock }}
@@ -1170,25 +1174,16 @@ export function ProductMarketplace({
           </div>
         </header>
 
-        {filterBar}
-
-        <div className="md:hidden">
-          {activeCategoryId ? (
-            <section className="space-y-3">
+        <div className="grid items-start gap-5 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-7">
+          <aside className="min-w-0 lg:sticky lg:top-24">{filterBar}</aside>
+          <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
+            {activeCategoryId ? (
               <h1 className="text-2xl font-black tracking-normal">
                 {activeCategory?.name ?? t("categoryProducts")}
               </h1>
-              {productGrid}
-            </section>
-          ) : (
-            <section className="space-y-5">
-              {productGrid}
-            </section>
-          )}
-        </div>
-
-        <div className="hidden min-w-0 md:block">
-          {productGrid}
+            ) : null}
+            {productGrid}
+          </section>
         </div>
       </div>
       <SiteFooter {...footer} />
