@@ -92,6 +92,7 @@
     "sortPriceDesc": "Price: high to low",
     "filters": "Filters",
     "sortFilter": "Sort",
+    "categoryFilter": "Category",
     "colorFilter": "Color",
     "sizeFilter": "Size",
     "allColors": "All colors",

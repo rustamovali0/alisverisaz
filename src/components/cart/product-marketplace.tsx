@@ -34,7 +34,9 @@ import {
   BriefcaseBusiness,
   Bus,
   Car,
+  Check,
   Clock,
+  ChevronDown,
   Dumbbell,
   ExternalLink,
   Home as HomeIcon,
@@ -263,6 +265,97 @@ function CategoryFilters({
   );
 }
 
+type MarketplaceDropdownOption = {
+  value: string;
+  label: string;
+};
+
+function MarketplaceDropdown({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: MarketplaceDropdownOption[];
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedOption = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        className="flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-3 text-left text-sm font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={label}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span className="truncate">{selectedOption?.label ?? label}</span>
+        <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden="true" />
+      </button>
+      {open ? (
+        <div
+          role="listbox"
+          aria-label={label}
+          className="absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl"
+        >
+          {options.map((option) => {
+            const selected = option.value === value;
+            return (
+              <button
+                key={`${label}-${option.value || "all"}`}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={cn(
+                  "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
+                  selected && "bg-primary/10 font-semibold text-primary",
+                )}
+                onClick={() => {
+                  onChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <span className="truncate">{option.label}</span>
+                {selected ? <Check className="size-4 shrink-0" aria-hidden="true" /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function MarketplaceFilterBar({
   categories,
   selectedCategoryId,
@@ -299,7 +392,6 @@ function MarketplaceFilterBar({
   onReset: () => void;
 }) {
   const t = useTranslations("marketplace");
-  const [categoryOpen, setCategoryOpen] = useState(false);
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
   const hasActiveFilters = Boolean(
     selectedCategoryId || color || size || minPrice || maxPrice || inStockOnly,
@@ -309,70 +401,35 @@ function MarketplaceFilterBar({
     <section className="relative z-20 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
       <h2 className="mb-3 text-sm font-bold text-foreground">{t("filters")}</h2>
       <div className="space-y-3">
-        <div className="relative w-full">
-          <button
-            type="button"
-            className="flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-3 text-left text-sm font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-expanded={categoryOpen}
-            onClick={() => setCategoryOpen((open) => !open)}
-          >
-            <span className="truncate">{selectedCategory?.name ?? t("allCategories")}</span>
-            <span className="text-muted-foreground" aria-hidden="true">⌄</span>
-          </button>
-          {categoryOpen ? (
-            <div className="absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl">
-              <button
-                type="button"
-                className={cn(
-                  "w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
-                  !selectedCategoryId && "bg-primary/10 font-semibold text-primary",
-                )}
-                onClick={() => {
-                  onCategory();
-                  setCategoryOpen(false);
-                }}
-              >
-                {t("allCategories")}
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  className={cn(
-                    "w-full rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
-                    selectedCategoryId === category.id && "bg-primary/10 font-semibold text-primary",
-                  )}
-                  onClick={() => {
-                    onCategory(category);
-                    setCategoryOpen(false);
-                  }}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <MarketplaceDropdown
+          label={t("categoryFilter")}
+          value={selectedCategoryId ?? ""}
+          options={[
+            { value: "", label: t("allCategories") },
+            ...categories.map((category) => ({ value: category.id, label: category.name })),
+          ]}
+          onChange={(value) => onCategory(categories.find((category) => category.id === value))}
+        />
 
-        <select
+        <MarketplaceDropdown
+          label={t("colorFilter")}
           value={color}
-          onChange={(event) => onColor(event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
-          aria-label={t("colorFilter")}
-        >
-          <option value="">{t("allColors")}</option>
-          {colors.map((value) => <option key={value} value={value}>{value}</option>)}
-        </select>
+          options={[
+            { value: "", label: t("allColors") },
+            ...colors.map((value) => ({ value, label: value })),
+          ]}
+          onChange={onColor}
+        />
 
-        <select
+        <MarketplaceDropdown
+          label={t("sizeFilter")}
           value={size}
-          onChange={(event) => onSize(event.target.value)}
-          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
-          aria-label={t("sizeFilter")}
-        >
-          <option value="">{t("allSizes")}</option>
-          {sizes.map((value) => <option key={value} value={value}>{value}</option>)}
-        </select>
+          options={[
+            { value: "", label: t("allSizes") },
+            ...sizes.map((value) => ({ value, label: value })),
+          ]}
+          onChange={onSize}
+        />
 
         <div className="flex min-w-0 items-center gap-2">
           <input
@@ -1148,17 +1205,17 @@ export function ProductMarketplace({
   );
 
   const sortControl = (
-    <select
+    <MarketplaceDropdown
+      label={t("sortFilter")}
       value={activeSort}
-      onChange={(event) => selectSort(event.target.value as MarketplaceProductSort)}
-      className="h-10 min-w-44 rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
-      aria-label={t("sortFilter")}
-    >
-      <option value="newest">{t("sortNewest")}</option>
-      <option value="oldest">{t("sortOldest")}</option>
-      <option value="price_asc">{t("sortPriceAsc")}</option>
-      <option value="price_desc">{t("sortPriceDesc")}</option>
-    </select>
+      options={[
+        { value: "newest", label: t("sortNewest") },
+        { value: "oldest", label: t("sortOldest") },
+        { value: "price_asc", label: t("sortPriceAsc") },
+        { value: "price_desc", label: t("sortPriceDesc") },
+      ]}
+      onChange={(value) => selectSort(value as MarketplaceProductSort)}
+    />
   );
 
   return (

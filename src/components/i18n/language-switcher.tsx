@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Languages, Loader2 } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
@@ -293,18 +293,15 @@ export function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="glass-panel inline-flex h-11 items-center gap-2 rounded-xl border bg-background/90 px-3 text-sm font-black text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="glass-panel inline-flex size-10 items-center justify-center rounded-full border bg-background/90 p-0 text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label={t("language")}
+        aria-label={`${t("language")}: ${currentLanguage?.name ?? currentLanguage?.code}`}
+        title={currentLanguage?.name}
       >
-        <Languages className="size-4 text-muted-foreground" aria-hidden="true" />
-        <span aria-hidden="true">{currentLanguage?.flag}</span>
-        <span>{currentLanguage?.code}</span>
-        <ChevronDown
-          className={cn("size-4 text-muted-foreground transition", isOpen && "rotate-180")}
-          aria-hidden="true"
-        />
+        <span className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-muted text-lg leading-none" aria-hidden="true">
+          {currentLanguage?.flag}
+        </span>
       </button>
       {isOpen ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] w-48 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">

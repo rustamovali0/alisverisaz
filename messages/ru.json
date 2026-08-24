@@ -92,6 +92,7 @@
     "sortPriceDesc": "Цена: по убыванию",
     "filters": "Фильтры",
     "sortFilter": "Сортировка",
+    "categoryFilter": "Категория",
     "colorFilter": "Цвет",
     "sizeFilter": "Размер",
     "allColors": "Все цвета",
