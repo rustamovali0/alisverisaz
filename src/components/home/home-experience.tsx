@@ -5,6 +5,7 @@ import {
   ArrowRight,
   PackageSearch,
   ShieldCheck,
+  Sparkles,
   Store,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -21,7 +22,6 @@ import {
 } from "@/lib/cms/defaults";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
-import { formatAznPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type HomeExperienceProps = {
@@ -230,7 +230,6 @@ export function HomeExperience({
 }: HomeExperienceProps) {
   const common = useTranslations("common");
   const home = useTranslations("home");
-  const marketplace = useTranslations("marketplace");
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
@@ -259,7 +258,6 @@ export function HomeExperience({
   );
   const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
-  const featuredProduct = products[0];
 
   return (
     <main
@@ -267,112 +265,122 @@ export function HomeExperience({
       data-homepage-preset={siteSettings.design.homepagePreset}
       style={themeStyle}
     >
-      <section className="border-b py-4 md:py-6" style={{ backgroundColor: "var(--home-hero-bg)" }}>
-        <div className="container grid items-start gap-4 lg:grid-cols-[220px_minmax(0,1fr)_236px]">
-          <aside className="rounded-lg border bg-card p-3 shadow-sm">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <h2 className="text-sm font-black">{home("categories")}</h2>
-              <Link href="/products" className="text-xs font-semibold text-primary hover:underline">
-                {home("allCategories")}
+      <section
+        className="grid items-center gap-8 py-8 lg:min-h-[560px] lg:py-14"
+        style={{ backgroundColor: "var(--home-hero-bg)" }}
+      >
+        <div className="container grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="min-w-0 max-w-2xl">
+          <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
+            <Sparkles className="size-4 text-primary" aria-hidden="true" />
+            {home("marketplaceBadge")}
+          </span>
+          <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
+            {heroTitle}
+          </h1>
+          <MarketplaceSearch
+            stores={stores}
+            categories={categories}
+            className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10 md:grid md:grid-cols-[1fr_auto]"
+            inputClassName="h-12 border-transparent bg-background"
+            buttonSize="lg"
+            stackOnMobile
+          />
+          <div className="mt-5 flex flex-wrap gap-2">
+            {activeCategories.slice(0, 6).map((category) => (
+              <Link
+                key={category.id}
+                href={`/products?category=${category.slug}`}
+                className="max-w-full rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
+              >
+                {category.name}
               </Link>
-            </div>
-            <div className="space-y-1">
-              {activeCategories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/products?category=${category.slug}`}
-                  className="flex min-w-0 items-center justify-between gap-2 rounded-md px-2.5 py-2 text-sm text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                >
-                  <span className="truncate">{category.name}</span>
-                  <ArrowRight className="size-3.5 shrink-0" aria-hidden="true" />
-                </Link>
-              ))}
-            </div>
-          </aside>
-
-          <div className="min-w-0 space-y-3">
-            <MarketplaceSearch
-              stores={stores}
-              categories={categories}
-              className="rounded-lg border bg-card p-1.5 shadow-sm md:grid md:grid-cols-[1fr_auto]"
-              inputClassName="h-10 border-transparent bg-background"
-              stackOnMobile
-            />
-            <article className="relative min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
-              <div className="relative aspect-[2.25/1] min-h-[190px] bg-muted sm:min-h-[240px]">
-                {hero?.imageUrl ? (
-                  <img src={hero.imageUrl} alt={heroTitle} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.12),hsl(var(--accent)/0.12))]" />
-                )}
-                <div className="absolute inset-0 flex items-end bg-gradient-to-t from-background/85 via-background/20 to-transparent p-4 sm:p-6">
-                  <div className="max-w-xl">
-                    {heroShowTitle ? <h1 className="text-2xl font-black tracking-normal sm:text-3xl">{heroTitle}</h1> : null}
-                    {heroShowDescription ? <p className="mt-1 max-w-lg text-sm text-muted-foreground">{heroDescription}</p> : null}
-                  </div>
-                  <div className="ml-auto hidden rounded-md bg-primary px-3 py-2 text-primary-foreground sm:block">
-                    <p className="text-[11px] opacity-80">{home("activeProducts")}</p>
-                    <p className="text-xl font-black">{totalProductCount}</p>
-                  </div>
-                </div>
-              </div>
-            </article>
+            ))}
           </div>
+        </div>
 
-          <aside className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            {featuredStores[0] ? (
-              <Link href={`/${featuredStores[0].slug}`} className="group min-w-0 rounded-lg border bg-card p-3 shadow-sm transition hover:border-primary/40 hover:shadow-md">
-                <p className="text-xs font-semibold text-muted-foreground">{home("featuredStores")}</p>
-                <div className="mt-2 flex items-center gap-3">
-                  <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-md border bg-muted">
-                    {featuredStores[0].logoUrl ? <img src={featuredStores[0].logoUrl} alt={featuredStores[0].name} className="h-full w-full object-contain p-1" /> : <Store className="size-5 text-primary" aria-hidden="true" />}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-black group-hover:text-primary">{featuredStores[0].name}</span>
-                    <span className="block text-xs text-muted-foreground">{home("activeProducts")}: {featuredStores[0].productCount}</span>
-                  </span>
+        <div className="relative hidden lg:block">
+          <div className="overflow-hidden rounded-lg border bg-card shadow-2xl shadow-slate-900/12">
+            <div className="relative aspect-[4/3] bg-muted">
+              {hero?.imageUrl ? (
+                <img
+                  src={hero.imageUrl}
+                  alt={heroTitle}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--accent)/0.12))]" />
+              )}
+              <div
+                className={cn(
+                  "absolute inset-0 grid place-items-center p-8 text-center",
+                  hero?.imageUrl && "bg-background/68 backdrop-blur-[1px]",
+                )}
+              >
+                  <div className="max-w-sm">
+                    <div className="mx-auto grid size-16 place-items-center rounded-lg border border-primary/20 bg-background/80 text-primary shadow-sm">
+                      <Store className="size-8" aria-hidden="true" />
+                    </div>
+                    {heroShowTitle ? (
+                      <h2 className="mt-5 text-2xl font-black tracking-normal">
+                        {heroTitle}
+                      </h2>
+                    ) : null}
+                    {heroShowDescription ? (
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                        {heroDescription}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              </Link>
-            ) : null}
-            {featuredProduct ? (
-              <Link href={featuredProduct.storeSlug ? `/${featuredProduct.storeSlug}/products/${featuredProduct.slug}` : "/products"} className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:border-primary/40 hover:shadow-md">
-                <div className="aspect-[2/1] bg-muted">
-                  {featuredProduct.imageUrl ? <img src={featuredProduct.imageUrl} alt={featuredProduct.name} className="h-full w-full object-contain p-2" /> : <PackageSearch className="mx-auto mt-8 size-7 text-muted-foreground" aria-hidden="true" />}
-                </div>
-                <div className="p-3">
-                  <p className="text-xs text-muted-foreground">{common("products")}</p>
-                  <p className="mt-1 line-clamp-2 text-sm font-bold group-hover:text-primary">{featuredProduct.name}</p>
-                  <p className="mt-1 text-sm font-black">{formatAznPrice(featuredProduct.priceAmount)}</p>
-                </div>
-              </Link>
-            ) : null}
-          </aside>
+            </div>
+          </div>
+          <div
+            className="absolute -bottom-5 right-5 rounded-lg p-4 shadow-xl"
+            style={{
+              backgroundColor: "var(--home-button-bg)",
+              color: "var(--home-button-text)",
+            }}
+          >
+            <p className="text-sm opacity-90">{home("activeProducts")}</p>
+            <p className="text-3xl font-black">{totalProductCount}</p>
+          </div>
+        </div>
         </div>
       </section>
 
-      {products.length > 0 ? (
+      {activeCategories.length > 0 ? (
         <section
+          data-home-categories
           className="py-6 md:py-10"
-          style={{ backgroundColor: "var(--home-products-bg)" }}
+          style={{ backgroundColor: "var(--home-categories-bg)" }}
         >
           <div className="container">
           <div className="mb-5 flex items-end justify-between">
             <div>
-              <h2 className="text-2xl font-black">{common("products")}</h2>
+              <h2 className="text-2xl font-black">
+                {categorySection?.title || home("categories")}
+              </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">{productsLabel}</Link>
+              <Link href="/products">{home("allCategories")}</Link>
             </Button>
           </div>
-          <InfiniteProductGrid
-            initialProducts={products}
-            initialCursor={productNextCursor}
-            initialHasMore={productHasMore}
-            locale={locale}
-            sort="newest"
-            productCardVariant={productCardVariant}
-            labels={{ stock: marketplace("stock") }}
-          />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
+            {activeCategories.map((category) => (
+              <div
+                key={category.id}
+              >
+                <Link
+                  href={`/products?category=${category.slug}`}
+                className="flex min-h-20 items-center justify-between rounded-lg border bg-card px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg sm:min-h-24 sm:p-4"
+                >
+                  <span className="line-clamp-2 min-w-0 break-words text-sm font-bold sm:text-base">{category.name}</span>
+                  <ArrowRight className="size-4 text-muted-foreground" />
+                </Link>
+              </div>
+            ))}
+          </div>
           </div>
         </section>
       ) : null}
@@ -400,6 +408,33 @@ export function HomeExperience({
               </div>
             ))}
           </div>
+          </div>
+        </section>
+      ) : null}
+
+      {products.length > 0 ? (
+        <section
+          className="py-6 md:py-10"
+          style={{ backgroundColor: "var(--home-products-bg)" }}
+        >
+          <div className="container">
+          <div className="mb-5 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-black">{common("products")}</h2>
+            </div>
+            <Button asChild variant="outline">
+              <Link href="/products">{productsLabel}</Link>
+            </Button>
+          </div>
+          <InfiniteProductGrid
+            initialProducts={products}
+            initialCursor={productNextCursor}
+            initialHasMore={productHasMore}
+            locale={locale}
+            sort="newest"
+            productCardVariant={productCardVariant}
+            labels={{ stock: "Stok" }}
+          />
           </div>
         </section>
       ) : null}
