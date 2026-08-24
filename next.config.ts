@@ -3,6 +3,7 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  serverExternalPackages: ["sharp"],
   images: {
     remotePatterns: [
       {

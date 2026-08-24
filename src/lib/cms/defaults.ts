@@ -150,6 +150,7 @@ export const defaultSiteSettings: SiteSettings = {
   userRegistrationEnabled: true,
   storeRegistrationEnabled: true,
   depositEnabled: false,
+  showWhatsappOrderButton: true,
   showSubscriptionInSellerPanel: false,
   subscriptionsDisabledForSellers: true,
   globalLoader: {

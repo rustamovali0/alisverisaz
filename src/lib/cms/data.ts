@@ -141,6 +141,10 @@ function normalizeSiteSettings(value: any): SiteSettings {
       defaultSiteSettings.storeRegistrationEnabled,
     ),
     depositEnabled: readBoolean(value?.deposit_enabled, defaultSiteSettings.depositEnabled),
+    showWhatsappOrderButton: readBoolean(
+      value?.show_whatsapp_order_button,
+      defaultSiteSettings.showWhatsappOrderButton,
+    ),
     showSubscriptionInSellerPanel: readBoolean(
       value?.show_subscription_in_seller_panel,
       defaultSiteSettings.showSubscriptionInSellerPanel,

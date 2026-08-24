@@ -66,6 +66,13 @@ export type CheckoutActionResult =
       ok: true;
       message: string;
       orderIds: string[];
+      orders?: Array<{
+        id?: unknown;
+        storeId?: unknown;
+        orderNumber?: unknown;
+        totalAmount?: unknown;
+        itemCount?: unknown;
+      }>;
       isGuest?: boolean;
     }
   | {

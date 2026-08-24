@@ -1,7 +1,6 @@
 import "server-only";
 
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import sharp from "sharp";
 
 import { serverEnv } from "@/lib/config/env.server";
 
@@ -79,6 +78,8 @@ function publicUrlForKey(key: string) {
 
 async function convertImageToWebp(input: Buffer) {
   try {
+    const sharp = (await import("sharp")).default;
+
     return await sharp(input)
       .rotate()
       .webp({ quality: DEFAULT_WEBP_QUALITY })

@@ -5,6 +5,7 @@ import { after } from "next/server";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
+import { WhatsAppOrderButton } from "@/components/cart/whatsapp-order-button";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { ProductMessageForm } from "@/components/messages/product-message-form";
@@ -177,6 +178,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     visibleProductLocations[0]?.location ??
     null;
   const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
+  const sellerPhone = sellerLocation?.phone ?? detail.store.phone ?? "";
   const sellerMapUrl = sellerLocation
     ? getLocationMapUrl(sellerLocation)
     : sellerAddress
@@ -277,6 +279,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 className="w-full"
               />
             </div>
+            {siteSettings.showWhatsappOrderButton && sellerPhone ? (
+              <WhatsAppOrderButton
+                product={detail.product}
+                sellerPhone={sellerPhone}
+                sellerName={detail.store.name}
+                viewerRole={viewerRole}
+                buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
+                buyerPhone={current?.profile?.phone ?? ""}
+                disabled={!canBuy}
+                className="mt-3 h-12 w-full"
+              />
+            ) : null}
             <div className="mt-5 min-w-0 rounded-lg border bg-background p-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg border bg-muted">

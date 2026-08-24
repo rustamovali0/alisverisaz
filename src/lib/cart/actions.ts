@@ -372,6 +372,7 @@ export async function createCheckoutOrdersAction(
       ? "Sifariş yaradıldı. Sifarişinizi izləmək üçün hesab yaradın."
       : "Sifariş yaradıldı.",
     orderIds: checkout.orderIds,
+    orders: checkout.orders,
     isGuest: isGuestCheckout,
   };
 }

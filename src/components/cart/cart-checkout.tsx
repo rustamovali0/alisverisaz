@@ -16,6 +16,7 @@ const CART_KEY = "alisveris_cart";
 type CartCheckoutProps = {
   products?: CartProduct[];
   defaultFullName?: string;
+  defaultPhone?: string;
   locale?: string;
   checkoutOnly?: boolean;
 };
@@ -45,6 +46,7 @@ function formatMoney(value: number) {
 export function CartCheckout({
   products: initialProducts = [],
   defaultFullName = "",
+  defaultPhone = "",
   locale = "az",
   checkoutOnly = false,
 }: CartCheckoutProps) {
@@ -86,6 +88,7 @@ export function CartCheckout({
       : "/products";
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
+  const hasSavedContact = Boolean(defaultFullName.trim() && defaultPhone.trim());
 
   useEffect(() => {
     setCheckoutRequestId(crypto.randomUUID());
@@ -321,19 +324,32 @@ export function CartCheckout({
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <div className="mt-4 grid gap-4">
-            <label className="grid gap-2 text-sm font-medium">
-              Ad Soyad
-              <input
-                name="fullName"
-                defaultValue={defaultFullName}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium">
-              Telefon
-              <PhoneInput name="phone" required />
-            </label>
+            {hasSavedContact ? (
+              <div className="rounded-md border bg-muted/40 p-3 text-sm">
+                <input type="hidden" name="fullName" value={defaultFullName} />
+                <input type="hidden" name="phone" value={defaultPhone} />
+                <p className="font-semibold">Profil məlumatları istifadə olunur</p>
+                <p className="mt-1 text-muted-foreground">
+                  {defaultFullName} · {defaultPhone}
+                </p>
+              </div>
+            ) : (
+              <>
+                <label className="grid gap-2 text-sm font-medium">
+                  Ad Soyad
+                  <input
+                    name="fullName"
+                    defaultValue={defaultFullName}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    required
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium">
+                  Telefon
+                  <PhoneInput name="phone" defaultValue={defaultPhone} required />
+                </label>
+              </>
+            )}
             <label className="grid gap-2 text-sm font-medium">
               Çatdırılma üsulu
               <select
