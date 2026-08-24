@@ -1,12 +1,15 @@
 import "server-only";
 
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 
 import { serverEnv } from "@/lib/config/env.server";
 
 const WEBP_CONTENT_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 82;
 const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const IMAGE_PROCESSING_ERROR =
+  "Şəkil emalı alınmadı. Faylın JPG, PNG və ya WebP olduğundan əmin olun.";
 
 let r2Client: S3Client | null = null;
 
@@ -75,12 +78,14 @@ function publicUrlForKey(key: string) {
 }
 
 async function convertImageToWebp(input: Buffer) {
-  const sharp = (await import("sharp")).default;
-
-  return sharp(input)
-    .rotate()
-    .webp({ quality: DEFAULT_WEBP_QUALITY })
-    .toBuffer({ resolveWithObject: true });
+  try {
+    return await sharp(input)
+      .rotate()
+      .webp({ quality: DEFAULT_WEBP_QUALITY })
+      .toBuffer({ resolveWithObject: true });
+  } catch {
+    throw new Error(IMAGE_PROCESSING_ERROR);
+  }
 }
 
 function keyFromPublicUrl(url: string) {
