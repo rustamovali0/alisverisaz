@@ -74,6 +74,16 @@ type ProductRow = {
 
 const PUBLIC_PRODUCT_SELECT =
   "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)";
+const PUBLIC_PRODUCT_SELECT_LEGACY =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(name,slug)";
+const PUBLIC_PRODUCT_SELECT_NO_STORE =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
+const PRODUCT_DETAIL_SELECT =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)";
+const PRODUCT_DETAIL_SELECT_LEGACY =
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
@@ -96,6 +106,24 @@ type ProductCursor = {
   id: string;
   price?: number;
 };
+
+function isMissingVariantSchemaError(error: unknown) {
+  const value = error as { code?: string; message?: string; details?: string } | null;
+  const text = `${value?.message ?? ""} ${value?.details ?? ""}`.toLowerCase();
+
+  return (
+    value?.code === "PGRST200" ||
+    value?.code === "PGRST205" ||
+    value?.code === "42P01" ||
+    value?.code === "42703" ||
+    text.includes("product_options") ||
+    text.includes("product_option_values") ||
+    text.includes("price_override_amount") ||
+    text.includes("combination") ||
+    text.includes("schema cache") ||
+    text.includes("relationship")
+  );
+}
 
 function readOriginalContentText(fallback: string | null) {
   return fallback || "";
@@ -435,29 +463,39 @@ async function getMarketplaceProductPageUncached(
   const supabase = createSupabasePublicClient();
   const cursor = decodeProductCursor(input.cursor);
   const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
-  let query = (supabase as any)
-    .from("products")
-    .select(PUBLIC_PRODUCT_SELECT)
-    .eq("status", "active");
 
-  if (input.categoryId && isUuid(input.categoryId)) {
-    query = query.eq("category_id", input.categoryId);
+  async function runQuery(selectColumns: string) {
+    let query = (supabase as any)
+      .from("products")
+      .select(selectColumns)
+      .eq("status", "active");
+
+    if (input.categoryId && isUuid(input.categoryId)) {
+      query = query.eq("category_id", input.categoryId);
+    }
+
+    if (input.storeId && isUuid(input.storeId)) {
+      query = query.eq("store_id", input.storeId);
+    }
+
+    if (normalizedSearch) {
+      const escaped = normalizedSearch.replace(/[%_]/g, "\\$&");
+      query = query.or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    }
+
+    return applyProductSort(
+      applyProductCursor(query, cursor, input.sort),
+      input.sort,
+    ).limit(input.limit + 1);
   }
 
-  if (input.storeId && isUuid(input.storeId)) {
-    query = query.eq("store_id", input.storeId);
+  let { data, error } = await runQuery(PUBLIC_PRODUCT_SELECT);
+
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await runQuery(PUBLIC_PRODUCT_SELECT_LEGACY);
+    data = fallback.data;
+    error = fallback.error;
   }
-
-  if (normalizedSearch) {
-    const escaped = normalizedSearch.replace(/[%_]/g, "\\$&");
-    query = query.or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`);
-  }
-
-  query = applyProductSort(applyProductCursor(query, cursor, input.sort), input.sort).limit(
-    input.limit + 1,
-  );
-
-  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);
@@ -496,13 +534,21 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
   }
 
   const favoriteOrder = new Map(productIds.map((productId, index) => [productId, index]));
-  const { data } = await (supabase as any)
+  let { data, error } = await (supabase as any)
     .from("products")
-    .select(
-      PUBLIC_PRODUCT_SELECT,
-    )
+    .select(PUBLIC_PRODUCT_SELECT)
     .eq("status", "active")
     .in("id", productIds);
+
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await (supabase as any)
+      .from("products")
+      .select(PUBLIC_PRODUCT_SELECT_LEGACY)
+      .eq("status", "active")
+      .in("id", productIds);
+
+    data = fallback.data;
+  }
 
   return ((data ?? []) as ProductRow[])
     .map((row) => toCartProduct(row))
@@ -540,26 +586,37 @@ async function getMarketplaceStoresUncached(
     return [];
   }
 
-  let productQuery = (supabase as any)
-    .from("products")
-    .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
-    )
-    .eq("status", "active")
-    .in("store_id", storeIds)
-    .order("created_at", {
-      ascending: false,
-    });
-
-  if (categoryId) {
-    productQuery = productQuery.eq("category_id", categoryId);
-  }
-
   const productLimit = Math.min(
     Math.max(storeRows.length * (categoryId || searchQuery ? 8 : 4), 24),
     categoryId || searchQuery ? 120 : 80,
   );
-  const { data: products, error: productsError } = await productQuery.limit(productLimit);
+
+  async function runStoreProductsQuery(selectColumns: string) {
+    let productQuery = (supabase as any)
+      .from("products")
+      .select(selectColumns)
+      .eq("status", "active")
+      .in("store_id", storeIds)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (categoryId) {
+      productQuery = productQuery.eq("category_id", categoryId);
+    }
+
+    return productQuery.limit(productLimit);
+  }
+
+  let { data: products, error: productsError } = await runStoreProductsQuery(
+    PUBLIC_PRODUCT_SELECT_NO_STORE,
+  );
+
+  if (productsError && isMissingVariantSchemaError(productsError)) {
+    const fallback = await runStoreProductsQuery(PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY);
+    products = fallback.data;
+    productsError = fallback.error;
+  }
 
   if (productsError) {
     throw new Error(productsError.message);
@@ -678,28 +735,37 @@ async function getMarketplaceStoreBySlugUncached(input: {
     return null;
   }
 
-  let productQuery = (supabase as any)
-    .from("products")
-    .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
-      { count: "exact" },
-    )
-    .eq("store_id", store.id)
-    .eq("status", "active")
-    .order("created_at", {
-      ascending: false,
-    })
-    .order("id", {
-      ascending: false,
-    });
+  async function runStorePageProductsQuery(selectColumns: string) {
+    let productQuery = (supabase as any)
+      .from("products")
+      .select(selectColumns, { count: "exact" })
+      .eq("store_id", store.id)
+      .eq("status", "active")
+      .order("created_at", {
+        ascending: false,
+      })
+      .order("id", {
+        ascending: false,
+      });
 
-  if (input.categoryId) {
-    productQuery = productQuery.eq("category_id", input.categoryId);
+    if (input.categoryId) {
+      productQuery = productQuery.eq("category_id", input.categoryId);
+    }
+
+    return productQuery.limit(DEFAULT_PRODUCT_PAGE_LIMIT + 1);
   }
 
-  const { data: products, error: productsError, count } = await productQuery.limit(
-    DEFAULT_PRODUCT_PAGE_LIMIT + 1,
-  );
+  let { data: products, error: productsError, count } =
+    await runStorePageProductsQuery(PUBLIC_PRODUCT_SELECT_NO_STORE);
+
+  if (productsError && isMissingVariantSchemaError(productsError)) {
+    const fallback = await runStorePageProductsQuery(
+      PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY,
+    );
+    products = fallback.data;
+    productsError = fallback.error;
+    count = fallback.count;
+  }
 
   if (productsError) {
     throw new Error(productsError.message);
@@ -794,22 +860,30 @@ async function getMarketplaceProductByIdUncached(input: {
     storeId = String(store.id);
   }
 
-  let query = (supabase as any)
-    .from("products")
-    .select(
-      "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)",
-    )
-    .eq("status", "active");
+  async function runDetailQuery(selectColumns: string) {
+    let query = (supabase as any)
+      .from("products")
+      .select(selectColumns)
+      .eq("status", "active");
 
-  if (storeId) {
-    query = query.eq("store_id", storeId);
+    if (storeId) {
+      query = query.eq("store_id", storeId);
+    }
+
+    query = isUuid(input.productId)
+      ? query.eq("id", input.productId)
+      : query.eq("slug", input.productId);
+
+    return query.maybeSingle();
   }
 
-  query = isUuid(input.productId)
-    ? query.eq("id", input.productId)
-    : query.eq("slug", input.productId);
+  let { data, error } = await runDetailQuery(PRODUCT_DETAIL_SELECT);
 
-  const { data, error } = await query.maybeSingle();
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await runDetailQuery(PRODUCT_DETAIL_SELECT_LEGACY);
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     throw new Error(error.message);
@@ -896,13 +970,25 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   }
 
   const supabase = await createSupabaseServerClient();
-  const { data } = await (supabase as any)
+  let { data, error } = await (supabase as any)
     .from("products")
     .select(
       "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)",
     )
     .eq("status", "active")
     .in("id", productIds);
+
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await (supabase as any)
+      .from("products")
+      .select(
+        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(name,slug)",
+      )
+      .eq("status", "active")
+      .in("id", productIds);
+
+    data = fallback.data;
+  }
 
   return ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row));
 }

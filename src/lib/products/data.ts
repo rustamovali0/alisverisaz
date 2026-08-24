@@ -91,6 +91,29 @@ const publicRootCategorySlugs = [
   "qida-ve-ickiler",
 ];
 
+const MANAGED_PRODUCT_SELECT =
+  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+const MANAGED_PRODUCT_SELECT_LEGACY =
+  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_variants(name,value,price_delta_amount,stock_quantity)";
+
+function isMissingVariantSchemaError(error: unknown) {
+  const value = error as { code?: string; message?: string; details?: string } | null;
+  const text = `${value?.message ?? ""} ${value?.details ?? ""}`.toLowerCase();
+
+  return (
+    value?.code === "PGRST200" ||
+    value?.code === "PGRST205" ||
+    value?.code === "42P01" ||
+    value?.code === "42703" ||
+    text.includes("product_options") ||
+    text.includes("product_option_values") ||
+    text.includes("price_override_amount") ||
+    text.includes("combination") ||
+    text.includes("schema cache") ||
+    text.includes("relationship")
+  );
+}
+
 function toManagedProduct(row: ProductRow): ManagedProduct {
   const optionsFromRows = (row.product_options ?? [])
     .filter((option) => PRODUCT_OPTION_TYPES.includes(option.type))
@@ -231,33 +254,41 @@ export async function getManagedProducts(filters: {
   listingType?: "store" | "personal";
 }) {
   const supabase = await createSupabaseServerClient();
-  let query = (supabase as any)
-    .from("products")
-    .select(
-      "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)",
-    )
-    .order("created_at", {
-      ascending: false,
-    });
 
-  if (filters.storeIds) {
-    query = query.in(
-      "store_id",
-      filters.storeIds.length > 0
-        ? filters.storeIds
-        : ["00000000-0000-0000-0000-000000000000"],
-    );
+  async function runQuery(selectColumns: string) {
+    let query = (supabase as any)
+      .from("products")
+      .select(selectColumns)
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (filters.storeIds) {
+      query = query.in(
+        "store_id",
+        filters.storeIds.length > 0
+          ? filters.storeIds
+          : ["00000000-0000-0000-0000-000000000000"],
+      );
+    }
+
+    if (filters.ownerId) {
+      query = query.eq("owner_id", filters.ownerId);
+    }
+
+    if (filters.listingType) {
+      query = query.eq("listing_type", filters.listingType);
+    }
+
+    return query;
   }
 
-  if (filters.ownerId) {
-    query = query.eq("owner_id", filters.ownerId);
-  }
+  let { data, error } = await runQuery(MANAGED_PRODUCT_SELECT);
 
-  if (filters.listingType) {
-    query = query.eq("listing_type", filters.listingType);
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await runQuery(MANAGED_PRODUCT_SELECT_LEGACY);
+    data = fallback.data;
   }
-
-  const { data } = await query;
 
   return ((data ?? []) as ProductRow[]).map(toManagedProduct);
 }
