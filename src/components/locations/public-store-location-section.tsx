@@ -40,13 +40,13 @@ export function PublicStoreLocationSection({
   }
 
   return (
-    <section className="mx-auto mt-6 w-full max-w-5xl rounded-lg bg-card p-4 shadow-sm md:p-5">
+    <section className="mx-auto mt-4 w-full max-w-5xl rounded-lg border bg-card p-3 shadow-sm md:mt-6 md:p-5">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary md:size-9">
           <MapPin className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h2 className="break-words text-lg font-black tracking-normal md:text-xl">
+          <h2 className="break-words text-base font-black tracking-normal md:text-xl">
             Ünvan və nəqliyyat
           </h2>
         </div>
@@ -56,11 +56,11 @@ export function PublicStoreLocationSection({
         {activeLocations.map((location) => (
           <article
             key={location.id}
-            className="grid min-w-0 gap-3 rounded-lg border bg-background p-3"
+            className="grid min-w-0 gap-2.5 rounded-lg border bg-background p-3 md:gap-3"
           >
             <div className="flex min-w-0 items-start justify-between gap-3">
               <div className="min-w-0">
-                <h3 className="break-words font-semibold">{location.name}</h3>
+                <h3 className="break-words text-sm font-bold md:text-base">{location.name}</h3>
                 {location.showAddress ? (
                   <p className="mt-1 break-words text-sm text-muted-foreground">
                     {location.city}
@@ -80,7 +80,7 @@ export function PublicStoreLocationSection({
               ) : null}
             </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm text-muted-foreground md:gap-x-4">
               {location.showMetro && location.nearestMetro ? (
                 <div className="flex min-w-0 items-center gap-2">
                   <Navigation className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />

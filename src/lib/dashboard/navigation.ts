@@ -14,6 +14,7 @@ export type DashboardIcon =
   | "palette"
   | "receipt"
   | "settings"
+  | "shield"
   | "shoppingCart"
   | "sparkles"
   | "users"
@@ -30,28 +31,22 @@ export type DashboardNavItem = {
 export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
   customer: [
     {
-      title: "İcmal",
+      title: "Ana səhifə",
       titleKey: "dashboard",
       href: "/dashboard",
       icon: "home",
     },
     {
-      title: "Sifarişlərim",
+      title: "Sifarişlər",
       titleKey: "orders",
       href: "/dashboard/orders",
       icon: "shoppingCart",
     },
     {
-      title: "Sevimlilər",
-      titleKey: "favorites",
-      href: "/dashboard/favorites",
-      icon: "heart",
-    },
-    {
-      title: "Bildirişlər",
-      titleKey: "notifications",
-      href: "/dashboard/notifications",
-      icon: "sparkles",
+      title: "Profil",
+      titleKey: "profile",
+      href: "/dashboard/profile",
+      icon: "user",
     },
     {
       title: "Ünvanlar",
@@ -60,10 +55,16 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "building",
     },
     {
-      title: "Profil",
-      titleKey: "profile",
-      href: "/dashboard/profile",
-      icon: "user",
+      title: "Bildirişlər",
+      titleKey: "notifications",
+      href: "/dashboard/notifications",
+      icon: "sparkles",
+    },
+    {
+      title: "Təhlükəsizlik",
+      titleKey: "security",
+      href: "/dashboard/security",
+      icon: "shield",
     },
     {
       title: "Ayarlar",

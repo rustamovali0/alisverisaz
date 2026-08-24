@@ -380,7 +380,7 @@ export function ProductGrid({
   const now = Date.now();
 
   return (
-    <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
         const hasDiscount = product.discountAmount > 0;
@@ -436,7 +436,7 @@ export function ProductGrid({
             <div
               data-product-card-image
               className={cn(
-                "relative aspect-[4/3] overflow-hidden bg-white",
+                "relative aspect-[4/3] overflow-hidden bg-background",
                 isLiquidGlass && "liquid-glass-product-image-shell",
               )}
             >
@@ -473,7 +473,7 @@ export function ProductGrid({
             productId={product.id}
             productName={product.name}
             compact
-            className="absolute right-2 top-2 z-20 size-9 border-white/70 bg-white/95 text-slate-900 shadow-sm"
+            className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
           />
           <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
             <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
@@ -530,7 +530,7 @@ export function ProductGrid({
                 product={product}
                 disabled={isOutOfStock}
                 className={cn(
-                  "h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-slate-100 disabled:text-slate-400 sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent",
+                  "h-10 w-full rounded-lg border-0 bg-[hsl(var(--marketplace-primary-soft))] px-2 text-[13px] font-black uppercase text-[hsl(var(--marketplace-primary))] shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary)/0.16)] hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:border sm:bg-background sm:text-sm sm:font-medium sm:normal-case sm:text-foreground sm:hover:bg-accent",
                   isLiquidGlass &&
                     "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                 )}
@@ -1033,8 +1033,8 @@ export function Storefront({
   }
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <div className="container max-w-full py-5 md:py-6">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
+      <div className="container max-w-full py-4 md:py-6">
         <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
           <Link href="/products" className="hover:text-primary">
             {t("stores")}
@@ -1043,8 +1043,8 @@ export function Storefront({
           <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
         </nav>
 
-        <section className="min-w-0 overflow-hidden rounded-lg bg-card shadow-sm">
-          <div className="relative h-36 bg-primary/10 sm:h-44 lg:h-56">
+        <section className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
+          <div className="relative h-24 bg-primary/10 sm:h-44 lg:h-56">
             {store.coverUrl ? (
               <div className="absolute inset-0 overflow-hidden">
                 <img
@@ -1064,34 +1064,34 @@ export function Storefront({
               </div>
             )}
             <div className="absolute bottom-0 left-4 z-20 translate-y-1/2 md:left-8">
-              <StoreLogo store={store} className="size-20 shadow-sm sm:size-24" />
+              <StoreLogo store={store} className="size-16 shadow-sm sm:size-24" />
             </div>
           </div>
-          <div className="grid min-w-0 gap-5 p-4 pt-12 md:grid-cols-[minmax(0,1fr)_260px] md:p-7 md:pt-14">
-            <div className="flex min-w-0 gap-4">
+          <div className="grid min-w-0 gap-4 p-4 pt-10 md:grid-cols-[minmax(0,1fr)_260px] md:gap-5 md:p-7 md:pt-14">
+            <div className="flex min-w-0 gap-3 md:gap-4">
               <div className="min-w-0">
-                <div className="flex min-w-0 flex-wrap items-end gap-x-3 gap-y-1">
-                  <h1 className="line-clamp-2 break-words text-2xl font-black tracking-normal md:text-3xl">
+                <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h1 className="line-clamp-2 break-words text-[26px] font-black leading-tight tracking-normal md:text-3xl">
                     {store.name}
                   </h1>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-semibold text-muted-foreground">
                       {t("productCount", { count: store.productCount })}
                   </p>
                 </div>
                 {store.description ? (
-                  <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-foreground">
+                  <p className="mt-2 line-clamp-2 max-w-2xl break-words text-sm leading-6 text-muted-foreground md:mt-3 md:text-foreground">
                     {store.description}
                   </p>
                 ) : null}
-                <div className="mt-4 flex min-w-0 flex-wrap gap-2 text-sm text-muted-foreground">
+                <div className="mt-3 flex min-w-0 flex-wrap gap-2 text-sm text-muted-foreground md:mt-4">
                   {primaryAddress ? (
-                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                    <span className="inline-flex max-w-full items-center gap-2 rounded-full border bg-background px-3 py-1.5">
                       <MapPin className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{primaryAddress}</span>
+                      <span className="min-w-0 truncate">{primaryAddress}</span>
                     </span>
                   ) : null}
                   {primaryLocation?.showMetro && primaryLocation.nearestMetro ? (
-                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
                       <Navigation className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">
                         {primaryLocation.nearestMetro}
@@ -1106,7 +1106,7 @@ export function Storefront({
                   ) : null}
                   {primaryLocation?.showBus &&
                   (primaryLocation.busStopName || primaryLocation.busRoutes.length) ? (
-                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
                       <Bus className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">
                         {primaryLocation.busStopName ?? "Avtobus"}
@@ -1117,7 +1117,7 @@ export function Storefront({
                     </span>
                   ) : null}
                   {primaryLocation?.workingHours ? (
-                    <span className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5">
+                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
                       <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">
                         {primaryLocation.workingHours}
@@ -1127,20 +1127,20 @@ export function Storefront({
                   {primaryPhone ? (
                     <a
                       href={`tel:${primaryPhone.replace(/\s/g, "")}`}
-                      className="inline-flex min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 transition hover:border-primary/40 hover:text-primary"
+                      className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 transition hover:border-primary/40 hover:text-primary sm:inline-flex"
                     >
                       <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
                       <span className="min-w-0 break-words">{primaryPhone}</span>
                     </a>
                   ) : null}
                   {primaryLocation?.pickupAvailable ? (
-                    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                    <span className="hidden min-w-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary sm:inline-flex">
                       <PackageCheck className="size-3.5 shrink-0" aria-hidden="true" />
                       Özün götürmə
                     </span>
                   ) : null}
                   {primaryLocation?.deliveryAvailable ? (
-                    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                    <span className="hidden min-w-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200 sm:inline-flex">
                       <Truck className="size-3.5 shrink-0" aria-hidden="true" />
                       Çatdırılma
                     </span>
@@ -1148,9 +1148,9 @@ export function Storefront({
                 </div>
               </div>
             </div>
-            <div className="grid min-w-0 content-start gap-3">
+            <div className="grid min-w-0 content-start gap-2.5 md:gap-3">
               {primaryPhone ? (
-                <Button asChild className="w-full min-w-0">
+                <Button asChild className="h-11 w-full min-w-0 md:h-10">
                   <a href={`tel:${primaryPhone.replace(/\s/g, "")}`}>
                     <Phone className="mr-2 size-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("showPhone")}</span>
@@ -1158,7 +1158,7 @@ export function Storefront({
                 </Button>
               ) : null}
               {primaryMapUrl ? (
-                <Button asChild variant="outline" className="w-full min-w-0">
+                <Button asChild variant="outline" className="h-11 w-full min-w-0 md:h-10">
                   <a href={primaryMapUrl} target="_blank" rel="noreferrer">
                     <MapPin className="mr-2 size-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">Xəritədə göstər</span>

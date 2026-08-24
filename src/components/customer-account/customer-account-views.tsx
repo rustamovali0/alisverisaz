@@ -1,4 +1,4 @@
-import { Bell, CheckCircle2, Heart, MapPin, Package, PackageCheck, UserRound } from "lucide-react";
+import { Bell, CheckCircle2, MapPin, Package, PackageCheck, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -210,10 +210,9 @@ export async function CustomerAccountHome({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard label={t("stats.activeOrders")} value={overview.stats.activeOrders} icon={Package} href="/dashboard/orders" />
         <MetricCard label={t("stats.completedOrders")} value={overview.stats.completedOrders} icon={PackageCheck} href="/dashboard/orders" />
-        <MetricCard label={t("stats.favorites")} value={overview.stats.favorites} icon={Heart} href="/dashboard/favorites" />
         <MetricCard label={t("stats.notifications")} value={overview.stats.unreadNotifications} icon={Bell} href="/dashboard/notifications" />
       </div>
-      <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-base font-black">{t("activeOrders")}</h2>
@@ -229,31 +228,14 @@ export async function CustomerAccountHome({
             <EmptyState title={t("emptyOrders")} description={t("emptyOrdersDescription")} />
           )}
         </div>
-        <div className="grid gap-5">
-          <div className="rounded-lg border bg-card p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-base font-black">{t("favorites")}</h2>
-              <Link href="/dashboard/favorites" className="text-sm font-bold text-primary">
-                {t("viewAll")}
-              </Link>
-            </div>
-            <div className="grid gap-2">
-              {overview.favorites.length > 0 ? (
-                overview.favorites.map((favorite) => <FavoritePreviewCard key={favorite.id} favorite={favorite} />)
-              ) : (
-                <p className="text-sm text-muted-foreground">{t("emptyFavorites")}</p>
-              )}
-            </div>
+        <div className="rounded-lg border bg-card p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="text-base font-black">{t("notifications")}</h2>
+            <Link href="/dashboard/notifications" className="text-sm font-bold text-primary">
+              {t("viewAll")}
+            </Link>
           </div>
-          <div className="rounded-lg border bg-card p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-base font-black">{t("notifications")}</h2>
-              <Link href="/dashboard/notifications" className="text-sm font-bold text-primary">
-                {t("viewAll")}
-              </Link>
-            </div>
-            <NotificationList notifications={overview.notifications.slice(0, 3)} emptyText={t("emptyNotifications")} />
-          </div>
+          <NotificationList notifications={overview.notifications.slice(0, 5)} emptyText={t("emptyNotifications")} />
         </div>
       </section>
     </div>
@@ -275,6 +257,7 @@ export async function CustomerOrdersView({ orders }: { orders: ManagedOrder[] })
             <div className="min-w-0">
               <p className="text-base font-black">#{order.orderNumber}</p>
               <p className="mt-1 text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.storeName}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("products")}: {order.items.length}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t("deliveryMethod")}: {deliveryMethodLabel(order.deliveryMethod)}</p>
               {order.estimatedDelivery ? <p className="mt-1 text-sm text-muted-foreground">{t("estimatedDelivery")}: {order.estimatedDelivery}</p> : null}
             </div>
@@ -296,6 +279,7 @@ export async function CustomerOrdersView({ orders }: { orders: ManagedOrder[] })
             <span>{t("delivery")}: {formatMoney(order.shippingAmount, order.currency)}</span>
             <span>{t("total")}: {formatMoney(order.totalAmount, order.currency)}</span>
           </div>
+          <p className="mt-3 text-sm font-bold text-primary">{t("viewDetails")}</p>
         </Link>
       ))}
     </div>

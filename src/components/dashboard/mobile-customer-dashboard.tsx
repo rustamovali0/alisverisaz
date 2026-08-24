@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 import {
   ChevronRight,
   Bell,
-  Heart,
   Home,
   MapPin,
   Package,
   Settings,
+  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
@@ -24,12 +24,12 @@ type MobileCustomerDashboardProps = {
 };
 
 const accountItems = [
-  { href: "/dashboard", label: "İcmal", icon: Home },
-  { href: "/dashboard/orders", label: "Sifarişlərim", icon: Package },
-  { href: "/dashboard/favorites", label: "Sevimlilər", icon: Heart },
-  { href: "/dashboard/notifications", label: "Bildirişlər", icon: Bell },
-  { href: "/dashboard/addresses", label: "Ünvanlar", icon: MapPin },
+  { href: "/dashboard", label: "Ana səhifə", icon: Home },
+  { href: "/dashboard/orders", label: "Sifarişlər", icon: Package },
   { href: "/dashboard/profile", label: "Profil", icon: UserRound },
+  { href: "/dashboard/addresses", label: "Ünvanlar", icon: MapPin },
+  { href: "/dashboard/notifications", label: "Bildirişlər", icon: Bell },
+  { href: "/dashboard/security", label: "Təhlükəsizlik", icon: ShieldCheck },
   { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
 ];
 
@@ -64,30 +64,28 @@ export function MobileCustomerDashboard({
 
   if (!showMenu) {
     return (
-      <section className="bg-white px-4 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-4 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
+      <section className="bg-background px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 text-foreground md:hidden">
         {children}
       </section>
     );
   }
 
   return (
-    <section className="bg-white px-5 pb-[calc(6.75rem+env(safe-area-inset-bottom))] pt-5 text-[hsl(var(--marketplace-navy))] dark:bg-background dark:text-foreground md:hidden">
+    <section className="bg-background px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 text-foreground md:hidden">
       <Link
         href="/dashboard/profile"
         onClick={resetDashboardScroll}
-        className="mb-5 grid min-w-0 grid-cols-[60px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-border dark:bg-card"
+        className="mb-4 grid min-w-0 grid-cols-[54px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border bg-card p-3 shadow-sm"
       >
-        <span className="relative grid size-14 place-items-center rounded-full bg-slate-100 text-slate-500">
-          <UserRound className="size-8" strokeWidth={2.1} aria-hidden="true" />
-          <span className="absolute bottom-0 right-0 size-4 rounded-full border-2 border-white bg-emerald-500" />
+        <span className="relative grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
+          <UserRound className="size-7" strokeWidth={2.1} aria-hidden="true" />
+          <span className="absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-card bg-emerald-500" />
         </span>
         <span className="min-w-0">
-          <span className="block truncate text-lg font-black">{userLabel}</span>
-          {userContact ? (
-            <span className="mt-0.5 block truncate text-sm text-[hsl(var(--marketplace-muted))]">{userContact}</span>
-          ) : null}
+          <span className="block truncate text-base font-black">{userLabel}</span>
+          {userContact ? <span className="mt-0.5 block truncate text-sm text-muted-foreground">{userContact}</span> : null}
         </span>
-        <ChevronRight className="size-6 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
+        <ChevronRight className="size-5 text-muted-foreground" aria-hidden="true" />
       </Link>
 
       <div className="space-y-0.5">
@@ -99,23 +97,23 @@ export function MobileCustomerDashboard({
               key={item.href}
               href={item.href}
               onClick={resetDashboardScroll}
-              className="grid min-h-[60px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 border-b border-slate-100 text-[hsl(var(--marketplace-navy))] dark:border-border dark:text-foreground"
+              className="grid min-h-[54px] grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-b text-foreground"
             >
-              <Icon className="size-7" strokeWidth={2.1} aria-hidden="true" />
+              <Icon className="size-6" strokeWidth={2.1} aria-hidden="true" />
               <span className="min-w-0 truncate text-base font-semibold">{item.label}</span>
-              <ChevronRight className="size-6 text-[hsl(var(--marketplace-muted))]" aria-hidden="true" />
+              <ChevronRight className="size-5 text-muted-foreground" aria-hidden="true" />
             </Link>
           );
         })}
       </div>
 
-      <div className="mt-5 border-t-8 border-slate-100 pt-4 dark:border-muted">
+      <div className="mt-5 border-t-8 border-muted pt-4">
         <div
           className={cn(
-            "grid min-h-[58px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 text-[hsl(var(--marketplace-navy))] dark:text-foreground",
+            "grid min-h-[54px] grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 text-foreground",
           )}
         >
-          <Settings className="size-7" strokeWidth={2.1} aria-hidden="true" />
+          <Settings className="size-6" strokeWidth={2.1} aria-hidden="true" />
           <span className="min-w-0 truncate text-base font-semibold">Görünüş</span>
           <ThemeToggle />
         </div>

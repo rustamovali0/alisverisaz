@@ -33,6 +33,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 220 29% 8%;
     --foreground: 210 32% 96%;
     --card: 220 25% 11%;
@@ -78,6 +79,17 @@
       hsl(var(--background));
   }
 
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground));
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
   @media (max-width: 767px) {
     input,
     textarea,
@@ -121,6 +133,15 @@
       linear-gradient(180deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.78)),
       hsl(var(--card));
     backdrop-filter: blur(10px);
+  }
+
+  .dark [data-card-preset="glass-lite"] .premium-card,
+  .dark [data-card-preset="glass-lite"] .glass-panel,
+  .dark[data-card-preset="glass-lite"] .premium-card,
+  .dark[data-card-preset="glass-lite"] .glass-panel {
+    background:
+      linear-gradient(180deg, hsl(var(--card) / 0.94), hsl(var(--card) / 0.78)),
+      hsl(var(--card));
   }
 
   [data-design-theme="dark-premium"] {

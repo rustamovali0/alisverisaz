@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { getSiteSettings } from "@/lib/cms/data";
 import { requireRole } from "@/lib/auth/session";
+import { getTranslations } from "next-intl/server";
 
 type CustomerDashboardLayoutProps = {
   children: ReactNode;
@@ -21,8 +22,18 @@ export default async function CustomerDashboardLayout({
     requireRole(["customer", "seller"], "/dashboard"),
     getSiteSettings(),
   ]);
+  const t = await getTranslations("nav");
   const userLabel = current.profile?.full_name ?? current.user.email ?? "İstifadəçi";
   const userContact = current.profile?.phone ?? current.user.email ?? "";
+  const navItems = [
+    { href: "/dashboard", label: t("dashboard") },
+    { href: "/dashboard/orders", label: t("orders") },
+    { href: "/dashboard/profile", label: t("profile") },
+    { href: "/dashboard/addresses", label: t("addresses") },
+    { href: "/dashboard/notifications", label: t("notifications") },
+    { href: "/dashboard/security", label: t("security") },
+    { href: "/dashboard/settings", label: t("settings") },
+  ];
 
   return (
     <main className="min-h-screen bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -38,27 +49,11 @@ export default async function CustomerDashboardLayout({
           <LogoutButton />
         </div>
         <div className="container flex gap-2 overflow-x-auto pb-4">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard">İcmal</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/orders">Sifarişlərim</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/favorites">Sevimlilər</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/notifications">Bildirişlər</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/addresses">Ünvanlar</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/profile">Profil</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/dashboard/settings">Ayarlar</Link>
-          </Button>
+          {navItems.map((item) => (
+            <Button key={item.href} asChild variant="outline" size="sm" className="shrink-0">
+              <Link href={item.href}>{item.label}</Link>
+            </Button>
+          ))}
         </div>
       </section>
       <div className="container hidden py-6 md:block">{children}</div>
