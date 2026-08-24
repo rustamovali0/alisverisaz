@@ -12,7 +12,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { requestPasswordResetAction } from "@/lib/auth/actions";
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey?: string }) {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
@@ -81,7 +81,11 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           required
         />
-        <TurnstileField token={captchaToken} onTokenChange={setCaptchaToken} />
+        <TurnstileField
+          token={captchaToken}
+          onTokenChange={setCaptchaToken}
+          siteKey={turnstileSiteKey}
+        />
         <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
           <Mail className="mr-2 size-4" aria-hidden="true" />
           {isPending ? "Göndərilir" : "Bərpa linki göndər"}

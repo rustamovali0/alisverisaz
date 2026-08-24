@@ -51,13 +51,13 @@ export const serverEnv = {
       throw new Error("Server environment variables cannot be read in the browser.");
     }
 
-    return process.env.TURNSTILE_SECRET_KEY ?? "";
+    return process.env.TURNSTILE_SECRET_KEY?.trim() ?? "";
   },
   get hasTurnstileConfig() {
     if (typeof window !== "undefined") {
       throw new Error("Server environment variables cannot be read in the browser.");
     }
 
-    return Boolean(process.env.TURNSTILE_SECRET_KEY);
+    return Boolean(process.env.TURNSTILE_SECRET_KEY?.trim());
   },
 } as const;

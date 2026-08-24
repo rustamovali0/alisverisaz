@@ -3,8 +3,6 @@
 import Script from "next/script";
 import { useEffect, useId, useRef, useState } from "react";
 
-import { clientEnv } from "@/lib/config/env.client";
-
 declare global {
   interface Window {
     turnstile?: {
@@ -25,17 +23,18 @@ declare global {
 type TurnstileFieldProps = {
   token: string;
   onTokenChange: (token: string) => void;
+  siteKey?: string;
 };
 
-export function TurnstileField({ token, onTokenChange }: TurnstileFieldProps) {
+export function TurnstileField({ token, onTokenChange, siteKey = "" }: TurnstileFieldProps) {
   const widgetId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedWidgetIdRef = useRef<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const siteKey = clientEnv.turnstileSiteKey;
+  const normalizedSiteKey = siteKey.trim();
 
   useEffect(() => {
-    if (!isReady || !siteKey || !containerRef.current || renderedWidgetIdRef.current) {
+    if (!isReady || !normalizedSiteKey || !containerRef.current || renderedWidgetIdRef.current) {
       return;
     }
 
@@ -44,12 +43,12 @@ export function TurnstileField({ token, onTokenChange }: TurnstileFieldProps) {
     }
 
     renderedWidgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: siteKey,
+      sitekey: normalizedSiteKey,
       callback: onTokenChange,
       "expired-callback": () => onTokenChange(""),
       "error-callback": () => onTokenChange(""),
     });
-  }, [isReady, onTokenChange, siteKey]);
+  }, [isReady, normalizedSiteKey, onTokenChange]);
 
   useEffect(() => {
     if (!token && renderedWidgetIdRef.current && window.turnstile) {
@@ -57,7 +56,7 @@ export function TurnstileField({ token, onTokenChange }: TurnstileFieldProps) {
     }
   }, [token]);
 
-  if (!siteKey) {
+  if (!normalizedSiteKey) {
     return (
       <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
         CAPTCHA ayarları tamamlanmayıb.

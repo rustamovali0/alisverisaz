@@ -17,6 +17,7 @@ import { Link } from "@/i18n/navigation";
 
 type LoginFormProps = {
   mode?: "public" | "admin";
+  turnstileSiteKey?: string;
 };
 
 type FieldErrors = {
@@ -28,7 +29,7 @@ function getInitialIdentifier(params: URLSearchParams) {
   return params.get("email") ?? params.get("identifier") ?? "";
 }
 
-export function LoginForm({ mode = "public" }: LoginFormProps) {
+export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormProps) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
@@ -219,7 +220,11 @@ export function LoginForm({ mode = "public" }: LoginFormProps) {
             Şifrəni unutmusunuz?
           </Link>
         </div>
-        <TurnstileField token={captchaToken} onTokenChange={setCaptchaToken} />
+        <TurnstileField
+          token={captchaToken}
+          onTokenChange={setCaptchaToken}
+          siteKey={turnstileSiteKey}
+        />
         <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>

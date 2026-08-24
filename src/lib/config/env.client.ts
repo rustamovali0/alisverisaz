@@ -43,5 +43,5 @@ export const clientEnv = {
   supabaseProjectId: readSupabaseProjectId(supabaseUrl),
   supabaseUrl,
   supabasePublishableKey,
-  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "",
+  turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "",
 } as const;
