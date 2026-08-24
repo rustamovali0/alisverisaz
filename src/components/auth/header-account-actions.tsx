@@ -117,19 +117,26 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
 
   if (profile.status === "loading") {
     return (
-      <div
-        className={cn(
-          "h-11 w-36 animate-pulse rounded-md border bg-muted/70",
-          className,
-        )}
-        aria-hidden="true"
-      />
+      <div className={cn("flex items-center gap-2", className)}>
+        <Button asChild variant="ghost">
+          <Link href={createNextHref(pathname, "/login")}>
+            <LogIn className="mr-2 size-4" aria-hidden="true" />
+            {auth("login")}
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={createNextHref(pathname, "/register")}>
+            <UserPlus className="mr-2 size-4" aria-hidden="true" />
+            {auth("register")}
+          </Link>
+        </Button>
+      </div>
     );
   }
 
   if (profile.status === "guest" || profile.role === "admin") {
     return (
-      <div className={cn("items-center gap-2", className)}>
+      <div className={cn("flex items-center gap-2", className)}>
         <Button asChild variant="ghost">
           <Link href={createNextHref(pathname, "/login")}>
             <LogIn className="mr-2 size-4" aria-hidden="true" />
