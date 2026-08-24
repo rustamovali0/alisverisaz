@@ -6,9 +6,9 @@ import { serverEnv } from "@/lib/config/env.server";
 
 const WEBP_CONTENT_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 82;
-const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/*"];
 const IMAGE_PROCESSING_ERROR =
-  "Şəkil emalı alınmadı. Faylın JPG, PNG və ya WebP olduğundan əmin olun.";
+  "Şəkil emalı alınmadı. Faylın real şəkil formatında olduğundan əmin olun.";
 
 let r2Client: S3Client | null = null;
 
@@ -89,6 +89,26 @@ async function convertImageToWebp(input: Buffer) {
   }
 }
 
+function isAllowedImageType(fileType: string, allowedMimeTypes: string[]) {
+  const normalizedType = fileType.trim().toLowerCase();
+
+  if (normalizedType === "image/svg+xml") {
+    return false;
+  }
+
+  if (allowedMimeTypes.includes("image/*")) {
+    return !normalizedType || normalizedType.startsWith("image/");
+  }
+
+  return allowedMimeTypes.includes(normalizedType);
+}
+
+function looksLikeSvg(input: Buffer) {
+  const head = input.subarray(0, 1024).toString("utf8").trimStart().toLowerCase();
+
+  return head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg"));
+}
+
 function keyFromPublicUrl(url: string) {
   const baseUrl = serverEnv.r2PublicUrl.replace(/\/+$/, "");
   const prefix = `${baseUrl}/`;
@@ -114,11 +134,16 @@ export async function uploadImageToR2({
     throw new Error(`${file.name} maksimum ${Math.floor(maxSizeBytes / 1024 / 1024)}MB ola bilər.`);
   }
 
-  if (!allowedMimeTypes.includes(file.type)) {
-    throw new Error("Yalnız JPG, PNG və WebP şəkillər qəbul edilir.");
+  if (!isAllowedImageType(file.type, allowedMimeTypes)) {
+    throw new Error("Yalnız real şəkil faylları qəbul edilir.");
   }
 
   const input = Buffer.from(await file.arrayBuffer());
+
+  if (looksLikeSvg(input)) {
+    throw new Error("SVG şəkillər qəbul edilmir.");
+  }
+
   const converted = await convertImageToWebp(input);
   const fileName = webpFileName(file.name);
   const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${fileName}`;

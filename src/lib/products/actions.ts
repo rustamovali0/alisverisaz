@@ -30,7 +30,7 @@ import {
 } from "@/lib/products/variant-utils";
 
 const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_PRODUCT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_PRODUCT_IMAGE_TYPES = ["image/*"];
 
 function isMissingTableError(error: unknown) {
   const value = error as { code?: string; message?: string } | null | undefined;

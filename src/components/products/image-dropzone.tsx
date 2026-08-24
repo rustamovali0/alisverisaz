@@ -28,64 +28,10 @@ function FilePreview({ file, alt }: { file: File; alt: string }) {
   ) : null;
 }
 
-function loadImage(file: File) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Şəkil oxuna bilmədi."));
-    };
-    image.src = url;
-  });
-}
+function isAcceptedImageFile(file: File) {
+  const type = file.type.trim().toLowerCase();
 
-async function convertToWebp(file: File) {
-  if (file.type === "image/webp") {
-    return file;
-  }
-
-  if (file.type !== "image/jpeg" && file.type !== "image/png") {
-    throw new Error("Yalnız JPG, PNG və WebP şəkillər qəbul edilir.");
-  }
-
-  const image = await loadImage(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const context = canvas.getContext("2d");
-
-  if (!context) {
-    throw new Error("Şəkil çevrilməsi mümkün olmadı.");
-  }
-
-  context.drawImage(image, 0, 0);
-
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (nextBlob) => {
-        if (nextBlob) {
-          resolve(nextBlob);
-          return;
-        }
-
-        reject(new Error("WebP çevrilməsi mümkün olmadı."));
-      },
-      "image/webp",
-      0.86,
-    );
-  });
-
-  const name = file.name.replace(/\.(jpe?g|png|webp)$/i, ".webp");
-
-  return new File([blob], name, {
-    type: "image/webp",
-    lastModified: Date.now(),
-  });
+  return !type || (type.startsWith("image/") && type !== "image/svg+xml");
 }
 
 export function ImageDropzone({
@@ -96,33 +42,27 @@ export function ImageDropzone({
 }: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
 
-  async function addFiles(nextFiles: FileList | File[]) {
+  function addFiles(nextFiles: FileList | File[]) {
     const incomingFiles = Array.from(nextFiles);
     const allowedFiles =
       maxFiles === null
         ? incomingFiles
         : incomingFiles.slice(0, Math.max(maxFiles - files.length, 0));
+    const imageFiles = allowedFiles.filter(isAcceptedImageFile);
 
-    if (allowedFiles.length === 0) {
+    if (imageFiles.length === 0) {
       return;
     }
 
-    setIsConverting(true);
-    try {
-      const converted = await Promise.all(allowedFiles.map(convertToWebp));
-      onFilesChange([...files, ...converted]);
-    } finally {
-      setIsConverting(false);
-    }
+    onFilesChange([...files, ...imageFiles]);
   }
 
   return (
     <div className="grid gap-3">
       <button
         type="button"
-        disabled={disabled || isConverting}
+        disabled={disabled}
         onClick={() => inputRef.current?.click()}
         onDragOver={(event) => {
           event.preventDefault();
@@ -132,7 +72,7 @@ export function ImageDropzone({
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          void addFiles(event.dataTransfer.files);
+          addFiles(event.dataTransfer.files);
         }}
         className={cn(
           "flex min-h-36 flex-col items-center justify-center rounded-md border border-dashed bg-background p-6 text-center transition-colors",
@@ -141,11 +81,9 @@ export function ImageDropzone({
         )}
       >
         <ImagePlus className="mb-3 size-7 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm font-medium">
-          {isConverting ? "WebP çevrilir" : "Şəkilləri buraya sürüklə"}
-        </span>
+        <span className="text-sm font-medium">Şəkilləri buraya sürüklə</span>
         <span className="mt-1 text-sm text-muted-foreground">
-          JPG və PNG avtomatik WebP formatına çevrilir
+          Şəkillər serverdə WebP formatına çevrilir
         </span>
         {maxFiles !== null ? (
           <span className="mt-2 text-xs font-semibold text-muted-foreground">
@@ -156,13 +94,13 @@ export function ImageDropzone({
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
         multiple
         className="hidden"
         disabled={disabled}
         onChange={(event) => {
           if (event.target.files) {
-            void addFiles(event.target.files);
+            addFiles(event.target.files);
           }
           event.target.value = "";
         }}
