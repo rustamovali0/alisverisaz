@@ -100,7 +100,10 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         return;
       }
 
-      void appAlert.success("Xoş gəldiniz", result.message);
+      void appAlert.success("Xoş gəldiniz", "Giriş uğurla tamamlandı.", {
+        dedupeKey: "login-success",
+        persistAcrossNavigation: true,
+      });
       window.location.assign(result.redirectTo);
     });
   }

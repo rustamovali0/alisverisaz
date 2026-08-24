@@ -88,6 +88,15 @@ function normalizeNextPath(value: string) {
   return value;
 }
 
+async function recordLoginFailure(
+  rateLimitRule: Parameters<typeof recordAuthRateLimitAttempt>[0],
+  fallbackMessage = GENERIC_LOGIN_ERROR,
+) {
+  const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
+
+  return attempt.isBlocked ? attempt.message : fallbackMessage;
+}
+
 async function upsertProfile(input: {
   id: string;
   email: string | null;
@@ -305,9 +314,9 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     endpoint: "login" as const,
     identifier,
     ip,
-    maxAttempts: 8,
+    maxAttempts: 5,
     windowSeconds: 15 * 60,
-    blockSeconds: 15 * 60,
+    blockSeconds: 2 * 60,
   };
 
   if (!identifier || !password) {
@@ -360,11 +369,14 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   if (!isValidEmail(email)) {
-    await recordAuthRateLimitAttempt(rateLimitRule);
+    const message = await recordLoginFailure(
+      rateLimitRule,
+      "Düzgün email və ya telefon daxil edin.",
+    );
 
     return {
       ok: false,
-      message: "Düzgün email və ya telefon daxil edin.",
+      message,
     };
   }
 
@@ -374,20 +386,20 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
-    await recordAuthRateLimitAttempt(rateLimitRule);
+    const message = await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
-      message: GENERIC_LOGIN_ERROR,
+      message,
     };
   }
 
   if (!data.user) {
-    await recordAuthRateLimitAttempt(rateLimitRule);
+    const message = await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
-      message: GENERIC_LOGIN_ERROR,
+      message,
     };
   }
 
@@ -402,21 +414,21 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   if (mode === "admin" && role !== "admin") {
     await supabase.auth.signOut();
-    await recordAuthRateLimitAttempt(rateLimitRule);
+    const message = await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
-      message: GENERIC_LOGIN_ERROR,
+      message,
     };
   }
 
   if (mode === "public" && role === "admin") {
     await supabase.auth.signOut();
-    await recordAuthRateLimitAttempt(rateLimitRule);
+    const message = await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
-      message: GENERIC_LOGIN_ERROR,
+      message,
     };
   }
 

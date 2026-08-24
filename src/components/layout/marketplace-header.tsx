@@ -12,6 +12,7 @@ import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -91,6 +92,10 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
+            <ThemeToggle
+              className="size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary"
+              iconClassName="size-6"
+            />
             <NotificationCenter
               buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
               iconClassName="size-7"
@@ -118,6 +123,10 @@ export function MarketplaceHeader({
           </div>
           <div className="ml-auto hidden items-center gap-1 md:flex">
             <LanguageSwitcher className="hidden lg:flex" />
+            <ThemeToggle
+              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-primary hover:shadow-md md:size-12"
+              iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"
+            />
             <NotificationCenter
               buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
               iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"

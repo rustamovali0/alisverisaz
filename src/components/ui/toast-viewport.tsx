@@ -1,9 +1,8 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type AppToast = {
@@ -11,24 +10,57 @@ type AppToast = {
   title: string;
   description?: string;
   variant?: "success" | "error" | "warning" | "info";
+  dedupeKey?: string;
 };
 
 type ToastEvent = CustomEvent<Omit<AppToast, "id">>;
+const PENDING_TOASTS_KEY = "alisveris-pending-toasts";
 
 export function ToastViewport() {
   const [toasts, setToasts] = useState<AppToast[]>([]);
 
   useEffect(() => {
-    function handleToast(event: Event) {
-      const detail = (event as ToastEvent).detail;
+    function addToast(detail: ToastEvent["detail"]) {
       const id = crypto.randomUUID();
+      const dedupeKey =
+        detail.dedupeKey ??
+        `${detail.variant ?? "info"}:${detail.title}:${detail.description ?? ""}`;
 
-      setToasts((current) => [...current, { id, ...detail }].slice(-3));
+      setToasts((current) => {
+        if (
+          current.some(
+            (toast) =>
+              (toast.dedupeKey ??
+                `${toast.variant ?? "info"}:${toast.title}:${toast.description ?? ""}`) ===
+              dedupeKey,
+          )
+        ) {
+          return current;
+        }
+
+        return [...current, { id, ...detail, dedupeKey }].slice(-3);
+      });
       const timeout = detail.variant === "error" ? 7000 : detail.variant === "warning" ? 5600 : 3800;
 
       window.setTimeout(() => {
         setToasts((current) => current.filter((toast) => toast.id !== id));
       }, timeout);
+    }
+
+    function handleToast(event: Event) {
+      addToast((event as ToastEvent).detail);
+    }
+
+    try {
+      const pending = window.sessionStorage.getItem(PENDING_TOASTS_KEY);
+
+      if (pending) {
+        window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
+        const parsed = JSON.parse(pending) as Array<ToastEvent["detail"]>;
+        parsed.forEach(addToast);
+      }
+    } catch {
+      window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
     }
 
     window.addEventListener("alisveris-toast", handleToast);
@@ -57,49 +89,47 @@ export function ToastViewport() {
                 : Info;
 
         return (
-        <div
-          key={toast.id}
-          className={cn(
-            "flex min-w-0 items-start gap-3 rounded-xl border bg-card/95 p-3 text-card-foreground shadow-2xl shadow-slate-900/12 backdrop-blur",
-            toast.variant === "success" && "border-emerald-500/25",
-            toast.variant === "error" && "border-destructive/25",
-            toast.variant === "warning" && "border-amber-500/25",
-            (!toast.variant || toast.variant === "info") && "border-primary/20",
-          )}
-          role={toast.variant === "error" ? "alert" : "status"}
-        >
-          <span
+          <div
+            key={toast.id}
             className={cn(
-              "mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg border",
-              toast.variant === "success" && "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
-              toast.variant === "error" && "bg-destructive/10 text-destructive",
-              toast.variant === "warning" && "border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400",
-              (!toast.variant || toast.variant === "info") && "border-primary/20 bg-primary/10 text-primary",
+              "relative flex min-w-0 animate-[toast-slide-in_180ms_ease-out] items-center gap-3 overflow-hidden rounded-xl border border-border/80 bg-white px-4 py-3 text-slate-950 shadow-xl shadow-slate-900/12 dark:bg-card dark:text-card-foreground motion-reduce:animate-none",
+              toast.variant === "success" && "border-[hsl(var(--toast-success)/0.2)]",
+              toast.variant === "error" && "border-[hsl(var(--toast-error)/0.2)]",
+              toast.variant === "warning" && "border-[hsl(var(--toast-warning)/0.2)]",
+              (!toast.variant || toast.variant === "info") && "border-[hsl(var(--toast-info)/0.2)]",
             )}
+            role={toast.variant === "error" ? "alert" : "status"}
           >
-            <Icon className="size-5" aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="break-words text-sm font-bold">{toast.title}</p>
-            {toast.description ? (
-              <p className="mt-1 break-words text-xs leading-5 text-muted-foreground">
-                {toast.description}
-              </p>
-            ) : null}
+            <span
+              className={cn(
+                "absolute inset-y-0 left-0 w-1.5",
+                toast.variant === "success" && "bg-[hsl(var(--toast-success))]",
+                toast.variant === "error" && "bg-[hsl(var(--toast-error))]",
+                toast.variant === "warning" && "bg-[hsl(var(--toast-warning))]",
+                (!toast.variant || toast.variant === "info") && "bg-[hsl(var(--toast-info))]",
+              )}
+              aria-hidden="true"
+            />
+            <span
+              className={cn(
+                "ml-1 grid size-9 shrink-0 place-items-center rounded-full text-white",
+                toast.variant === "success" && "bg-[hsl(var(--toast-success))]",
+                toast.variant === "error" && "bg-[hsl(var(--toast-error))]",
+                toast.variant === "warning" && "bg-[hsl(var(--toast-warning))]",
+                (!toast.variant || toast.variant === "info") && "bg-[hsl(var(--toast-info))]",
+              )}
+            >
+              <Icon className="size-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-sm font-extrabold tracking-normal">{toast.title}</p>
+              {toast.description ? (
+                <p className="mt-0.5 break-words text-xs leading-5 text-muted-foreground">
+                  {toast.description}
+                </p>
+              ) : null}
+            </div>
           </div>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="size-8 shrink-0 rounded-lg"
-            onClick={() =>
-              setToasts((current) => current.filter((item) => item.id !== toast.id))
-            }
-            aria-label="Bildirişi bağla"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </Button>
-        </div>
         );
       })}
     </div>

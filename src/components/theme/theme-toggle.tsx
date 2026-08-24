@@ -4,8 +4,13 @@ import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ThemeMode = "light" | "dark";
+type ThemeToggleProps = {
+  className?: string;
+  iconClassName?: string;
+};
 
 function getInitialTheme(): ThemeMode {
   if (typeof window === "undefined") {
@@ -28,7 +33,7 @@ function applyTheme(theme: ThemeMode) {
   window.localStorage.setItem("alisveris-theme", theme);
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
   const [theme, setTheme] = useState<ThemeMode>("light");
 
   useEffect(() => {
@@ -51,15 +56,18 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      className="glass-panel size-11 rounded-lg border bg-card hover:bg-primary hover:text-primary-foreground md:size-[56px]"
+      className={cn(
+        "glass-panel size-11 rounded-lg border bg-card hover:bg-primary hover:text-primary-foreground md:size-[56px]",
+        className,
+      )}
       onClick={toggleTheme}
       aria-label={theme === "dark" ? "Light mode" : "Dark mode"}
       title={theme === "dark" ? "Light mode" : "Dark mode"}
     >
       {theme === "dark" ? (
-        <Sun className="size-5 md:size-7" aria-hidden="true" />
+        <Sun className={cn("size-5 md:size-7", iconClassName)} aria-hidden="true" />
       ) : (
-        <Moon className="size-5 md:size-7" aria-hidden="true" />
+        <Moon className={cn("size-5 md:size-7", iconClassName)} aria-hidden="true" />
       )}
     </Button>
   );

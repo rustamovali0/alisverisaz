@@ -28,7 +28,8 @@ type BucketInput = {
 };
 
 const GENERIC_CAPTCHA_ERROR = "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
-const GENERIC_RATE_LIMIT_ERROR = "Çox cəhd edildi. Bir az sonra yenidən yoxlayın.";
+const GENERIC_RATE_LIMIT_ERROR =
+  "Brut-force detected. 2 dəqiqə sonra yenidən cəhd edin.";
 
 function hashValue(value: string) {
   return createHash("sha256").update(value).digest("hex");
@@ -211,6 +212,7 @@ export async function recordAuthRateLimitAttempt(
     identifier: input.identifier,
     ip: input.ip,
   });
+  let isBlocked = false;
 
   for (const bucketInput of bucketInputs) {
     const bucketKey = getBucketKey(bucketInput);
@@ -226,6 +228,7 @@ export async function recordAuthRateLimitAttempt(
       attempts >= input.maxAttempts
         ? new Date(now.getTime() + blockMs).toISOString()
         : null;
+    isBlocked = isBlocked || Boolean(blockedUntil);
 
     await (supabaseAdmin as any).from("auth_rate_limits").upsert({
       bucket_key: bucketKey,
@@ -238,6 +241,11 @@ export async function recordAuthRateLimitAttempt(
       blocked_until: blockedUntil,
     });
   }
+
+  return {
+    isBlocked,
+    message: isBlocked ? GENERIC_RATE_LIMIT_ERROR : "",
+  };
 }
 
 export async function resetAuthRateLimit(input: {

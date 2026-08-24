@@ -493,7 +493,7 @@ export function ProductForm({
           Status
           <select
             name="status"
-            defaultValue={product?.status ?? "draft"}
+            defaultValue={product?.status ?? "active"}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           >

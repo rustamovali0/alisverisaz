@@ -8,6 +8,43 @@ type ConfirmResult = {
   isConfirmed: boolean;
 };
 
+type ToastOptions = {
+  dedupeKey?: string;
+  persistAcrossNavigation?: boolean;
+};
+
+const PENDING_TOASTS_KEY = "alisveris-pending-toasts";
+
+function dispatchToast(input: {
+  title: string;
+  description?: string;
+  variant: "success" | "info";
+  options?: ToastOptions;
+}) {
+  const detail = {
+    title: input.title,
+    description: input.description,
+    variant: input.variant,
+    dedupeKey:
+      input.options?.dedupeKey ??
+      `${input.variant}:${input.title}:${input.description ?? ""}`,
+  };
+
+  if (input.options?.persistAcrossNavigation) {
+    try {
+      window.sessionStorage.setItem(PENDING_TOASTS_KEY, JSON.stringify([detail]));
+    } catch {
+      // Toast persistence is best-effort; the immediate toast still works.
+    }
+  }
+
+  window.dispatchEvent(new CustomEvent("alisveris-toast", { detail }));
+
+  return Promise.resolve({
+    isConfirmed: true,
+  });
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -150,13 +187,12 @@ function createAlert(input: {
 }
 
 export const appAlert = {
-  success(title: string, text?: string) {
-    return createAlert({
-      kind: "success",
+  success(title: string, text?: string, options?: ToastOptions) {
+    return dispatchToast({
       title,
-      text,
-      confirmText: "Oldu",
-      autoCloseMs: 2000,
+      description: text,
+      variant: "success",
+      options,
     });
   },
   error(error: unknown, title = "Xəta") {
@@ -168,13 +204,12 @@ export const appAlert = {
       autoCloseMs: 6000,
     });
   },
-  info(title: string, text?: string) {
-    return createAlert({
-      kind: "info",
+  info(title: string, text?: string, options?: ToastOptions) {
+    return dispatchToast({
       title,
-      text,
-      confirmText: "Oldu",
-      autoCloseMs: 3500,
+      description: text,
+      variant: "info",
+      options,
     });
   },
   confirm(

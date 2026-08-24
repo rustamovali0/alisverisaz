@@ -31,6 +31,8 @@ type FieldErrors = {
   terms?: string;
 };
 
+const MAX_SELLER_IMAGE_SIZE = 5 * 1024 * 1024;
+
 function SellerImageDropzone({
   name,
   label,
@@ -57,6 +59,15 @@ function SellerImageDropzone({
     const file = files?.[0];
 
     if (!file) {
+      return;
+    }
+
+    if (file.size > MAX_SELLER_IMAGE_SIZE) {
+      setError(`${label} maksimum 5MB ola bilər.`);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      setPreview("");
       return;
     }
 
@@ -237,7 +248,16 @@ export function RegisterForm({
       formData.set("terms", termsAccepted ? "on" : "");
       formData.set("role", role);
 
-      const result = await registerAction(formData);
+      let result;
+
+      try {
+        result = await registerAction(formData);
+      } catch {
+        const message = "Qeydiyyat tamamlanmadı. Şəkilləri yoxlayıb yenidən cəhd edin.";
+        setServerError(message);
+        void appAlert.error(message, "Qeydiyyat alınmadı");
+        return;
+      }
 
       if (!result.ok) {
         setServerError(result.message);

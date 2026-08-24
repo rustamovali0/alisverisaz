@@ -7,8 +7,8 @@ import type { ReactNode } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { PublicNavigationShell } from "@/components/layout/public-navigation-shell";
+import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
 import { StructuredData } from "@/components/seo/structured-data";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
@@ -176,9 +176,7 @@ export default async function LocaleLayout({
         data-typography-preset={siteSettings.design.typographyPreset}
         style={buildDesignCssVariables(siteSettings.design)}
       >
-        <div className="fixed bottom-4 right-4 z-40 hidden items-center gap-2 md:flex">
-          <ThemeToggle />
-        </div>
+        <ScrollToTopButton />
         <ToastViewport />
         <StructuredData />
         {isMaintenanceBlocked ? (
