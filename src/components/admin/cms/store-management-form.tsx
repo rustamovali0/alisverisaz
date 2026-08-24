@@ -1,9 +1,11 @@
 "use client";
 
+import { Copy, ExternalLink } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { getStorefrontUrl } from "@/lib/config/domains";
 import { updateStoreManagementAction } from "@/lib/cms/actions";
 
 type StoreManagementFormProps = {
@@ -27,6 +29,7 @@ export function StoreManagementForm({
   panelSettings,
 }: StoreManagementFormProps) {
   const [isPending, startTransition] = useTransition();
+  const publicUrl = getStorefrontUrl(store.slug);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -44,6 +47,36 @@ export function StoreManagementForm({
   return (
     <form action={handleSubmit} className="grid gap-4">
       <input type="hidden" name="storeId" value={store.id} />
+      <div className="rounded-lg border bg-background p-3">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+              Public mağaza URL
+            </p>
+            <code className="mt-1 block min-w-0 truncate text-sm">{publicUrl}</code>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(publicUrl);
+                void appAlert.success("Kopyalandı", "Mağaza linki panoya əlavə edildi.");
+              }}
+            >
+              <Copy className="mr-2 size-4" aria-hidden="true" />
+              Kopyala
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href={publicUrl} target="_blank" rel="noreferrer">
+                Aç
+                <ExternalLink className="ml-2 size-4" aria-hidden="true" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Mağaza adı

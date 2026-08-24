@@ -162,6 +162,7 @@ function parseVariantConfig(formData: FormData) {
           }
 
           const name = typeof row.name === "string" ? row.name.trim().slice(0, 60) : "";
+          const seenValues = new Set<string>();
           const values = Array.isArray(row.values)
             ? row.values
                 .map((value, valueIndex) => {
@@ -178,14 +179,19 @@ function parseVariantConfig(formData: FormData) {
                     /^#[0-9a-f]{6}$/i.test(valueRow.colorHex)
                       ? valueRow.colorHex
                       : null;
+                  const duplicateKey = text.toLocaleLowerCase("az");
 
-                  return text
-                    ? {
-                        value: text,
-                        colorHex,
-                        sortOrder: valueIndex,
-                      }
-                    : null;
+                  if (!text || seenValues.has(duplicateKey)) {
+                    return null;
+                  }
+
+                  seenValues.add(duplicateKey);
+
+                  return {
+                    value: text,
+                    colorHex,
+                    sortOrder: valueIndex,
+                  };
                 })
                 .filter((value): value is NonNullable<typeof value> => Boolean(value))
                 .slice(0, 40)

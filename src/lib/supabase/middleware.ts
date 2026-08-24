@@ -5,6 +5,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import type { AuthRole } from "@/lib/auth/types";
 import { clientEnv } from "@/lib/config/env.client";
+import { getSharedCookieDomain } from "@/lib/config/domains";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
@@ -78,12 +79,16 @@ export async function updateSession(
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: CookiesToSet) {
+          const sharedDomain = getSharedCookieDomain(request.headers.get("host"));
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
 
           cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
+            response.cookies.set(name, value, {
+              ...options,
+              ...(sharedDomain ? { domain: sharedDomain } : {}),
+            });
           });
         },
       },

@@ -19,10 +19,8 @@ import type {
   ManagedProduct,
   ProductOptionInput,
   ProductOptionType,
-  ProductVariantCombinationInput,
 } from "@/lib/products/types";
 import {
-  DEFAULT_PRODUCT_OPTIONS,
   getEnabledProductOptions,
   normalizeProductOptions,
 } from "@/lib/products/variant-utils";
@@ -104,31 +102,19 @@ function getInitialOptions(product?: ManagedProduct) {
   );
 }
 
-function getCombinationKey(combination: Record<string, string>) {
-  return DEFAULT_PRODUCT_OPTIONS.map((option) =>
-    combination[option.type] ? `${option.type}:${combination[option.type]}` : "",
-  )
-    .filter(Boolean)
-    .join("|");
-}
+function dedupeOptionValues(values: ProductOptionInput["values"]) {
+  const seen = new Set<string>();
 
-function buildCombinations(options: ProductOptionInput[]) {
-  const enabled = getEnabledProductOptions(options);
+  return values.filter((item) => {
+    const key = item.value.trim().toLocaleLowerCase("az");
 
-  if (enabled.length === 0) {
-    return [];
-  }
+    if (!key || seen.has(key)) {
+      return false;
+    }
 
-  return enabled.reduce<Array<Record<string, string>>>(
-    (combinations, option) =>
-      combinations.flatMap((combination) =>
-        option.values.map((value) => ({
-          ...combination,
-          [option.type]: value.value,
-        })),
-      ),
-    [{}],
-  );
+    seen.add(key);
+    return true;
+  });
 }
 
 function ProductVariantEditor({
@@ -141,34 +127,16 @@ function ProductVariantEditor({
   const [options, setOptions] = useState<ProductOptionInput[]>(() =>
     getInitialOptions(product),
   );
-  const [variantRows, setVariantRows] = useState<
-    ProductVariantCombinationInput[]
-  >(() => product?.variantCombinations ?? []);
-  const combinations = useMemo(() => buildCombinations(options), [options]);
-  const rowMap = useMemo(
-    () =>
-      new Map(
-        variantRows.map((row) => [getCombinationKey(row.combination), row]),
-      ),
-    [variantRows],
-  );
   const variantConfig = useMemo(
     () =>
       JSON.stringify({
-        options,
-        combinations: combinations.map((combination) => {
-          const existing = rowMap.get(getCombinationKey(combination));
-
-          return {
-            combination,
-            sku: existing?.sku ?? "",
-            priceOverrideAmount: existing?.priceOverrideAmount ?? null,
-            stockQuantity: existing?.stockQuantity ?? 0,
-            isEnabled: existing?.isEnabled !== false,
-          };
-        }),
+        options: options.map((option) => ({
+          ...option,
+          values: dedupeOptionValues(option.values),
+        })),
+        combinations: product?.variantCombinations ?? [],
       }),
-    [combinations, options, rowMap],
+    [options, product?.variantCombinations],
   );
 
   function updateOption(type: ProductOptionType, next: Partial<ProductOptionInput>) {
@@ -235,31 +203,6 @@ function ProductVariantEditor({
           : option,
       ),
     );
-  }
-
-  function updateCombination(
-    combination: Record<string, string>,
-    next: Partial<ProductVariantCombinationInput>,
-  ) {
-    const key = getCombinationKey(combination);
-
-    setVariantRows((current) => {
-      const withoutRow = current.filter(
-        (row) => getCombinationKey(row.combination) !== key,
-      );
-      const existing = current.find((row) => getCombinationKey(row.combination) === key);
-
-      return [
-        ...withoutRow,
-        {
-          combination,
-          stockQuantity: 0,
-          isEnabled: true,
-          ...existing,
-          ...next,
-        },
-      ];
-    });
   }
 
   return (
@@ -372,67 +315,6 @@ function ProductVariantEditor({
           </div>
         ))}
       </div>
-      {combinations.length > 0 ? (
-        <div className="grid gap-3 rounded-md border bg-muted/30 p-3">
-          <div>
-            <p className="text-sm font-semibold">Kombinasiya stok və qiymət</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Boş qiymət əsas məhsul qiymətindən istifadə edir.
-            </p>
-          </div>
-          <div className="grid gap-2">
-            {combinations.slice(0, 80).map((combination) => {
-              const key = getCombinationKey(combination);
-              const row = rowMap.get(key);
-
-              return (
-                <div
-                  key={key}
-                  className="grid gap-2 rounded-md border bg-card p-2 text-sm md:grid-cols-[minmax(0,1fr)_120px_150px]"
-                >
-                  <p className="min-w-0 truncate font-medium">
-                    {Object.values(combination).join(" / ")}
-                  </p>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={row?.stockQuantity ?? 0}
-                    onChange={(event) =>
-                      updateCombination(combination, {
-                        stockQuantity: Math.max(
-                          Math.trunc(Number(event.target.value) || 0),
-                          0,
-                        ),
-                      })
-                    }
-                    disabled={disabled}
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label="Stok"
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={row?.priceOverrideAmount ?? ""}
-                    onChange={(event) =>
-                      updateCombination(combination, {
-                        priceOverrideAmount:
-                          event.target.value === ""
-                            ? null
-                            : Math.max(Number(event.target.value) || 0, 0),
-                      })
-                    }
-                    disabled={disabled}
-                    placeholder="Qiymət override"
-                    className="h-9 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -557,7 +439,8 @@ export function ProductForm({
             type="number"
             min="0"
             step="1"
-            defaultValue={product?.stockQuantity ?? 0}
+            defaultValue={product?.stockQuantity ?? undefined}
+            placeholder="Stok sayı"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
             disabled={disabled}
@@ -570,7 +453,8 @@ export function ProductForm({
             type="number"
             min="0"
             step="0.01"
-            defaultValue={product?.costAmount ?? 0}
+            defaultValue={product?.costAmount ?? undefined}
+            placeholder="Maya dəyəri"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           />
@@ -582,7 +466,8 @@ export function ProductForm({
             type="number"
             min="0"
             step="0.01"
-            defaultValue={product?.priceAmount ?? 0}
+            defaultValue={product?.priceAmount ?? undefined}
+            placeholder="Əsas qiymət"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
             disabled={disabled}
@@ -697,7 +582,8 @@ export function ProductForm({
                       type="number"
                       min="0"
                       step="1"
-                      defaultValue={selected?.stockQuantity ?? 0}
+                      defaultValue={selected?.stockQuantity ?? undefined}
+                      placeholder="Stok"
                       disabled={disabled}
                       className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />

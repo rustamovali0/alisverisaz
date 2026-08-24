@@ -1,17 +1,19 @@
 "use client";
 
-import { ImagePlus } from "lucide-react";
+import { Copy, ExternalLink, ImagePlus } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { updateSellerStoreSettingsAction } from "@/lib/store-settings/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { getStorefrontUrl } from "@/lib/config/domains";
 import { cn } from "@/lib/utils";
 
 type StoreSettingsFormProps = {
   store: {
     id: string;
     name: string;
+    slug: string;
     logo_url: string | null;
     cover_url: string | null;
   };
@@ -101,6 +103,7 @@ function MediaPicker({
 
 export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
+  const publicUrl = getStorefrontUrl(store.slug);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -123,6 +126,36 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
         <p className="mt-1 text-sm text-muted-foreground">
           Mağaza adı, logo və banner şəklini buradan yeniləyin.
         </p>
+      </div>
+      <div className="rounded-lg border bg-background p-3">
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+          Public mağaza URL
+        </p>
+        <div className="mt-2 flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <code className="min-w-0 flex-1 truncate rounded-md bg-muted px-3 py-2 text-sm">
+            {publicUrl}
+          </code>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(publicUrl);
+                void appAlert.success("Kopyalandı", "Mağaza linki panoya əlavə edildi.");
+              }}
+            >
+              <Copy className="mr-2 size-4" aria-hidden="true" />
+              Kopyala
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <a href={publicUrl} target="_blank" rel="noreferrer">
+                Aç
+                <ExternalLink className="ml-2 size-4" aria-hidden="true" />
+              </a>
+            </Button>
+          </div>
+        </div>
       </div>
       <label className="grid gap-2 text-sm font-medium">
         Mağaza adı

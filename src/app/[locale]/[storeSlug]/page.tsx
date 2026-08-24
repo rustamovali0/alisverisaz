@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
+import {
+  getStoreSubdomainSlug,
+  getStorefrontUrl,
+  isReservedStoreSubdomain,
+} from "@/lib/config/domains";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -20,32 +26,12 @@ type StorePageProps = {
   }>;
 };
 
-const reservedSlugs = new Set([
-  "admin",
-  "radmin",
-  "api",
-  "about",
-  "cart",
-  "contact",
-  "dashboard",
-  "faq",
-  "guide",
-  "help",
-  "login",
-  "privacy",
-  "products",
-  "register",
-  "rules",
-  "store",
-  "terms",
-]);
-
 export async function generateMetadata({
   params,
 }: StorePageProps): Promise<Metadata> {
   const { locale, storeSlug } = await params;
 
-  if (reservedSlugs.has(storeSlug)) {
+  if (isReservedStoreSubdomain(storeSlug)) {
     return {};
   }
 
@@ -58,20 +44,22 @@ export async function generateMetadata({
     return {};
   }
 
+  const canonicalUrl = getStorefrontUrl(store.slug);
+
   return {
     title: `${store.name} | Alışveriş`,
     description:
       store.description ||
       `${store.name} mağazasının yeni məhsulları Alışveriş-də.`,
     alternates: {
-      canonical: `/${store.slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
       title: `${store.name} | Alışveriş`,
       description:
         store.description ||
         `${store.name} mağazasının aktiv yeni məhsulları.`,
-      url: `/${store.slug}`,
+      url: canonicalUrl,
       images: store.coverUrl ? [store.coverUrl] : undefined,
       type: "website",
     },
@@ -83,7 +71,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   const search = await searchParams;
   setRequestLocale(locale);
 
-  if (reservedSlugs.has(storeSlug)) {
+  if (isReservedStoreSubdomain(storeSlug)) {
     notFound();
   }
 
@@ -105,6 +93,10 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   if (!store) {
     notFound();
   }
+
+  const requestHeaders = await headers();
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : `/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
   const storeCategories = categories.filter((category) =>
@@ -133,6 +125,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
         locale={locale}
+        storeBaseHref={storeBaseHref}
         productCardVariant={activeTheme.productCardVariant}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,

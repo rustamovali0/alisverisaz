@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { routing } from "@/i18n/routing";
+import {
+  getSharedCookieDomain,
+  getStoreSubdomainSlug,
+} from "@/lib/config/domains";
 import { updateSession } from "@/lib/supabase/middleware";
 
 function copyCookies(from: NextResponse, to: NextResponse) {
@@ -19,12 +23,15 @@ function resolveCookieLocale(request: NextRequest) {
   };
 }
 
-function setLocaleCookie(response: NextResponse, locale: string) {
+function setLocaleCookie(response: NextResponse, locale: string, host?: string | null) {
+  const domain = getSharedCookieDomain(host);
+
   response.cookies.set("NEXT_LOCALE", locale, {
     path: "/",
     sameSite: "lax",
     maxAge: 60 * 60 * 24 * 365,
     secure: process.env.NODE_ENV === "production",
+    ...(domain ? { domain } : {}),
   });
 }
 
@@ -109,7 +116,7 @@ function createLocalizedRewrite(
     },
   });
   if (shouldSetLocaleCookie) {
-    setLocaleCookie(response, locale);
+    setLocaleCookie(response, locale, request.headers.get("host"));
   }
 
   return response;
@@ -119,9 +126,25 @@ function createCleanLocaleRedirect(request: NextRequest, pathname: string, local
   const url = request.nextUrl.clone();
   url.pathname = pathname;
   const response = NextResponse.redirect(url, 308);
-  setLocaleCookie(response, locale);
+  setLocaleCookie(response, locale, request.headers.get("host"));
 
   return response;
+}
+
+function resolveSubdomainPath(pathname: string, storeSlug: string) {
+  if (pathname === "/" || pathname === `/${storeSlug}` || pathname === "/products") {
+    return `/${storeSlug}`;
+  }
+
+  if (pathname.startsWith("/products/")) {
+    return `/${storeSlug}${pathname}`;
+  }
+
+  if (pathname.startsWith(`/${storeSlug}/products/`)) {
+    return pathname;
+  }
+
+  return pathname;
 }
 
 async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: NextResponse) {
@@ -144,14 +167,19 @@ export async function proxy(request: NextRequest) {
     return createCleanLocaleRedirect(request, visiblePathname, safeLocale);
   }
 
+  const storeSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
+  const effectivePathname = storeSubdomainSlug
+    ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
+    : visiblePathname;
+
   const rewriteResponse = createLocalizedRewrite(
     request,
-    visiblePathname,
+    effectivePathname,
     safeLocale,
     shouldSetLocaleCookie,
   );
 
-  if (!needsSessionCheck(visiblePathname)) {
+  if (!needsSessionCheck(effectivePathname)) {
     return rewriteResponse;
   }
 

@@ -40,6 +40,8 @@ const supabasePublishableKey = requirePublicEnv(
 
 export const clientEnv = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  storeRootDomain:
+    process.env.NEXT_PUBLIC_STORE_ROOT_DOMAIN?.trim() || "alisveris.az",
   supabaseProjectId: readSupabaseProjectId(supabaseUrl),
   supabaseUrl,
   supabasePublishableKey,

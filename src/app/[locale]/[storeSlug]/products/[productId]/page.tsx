@@ -1,6 +1,7 @@
 import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { after } from "next/server";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
@@ -25,6 +26,7 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
+import { getStoreSubdomainSlug, getStorefrontUrl } from "@/lib/config/domains";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import {
   getLocationsForStores,
@@ -102,9 +104,24 @@ export async function generateMetadata({
     return {};
   }
 
+  const canonicalUrl = getStorefrontUrl(
+    detail.store.slug,
+    `/products/${detail.product.slug}`,
+  );
+
   return {
     title: `${detail.product.name} | ${detail.store.name}`,
     description: detail.product.description || `${detail.product.name} məhsul detalları.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${detail.product.name} | ${detail.store.name}`,
+      description: detail.product.description || `${detail.product.name} məhsul detalları.`,
+      url: canonicalUrl,
+      images: detail.product.imageUrl ? [detail.product.imageUrl] : undefined,
+      type: "website",
+    },
   };
 }
 
@@ -183,6 +200,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     : sellerAddress
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sellerAddress)}`
       : null;
+  const requestHeaders = await headers();
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : `/${detail.store.slug}`;
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -197,7 +217,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 Mağazalar
               </Link>
               <span className="mx-2">·</span>
-              <Link href={`/${detail.store.slug}`} className="min-w-0 truncate hover:text-primary">
+              <Link href={storeBaseHref} className="min-w-0 truncate hover:text-primary">
                 {detail.store.name}
               </Link>
               <span className="mx-2">·</span>
@@ -315,7 +335,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 </p>
               ) : null}
               <Button asChild variant="outline" className="mt-3 w-full">
-                <Link href={`/${detail.store.slug}`}>Mağazaya keç</Link>
+                <Link href={storeBaseHref}>Mağazaya keç</Link>
               </Button>
               {sellerMapUrl ? (
                 <Button asChild variant="secondary" className="mt-2 w-full">

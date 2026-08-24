@@ -1,10 +1,36 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/config/site";
+import { getStorefrontUrl } from "@/lib/config/domains";
 import { helpArticles, helpNavigation } from "@/lib/help-center/content";
+import { createSupabasePublicClient } from "@/lib/supabase/public";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
+  try {
+    const supabase = createSupabasePublicClient();
+    const { data } = await (supabase as any)
+      .from("stores")
+      .select("slug,updated_at")
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(1000);
+
+    return ((data ?? []) as Array<{ slug: string | null; updated_at: string | null }>)
+      .filter((store) => store.slug)
+      .map((store) => ({
+        url: getStorefrontUrl(store.slug as string),
+        lastModified: store.updated_at ? new Date(store.updated_at) : now,
+        changeFrequency: "daily" as const,
+        priority: 0.75,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const storeUrls = await getStoreUrls(now);
 
   const helpUrls = helpNavigation.map((item) => ({
     url: `${siteConfig.url}${item.href}`,
@@ -40,5 +66,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...helpUrls,
     ...articleUrls,
+    ...storeUrls,
   ];
 }

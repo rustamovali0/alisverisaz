@@ -179,11 +179,11 @@ export function ImageDropzone({
                 type="button"
                 variant="secondary"
                 size="icon"
-                className="absolute right-3 top-3"
+                className="absolute right-3 top-3 size-11 rounded-xl shadow-md"
                 onClick={() => onFilesChange(files.slice(1))}
                 aria-label="Əsas şəkli sil"
               >
-                <X className="size-4" aria-hidden="true" />
+                <X className="size-6 stroke-[2.4]" aria-hidden="true" />
               </Button>
             </div>
             <p className="truncate px-3 py-2 text-sm text-muted-foreground">
@@ -205,7 +205,7 @@ export function ImageDropzone({
                       type="button"
                       variant="secondary"
                       size="icon"
-                      className="absolute right-1 top-1 size-7 opacity-90"
+                      className="absolute right-1.5 top-1.5 size-9 rounded-lg opacity-95 shadow-sm"
                       onClick={() => {
                         onFilesChange(
                           files.filter((_, fileIndex) => fileIndex !== realIndex),
@@ -213,7 +213,7 @@ export function ImageDropzone({
                       }}
                       aria-label="Şəkli sil"
                     >
-                      <X className="size-3" aria-hidden="true" />
+                      <X className="size-5 stroke-[2.4]" aria-hidden="true" />
                     </Button>
                   </div>
                 );

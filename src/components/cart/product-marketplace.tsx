@@ -84,6 +84,7 @@ type StorefrontProps = {
   locations?: StoreLocation[];
   selectedCategoryId?: string;
   locale: string;
+  storeBaseHref?: string;
   productCardVariant?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
@@ -160,6 +161,12 @@ function ProductListLoader({ show }: { show: boolean }) {
       <GlobalLoader />
     </div>
   );
+}
+
+function buildStoreProductHref(storeSlug: string, productSlug: string, storeBaseHref?: string) {
+  const baseHref = storeBaseHref ?? `/${storeSlug}`;
+
+  return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
 
 function ProductInfiniteSentinel({
@@ -345,12 +352,14 @@ export function ProductGrid({
   products,
   storeSlug,
   storeName,
+  storeBaseHref,
   productCardVariant,
   labels,
 }: {
   products: CartProduct[];
   storeSlug?: string;
   storeName?: string;
+  storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
@@ -382,7 +391,7 @@ export function ProductGrid({
         const displayStoreName = storeName ?? product.storeName ?? null;
         const detailStoreSlug = storeSlug ?? product.storeSlug ?? "";
         const detailHref = detailStoreSlug
-          ? `/${detailStoreSlug}/products/${product.slug}`
+          ? buildStoreProductHref(detailStoreSlug, product.slug, storeBaseHref)
           : "/products";
         const createdTime = product.createdAt ? new Date(product.createdAt).getTime() : 0;
         const isNewProduct =
@@ -712,6 +721,7 @@ export function ProductInfiniteGrid({
   onLoadNext,
   storeSlug,
   storeName,
+  storeBaseHref,
   productCardVariant,
   labels,
 }: {
@@ -721,6 +731,7 @@ export function ProductInfiniteGrid({
   onLoadNext: () => void;
   storeSlug?: string;
   storeName?: string;
+  storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
@@ -730,6 +741,7 @@ export function ProductInfiniteGrid({
         products={products}
         storeSlug={storeSlug}
         storeName={storeName}
+        storeBaseHref={storeBaseHref}
         productCardVariant={productCardVariant}
         labels={labels}
       />
@@ -753,6 +765,7 @@ export function InfiniteProductGrid({
   sort = "newest",
   storeSlug,
   storeName,
+  storeBaseHref,
   productCardVariant,
   labels,
 }: {
@@ -766,6 +779,7 @@ export function InfiniteProductGrid({
   sort?: MarketplaceProductSort;
   storeSlug?: string;
   storeName?: string;
+  storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
 }) {
@@ -788,6 +802,7 @@ export function InfiniteProductGrid({
       onLoadNext={infinite.loadNext}
       storeSlug={storeSlug}
       storeName={storeName}
+      storeBaseHref={storeBaseHref}
       productCardVariant={productCardVariant}
       labels={labels}
     />
@@ -970,6 +985,7 @@ export function Storefront({
   locations = [],
   selectedCategoryId,
   locale,
+  storeBaseHref,
   productCardVariant,
   footer,
   labels,
@@ -1167,7 +1183,7 @@ export function Storefront({
               <CategoryFilters
                 categories={categories}
                 selectedCategoryId={activeCategoryId}
-                baseHref={`/${store.slug}`}
+                baseHref={storeBaseHref ?? `/${store.slug}`}
                 allLabel={t("allCategories")}
                 onSelect={selectCategory}
               />
@@ -1180,6 +1196,7 @@ export function Storefront({
                 onLoadNext={infinite.loadNext}
                 storeSlug={store.slug}
                 storeName={store.name}
+                storeBaseHref={storeBaseHref}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
               />
