@@ -85,7 +85,8 @@ function MediaPicker({
         ) : (
           <div className="grid place-items-center gap-2 text-sm text-muted-foreground">
             <ImagePlus className="size-7" aria-hidden="true" />
-            Şəkli buraya sürüklə
+            <span className="sm:hidden">Şəkil seç</span>
+            <span className="hidden sm:inline">Şəkli seç və ya buraya sürüklə</span>
           </div>
         )}
       </button>
@@ -93,7 +94,7 @@ function MediaPicker({
         ref={inputRef}
         type="file"
         name={name}
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
         className="hidden"
         onChange={(event) => handleFiles(event.target.files)}
       />

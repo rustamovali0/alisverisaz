@@ -16,9 +16,9 @@ export function AuthSplitScreen({
 }: AuthSplitScreenProps) {
   return (
     <div className={cn("w-full", className)}>
-      <div className="mx-auto grid w-full max-w-[1180px] gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-        <div className="flex items-start">
-          <div className="w-full">{children}</div>
+      <div className="mx-auto grid w-full max-w-[1180px] gap-6 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center">
+        <div className="flex w-full justify-center">
+          <div className="w-full max-w-[520px]">{children}</div>
         </div>
         <AuthVisualPanel variant={variant} />
       </div>

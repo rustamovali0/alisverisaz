@@ -6,6 +6,7 @@
   "common": {
     "brand": "alisveris.az",
     "products": "Products",
+    "addProduct": "Add product",
     "cart": "Cart",
     "loading": "Loading",
     "empty": "No data",

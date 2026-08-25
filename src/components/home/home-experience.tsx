@@ -364,7 +364,7 @@ export function HomeExperience({
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">{home("allCategories")}</Link>
+              <Link href="/categories">{home("allCategories")}</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -400,7 +400,7 @@ export function HomeExperience({
               </h2>
             </div>
             <Button asChild variant="outline">
-              <a href="#featured-stores">{home("allStores")}</a>
+              <Link href="/stores">{home("allStores")}</Link>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

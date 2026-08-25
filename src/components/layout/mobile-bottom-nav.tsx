@@ -1,9 +1,10 @@
 "use client";
 
 import {
-  Grid2X2,
   Heart,
   Home,
+  Package,
+  Plus,
   ShoppingCart,
   Store,
   UserRound,
@@ -116,12 +117,6 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const isAuthLoading = profile.status === "loading";
   const actualRole = profile.status === "authenticated" ? profile.role : null;
   const role = actualRole === "admin" ? null : actualRole;
-  const items = [
-    { href: "/", label: nav("home"), icon: Home },
-    { href: "/products", label: nav("catalog"), icon: Grid2X2 },
-    { href: "/favorites", label: nav("favorites"), icon: Heart },
-    { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
-  ];
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
     ? nav("account")
@@ -130,10 +125,29 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         : role
           ? nav("account")
           : auth("login");
+  const items =
+    role === "seller"
+      ? [
+          { href: "/", label: nav("home"), icon: Home },
+          { href: "/products", label: nav("products"), icon: Package },
+          {
+            href: "/sell",
+            label: nav("addProduct"),
+            icon: Plus,
+            isPrimaryAction: true,
+          },
+          { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
+        ]
+      : [
+          { href: "/", label: nav("home"), icon: Home },
+          { href: "/products", label: nav("products"), icon: Package },
+          { href: "/favorites", label: nav("favorites"), icon: Heart },
+          { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
+        ];
 
   const isCurrentRoute = useCallback(
     (href: string) => {
-      const cleanHref = href.split("?")[0] || "/";
+      const cleanHref = href.split(/[?#]/)[0] || "/";
 
       return cleanHref === "/"
         ? pathname === "/"
@@ -206,6 +220,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
+          const isPrimaryAction = "isPrimaryAction" in item && item.isPrimaryAction;
           const isActive = (pendingHref ?? (isNavItemActive(item.href) ? item.href : null)) === item.href;
 
           return (
@@ -223,6 +238,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
                 "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
                 itemVariantClass[variant],
                 isActive && "bg-primary/10 text-primary",
+                isPrimaryAction && "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}

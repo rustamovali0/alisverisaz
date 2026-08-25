@@ -122,7 +122,8 @@ function SellerImageDropzone({
         ) : (
           <span className="grid place-items-center gap-2 text-sm text-muted-foreground">
             <ImagePlus className="size-7" aria-hidden="true" />
-            Şəkli buraya sürüklə və ya seç
+            <span className="sm:hidden">Şəkil seç</span>
+            <span className="hidden sm:inline">Şəkli seç və ya buraya sürüklə</span>
           </span>
         )}
       </button>

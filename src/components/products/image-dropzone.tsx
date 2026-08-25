@@ -85,10 +85,8 @@ export function ImageDropzone({
         )}
       >
         <ImagePlus className="mb-3 size-7 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm font-medium">Şəkilləri buraya sürüklə</span>
-        <span className="mt-1 text-sm text-muted-foreground">
-          Şəkillər serverdə WebP formatına çevrilir
-        </span>
+        <span className="text-sm font-medium sm:hidden">Şəkil seç</span>
+        <span className="hidden text-sm font-medium sm:inline">Şəkilləri seç və ya buraya sürüklə</span>
         {maxFiles !== null ? (
           <span className="mt-2 text-xs font-semibold text-muted-foreground">
             {files.length}/{maxFiles} şəkil

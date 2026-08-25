@@ -35,7 +35,6 @@ import type { ProductLocationAvailability } from "@/lib/locations/types";
 import {
   getProductReviews,
   getReviewSummary,
-  hasUserPurchasedProduct,
 } from "@/lib/reviews/data";
 import { setRequestLocale } from "next-intl/server";
 
@@ -140,17 +139,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const [reviews, productLocations, storeLocations, hasPurchasedProduct] =
+  const [reviews, productLocations, storeLocations] =
     await Promise.all([
     getProductReviews(detail.product.id),
     getPublicProductLocations(detail.product.id),
     getLocationsForStores([detail.store.id]),
-    current?.role === "customer"
-      ? hasUserPurchasedProduct({
-          userId: current.user.id,
-          productId: detail.product.id,
-        })
-      : Promise.resolve(false),
   ]);
 
   const relatedProducts = detail.product.categoryId
@@ -178,7 +171,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const reviewSummary = getReviewSummary(reviews);
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
-  const canWriteReview = current?.role === "customer" && hasPurchasedProduct;
+  const canWriteReview = current?.role === "customer" || current?.role === "seller";
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
   const visibleProductLocations: ProductLocationAvailability[] =

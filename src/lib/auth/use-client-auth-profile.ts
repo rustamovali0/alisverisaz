@@ -23,6 +23,7 @@ export type ClientAuthProfile =
 
 const AUTH_PROFILE_RESET_EVENT = "alisveris-auth-profile-reset";
 const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v1";
+let inMemoryProfile: ClientAuthProfile | null = null;
 
 const emptyProfile: ClientAuthProfile = {
   status: "loading",
@@ -31,6 +32,55 @@ const emptyProfile: ClientAuthProfile = {
   fullName: null,
   avatarUrl: null,
 };
+
+function isCachedProfile(value: unknown): value is ClientAuthProfile {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const profile = value as Record<string, unknown>;
+
+  if (profile.status === "guest") {
+    return profile.role === null;
+  }
+
+  return profile.status === "authenticated" && isAuthRole(profile.role);
+}
+
+function readCachedProfile() {
+  if (inMemoryProfile) {
+    return inMemoryProfile;
+  }
+
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const cached = JSON.parse(window.localStorage.getItem(AUTH_PROFILE_CACHE_KEY) ?? "null");
+
+    if (isCachedProfile(cached)) {
+      inMemoryProfile = cached;
+      return cached;
+    }
+  } catch {
+    // The server-side route check remains the source of authorization truth.
+  }
+
+  return null;
+}
+
+function cacheProfile(profile: ClientAuthProfile) {
+  inMemoryProfile = profile;
+
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(AUTH_PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } catch {
+      // Keep the in-memory value when storage is unavailable.
+    }
+  }
+}
 
 function normalizeRole(role: unknown): AuthRole {
   return isAuthRole(role) ? role : "customer";
@@ -84,6 +134,8 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
 }
 
 export function clearClientAuthProfileCache() {
+  inMemoryProfile = null;
+
   if (typeof window !== "undefined") {
     try {
       window.localStorage.removeItem(AUTH_PROFILE_CACHE_KEY);
@@ -95,7 +147,9 @@ export function clearClientAuthProfileCache() {
 }
 
 export function useClientAuthProfile() {
-  const [profile, setProfile] = useState<ClientAuthProfile>(emptyProfile);
+  const [profile, setProfile] = useState<ClientAuthProfile>(
+    () => readCachedProfile() ?? emptyProfile,
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -105,6 +159,7 @@ export function useClientAuthProfile() {
       const nextProfile = await loadClientAuthProfile();
 
       if (isMounted) {
+        cacheProfile(nextProfile);
         setProfile(nextProfile);
       }
     }

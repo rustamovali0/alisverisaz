@@ -6,6 +6,7 @@
   "common": {
     "brand": "alisveris.az",
     "products": "Товары",
+    "addProduct": "Добавить товар",
     "cart": "Корзина",
     "loading": "Загрузка",
     "empty": "Нет данных",

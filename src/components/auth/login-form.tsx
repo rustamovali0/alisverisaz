@@ -6,13 +6,13 @@ import { useMemo, useState, useTransition } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthDivider } from "@/components/auth/auth-divider";
-import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
 import { PasswordInput } from "@/components/auth/password-input";
 import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { showToast } from "@/lib/toast";
 import { Link, useRouter } from "@/i18n/navigation";
 
 type LoginFormProps = {
@@ -38,7 +38,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
   const [captchaToken, setCaptchaToken] = useState("");
-  const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const next = searchParams.get("next") ?? "";
 
@@ -71,16 +70,13 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       return;
     }
 
-    setServerError(null);
-
     if (!validate()) {
       return;
     }
 
     if (!captchaToken) {
       const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
-      setServerError(message);
-      void appAlert.error(message, "Giriş alınmadı");
+      showToast({ title: "Giriş alınmadı", description: message, variant: "error" });
       return;
     }
 
@@ -99,15 +95,13 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       } catch {
         const message = "Giriş zamanı texniki xəta baş verdi. Yenidən cəhd edin.";
         setCaptchaToken("");
-        setServerError(message);
-        void appAlert.error(message, "Giriş alınmadı");
+        showToast({ title: "Giriş alınmadı", description: message, variant: "error" });
         return;
       }
 
       if (!result.ok) {
         setCaptchaToken("");
-        setServerError(result.message);
-        void appAlert.error(result.message, "Giriş alınmadı");
+        showToast({ title: "Giriş alınmadı", description: result.message, variant: "error" });
         return;
       }
 
@@ -126,23 +120,19 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
 
     if (!captchaToken) {
       const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
-      setServerError(message);
-      void appAlert.error(message, "Google girişi alınmadı");
+      showToast({ title: "Google girişi alınmadı", description: message, variant: "error" });
       return;
     }
 
     formData.set("next", next);
     formData.set("mode", mode);
     formData.set("captchaToken", captchaToken);
-    setServerError(null);
-
     startGoogleTransition(async () => {
       const result = await googleOAuthAction(formData);
 
       if (!result.ok) {
         setCaptchaToken("");
-        setServerError(result.message);
-        void appAlert.error(result.message, "Google girişi alınmadı");
+        showToast({ title: "Google girişi alınmadı", description: result.message, variant: "error" });
         return;
       }
 
@@ -204,7 +194,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       <form action={handleSubmit} className="grid gap-4">
         <input name="next" type="hidden" value={next} />
         <input name="mode" type="hidden" value={mode} />
-        <AuthErrorAlert message={serverError} />
         <AuthField
           id="identifier"
           name="identifier"

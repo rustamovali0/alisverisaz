@@ -6,6 +6,7 @@
   "common": {
     "brand": "alisveris.az",
     "products": "Məhsullar",
+    "addProduct": "Məhsul əlavə et",
     "cart": "Səbət",
     "loading": "Yüklənir",
     "empty": "Məlumat yoxdur",

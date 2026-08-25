@@ -1,7 +1,7 @@
 "use client";
 
 import { MessageCircle } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import { WhatsAppIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,7 @@ export function WhatsAppOrderButton({
 }: WhatsAppOrderButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [checkoutRequestId, setCheckoutRequestId] = useState(() => crypto.randomUUID());
+  const isSubmittingRef = useRef(false);
   const quantity = 1;
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
@@ -116,6 +117,10 @@ export function WhatsAppOrderButton({
   }
 
   function handleClick() {
+    if (isSubmittingRef.current) {
+      return;
+    }
+
     if (isUnavailable) {
       void appAlert.error(
         whatsappPhone
@@ -146,6 +151,8 @@ export function WhatsAppOrderButton({
       );
       return;
     }
+
+    isSubmittingRef.current = true;
 
     const popup = window.open("about:blank", "_blank");
 
@@ -182,24 +189,32 @@ export function WhatsAppOrderButton({
     formData.set("note", note);
 
     startTransition(async () => {
-      const result = await createCheckoutOrdersAction(formData);
+      try {
+        const result = await createCheckoutOrdersAction(formData);
 
-      if (!result.ok) {
+        if (!result.ok) {
+          popup?.close();
+          isSubmittingRef.current = false;
+          void appAlert.error(result.message, "WhatsApp sifarişi alınmadı");
+          return;
+        }
+
+        const message = buildMessage(getOrderNumber(result));
+        const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+
+        setCheckoutRequestId(crypto.randomUUID());
+        isSubmittingRef.current = false;
+        void appAlert.success("Sifariş yaradıldı", "Satıcıya WhatsApp mesajı açılır.");
+
+        if (popup) {
+          popup.location.href = url;
+        } else {
+          window.location.href = url;
+        }
+      } catch {
         popup?.close();
-        void appAlert.error(result.message, "WhatsApp sifarişi alınmadı");
-        return;
-      }
-
-      const message = buildMessage(getOrderNumber(result));
-      const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
-
-      setCheckoutRequestId(crypto.randomUUID());
-      void appAlert.success("Sifariş yaradıldı", "Satıcıya WhatsApp mesajı açılır.");
-
-      if (popup) {
-        popup.location.href = url;
-      } else {
-        window.location.href = url;
+        isSubmittingRef.current = false;
+        void appAlert.error("Sifariş hazırda yaradıla bilmədi.", "WhatsApp sifarişi alınmadı");
       }
     });
   }

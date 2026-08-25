@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -218,12 +218,11 @@ export function AddToCartButton({
     }
 
     if (requiresSelection && Object.keys(normalizedSelection).length === 0) {
-      const href =
-        product.storeSlug && product.slug
-          ? `/${product.storeSlug}/products/${product.slug}`
-          : `/products/${product.slug}`;
-
-      window.location.href = href;
+      showToast({
+        title: "Variant seçin",
+        description: "Məhsulu səbətə əlavə etmək üçün seçimləri tamamlayın.",
+        variant: "warning",
+      });
       return;
     }
 
@@ -295,9 +294,8 @@ export function AddToCartButton({
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center gap-0.5 px-1 text-center text-[11px] font-black leading-tight !text-primary-foreground min-[360px]:text-xs min-[390px]:gap-1 sm:text-sm">
-          <Check className="hidden size-4 shrink-0 stroke-[2.5] min-[390px]:block" aria-hidden="true" />
-          <span className="whitespace-nowrap">{t("addedToCart")}</span>
+        <span className="flex min-w-0 items-center justify-center px-1 text-center text-[11px] font-black leading-tight !text-primary-foreground min-[360px]:text-xs sm:text-sm">
+          <span className="truncate whitespace-nowrap">{t("addedToCart")} ({quantity})</span>
         </span>
         <button
           type="button"
@@ -349,7 +347,7 @@ export function BuyNowButton({
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
-  const checkoutPath = "/cart?mode=checkout";
+  const checkoutPath = "/checkout";
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
     product.variantCombinations ?? [],

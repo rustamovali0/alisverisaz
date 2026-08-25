@@ -36,10 +36,10 @@ export function ProductReviewForm({
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
-    if (viewerRole !== "customer") {
+    if (viewerRole !== "customer" && viewerRole !== "seller") {
       void appAlert.info(
         "Rəy yazmaq üçün giriş edin",
-        "Rəy yazmaq üçün zəhmət olmasa giriş edin.",
+        "Rəy yazmaq üçün alıcı və ya satıcı hesabı ilə daxil olun.",
       );
       return;
     }

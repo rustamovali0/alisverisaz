@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -22,6 +22,18 @@ type FavoriteProductCache = {
 
 let favoriteProductCache: FavoriteProductCache | null = null;
 let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null = null;
+const FAVORITE_UPDATED_EVENT = "alisveris-favorite-updated";
+
+type FavoriteUpdatedDetail = {
+  productId: string;
+  isActive: boolean;
+};
+
+function emitFavoriteUpdate(detail: FavoriteUpdatedDetail) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<FavoriteUpdatedDetail>(FAVORITE_UPDATED_EVENT, { detail }));
+  }
+}
 
 async function loadFavoriteProductCache() {
   if (favoriteProductCache) {
@@ -93,6 +105,7 @@ export function FavoriteToggleButton({
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const isMutatingRef = useRef(false);
   const isActive = Boolean(favoriteId);
 
   useEffect(() => {
@@ -142,19 +155,34 @@ export function FavoriteToggleButton({
     };
   }, [productId]);
 
+  useEffect(() => {
+    function handleFavoriteUpdate(event: Event) {
+      const detail = (event as CustomEvent<FavoriteUpdatedDetail>).detail;
+
+      if (detail?.productId === productId) {
+        setFavoriteId(detail.isActive ? productId : null);
+      }
+    }
+
+    window.addEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
+    return () => window.removeEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
+  }, [productId]);
+
   function toggleFavorite(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
 
-    if (isMutating) {
+    if (isMutatingRef.current) {
       showToast({ title: "Bir az gözləyin...", description: "Əməliyyat davam edir.", variant: "info" });
       return;
     }
 
     const previousFavoriteId = favoriteId;
     const wasActive = Boolean(previousFavoriteId);
+    isMutatingRef.current = true;
     setIsMutating(true);
     setFavoriteId(wasActive ? null : productId);
+    emitFavoriteUpdate({ productId, isActive: !wasActive });
 
     void (async () => {
       const supabase = createSupabaseBrowserClient();
@@ -164,7 +192,9 @@ export function FavoriteToggleButton({
 
       if (!user) {
         setFavoriteId(previousFavoriteId);
+        emitFavoriteUpdate({ productId, isActive: wasActive });
         setIsMutating(false);
+        isMutatingRef.current = false;
         showToast({
           title: "Giriş tələb olunur",
           description: "Seçilmişlərə əlavə etmək üçün zəhmət olmasa giriş edin.",
@@ -226,6 +256,7 @@ export function FavoriteToggleButton({
       } catch {
         setFavoriteId(previousFavoriteId);
         updateFavoriteProductCache(user.id, productId, wasActive);
+        emitFavoriteUpdate({ productId, isActive: wasActive });
         showToast({
           title: "Əməliyyatı tamamlamaq mümkün olmadı.",
           description: "Yenidən cəhd edin.",
@@ -233,6 +264,7 @@ export function FavoriteToggleButton({
         });
       } finally {
         setIsMutating(false);
+        isMutatingRef.current = false;
       }
     })();
   }
@@ -251,7 +283,7 @@ export function FavoriteToggleButton({
       className={cn(
         "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 md:hover:shadow-md",
         compact ? "size-10" : "size-11",
-        isActive && "border-primary/40 bg-primary text-primary-foreground hover:text-primary-foreground",
+        isActive && "border-foreground/25 bg-background text-foreground hover:text-foreground",
         className,
       )}
     >

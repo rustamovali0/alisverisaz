@@ -29,7 +29,7 @@ export function SellProductButton() {
       }
 
       if (profile.status === "authenticated" && profile.role === "seller") {
-        router.push("/store/dashboard/products#create-product");
+        router.push("/sell");
         return;
       }
 

@@ -15,6 +15,7 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
@@ -59,7 +60,9 @@ export function MarketplaceHeader({
   const common = useTranslations("common");
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
+  const profile = useClientAuthProfile();
   const isHomePage = pathname === "/";
+  const isSeller = profile.status === "authenticated" && profile.role === "seller";
   const isProductsActive = pathname.startsWith("/products");
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
@@ -132,6 +135,19 @@ export function MarketplaceHeader({
               buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
               iconClassName="size-7"
             />
+            {isSeller ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className="size-12 rounded-xl border bg-background text-foreground shadow-sm"
+                aria-label={nav("favorites")}
+              >
+                <Link href="/favorites" prefetch className="grid place-items-center">
+                  <Heart className="size-7 stroke-[2.4]" aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : null}
           </div>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>

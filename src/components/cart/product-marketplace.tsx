@@ -574,6 +574,7 @@ export function ProductGrid({
   const t = useTranslations("marketplace");
   const router = useRouter();
   const isLiquidGlass = productCardVariant === "liquid-glass";
+  const centerRelatedCards = layout === "related" && products.length <= 3;
 
   if (products.length === 0) {
     return (
@@ -591,7 +592,10 @@ export function ProductGrid({
     <div
       className={cn(
         layout === "related"
-          ? "grid min-w-0 grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-3 md:pr-3 md:[scrollbar-color:hsl(var(--border))_transparent] md:[scrollbar-width:thin]"
+          ? cn(
+              "grid min-w-0 grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-3 md:pr-3 md:[scrollbar-color:hsl(var(--border))_transparent] md:[scrollbar-width:thin]",
+              centerRelatedCards && "md:justify-center",
+            )
           : "grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4",
       )}
     >
@@ -741,15 +745,20 @@ export function ProductGrid({
               {t("deliveryWithStore")}
             </p>
             <div className="relative z-10 mt-auto grid gap-2 pt-3">
-              <AddToCartButton
-                product={product}
-                disabled={isOutOfStock}
-                className={cn(
-                  "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[13px] font-black uppercase text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:text-sm sm:font-medium sm:normal-case",
-                  isLiquidGlass &&
-                    "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
-                )}
-              />
+              <div
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                <AddToCartButton
+                  product={product}
+                  disabled={isOutOfStock}
+                  className={cn(
+                    "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[13px] font-black uppercase text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:text-sm sm:font-medium sm:normal-case",
+                    isLiquidGlass &&
+                      "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                  )}
+                />
+              </div>
             </div>
           </div>
         </article>

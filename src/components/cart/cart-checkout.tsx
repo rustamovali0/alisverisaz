@@ -184,6 +184,14 @@ export function CartCheckout({
       .then((nextProducts) => {
         if (isMounted) {
           setProducts(nextProducts);
+
+          const availableProductIds = new Set(nextProducts.map((product) => product.id));
+          const nextItems = cartItems.filter((item) => availableProductIds.has(item.productId));
+
+          if (nextItems.length !== cartItems.length) {
+            setItems(nextItems);
+            writeCart(nextItems);
+          }
         }
       })
       .finally(() => {
