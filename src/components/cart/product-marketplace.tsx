@@ -52,6 +52,7 @@ import {
   PawPrint,
   Phone,
   Shirt,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Store,
@@ -1099,6 +1100,7 @@ export function ProductMarketplace({
   const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const [activeSort, setActiveSort] = useState<MarketplaceProductSort>(sort);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [colorFilter, setColorFilter] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -1295,15 +1297,33 @@ export function ProductMarketplace({
           </div>
         </header>
 
-        <div className="grid items-start gap-5 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-7">
-          <aside className="min-w-0 lg:sticky lg:top-24">{filterBar}</aside>
+        <div className="min-w-0">
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm">
               <h1 className="text-xl font-black tracking-normal sm:text-2xl">
                 {activeCategoryId ? activeCategory?.name ?? t("categoryProducts") : t("allProducts")}
               </h1>
-              {sortControl}
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant={isFiltersOpen ? "default" : "outline"}
+                  className="h-10 gap-2 px-3 text-sm"
+                  aria-expanded={isFiltersOpen}
+                  aria-controls="marketplace-filters"
+                  onClick={() => setIsFiltersOpen((current) => !current)}
+                >
+                  <SlidersHorizontal className="size-4" aria-hidden="true" />
+                  {t("filters")}
+                  <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+                </Button>
+                <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+              </div>
             </div>
+            {isFiltersOpen ? (
+              <div id="marketplace-filters" className="relative z-20 mx-auto w-full max-w-sm">
+                {filterBar}
+              </div>
+            ) : null}
             {productGrid}
           </section>
         </div>
@@ -1349,7 +1369,12 @@ export function Storefront({
       : store.address;
   const primaryPhone = primaryLocation?.phone || store.phone;
   const primaryMapUrl = getStoreLocationMapUrl(primaryLocation, primaryAddress);
-  const visibleProducts = infinite.products;
+  // The data query is already scoped by store ID. Keep a client-side guard too so
+  // stale cached state can never render another store's product in "Mağazam".
+  const visibleProducts = useMemo(
+    () => infinite.products.filter((product) => product.storeId === store.id),
+    [infinite.products, store.id],
+  );
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
