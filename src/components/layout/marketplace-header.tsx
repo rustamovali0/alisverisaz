@@ -118,10 +118,10 @@ export function MarketplaceHeader({
       <header
         className={sticky ? cn("marketplace-header relative z-40 border-b shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0", isHomePage ? "bg-background/80 backdrop-blur-xl" : "bg-background/95") : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
-        <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
+        <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 py-3 sm:gap-3 xl:flex-nowrap">
           <Link href="/" prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
-              <span className="grid size-12 place-items-center overflow-hidden rounded-xl border bg-background shadow-sm md:size-10 md:rounded-md">
+              <span className="grid size-10 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm md:size-10 md:rounded-md">
                 <img
                   src={logoUrl}
                   alt={displaySiteName}
@@ -136,11 +136,11 @@ export function MarketplaceHeader({
                 ) : null}
               </span>
             ) : (
-              <span className="grid size-12 place-items-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
+              <span className="grid size-10 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
                 a
               </span>
             )}
-            <span className="min-w-0 truncate text-2xl font-black tracking-normal md:text-xl">
+            <span className="min-w-0 truncate text-xl font-black tracking-normal min-[400px]:text-2xl md:text-xl">
               {displaySiteName}
             </span>
           </Link>
