@@ -3,6 +3,7 @@
 import {
   Heart,
   Home,
+  LayoutDashboard,
   Package,
   Plus,
   ShoppingCart,
@@ -99,7 +100,12 @@ function scrollPageToTop() {
 
 function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "seller") {
-    return <Store className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
+    return (
+      <LayoutDashboard
+        className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]"
+        aria-hidden="true"
+      />
+    );
   }
 
   return <UserRound className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
@@ -237,6 +243,10 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
     setPendingHref(null);
   }, [pathname]);
 
+  const isAccountActive =
+    (role === "seller" && pathname === "/store/dashboard") ||
+    (role !== "seller" && pathname.startsWith("/dashboard"));
+
   useEffect(() => {
     function syncCartCount() {
       setCartCount(readCartCount());
@@ -346,16 +356,9 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
             "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            ((role === "seller" && pathname.startsWith("/store/dashboard")) ||
-              (role !== "seller" && pathname.startsWith("/dashboard"))) &&
-              "bg-primary/10 text-primary",
+            isAccountActive && "bg-primary/10 text-primary",
           )}
-          aria-current={
-            (role === "seller" && pathname.startsWith("/store/dashboard")) ||
-            (role !== "seller" && pathname.startsWith("/dashboard"))
-              ? "page"
-              : undefined
-          }
+          aria-current={isAccountActive ? "page" : undefined}
           aria-disabled={isAuthLoading}
           aria-label={accountText}
         >
