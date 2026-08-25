@@ -569,6 +569,7 @@ export function ProductGrid({
   labels,
   layout = "grid",
   isStoreOwner = false,
+  forceMobileTwoColumns = false,
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -578,6 +579,7 @@ export function ProductGrid({
   labels: Pick<MarketplaceLabels, "stock">;
   layout?: "grid" | "related";
   isStoreOwner?: boolean;
+  forceMobileTwoColumns?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -604,7 +606,9 @@ export function ProductGrid({
               "grid min-w-0 grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-3 md:pr-3 md:[scrollbar-color:hsl(var(--border))_transparent] md:[scrollbar-width:thin]",
               centerRelatedCards && "md:justify-center",
             )
-          : "grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4",
+          : forceMobileTwoColumns
+            ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4"
+            : "grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4",
       )}
     >
       {products.map((product) => {
@@ -983,6 +987,7 @@ export function ProductInfiniteGrid({
   productCardVariant,
   labels,
   isStoreOwner = false,
+  forceMobileTwoColumns = false,
 }: {
   products: CartProduct[];
   hasMore: boolean;
@@ -994,6 +999,7 @@ export function ProductInfiniteGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
+  forceMobileTwoColumns?: boolean;
 }) {
   return (
     <>
@@ -1005,6 +1011,7 @@ export function ProductInfiniteGrid({
         productCardVariant={productCardVariant}
         labels={labels}
         isStoreOwner={isStoreOwner}
+        forceMobileTwoColumns={forceMobileTwoColumns}
       />
       <ProductInfiniteSentinel
         disabled={!hasMore || isLoadingNext}
@@ -1030,6 +1037,7 @@ export function InfiniteProductGrid({
   productCardVariant,
   labels,
   isStoreOwner = false,
+  forceMobileTwoColumns = false,
 }: {
   initialProducts: CartProduct[];
   initialCursor?: string | null;
@@ -1045,6 +1053,7 @@ export function InfiniteProductGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
+  forceMobileTwoColumns?: boolean;
 }) {
   const infinite = useInfiniteProducts({
     initialProducts,
@@ -1069,6 +1078,7 @@ export function InfiniteProductGrid({
       productCardVariant={productCardVariant}
       labels={labels}
       isStoreOwner={isStoreOwner}
+      forceMobileTwoColumns={forceMobileTwoColumns}
     />
   );
 }
@@ -1531,6 +1541,7 @@ export function Storefront({
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
                 isStoreOwner={isStoreOwner}
+                forceMobileTwoColumns
               />
             </div>
           </div>

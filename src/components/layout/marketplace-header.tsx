@@ -81,6 +81,9 @@ export function MarketplaceHeader({
   const isProductsActive = pathname.startsWith("/products");
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
+  const sellerUtilityButtonClass =
+    "size-12 rounded-xl !border-0 !bg-transparent !shadow-none hover:!bg-muted hover:!text-primary min-[400px]:size-14";
+  const sellerUtilityIconClass = "size-7 stroke-[2.5] min-[400px]:size-8";
 
   useEffect(() => {
     if (!isHomePage) {
@@ -143,37 +146,47 @@ export function MarketplaceHeader({
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
             <ThemeToggle
-              className="size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-14"
-              iconClassName="size-7 min-[400px]:size-8"
+              className={cn(
+                "size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-14",
+                isSeller && sellerUtilityButtonClass,
+              )}
+              iconClassName={isSeller ? sellerUtilityIconClass : "size-7 min-[400px]:size-8"}
             />
-            {!isSeller ? (
-              <NotificationCenter
-                buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
-                iconClassName="size-7 min-[400px]:size-8"
-              />
-            ) : null}
+            <NotificationCenter
+              buttonClassName={cn(
+                "size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14",
+                isSeller && sellerUtilityButtonClass,
+              )}
+              iconClassName={isSeller ? sellerUtilityIconClass : "size-7 min-[400px]:size-8"}
+            />
             {isSeller ? (
               <>
                 <Button
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12 max-[374px]:hidden"
+                  className={cn(
+                    "size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12 max-[374px]:hidden",
+                    sellerUtilityButtonClass,
+                  )}
                   aria-label={nav("favorites")}
                 >
                   <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className="size-6 stroke-[2.5] min-[400px]:size-7" aria-hidden="true" />
+                    <Heart className={sellerUtilityIconClass} aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
+                  className={cn(
+                    "size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14",
+                    sellerUtilityButtonClass,
+                  )}
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="grid place-items-center">
-                    <ShoppingCart className="size-7 stroke-[2.5] min-[400px]:size-8" aria-hidden="true" />
+                    <ShoppingCart className={sellerUtilityIconClass} aria-hidden="true" />
                   </Link>
                 </Button>
               </>
@@ -205,35 +218,45 @@ export function MarketplaceHeader({
           <div className="ml-auto hidden items-center gap-1 md:flex">
             <LanguageSwitcher className="hidden lg:flex" />
             <ThemeToggle
-              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-primary hover:shadow-md md:size-12"
-              iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"
+              className={cn(
+                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-primary hover:shadow-md md:size-12",
+                isSeller && sellerUtilityButtonClass,
+              )}
+              iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"}
             />
-            {!isSeller ? (
-              <NotificationCenter
-                buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
-                iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"
-              />
-            ) : null}
+            <NotificationCenter
+              buttonClassName={cn(
+                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                isSeller && sellerUtilityButtonClass,
+              )}
+              iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"}
+            />
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
+              className={cn(
+                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                isSeller && sellerUtilityButtonClass,
+              )}
               aria-label={nav("favorites")}
             >
               <Link href="/favorites" prefetch className="grid place-items-center">
-                <Heart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
+                <Heart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
               </Link>
             </Button>
             <Button
               asChild
               size="icon"
               variant="ghost"
-              className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
+              className={cn(
+                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                isSeller && sellerUtilityButtonClass,
+              )}
               aria-label={common("cart")}
             >
               <Link href="/cart" prefetch className="grid place-items-center">
-                <ShoppingCart className="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />
+                <ShoppingCart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
               </Link>
             </Button>
             <div className="hidden min-w-[168px] lg:block">
