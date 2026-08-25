@@ -16,6 +16,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 type MobileBottomNavProps = {
@@ -27,25 +28,25 @@ const CART_KEY = "alisveris_cart";
 
 const navVariantClass: Record<MobileNavbarVariant, string> = {
   classic:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/82 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-border dark:bg-background/82",
+    "inset-x-0 bottom-0 border-t border-border/80 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.12)] backdrop-blur-xl",
   floating:
-    "inset-x-3 bottom-3 rounded-2xl border border-white/70 bg-white/80 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-border dark:bg-background/80",
+    "inset-x-3 bottom-3 rounded-2xl border border-border/80 bg-background/95 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.2)] backdrop-blur-xl",
   pill:
-    "inset-x-4 bottom-3 rounded-full border border-slate-200 bg-white/84 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-border dark:bg-background/84",
+    "inset-x-4 bottom-3 rounded-full border border-border/80 bg-background/95 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.18)] backdrop-blur-xl",
   compact:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/86 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.08)] backdrop-blur-lg dark:border-border dark:bg-background/86",
+    "inset-x-0 bottom-0 border-t border-border/80 bg-background/95 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.1)] backdrop-blur-lg",
   outlined:
-    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/20 bg-background/84 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl",
+    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/25 bg-background/95 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl",
   soft:
-    "inset-x-0 bottom-0 border-t border-primary/10 bg-primary/5 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.07)] backdrop-blur-lg",
+    "inset-x-0 bottom-0 border-t border-primary/15 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)] backdrop-blur-lg",
   solid:
     "inset-x-0 bottom-0 border-t border-primary/20 bg-background px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)]",
   glass:
-    "inset-x-3 bottom-3 rounded-2xl border border-white/60 bg-white/68 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-background/64",
+    "inset-x-3 bottom-3 rounded-2xl border border-border/70 bg-background/92 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.2)] backdrop-blur-2xl",
   minimal:
-    "inset-x-0 bottom-0 bg-background/88 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-lg",
+    "inset-x-0 bottom-0 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-lg",
   rail:
-    "inset-x-2 bottom-2 rounded-lg border border-slate-200 bg-white/84 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-border dark:bg-background/84",
+    "inset-x-2 bottom-2 rounded-lg border border-border/80 bg-background/95 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.16)] backdrop-blur-xl",
 };
 
 const itemVariantClass: Record<MobileNavbarVariant, string> = {
@@ -113,6 +114,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const isAuthLoading = profile.status === "loading";
   const actualRole = profile.status === "authenticated" ? profile.role : null;
@@ -125,17 +127,61 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         : role
           ? nav("account")
           : auth("login");
+
+  useEffect(() => {
+    if (role !== "seller") {
+      setSellerStoreHref(null);
+      return;
+    }
+
+    let active = true;
+    const supabase = createSupabaseBrowserClient();
+
+    async function loadStorefrontHref() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        return;
+      }
+
+      const { data } = await (supabase as any)
+        .from("stores")
+        .select("slug")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const store = data as { slug?: string | null } | null;
+
+      if (active && store?.slug) {
+        setSellerStoreHref(`/${store.slug}`);
+      }
+    }
+
+    void loadStorefrontHref();
+
+    return () => {
+      active = false;
+    };
+  }, [role]);
+
   const items =
     role === "seller"
       ? [
           { href: "/", label: nav("home"), icon: Home },
-          { href: "/products", label: nav("products"), icon: Package },
+          {
+            href: sellerStoreHref ?? "/store/dashboard/products",
+            label: "Mağazam",
+            icon: Store,
+          },
           {
             href: "/sell",
             label: nav("addProduct"),
             icon: Plus,
           },
-          { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
+          { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
           { href: "/", label: nav("home"), icon: Home },
@@ -206,6 +252,30 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
     };
   }, []);
 
+  if (isAuthLoading) {
+    return (
+      <nav
+        className={cn(
+          "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+          navVariantClass[variant],
+          className,
+        )}
+        aria-label={nav("mobileNavigation")}
+        aria-busy="true"
+      >
+        <div className="grid w-full grid-cols-5 gap-1">
+          {Array.from({ length: 5 }, (_, index) => (
+            <span
+              key={index}
+              className="mx-auto h-11 w-full max-w-12 animate-pulse rounded-xl bg-muted/70"
+              aria-hidden="true"
+            />
+          ))}
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <nav
       className={cn(
@@ -215,7 +285,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
       )}
       aria-label={nav("mobileNavigation")}
     >
-      <div className="grid w-full min-w-0 grid-cols-5 items-center text-center">
+      <div className="grid w-full min-w-0 grid-cols-5 items-center text-center text-foreground">
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
@@ -233,7 +303,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
               }}
               onClick={() => navigate(item.href)}
               className={cn(
-                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
                 itemVariantClass[variant],
                 isActive && "bg-primary/10 text-primary",
               )}
@@ -273,7 +343,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
           }}
           disabled={isAuthLoading}
           className={cn(
-            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
             ((role === "seller" && pathname.startsWith("/store/dashboard")) ||

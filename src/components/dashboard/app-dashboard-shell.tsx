@@ -8,7 +8,7 @@ import { m } from "framer-motion";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { DashboardIconView } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { DashboardNavItem } from "@/lib/dashboard/navigation";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +58,7 @@ export function AppDashboardShell({
   children,
 }: AppDashboardShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const [hash, setHash] = useState("");
@@ -79,6 +80,30 @@ export function AppDashboardShell({
   useEffect(() => {
     setPendingHref(null);
   }, [hash, pathname]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      navItems.forEach((item) => router.prefetch(getPathWithoutHash(item.href)));
+    }, 80);
+
+    return () => window.clearTimeout(timeout);
+  }, [navItems, router]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isOpen]);
 
   function resetDashboardScroll() {
     if (typeof window === "undefined") {
@@ -193,7 +218,7 @@ export function AppDashboardShell({
         </Link>
         <p className="mt-1 truncate text-sm text-muted-foreground">{userLabel}</p>
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3" data-dashboard-scroll-root>
+      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3" data-dashboard-scroll-root>
         {renderNavItems()}
       </nav>
       <div className="border-t p-3">
@@ -261,7 +286,7 @@ export function AppDashboardShell({
         </div>
       ) : null}
 
-      <div className={cn(mobileRail ? "pl-16" : "pl-0", "lg:pl-72")}>
+      <div className={cn(mobileRail ? "pl-16" : "pl-0", "min-w-0 lg:pl-72")}>
         <header className={cn("z-30 border-b bg-background/[0.82] backdrop-blur-xl", mobileRail && "sticky top-0")}>
           <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
             {!mobileRail ? (
@@ -291,7 +316,7 @@ export function AppDashboardShell({
             ) : null}
           </div>
         </header>
-        <main className="min-w-0 px-3 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
+        <main className="min-w-0 max-w-full overflow-x-clip px-3 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
           {children}
         </main>
       </div>

@@ -57,6 +57,7 @@
     "stock": "Stock",
     "stockWithCount": "Stock: {count}",
     "addToCart": "Add to cart",
+    "viewDetails": "View details",
     "cartShort": "Cart",
     "addedToCart": "In cart",
     "cartAdded": "Added to cart",

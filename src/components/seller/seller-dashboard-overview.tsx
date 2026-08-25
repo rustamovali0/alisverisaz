@@ -70,7 +70,7 @@ function Stat({
     </article>
   );
 
-  return href ? <Link href={href} className="block transition hover:-translate-y-0.5">{content}</Link> : content;
+  return href ? <Link href={href} prefetch className="block transition hover:-translate-y-0.5">{content}</Link> : content;
 }
 
 function LimitWarning({
@@ -136,11 +136,11 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
       />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <Stat label="Hazırlanır" value={overview.orders.processing} />
-        <Stat label="Göndərildi" value={overview.orders.shipped} />
-        <Stat label="Çatdırıldı" value={overview.orders.completed} tone="success" />
-        <Stat label="Ləğv edildi" value={overview.orders.cancelled} />
-        <Stat label="Arxiv məhsullar" value={overview.products.archived} />
+        <Stat label="Hazırlanır" value={overview.orders.processing} href="/store/dashboard/orders" />
+        <Stat label="Göndərildi" value={overview.orders.shipped} href="/store/dashboard/orders" />
+        <Stat label="Çatdırıldı" value={overview.orders.completed} href="/store/dashboard/orders" tone="success" />
+        <Stat label="Ləğv edildi" value={overview.orders.cancelled} href="/store/dashboard/orders" />
+        <Stat label="Arxiv məhsullar" value={overview.products.archived} href="/store/dashboard/products" />
       </section>
 
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
@@ -150,10 +150,10 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
             <h2 className="text-base font-black">Satış xülasəsi</h2>
           </div>
           <div className="grid gap-3">
-            <Stat label="Bu gün" value={formatMoney(overview.sales.today, overview.currency)} />
-            <Stat label="Son 7 gün" value={formatMoney(overview.sales.last7Days, overview.currency)} />
-            <Stat label="Bu ay" value={formatMoney(overview.sales.month, overview.currency)} />
-            <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} />
+            <Stat label="Bu gün" value={formatMoney(overview.sales.today, overview.currency)} href="/store/dashboard/earnings" />
+            <Stat label="Son 7 gün" value={formatMoney(overview.sales.last7Days, overview.currency)} href="/store/dashboard/earnings" />
+            <Stat label="Bu ay" value={formatMoney(overview.sales.month, overview.currency)} href="/store/dashboard/earnings" />
+            <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} href="/store/dashboard/orders" />
           </div>
         </div>
 

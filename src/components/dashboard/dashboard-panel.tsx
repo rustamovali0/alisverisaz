@@ -16,7 +16,7 @@ export function DashboardPanel({
   className,
 }: DashboardPanelProps) {
   return (
-    <section className={cn("premium-card p-4", className)}>
+    <section className={cn("premium-card min-w-0 max-w-full overflow-x-clip p-4", className)}>
       <div className="mb-4 space-y-1">
         <h2 className="text-base font-semibold tracking-normal">{title}</h2>
         {description ? (

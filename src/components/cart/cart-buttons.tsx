@@ -282,7 +282,7 @@ export function AddToCartButton({
     return (
       <div
         className={cn(
-          "grid !h-11 min-h-11 min-w-0 grid-cols-[2.15rem_minmax(0,1fr)_2.15rem] items-center overflow-hidden rounded-xl border border-primary/25 !bg-primary !text-primary-foreground shadow-sm sm:!h-12 sm:grid-cols-[2.5rem_minmax(0,1fr)_2.5rem]",
+          "grid !h-11 min-h-11 min-w-0 grid-cols-[1.9rem_minmax(0,1fr)_1.9rem] items-center overflow-hidden rounded-xl border border-primary/25 !bg-primary !text-primary-foreground shadow-sm min-[360px]:grid-cols-[2.05rem_minmax(0,1fr)_2.05rem] sm:!h-12 sm:grid-cols-[2.25rem_minmax(0,1fr)_2.25rem]",
           className,
         )}
       >
@@ -294,7 +294,7 @@ export function AddToCartButton({
         >
           <Minus className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
         </button>
-        <span className="flex min-w-0 items-center justify-center px-1 text-center text-[11px] font-black leading-tight !text-primary-foreground min-[360px]:text-xs sm:text-sm">
+        <span className="flex min-w-0 items-center justify-center px-0.5 text-center text-[10px] font-bold leading-tight !text-primary-foreground min-[360px]:px-1 min-[360px]:text-[11px] sm:text-sm">
           <span className="truncate whitespace-nowrap">{t("addedToCart")} ({quantity})</span>
         </span>
         <button

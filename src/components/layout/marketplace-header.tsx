@@ -63,6 +63,8 @@ export function MarketplaceHeader({
   const profile = useClientAuthProfile();
   const isHomePage = pathname === "/";
   const isSeller = profile.status === "authenticated" && profile.role === "seller";
+  const isSellerDashboard =
+    pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
   const isProductsActive = pathname.startsWith("/products");
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
@@ -126,27 +128,40 @@ export function MarketplaceHeader({
               {displaySiteName}
             </span>
           </Link>
-          <div className="ml-auto flex shrink-0 items-center gap-2 md:hidden">
+          <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
             <ThemeToggle
-              className="size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary"
-              iconClassName="size-6"
+              className="size-10 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-12"
+              iconClassName="size-5 min-[400px]:size-6"
             />
             <NotificationCenter
-              buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm"
-              iconClassName="size-7"
+              buttonClassName="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+              iconClassName="size-6 min-[400px]:size-7"
             />
             {isSeller ? (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className="size-12 rounded-xl border bg-background text-foreground shadow-sm"
-                aria-label={nav("favorites")}
-              >
-                <Link href="/favorites" prefetch className="grid place-items-center">
-                  <Heart className="size-7 stroke-[2.4]" aria-hidden="true" />
-                </Link>
-              </Button>
+              <>
+                <Button
+                  asChild
+                  size="icon"
+                  variant="ghost"
+                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  aria-label={nav("favorites")}
+                >
+                  <Link href="/favorites" prefetch className="grid place-items-center">
+                    <Heart className="size-6 stroke-[2.4] min-[400px]:size-7" aria-hidden="true" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="icon"
+                  variant="ghost"
+                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  aria-label={common("cart")}
+                >
+                  <Link href="/cart" prefetch className="grid place-items-center">
+                    <ShoppingCart className="size-6 stroke-[2.4] min-[400px]:size-7" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </>
             ) : null}
           </div>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
@@ -161,14 +176,16 @@ export function MarketplaceHeader({
               </Link>
             </Button>
           </nav>
-          <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
-            <MarketplaceSearch
-              stores={stores}
-              categories={categories}
-              defaultValue={searchDefaultValue}
-              className="min-w-0 flex-1"
-            />
-          </div>
+          {!isSellerDashboard ? (
+            <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
+              <MarketplaceSearch
+                stores={stores}
+                categories={categories}
+                defaultValue={searchDefaultValue}
+                className="min-w-0 flex-1"
+              />
+            </div>
+          ) : null}
           <div className="ml-auto hidden items-center gap-1 md:flex">
             <LanguageSwitcher className="hidden lg:flex" />
             <ThemeToggle
@@ -210,7 +227,7 @@ export function MarketplaceHeader({
           </div>
         </div>
       </header>
-      {showMobileSearch && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+      {showMobileSearch && !isSellerDashboard && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
         <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}

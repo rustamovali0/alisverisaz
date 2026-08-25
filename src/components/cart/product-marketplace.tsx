@@ -27,6 +27,7 @@ import type {
 import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
 import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
+import { getRequiredSelectableProductOptions } from "@/lib/products/variant-utils";
 import { cn } from "@/lib/utils";
 import {
   Baby,
@@ -601,6 +602,8 @@ export function ProductGrid({
     >
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
+        const requiresDetailSelection =
+          getRequiredSelectableProductOptions(product.options ?? []).length > 0;
         const hasDiscount = product.discountAmount > 0;
         const discountPercent =
           hasDiscount && product.priceAmount > 0
@@ -749,15 +752,30 @@ export function ProductGrid({
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => event.stopPropagation()}
               >
-                <AddToCartButton
-                  product={product}
-                  disabled={isOutOfStock}
-                  className={cn(
-                    "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[13px] font-black uppercase text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground sm:text-sm sm:font-medium sm:normal-case",
-                    isLiquidGlass &&
-                      "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
-                  )}
-                />
+                {requiresDetailSelection ? (
+                  <Button
+                    asChild
+                    className={cn(
+                      "h-10 w-full rounded-lg px-2 text-[13px] font-black uppercase shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:text-sm sm:font-medium sm:normal-case",
+                      isLiquidGlass &&
+                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25",
+                    )}
+                  >
+                    <Link href={detailHref} scroll>
+                      {t("viewDetails")}
+                    </Link>
+                  </Button>
+                ) : (
+                  <AddToCartButton
+                    product={product}
+                    disabled={isOutOfStock}
+                    className={cn(
+                      "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[11px] font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground min-[360px]:text-xs sm:text-sm sm:font-medium",
+                      isLiquidGlass &&
+                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                    )}
+                  />
+                )}
               </div>
             </div>
           </div>
