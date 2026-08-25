@@ -71,11 +71,19 @@ export function PublicNavigationShell({
       pathname.startsWith(`/store/${store.slug}/`),
   )?.slug;
   const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
+  const isLegacyStorePath = Boolean(
+    pathStoreSlug &&
+      (pathname === `/store/${pathStoreSlug}` ||
+        pathname.startsWith(`/store/${pathStoreSlug}/`)),
+  );
   const storeHomeHref = storeSubdomainSlug
     ? "/"
     : pathStoreSlug
-      ? `/${pathStoreSlug}`
+      ? isLegacyStorePath
+        ? `/store/${pathStoreSlug}`
+        : `/${pathStoreSlug}`
       : "/";
+  const productsHref = pathStoreSlug ? `${storeHomeHref}#products` : "/products";
 
   return (
     <>
@@ -92,6 +100,7 @@ export function PublicNavigationShell({
           mobileNavbarVariant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
+          productsHref={productsHref}
           searchStoreSlug={searchStoreSlug}
           initialRole={initialRole}
           sticky={!isProductDetailPath(pathname)}

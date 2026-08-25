@@ -36,6 +36,7 @@ type MarketplaceHeaderProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  productsHref?: string;
   searchStoreSlug?: string | null;
   initialRole?: AuthRole | null;
   sticky?: boolean;
@@ -61,6 +62,7 @@ export function MarketplaceHeader({
   mobileNavbarVariant,
   storeSubdomainSlug,
   storeHomeHref = "/",
+  productsHref = "/products",
   searchStoreSlug,
   initialRole,
   sticky = true,
@@ -82,7 +84,7 @@ export function MarketplaceHeader({
   const isSeller = resolvedRole === "seller";
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
-  const isProductsActive = pathname.startsWith("/products");
+  const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
   const sellerUtilityButtonClass =
@@ -198,7 +200,7 @@ export function MarketplaceHeader({
           </div>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
             <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
-              <Link href="/products" prefetch>
+              <Link href={productsHref} prefetch>
                 {nav("products")}
               </Link>
             </Button>

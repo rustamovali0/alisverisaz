@@ -90,6 +90,7 @@ type StorefrontProps = {
   footer?: FooterProps;
   labels: MarketplaceLabels;
   isStoreOwner?: boolean;
+  legacyLayout?: boolean;
 };
 
 type FooterProps = {
@@ -1332,6 +1333,7 @@ export function Storefront({
   footer,
   labels,
   isStoreOwner = false,
+  legacyLayout = false,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
@@ -1382,6 +1384,34 @@ export function Storefront({
 
         {isStoreOwner ? (
           <StoreBrandingQuickEdit store={store} />
+        ) : legacyLayout ? (
+          <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
+              {store.coverUrl ? (
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    src={store.coverUrl}
+                    alt={store.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="absolute inset-0 bg-muted" />
+              )}
+              <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+              <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
+                <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
+                <div className="min-w-0 pb-0.5 text-white">
+                  <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal sm:text-3xl md:text-4xl">
+                    {store.name}
+                  </h1>
+                  <p className="mt-1 text-sm font-medium text-white/85 sm:text-base">
+                    {t("productCount", { count: store.productCount })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
         ) : (
           <section className="grid min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="flex min-w-0 flex-col justify-center p-5 sm:p-7 md:p-9">
@@ -1413,9 +1443,9 @@ export function Storefront({
           </section>
         )}
 
-        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
+        {!isStoreOwner && !legacyLayout ? <PublicStoreLocationSection locations={locations} /> : null}
 
-        <section className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
+        <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
           <div className="mb-6 min-w-0">
             <h2 className="break-words text-xl font-black tracking-normal">
               {t("storeProducts")}
@@ -1448,6 +1478,7 @@ export function Storefront({
             </div>
           </div>
         </section>
+        {!isStoreOwner && legacyLayout ? <PublicStoreLocationSection locations={locations} /> : null}
       </div>
       <SiteFooter {...footer} />
     </main>
