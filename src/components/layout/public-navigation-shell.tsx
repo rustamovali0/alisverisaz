@@ -64,7 +64,11 @@ export function PublicNavigationShell({
   const searchParams = useSearchParams();
   const showNavigation = shouldShowPublicNavigation(pathname);
   const pathStoreSlug = stores.find(
-    (store) => pathname === `/${store.slug}` || pathname.startsWith(`/${store.slug}/`),
+    (store) =>
+      pathname === `/${store.slug}` ||
+      pathname.startsWith(`/${store.slug}/`) ||
+      pathname === `/store/${store.slug}` ||
+      pathname.startsWith(`/store/${store.slug}/`),
   )?.slug;
   const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
 

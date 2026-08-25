@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
-import type { MarketplaceStore } from "@/lib/cart/types";
+import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 
 type MarketplaceSearchProps = {
@@ -58,18 +58,24 @@ export function MarketplaceSearch({
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
   const marketplace = useTranslations("marketplace");
+  const locale = useLocale();
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
   const [popularSearches, setPopularSearches] = useState<string[]>([]);
+  const [remoteProducts, setRemoteProducts] = useState<CartProduct[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const loadedPopularSearches = useRef(false);
   const resolvedButtonLabel = buttonLabel ?? common("search");
+  const normalizedQuery = useMemo(() => normalize(query), [query]);
+  const selectedStore = useMemo(
+    () => (storeSlug ? stores.find((store) => store.slug === storeSlug) : undefined),
+    [storeSlug, stores],
+  );
 
   const suggestionGroups = useMemo(() => {
     const scopedStores = storeSlug ? stores.filter((store) => store.slug === storeSlug) : stores;
-    const normalizedQuery = normalize(query);
-
     if (!normalizedQuery) {
       return { stores: [], products: [] };
     }
@@ -77,7 +83,7 @@ export function MarketplaceSearch({
     const storeSuggestions: SearchSuggestion[] = storeSlug
       ? []
       : scopedStores
-          .filter((store) => normalize(store.name).startsWith(normalizedQuery))
+          .filter((store) => normalize(store.name).includes(normalizedQuery))
           .slice(0, 4)
           .map((store) => ({
             key: `store-${store.id}`,
@@ -86,23 +92,28 @@ export function MarketplaceSearch({
             description: marketplace("productCount", { count: store.productCount }),
             href: `/${store.slug}`,
           }));
-    const productSuggestions: SearchSuggestion[] = scopedStores.flatMap((store) =>
-      store.sampleProducts.map((product) => ({
+    const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
+    const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
+      const productStore = scopedStores.find((store) => store.id === product.storeId);
+      const productStoreSlug = product.storeSlug ?? productStore?.slug;
+      const productStoreName = product.storeName ?? productStore?.name ?? marketplace("store");
+
+      return {
         key: `product-${product.id}`,
         type: "product" as const,
         label: product.name,
-        description: store.name,
-        href: `/${store.slug}/products/${product.slug}`,
-      })),
-    );
+        description: productStoreName,
+        href: productStoreSlug ? `/${productStoreSlug}/products/${product.slug}` : "/products",
+      };
+    });
 
     return {
       stores: storeSuggestions,
       products: productSuggestions
-        .filter((suggestion) => normalize(suggestion.label).startsWith(normalizedQuery))
+        .filter((suggestion) => normalize(suggestion.label).includes(normalizedQuery))
         .slice(0, 6),
     };
-  }, [marketplace, query, storeSlug, stores]);
+  }, [marketplace, normalizedQuery, remoteProducts, storeSlug, stores]);
 
   const suggestions = useMemo(
     () => [...suggestionGroups.stores, ...suggestionGroups.products],
@@ -148,6 +159,62 @@ export function MarketplaceSearch({
     return () => controller.abort();
   }, [isFocused, query]);
 
+  useEffect(() => {
+    if (!isFocused || normalizedQuery.length < 2) {
+      setRemoteProducts(null);
+      setIsSearching(false);
+      return;
+    }
+
+    // A supplied store slug must never fall back to an unscoped marketplace search.
+    if (storeSlug && !selectedStore) {
+      setRemoteProducts([]);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setRemoteProducts(null);
+    setIsSearching(true);
+
+    const timeout = window.setTimeout(() => {
+      const params = new URLSearchParams({
+        q: query.trim(),
+        locale,
+        limit: "6",
+      });
+
+      if (selectedStore?.id) {
+        params.set("storeId", selectedStore.id);
+      }
+
+      fetch(`/api/marketplace/products?${params.toString()}`, {
+        signal: controller.signal,
+      })
+        .then((response) => (response.ok ? response.json() as Promise<MarketplaceProductPage> : null))
+        .then((page) => {
+          if (!controller.signal.aborted) {
+            setRemoteProducts(page?.products ?? []);
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setRemoteProducts([]);
+          }
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) {
+            setIsSearching(false);
+          }
+        });
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [isFocused, locale, normalizedQuery, query, selectedStore, storeSlug]);
+
   function recordSearch(value: string) {
     const term = value.trim();
 
@@ -189,7 +256,12 @@ export function MarketplaceSearch({
 
   const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
   const showSuggestions = isFocused && query.trim().length > 0 && suggestions.length > 0;
-  const showNoResults = isFocused && query.trim().length > 0 && suggestions.length === 0;
+  const showNoResults =
+    isFocused &&
+    normalizedQuery.length >= 2 &&
+    !isSearching &&
+    remoteProducts !== null &&
+    suggestions.length === 0;
 
   return (
     <form
