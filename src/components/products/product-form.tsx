@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import {
   createPersonalListingAction,
@@ -39,6 +40,7 @@ type ProductFormProps = {
   productLocations?: ProductLocationAvailability[];
   disabled?: boolean;
   imageLimit?: number | null;
+  successRedirect?: string;
 };
 
 function variantsToText(product?: ManagedProduct) {
@@ -344,9 +346,11 @@ export function ProductForm({
   productLocations = [],
   disabled = false,
   imageLimit = 5,
+  successRedirect,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const router = useRouter();
   const selectedLocationMap = new Map(
     productLocations.map((item) => [item.locationId, item]),
   );
@@ -375,13 +379,18 @@ export function ProductForm({
 
       void appAlert.success("Uğurludur", result.message);
       setImageFiles([]);
+
+      if (successRedirect) {
+        router.replace(successRedirect);
+        router.refresh();
+      }
     });
   }
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid gap-4 rounded-md border bg-card p-4 text-card-foreground shadow-sm"
+      className="grid min-w-0 gap-4 overflow-hidden rounded-md border bg-card p-4 text-card-foreground shadow-sm [&_input]:min-w-0 [&_input]:w-full [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       {mode === "store-create" ? (
@@ -402,8 +411,8 @@ export function ProductForm({
         </label>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <label className="grid gap-2 text-sm font-medium">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Ad
           <input
             name="name"
@@ -413,7 +422,7 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Kateqoriya
           <select
             name="categoryId"
@@ -431,7 +440,7 @@ export function ProductForm({
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <label className="grid gap-2 text-sm font-medium">
           Stok sayı
           <input

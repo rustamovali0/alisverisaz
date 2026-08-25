@@ -5,18 +5,13 @@ import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
-import { getLocationsForStores, getProductLocationMap } from "@/lib/locations/data";
+import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 
 export const dynamic = "force-dynamic";
 
-type StoreProductsPageProps = {
-  searchParams: Promise<{ edit?: string }>;
-};
-
-export default async function StoreProductsPage({ searchParams }: StoreProductsPageProps) {
-  const { edit: openProductId } = await searchParams;
+export default async function StoreProductsPage() {
   const current = await requireRole(["seller"], "/store/dashboard/products");
   const enabled = await getSellerFeatureAccess(current.user.id, "products");
 
@@ -28,15 +23,13 @@ export default async function StoreProductsPage({ searchParams }: StoreProductsP
     getOwnedStores(current.user.id),
     getCategoryOptions(),
   ]);
-  const products = await getManagedProducts({
-    storeIds: stores.map((store) => store.id),
-    listingType: "store",
-  });
-  const [locations, productLocationMap] = await Promise.all([
+  const [products, locations] = await Promise.all([
+    getManagedProducts({
+      storeIds: stores.map((store) => store.id),
+      listingType: "store",
+    }),
     getLocationsForStores(stores.map((store) => store.id)),
-    getProductLocationMap(products.map((product) => product.id)),
   ]);
-  const productLocationRecord = Object.fromEntries(productLocationMap);
   const firstStore = stores[0];
   const limit = firstStore ? await canCreateListing(firstStore.id) : null;
   const productLimit = limit?.subscription?.productLimit ?? 100;
@@ -76,10 +69,8 @@ export default async function StoreProductsPage({ searchParams }: StoreProductsP
         <ProductList
           products={products}
           categories={categories}
-          locations={locations}
-          productLocationMap={productLocationRecord}
           imageLimit={imageLimit}
-          openProductId={openProductId}
+          editHref={(product) => `/store/dashboard/products/${product.id}/edit`}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
             limit?.allowed

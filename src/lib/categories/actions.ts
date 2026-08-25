@@ -12,7 +12,7 @@ import { uploadImageToR2 } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const MAX_CATEGORY_IMAGE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_CATEGORY_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_CATEGORY_IMAGE_TYPES = ["image/*"];
 
 type CategoryActionResult =
   | {

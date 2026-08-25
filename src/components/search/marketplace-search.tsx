@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, PackageSearch, Search, Store, Tags, TrendingUp } from "lucide-react";
+import { ArrowRight, PackageSearch, Search, Store, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
-import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 
 type MarketplaceSearchProps = {
   stores: MarketplaceStore[];
-  categories: CategoryOption[];
   defaultValue?: string;
   className?: string;
   inputClassName?: string;
@@ -27,7 +25,7 @@ type SearchSuggestion = {
   label: string;
   description: string;
   href: string;
-  type: "store" | "product" | "category";
+  type: "store" | "product";
 };
 
 function normalize(value: string) {
@@ -43,16 +41,11 @@ function suggestionIcon(type: SearchSuggestion["type"]) {
     return <Store className="size-5 text-primary" aria-hidden="true" />;
   }
 
-  if (type === "category") {
-    return <Tags className="size-5 text-primary" aria-hidden="true" />;
-  }
-
   return <PackageSearch className="size-5 text-primary" aria-hidden="true" />;
 }
 
 export function MarketplaceSearch({
   stores,
-  categories,
   defaultValue = "",
   className,
   inputClassName,
@@ -67,27 +60,32 @@ export function MarketplaceSearch({
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
   const [popularSearches, setPopularSearches] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
   const loadedPopularSearches = useRef(false);
   const resolvedButtonLabel = buttonLabel ?? common("search");
 
-  const suggestions = useMemo(() => {
-    const categorySuggestions: SearchSuggestion[] = storeSlug ? [] : categories.map((category) => ({
-      key: `category-${category.id}`,
-      type: "category",
-      label: category.name,
-      description: marketplace("category"),
-      href: `/products?category=${category.slug}`,
-    }));
+  const suggestionGroups = useMemo(() => {
     const scopedStores = storeSlug ? stores.filter((store) => store.slug === storeSlug) : stores;
-    const storeSuggestions: SearchSuggestion[] = storeSlug ? [] : scopedStores.map((store) => ({
-      key: `store-${store.id}`,
-      type: "store",
-      label: store.name,
-      description: marketplace("productCount", { count: store.productCount }),
-      href: `/${store.slug}`,
-    }));
+    const normalizedQuery = normalize(query);
+
+    if (!normalizedQuery) {
+      return { stores: [], products: [] };
+    }
+
+    const storeSuggestions: SearchSuggestion[] = storeSlug
+      ? []
+      : scopedStores
+          .filter((store) => normalize(store.name).startsWith(normalizedQuery))
+          .slice(0, 4)
+          .map((store) => ({
+            key: `store-${store.id}`,
+            type: "store",
+            label: store.name,
+            description: marketplace("productCount", { count: store.productCount }),
+            href: `/${store.slug}`,
+          }));
     const productSuggestions: SearchSuggestion[] = scopedStores.flatMap((store) =>
-      store.sampleProducts.slice(0, 4).map((product) => ({
+      store.sampleProducts.map((product) => ({
         key: `product-${product.id}`,
         type: "product" as const,
         label: product.name,
@@ -95,23 +93,32 @@ export function MarketplaceSearch({
         href: `/${store.slug}/products/${product.slug}`,
       })),
     );
-    const allSuggestions = [
-      ...categorySuggestions,
-      ...storeSuggestions,
-      ...productSuggestions,
-    ];
-    const normalizedQuery = normalize(query);
 
-    if (!normalizedQuery) {
-      return allSuggestions.slice(0, 7);
+    return {
+      stores: storeSuggestions,
+      products: productSuggestions
+        .filter((suggestion) => normalize(suggestion.label).startsWith(normalizedQuery))
+        .slice(0, 6),
+    };
+  }, [marketplace, query, storeSlug, stores]);
+
+  const suggestions = useMemo(
+    () => [...suggestionGroups.stores, ...suggestionGroups.products],
+    [suggestionGroups],
+  );
+
+  useEffect(() => {
+    if (!isFocused || typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches) {
+      return;
     }
 
-    return allSuggestions
-      .filter((suggestion) =>
-        normalize(`${suggestion.label} ${suggestion.description}`).includes(normalizedQuery),
-      )
-      .slice(0, 7);
-  }, [categories, marketplace, query, storeSlug, stores]);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFocused]);
 
   useEffect(() => {
     if (!isFocused || query.trim() || loadedPopularSearches.current) {
@@ -173,8 +180,13 @@ export function MarketplaceSearch({
     router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(value)}` : `/products?q=${encodeURIComponent(value)}`);
   }
 
+  function closeMobileSearch() {
+    setIsFocused(false);
+    inputRef.current?.blur();
+  }
+
   const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
-  const showSuggestions = isFocused && suggestions.length > 0;
+  const showSuggestions = isFocused && query.trim().length > 0 && suggestions.length > 0;
 
   return (
     <form
@@ -185,7 +197,7 @@ export function MarketplaceSearch({
       }}
       className={cn(
         "relative flex w-full min-w-0 gap-2",
-        stackOnMobile ? "flex-col items-stretch sm:flex-row sm:items-center" : "flex-row items-center",
+        "flex-row items-center",
         className,
       )}
       onBlur={(event) => {
@@ -194,7 +206,7 @@ export function MarketplaceSearch({
         }
       }}
     >
-      <label className={cn("relative min-w-0", stackOnMobile ? "w-full sm:flex-1" : "flex-1")}>
+      <label className="relative min-w-0 flex-1">
         <span className="sr-only">{common("search")}</span>
         <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -203,6 +215,7 @@ export function MarketplaceSearch({
           autoCapitalize="none"
           data-lpignore="true"
           data-form-type="other"
+          ref={inputRef}
           spellCheck={false}
           className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
           name="marketplace-search"
@@ -216,13 +229,24 @@ export function MarketplaceSearch({
       <Button
         type="submit"
         size={buttonSize}
-        className={cn(stackOnMobile && "hidden w-full sm:inline-flex sm:w-auto")}
+        className={cn(stackOnMobile && "w-auto shrink-0 sm:w-auto")}
       >
         {resolvedButtonLabel}
         {buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
+      {isFocused ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size={buttonSize}
+          className="shrink-0 md:hidden"
+          onClick={closeMobileSearch}
+        >
+          {common("close")}
+        </Button>
+      ) : null}
       {showPopularSearches || showSuggestions ? (
         <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
@@ -251,25 +275,53 @@ export function MarketplaceSearch({
               </div>
             </div>
           ) : null}
-          {showSuggestions ? suggestions.map((suggestion) => (
-              <Link
-                key={suggestion.key}
-                href={suggestion.href}
-                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition hover:bg-muted"
-              >
-                <span className="grid size-9 place-items-center rounded-md bg-primary/10">
-                  {suggestionIcon(suggestion.type)}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold">{suggestion.label}</span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {suggestion.description}
-                  </span>
-                </span>
-              </Link>
-            )) : null}
+          {showSuggestions ? (
+            <div className="py-1">
+              {suggestionGroups.stores.length > 0 ? (
+                <SearchSuggestionGroup
+                  label={marketplace("stores")}
+                  suggestions={suggestionGroups.stores}
+                />
+              ) : null}
+              {suggestionGroups.products.length > 0 ? (
+                <SearchSuggestionGroup
+                  label={common("products")}
+                  suggestions={suggestionGroups.products}
+                />
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </form>
+  );
+}
+
+function SearchSuggestionGroup({
+  label,
+  suggestions,
+}: {
+  label: string;
+  suggestions: SearchSuggestion[];
+}) {
+  return (
+    <section className="border-b px-1 py-1 last:border-b-0">
+      <p className="px-2 pb-1 pt-1 text-xs font-semibold text-muted-foreground">{label}</p>
+      {suggestions.map((suggestion) => (
+        <Link
+          key={suggestion.key}
+          href={suggestion.href}
+          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition hover:bg-muted"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10">
+            {suggestionIcon(suggestion.type)}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate font-semibold">{suggestion.label}</span>
+            <span className="block truncate text-xs text-muted-foreground">{suggestion.description}</span>
+          </span>
+        </Link>
+      ))}
+    </section>
   );
 }

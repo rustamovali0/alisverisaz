@@ -282,7 +282,6 @@ export function HomeExperience({
           <div data-home-search-sentinel className="h-px w-full" aria-hidden="true" />
           <MarketplaceSearch
             stores={stores}
-            categories={categories}
             className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10 md:grid md:grid-cols-[1fr_auto]"
             inputClassName="h-12 border-transparent bg-background"
             buttonSize="lg"

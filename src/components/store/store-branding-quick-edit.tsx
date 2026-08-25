@@ -17,7 +17,7 @@ type StoreBrandingQuickEditProps = {
   };
 };
 
-const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
+const IMAGE_ACCEPT = "image/*,.heic,.heif,.avif,.tif,.tiff,.bmp";
 
 export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
   const router = useRouter();

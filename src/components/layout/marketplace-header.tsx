@@ -208,7 +208,6 @@ export function MarketplaceHeader({
             <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
               <MarketplaceSearch
                 stores={stores}
-                categories={categories}
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
                 className="min-w-0 flex-1"
@@ -272,7 +271,6 @@ export function MarketplaceHeader({
         <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
-            categories={categories}
             defaultValue={searchDefaultValue}
             storeSlug={searchStoreSlug ?? undefined}
             stackOnMobile

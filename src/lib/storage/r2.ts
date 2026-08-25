@@ -7,6 +7,32 @@ import { serverEnv } from "@/lib/config/env.server";
 const WEBP_CONTENT_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 82;
 const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/*"];
+const RASTER_IMAGE_EXTENSIONS = new Set([
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
+  "gif",
+  "avif",
+  "heic",
+  "heif",
+  "tif",
+  "tiff",
+  "bmp",
+]);
+const EXTENSION_MIME_TYPES: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  heic: "image/heic",
+  heif: "image/heif",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  bmp: "image/bmp",
+};
 const IMAGE_PROCESSING_ERROR =
   "Şəkil emalı alınmadı. Faylın real şəkil formatında olduğundan əmin olun.";
 
@@ -89,18 +115,32 @@ async function convertImageToWebp(input: Buffer) {
   }
 }
 
-function isAllowedImageType(fileType: string, allowedMimeTypes: string[]) {
-  const normalizedType = fileType.trim().toLowerCase();
+function extensionOf(fileName: string) {
+  const extension = fileName.split(".").pop()?.trim().toLowerCase();
 
-  if (normalizedType === "image/svg+xml") {
+  return extension && extension !== fileName.toLowerCase() ? extension : "";
+}
+
+function isAllowedImageType(file: File, allowedMimeTypes: string[]) {
+  const normalizedType = file.type.trim().toLowerCase();
+  const extension = extensionOf(file.name);
+  const extensionMimeType = EXTENSION_MIME_TYPES[extension];
+
+  if (normalizedType === "image/svg+xml" || extension === "svg") {
     return false;
   }
 
   if (allowedMimeTypes.includes("image/*")) {
-    return !normalizedType || normalizedType.startsWith("image/");
+    // Mobile galleries occasionally provide an empty or generic MIME type for a
+    // valid photo. Sharp still verifies the binary while converting it to WebP.
+    return normalizedType.startsWith("image/") || RASTER_IMAGE_EXTENSIONS.has(extension);
   }
 
-  return allowedMimeTypes.includes(normalizedType);
+  return (
+    allowedMimeTypes.includes(normalizedType) ||
+    ((!normalizedType || normalizedType === "application/octet-stream") &&
+      Boolean(extensionMimeType && allowedMimeTypes.includes(extensionMimeType)))
+  );
 }
 
 function looksLikeSvg(input: Buffer) {
@@ -134,7 +174,7 @@ export async function uploadImageToR2({
     throw new Error(`${file.name} maksimum ${Math.floor(maxSizeBytes / 1024 / 1024)}MB ola bilər.`);
   }
 
-  if (!isAllowedImageType(file.type, allowedMimeTypes)) {
+  if (!isAllowedImageType(file, allowedMimeTypes)) {
     throw new Error("Yalnız real şəkil faylları qəbul edilir.");
   }
 

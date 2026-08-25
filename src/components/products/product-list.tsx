@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ProductForm } from "@/components/products/product-form";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import type {
   ProductLocationAvailability,
@@ -24,6 +25,7 @@ type ProductListProps = {
   productLocationMap?: Record<string, ProductLocationAvailability[]>;
   imageLimit?: number | null;
   openProductId?: string;
+  editHref?: (product: ManagedProduct) => string;
 };
 
 function formatMoney(value: number) {
@@ -84,6 +86,7 @@ export function ProductList({
   productLocationMap = {},
   imageLimit = 5,
   openProductId,
+  editHref,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -140,28 +143,37 @@ export function ProductList({
               <DeleteProductButton productId={product.id} />
             </div>
           </div>
-          <details
-            id={`edit-product-${product.id}`}
-            className="mt-4 scroll-mt-24"
-            open={openProductId === product.id}
-          >
-            <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-primary">
-              <Pencil className="size-4" aria-hidden="true" />
-              Redaktə et
-            </summary>
-            <div className="mt-4">
-              <ProductForm
-                mode="edit"
-                categories={categories}
-                product={product}
-                locations={locations.filter(
-                  (location) => location.storeId === product.storeId,
-                )}
-                productLocations={productLocationMap[product.id] ?? []}
-                imageLimit={imageLimit}
-              />
-            </div>
-          </details>
+          {editHref ? (
+            <Button asChild variant="outline" size="sm" className="mt-4">
+              <Link href={editHref(product)}>
+                <Pencil className="mr-2 size-4" aria-hidden="true" />
+                Redaktə et
+              </Link>
+            </Button>
+          ) : (
+            <details
+              id={`edit-product-${product.id}`}
+              className="mt-4 scroll-mt-24"
+              open={openProductId === product.id}
+            >
+              <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-primary">
+                <Pencil className="size-4" aria-hidden="true" />
+                Redaktə et
+              </summary>
+              <div className="mt-4">
+                <ProductForm
+                  mode="edit"
+                  categories={categories}
+                  product={product}
+                  locations={locations.filter(
+                    (location) => location.storeId === product.storeId,
+                  )}
+                  productLocations={productLocationMap[product.id] ?? []}
+                  imageLimit={imageLimit}
+                />
+              </div>
+            </details>
+          )}
         </article>
       ))}
     </div>

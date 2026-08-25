@@ -252,6 +252,7 @@ export async function getManagedProducts(filters: {
   storeIds?: string[];
   ownerId?: string;
   listingType?: "store" | "personal";
+  productId?: string;
 }) {
   const supabase = await createSupabaseServerClient();
 
@@ -278,6 +279,10 @@ export async function getManagedProducts(filters: {
 
     if (filters.listingType) {
       query = query.eq("listing_type", filters.listingType);
+    }
+
+    if (filters.productId) {
+      query = query.eq("id", filters.productId);
     }
 
     return query;

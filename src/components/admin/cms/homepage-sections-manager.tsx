@@ -269,11 +269,11 @@ export function HomepageSectionsManager({
                 <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/20 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
                   <ImagePlus className="size-6 text-primary" aria-hidden="true" />
                   <span className="font-semibold">Bölmə şəklini seç</span>
-                  <span className="text-xs text-muted-foreground">JPG, PNG və WebP, maksimum 5MB</span>
+                  <span className="text-xs text-muted-foreground">Şəkil faylı, maksimum 5MB</span>
                   <input
                     name="imageFile"
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
                     className="sr-only"
                   />
                 </label>

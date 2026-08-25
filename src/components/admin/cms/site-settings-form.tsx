@@ -9,6 +9,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSiteSettingsAction } from "@/lib/cms/actions";
 import type { SiteSettings, ThemeSetting } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { isRealImageFile } from "@/lib/images/client-file-validation";
 import { cn } from "@/lib/utils";
 
 type SiteSettingsFormProps = {
@@ -97,57 +98,6 @@ function LimitField({
   );
 }
 
-function loadImage(file: File) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Logo oxuna bilmədi."));
-    };
-    image.src = url;
-  });
-}
-
-async function convertToWebp(file: File) {
-  if (file.type === "image/webp") {
-    return file;
-  }
-
-  if (file.type !== "image/jpeg" && file.type !== "image/png") {
-    throw new Error("Yalnız JPG, PNG və WebP qəbul edilir.");
-  }
-
-  const image = await loadImage(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const context = canvas.getContext("2d");
-
-  if (!context) {
-    throw new Error("Logo çevrilməsi mümkün olmadı.");
-  }
-
-  context.drawImage(image, 0, 0);
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (nextBlob) =>
-        nextBlob ? resolve(nextBlob) : reject(new Error("WebP çevrilməsi alınmadı.")),
-      "image/webp",
-      0.88,
-    );
-  });
-
-  return new File([blob], file.name.replace(/\.(jpe?g|png|webp)$/i, ".webp"), {
-    type: "image/webp",
-    lastModified: Date.now(),
-  });
-}
-
 function LogoUploadField({
   label,
   fileName,
@@ -178,8 +128,11 @@ function LogoUploadField({
   async function setFile(file: File) {
     setIsConverting(true);
     try {
-      const converted = await convertToWebp(file);
-      const nextPreviewUrl = URL.createObjectURL(converted);
+      if (!(await isRealImageFile(file))) {
+        throw new Error("Yalnız həqiqi şəkil faylı seçin.");
+      }
+
+      const nextPreviewUrl = URL.createObjectURL(file);
 
       if (previewUrlRef.current?.startsWith("blob:")) {
         URL.revokeObjectURL(previewUrlRef.current);
@@ -188,13 +141,13 @@ function LogoUploadField({
       previewUrlRef.current = nextPreviewUrl;
       setPreviewUrl(nextPreviewUrl);
       const transfer = new DataTransfer();
-      transfer.items.add(converted);
+      transfer.items.add(file);
 
       if (inputRef.current) {
         inputRef.current.files = transfer.files;
       }
 
-      setSelectedName(converted.name);
+      setSelectedName(file.name);
     } catch (error) {
       void appAlert.error(
         error instanceof Error ? error.message : "Logo seçilmədi.",
@@ -237,14 +190,14 @@ function LogoUploadField({
               {selectedName || (previewUrl ? "Cari şəkil göstərilir" : "Şəkil seçilməyib")}
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
-              JPG, PNG və WebP qəbul edilir. Fayl seçdikdə buradakı önizləmə dərhal yenilənir.
+              Şəkil faylı seçin. Fayl serverdə təhlükəsiz şəkildə WebP formatına çevrilir.
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                 Drag & drop
               </span>
               <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                WebP
+                Serverdə WebP
               </span>
             </div>
           </div>
@@ -275,18 +228,18 @@ function LogoUploadField({
         <ImagePlus className="mb-2 size-6 text-muted-foreground" aria-hidden="true" />
         <span className="text-sm">
           {isConverting
-            ? "WebP çevrilir"
+            ? "Şəkil hazırlanır"
             : selectedName || "Logo faylını buraya sürüklə"}
         </span>
         <span className="mt-1 text-xs text-muted-foreground">
-          JPG və PNG avtomatik WebP formatına çevrilir
+          JPG, JPEG, PNG və digər dəstəklənən şəkillər qəbul edilir
         </span>
       </button>
       <input
         ref={inputRef}
         type="file"
         name={fileName}
-        accept="image/png,image/jpeg,image/webp"
+        accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
         className="hidden"
         onChange={(event) => {
           const file = event.target.files?.[0];

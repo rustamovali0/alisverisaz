@@ -27,7 +27,7 @@ import {
 } from "@/lib/design/presets";
 
 const MAX_MEDIA_SIZE = 5 * 1024 * 1024;
-const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const ALLOWED_MEDIA_TYPES = ["image/*"];
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
