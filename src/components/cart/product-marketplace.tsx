@@ -1384,7 +1384,7 @@ export function Storefront({
 
         {isStoreOwner ? (
           <StoreBrandingQuickEdit store={store} />
-        ) : legacyLayout ? (
+        ) : (
           <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
             <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
               {store.coverUrl ? (
@@ -1410,35 +1410,6 @@ export function Storefront({
                   </p>
                 </div>
               </div>
-            </div>
-          </section>
-        ) : (
-          <section className="grid min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-            <div className="flex min-w-0 flex-col justify-center p-5 sm:p-7 md:p-9">
-              <StoreLogo store={store} className="mb-5 size-20 border-2 border-primary/15 shadow-sm sm:size-24" />
-              <h1 className="break-words text-3xl font-black leading-tight tracking-normal sm:text-4xl">
-                {store.name}
-              </h1>
-              <p className="mt-2 text-sm font-medium text-muted-foreground sm:text-base">
-                {t("productCount", { count: store.productCount })}
-              </p>
-              {store.description ? (
-                <p className="mt-4 line-clamp-3 max-w-xl text-sm leading-6 text-muted-foreground">
-                  {store.description}
-                </p>
-              ) : null}
-            </div>
-            <div className="relative min-h-52 bg-primary/10 sm:min-h-64 md:min-h-full">
-              {store.coverUrl ? (
-                <img
-                  src={store.coverUrl}
-                  alt={`${store.name} banneri`}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-muted" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" aria-hidden="true" />
             </div>
           </section>
         )}
