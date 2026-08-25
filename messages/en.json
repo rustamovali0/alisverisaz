@@ -100,7 +100,11 @@
     "minPrice": "Minimum price",
     "maxPrice": "Maximum price",
     "inStockOnly": "Only in stock",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "popularSearches": "Popular searches",
+    "similarProducts": "Similar products",
+    "sameCategoryProducts": "Selected products from the same category",
+    "showMore": "Show more"
   },
   "nav": {
     "dashboard": "Dashboard",

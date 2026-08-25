@@ -1,12 +1,84 @@
 import { GlobalLoader } from "@/components/common/global-loader";
 
 type RouteLoadingProps = {
-  variant?: "marketplace" | "dashboard" | "account";
+  variant?: "marketplace" | "dashboard" | "account" | "favorites" | "cart";
 };
 
 export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
   const label =
     variant === "dashboard" ? "Panel açılır" : variant === "account" ? "Hesab açılır" : "Səhifə açılır";
+
+  if (variant === "favorites") {
+    return (
+      <main
+        className="min-h-screen bg-muted/40 px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:py-8 md:pb-0"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">{label}</span>
+        <div className="container space-y-5">
+          <div className="h-8 w-44 animate-pulse rounded-lg bg-muted" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                <div className="aspect-[4/3] animate-pulse bg-muted" />
+                <div className="space-y-2 p-3">
+                  <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="h-5 w-2/5 animate-pulse rounded bg-muted" />
+                  <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (variant === "cart") {
+    return (
+      <main
+        className="min-h-screen bg-slate-50 px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:py-8 md:pb-0"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">{label}</span>
+        <div className="container grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(300px,420px)]">
+          <section className="min-w-0 rounded-xl border bg-card p-4 shadow-sm md:p-5">
+            <div className="mb-5 h-7 w-32 animate-pulse rounded bg-muted" />
+            <div className="divide-y">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="grid min-w-0 grid-cols-[80px_minmax(0,1fr)] gap-3 py-4 sm:grid-cols-[96px_minmax(0,1fr)_132px]">
+                  <div className="aspect-square animate-pulse rounded-lg bg-muted" />
+                  <div className="min-w-0 space-y-2 py-1">
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                    <div className="h-3 w-2/5 animate-pulse rounded bg-muted" />
+                    <div className="h-8 w-28 animate-pulse rounded-md bg-muted sm:hidden" />
+                  </div>
+                  <div className="hidden space-y-3 sm:block">
+                    <div className="ml-auto h-5 w-20 animate-pulse rounded bg-muted" />
+                    <div className="ml-auto h-9 w-28 animate-pulse rounded-md bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+          <aside className="h-fit rounded-xl border bg-card p-4 shadow-sm md:p-5">
+            <div className="h-6 w-36 animate-pulse rounded bg-muted" />
+            <div className="mt-5 space-y-3">
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+              <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-3/5 animate-pulse rounded bg-muted" />
+              <div className="h-px w-full bg-border" />
+              <div className="h-6 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-11 w-full animate-pulse rounded-lg bg-muted" />
+            </div>
+          </aside>
+        </div>
+      </main>
+    );
+  }
 
   if (variant === "marketplace") {
     return (

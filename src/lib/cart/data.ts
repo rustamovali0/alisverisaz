@@ -449,6 +449,66 @@ export async function getMarketplaceProductPage(
   });
 }
 
+export async function getSimilarMarketplaceProductPage(
+  locale = "az",
+  input: {
+    productId: string;
+    categoryId: string;
+    limit?: number;
+    cursor?: string | null;
+  },
+): Promise<MarketplaceProductPage> {
+  const productId = isUuid(input.productId) ? input.productId : "";
+  const categoryId = isUuid(input.categoryId) ? input.categoryId : "";
+
+  if (!productId || !categoryId) {
+    return { products: [], nextCursor: null, hasMore: false };
+  }
+
+  const limit = clampProductLimit(input.limit);
+  const cursor = decodeProductCursor(input.cursor);
+  const supabase = createSupabasePublicClient();
+
+  async function runQuery(selectColumns: string) {
+    const query = (supabase as any)
+      .from("products")
+      .select(selectColumns)
+      .eq("status", "active")
+      .eq("category_id", categoryId)
+      .neq("id", productId);
+
+    return applyProductSort(
+      applyProductCursor(query, cursor, "newest"),
+      "newest",
+    ).limit(limit + 1);
+  }
+
+  let { data, error } = await runQuery(PUBLIC_PRODUCT_SELECT);
+
+  if (error && isMissingVariantSchemaError(error)) {
+    const fallback = await runQuery(PUBLIC_PRODUCT_SELECT_LEGACY);
+    data = fallback.data;
+    error = fallback.error;
+  }
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const rows = ((data ?? []) as ProductRow[]).map(toCartProduct);
+  const products = rows.slice(0, limit);
+  const lastProduct = products.at(-1);
+
+  return {
+    products,
+    hasMore: rows.length > limit,
+    nextCursor:
+      rows.length > limit && lastProduct
+        ? encodeProductCursor(lastProduct, "newest")
+        : null,
+  };
+}
+
 async function getMarketplaceProductPageUncached(
   locale: string,
   input: {

@@ -100,7 +100,11 @@
     "minPrice": "Минимальная цена",
     "maxPrice": "Максимальная цена",
     "inStockOnly": "Только в наличии",
-    "clearFilters": "Очистить фильтры"
+    "clearFilters": "Очистить фильтры",
+    "popularSearches": "Популярные запросы",
+    "similarProducts": "Похожие товары",
+    "sameCategoryProducts": "Подборка из той же категории",
+    "showMore": "Показать ещё"
   },
   "nav": {
     "dashboard": "Панель",

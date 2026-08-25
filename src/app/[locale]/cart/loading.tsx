@@ -1,5 +1,5 @@
 import { RouteLoading } from "@/components/common/route-loading";
 
 export default function Loading() {
-  return <RouteLoading variant="marketplace" />;
+  return <RouteLoading variant="cart" />;
 }

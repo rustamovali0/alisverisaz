@@ -151,6 +151,11 @@ export function FavoriteToggleButton({
       return;
     }
 
+    const previousFavoriteId = favoriteId;
+    const wasActive = Boolean(previousFavoriteId);
+    setIsMutating(true);
+    setFavoriteId(wasActive ? null : productId);
+
     void (async () => {
       const supabase = createSupabaseBrowserClient();
       const {
@@ -158,6 +163,8 @@ export function FavoriteToggleButton({
       } = await supabase.auth.getUser();
 
       if (!user) {
+        setFavoriteId(previousFavoriteId);
+        setIsMutating(false);
         showToast({
           title: "Giriş tələb olunur",
           description: "Seçilmişlərə əlavə etmək üçün zəhmət olmasa giriş edin.",
@@ -171,10 +178,6 @@ export function FavoriteToggleButton({
         favoriteProductCache = null;
       }
 
-      const previousFavoriteId = favoriteId;
-      const wasActive = Boolean(previousFavoriteId);
-      setIsMutating(true);
-      setFavoriteId(wasActive ? null : productId);
       updateFavoriteProductCache(user.id, productId, !wasActive);
 
       try {

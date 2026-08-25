@@ -561,6 +561,7 @@ export function ProductGrid({
   storeBaseHref,
   productCardVariant,
   labels,
+  layout = "grid",
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -568,6 +569,7 @@ export function ProductGrid({
   storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
+  layout?: "grid" | "related";
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -586,7 +588,13 @@ export function ProductGrid({
   const now = Date.now();
 
   return (
-    <div className="grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+    <div
+      className={cn(
+        layout === "related"
+          ? "grid min-w-0 grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-3 md:pr-3 md:[scrollbar-color:hsl(var(--border))_transparent] md:[scrollbar-width:thin]"
+          : "grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4",
+      )}
+    >
       {products.map((product) => {
         const isOutOfStock = product.stockQuantity <= 0;
         const hasDiscount = product.discountAmount > 0;
@@ -629,6 +637,7 @@ export function ProductGrid({
           }}
           className={cn(
             "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
+            layout === "related" && "md:w-60 md:shrink-0",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
           )}

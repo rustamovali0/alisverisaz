@@ -7,13 +7,12 @@ import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { ProductMessageForm } from "@/components/messages/product-message-form";
 import {
-  ProductMessageThread,
   ProductReviewList,
 } from "@/components/products/product-feedback-lists";
 import { ProductLocationSection } from "@/components/products/product-location-section";
 import { ProductPurchaseOptions } from "@/components/products/product-purchase-options";
+import { RelatedProductList } from "@/components/products/related-product-list";
 import {
   ProductBackButton,
   ProductDetailGallery,
@@ -24,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
-import { getMarketplaceProductById } from "@/lib/cart/data";
+import { getMarketplaceProductById, getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getStoreSubdomainSlug, getStorefrontUrl } from "@/lib/config/domains";
 import { formatAznDiscountedPrice } from "@/lib/format";
@@ -33,7 +32,6 @@ import {
   getPublicProductLocations,
 } from "@/lib/locations/data";
 import type { ProductLocationAvailability } from "@/lib/locations/types";
-import { getProductMessagesForProduct } from "@/lib/messages/data";
 import {
   getProductReviews,
   getReviewSummary,
@@ -142,9 +140,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     notFound();
   }
 
-  const [messages, reviews, productLocations, storeLocations, hasPurchasedProduct] =
+  const [reviews, productLocations, storeLocations, hasPurchasedProduct] =
     await Promise.all([
-    getProductMessagesForProduct(detail.product.id),
     getProductReviews(detail.product.id),
     getPublicProductLocations(detail.product.id),
     getLocationsForStores([detail.store.id]),
@@ -155,6 +152,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         })
       : Promise.resolve(false),
   ]);
+
+  const relatedProducts = detail.product.categoryId
+    ? await getSimilarMarketplaceProductPage(locale, {
+        productId: detail.product.id,
+        categoryId: detail.product.categoryId,
+        limit: 4,
+      })
+    : null;
 
   after(() => {
     void trackActivityEvent({
@@ -296,6 +301,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               buyerPhone={current?.profile?.phone ?? ""}
               disabled={!canBuy}
             />
+            <Button asChild variant="outline" className="mt-3 h-11 w-full border-primary/20 bg-background text-foreground hover:bg-primary/5">
+              <Link href={`/${detail.store.slug}/products/${detail.product.slug}/questions`}>
+                <MessageCircle className="mr-2 size-4" aria-hidden="true" />
+                Sual & Cavablar
+              </Link>
+            </Button>
             <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
@@ -355,24 +366,20 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <ProductLocationSection locations={visibleProductLocations} />
         </div>
 
-        <section className="mt-5 grid min-w-0 gap-4 md:mt-6 md:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-          <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
-            <div className="mb-3 flex items-center gap-2 md:mb-4">
-              <MessageCircle className="size-4 text-primary md:size-5" aria-hidden="true" />
-              <h2 className="text-lg font-black tracking-normal md:text-xl">
-                Məhsul haqqında suallar
-              </h2>
-            </div>
-            <ProductMessageForm
+        {relatedProducts ? (
+          <div className="mt-5 md:mt-6">
+            <RelatedProductList
+              initialProducts={relatedProducts.products}
+              initialCursor={relatedProducts.nextCursor}
+              initialHasMore={relatedProducts.hasMore}
               productId={detail.product.id}
-              storeId={detail.store.id}
-              storeSlug={detail.store.slug}
-              viewerRole={viewerRole}
-              defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
+              categoryId={detail.product.categoryId!}
+              locale={locale}
             />
-            <ProductMessageThread messages={messages} />
           </div>
+        ) : null}
 
+        <section className="mt-5 min-w-0 md:mt-6">
           <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />

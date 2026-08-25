@@ -221,6 +221,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "layout",
     },
     {
+      title: "Populyar axtarışlar",
+      href: "/radmin/searches",
+      icon: "sparkles",
+    },
+    {
       title: "Menyular",
       href: "/radmin/menus",
       icon: "menu",

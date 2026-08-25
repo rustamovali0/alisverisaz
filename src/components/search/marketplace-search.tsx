@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowRight, PackageSearch, Search, Store, Tags } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, PackageSearch, Search, Store, Tags, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,8 @@ export function MarketplaceSearch({
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
+  const [popularSearches, setPopularSearches] = useState<string[]>([]);
+  const loadedPopularSearches = useRef(false);
   const resolvedButtonLabel = buttonLabel ?? common("search");
 
   const suggestions = useMemo(() => {
@@ -108,6 +110,47 @@ export function MarketplaceSearch({
       .slice(0, 7);
   }, [categories, marketplace, query, stores]);
 
+  useEffect(() => {
+    if (!isFocused || query.trim() || loadedPopularSearches.current) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    fetch("/api/marketplace/searches", { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (controller.signal.aborted || !Array.isArray(payload?.searches)) {
+          return;
+        }
+
+        setPopularSearches(
+          payload.searches
+            .filter((term: unknown): term is string => typeof term === "string")
+            .slice(0, 4),
+        );
+        loadedPopularSearches.current = true;
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [isFocused, query]);
+
+  function recordSearch(value: string) {
+    const term = value.trim();
+
+    if (term.length < 2) {
+      return;
+    }
+
+    void fetch("/api/marketplace/searches", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ term }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }
+
   function submitSearch(value: string) {
     if (!value) {
       router.push("/products");
@@ -123,8 +166,12 @@ export function MarketplaceSearch({
       return;
     }
 
+    recordSearch(value);
     router.push(`/products?q=${encodeURIComponent(value)}`);
   }
+
+  const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
+  const showSuggestions = isFocused && suggestions.length > 0;
 
   return (
     <form
@@ -173,25 +220,51 @@ export function MarketplaceSearch({
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
-      {isFocused && suggestions.length > 0 ? (
+      {showPopularSearches || showSuggestions ? (
         <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
-          {suggestions.map((suggestion) => (
-            <Link
-              key={suggestion.key}
-              href={suggestion.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition hover:bg-muted"
-            >
-              <span className="grid size-9 place-items-center rounded-md bg-primary/10">
-                {suggestionIcon(suggestion.type)}
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate font-semibold">{suggestion.label}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {suggestion.description}
+          {showPopularSearches ? (
+            <div className="border-b px-3 py-3 last:border-b-0">
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                <TrendingUp className="size-4 text-primary" aria-hidden="true" />
+                {marketplace("popularSearches")}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {popularSearches.map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm font-medium transition hover:bg-primary hover:text-primary-foreground"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setQuery(term);
+                      setIsFocused(false);
+                      recordSearch(term);
+                      router.push(`/products?q=${encodeURIComponent(term)}`);
+                    }}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {showSuggestions ? suggestions.map((suggestion) => (
+              <Link
+                key={suggestion.key}
+                href={suggestion.href}
+                className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition hover:bg-muted"
+              >
+                <span className="grid size-9 place-items-center rounded-md bg-primary/10">
+                  {suggestionIcon(suggestion.type)}
                 </span>
-              </span>
-            </Link>
-          ))}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold">{suggestion.label}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {suggestion.description}
+                  </span>
+                </span>
+              </Link>
+            )) : null}
         </div>
       ) : null}
     </form>

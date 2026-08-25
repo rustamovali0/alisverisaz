@@ -33,15 +33,6 @@ function getMapUrl(item: ProductLocationAvailability) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-function getEmbedUrl(item: ProductLocationAvailability) {
-  const { location } = item;
-  const query = [location.city, location.district, location.address]
-    .filter(Boolean)
-    .join(", ");
-
-  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-}
-
 export function ProductLocationSection({
   locations,
   compact = false,
@@ -126,26 +117,15 @@ export function ProductLocationSection({
             </div>
 
             {item.location.showMap ? (
-              <div className="overflow-hidden rounded-xl border border-primary/15 bg-background">
-                <iframe
-                  title={`${item.location.name} xəritəsi`}
-                  src={getEmbedUrl(item)}
-                  loading="lazy"
-                  className={compact ? "h-[120px] w-full" : "h-[130px] w-full md:h-[140px]"}
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-                <div className="flex items-center justify-end border-t bg-muted/30 px-2 py-1.5">
-                  <a
-                    href={getMapUrl(item)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                  >
-                    Xəritəni böyüt
-                    <ExternalLink className="size-3.5" aria-hidden="true" />
-                  </a>
-                </div>
-              </div>
+              <a
+                href={getMapUrl(item)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-primary/20 bg-background px-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+              >
+                Xəritədə göstər
+                <ExternalLink className="size-4" aria-hidden="true" />
+              </a>
             ) : null}
           </article>
         ))}

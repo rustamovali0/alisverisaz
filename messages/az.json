@@ -100,7 +100,11 @@
     "minPrice": "Minimum qiymət",
     "maxPrice": "Maksimum qiymət",
     "inStockOnly": "Yalnız stokda olanlar",
-    "clearFilters": "Filtrləri təmizlə"
+    "clearFilters": "Filtrləri təmizlə",
+    "popularSearches": "Populyar axtarışlar",
+    "similarProducts": "Oxşar məhsullar",
+    "sameCategoryProducts": "Eyni kateqoriyadan seçilmiş məhsullar",
+    "showMore": "Daha çox göstər"
   },
   "nav": {
     "dashboard": "Dashboard",

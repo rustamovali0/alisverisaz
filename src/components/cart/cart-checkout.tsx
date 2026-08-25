@@ -224,6 +224,19 @@ export function CartCheckout({
     });
   }
 
+  if (!isCartReady) {
+    return (
+      <main
+        className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0"
+        aria-busy="true"
+      >
+        <div className="container grid min-h-[38dvh] place-items-center py-8">
+          <span className="size-8 animate-spin rounded-full border-[3px] border-muted border-t-primary" aria-label="Səbət açılır" />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:bg-background md:pb-0">
       <div
@@ -249,20 +262,7 @@ export function CartCheckout({
             </h1>
           </div>
           <div className="mt-2 divide-y bg-white md:mt-6 md:bg-transparent">
-            {!hasLoadedCart || isLoadingProducts ? (
-              <div className="space-y-4 py-4">
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="size-20 rounded-md bg-muted" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-48 max-w-full rounded bg-muted" />
-                      <div className="h-3 w-28 rounded bg-muted" />
-                    </div>
-                    <div className="hidden h-10 w-28 rounded bg-muted sm:block" />
-                  </div>
-                ))}
-              </div>
-            ) : visibleItems.length === 0 ? (
+            {visibleItems.length === 0 ? (
               <div className="grid place-items-center gap-3 py-12 text-center text-sm text-muted-foreground">
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
                   <ShoppingCart className="size-7" aria-hidden="true" />
