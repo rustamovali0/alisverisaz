@@ -23,6 +23,7 @@ type ProductListProps = {
   locations?: StoreLocation[];
   productLocationMap?: Record<string, ProductLocationAvailability[]>;
   imageLimit?: number | null;
+  openProductId?: string;
 };
 
 function formatMoney(value: number) {
@@ -82,6 +83,7 @@ export function ProductList({
   locations = [],
   productLocationMap = {},
   imageLimit = 5,
+  openProductId,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -138,7 +140,11 @@ export function ProductList({
               <DeleteProductButton productId={product.id} />
             </div>
           </div>
-          <details className="mt-4">
+          <details
+            id={`edit-product-${product.id}`}
+            className="mt-4 scroll-mt-24"
+            open={openProductId === product.id}
+          >
             <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-primary">
               <Pencil className="size-4" aria-hidden="true" />
               Redaktə et

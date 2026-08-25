@@ -19,6 +19,7 @@ type MarketplaceSearchProps = {
   buttonSize?: "default" | "lg";
   buttonLabel?: string;
   stackOnMobile?: boolean;
+  storeSlug?: string;
 };
 
 type SearchSuggestion = {
@@ -58,6 +59,7 @@ export function MarketplaceSearch({
   buttonSize = "default",
   buttonLabel,
   stackOnMobile = false,
+  storeSlug,
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
   const marketplace = useTranslations("marketplace");
@@ -69,21 +71,22 @@ export function MarketplaceSearch({
   const resolvedButtonLabel = buttonLabel ?? common("search");
 
   const suggestions = useMemo(() => {
-    const categorySuggestions: SearchSuggestion[] = categories.map((category) => ({
+    const categorySuggestions: SearchSuggestion[] = storeSlug ? [] : categories.map((category) => ({
       key: `category-${category.id}`,
       type: "category",
       label: category.name,
       description: marketplace("category"),
       href: `/products?category=${category.slug}`,
     }));
-    const storeSuggestions: SearchSuggestion[] = stores.map((store) => ({
+    const scopedStores = storeSlug ? stores.filter((store) => store.slug === storeSlug) : stores;
+    const storeSuggestions: SearchSuggestion[] = storeSlug ? [] : scopedStores.map((store) => ({
       key: `store-${store.id}`,
       type: "store",
       label: store.name,
       description: marketplace("productCount", { count: store.productCount }),
       href: `/${store.slug}`,
     }));
-    const productSuggestions: SearchSuggestion[] = stores.flatMap((store) =>
+    const productSuggestions: SearchSuggestion[] = scopedStores.flatMap((store) =>
       store.sampleProducts.slice(0, 4).map((product) => ({
         key: `product-${product.id}`,
         type: "product" as const,
@@ -108,7 +111,7 @@ export function MarketplaceSearch({
         normalize(`${suggestion.label} ${suggestion.description}`).includes(normalizedQuery),
       )
       .slice(0, 7);
-  }, [categories, marketplace, query, stores]);
+  }, [categories, marketplace, query, storeSlug, stores]);
 
   useEffect(() => {
     if (!isFocused || query.trim() || loadedPopularSearches.current) {
@@ -153,7 +156,7 @@ export function MarketplaceSearch({
 
   function submitSearch(value: string) {
     if (!value) {
-      router.push("/products");
+      router.push(storeSlug ? `/${storeSlug}` : "/products");
       return;
     }
 
@@ -167,7 +170,7 @@ export function MarketplaceSearch({
     }
 
     recordSearch(value);
-    router.push(`/products?q=${encodeURIComponent(value)}`);
+    router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(value)}` : `/products?q=${encodeURIComponent(value)}`);
   }
 
   const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
@@ -239,7 +242,7 @@ export function MarketplaceSearch({
                       setQuery(term);
                       setIsFocused(false);
                       recordSearch(term);
-                      router.push(`/products?q=${encodeURIComponent(term)}`);
+                      router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(term)}` : `/products?q=${encodeURIComponent(term)}`);
                     }}
                   >
                     {term}

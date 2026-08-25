@@ -35,6 +35,7 @@ type MarketplaceHeaderProps = {
   showBottomNav?: boolean;
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
+  searchStoreSlug?: string | null;
   initialRole?: AuthRole | null;
   sticky?: boolean;
 };
@@ -58,6 +59,7 @@ export function MarketplaceHeader({
   showBottomNav = true,
   mobileNavbarVariant,
   storeSubdomainSlug,
+  searchStoreSlug,
   initialRole,
   sticky = true,
 }: MarketplaceHeaderProps) {
@@ -144,10 +146,12 @@ export function MarketplaceHeader({
               className="size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-14"
               iconClassName="size-7 min-[400px]:size-8"
             />
-            <NotificationCenter
-              buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
-              iconClassName="size-7 min-[400px]:size-8"
-            />
+            {!isSeller ? (
+              <NotificationCenter
+                buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
+                iconClassName="size-7 min-[400px]:size-8"
+              />
+            ) : null}
             {isSeller ? (
               <>
                 <Button
@@ -193,6 +197,7 @@ export function MarketplaceHeader({
                 stores={stores}
                 categories={categories}
                 defaultValue={searchDefaultValue}
+                storeSlug={searchStoreSlug ?? undefined}
                 className="min-w-0 flex-1"
               />
             </div>
@@ -203,10 +208,12 @@ export function MarketplaceHeader({
               className="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-primary hover:shadow-md md:size-12"
               iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"
             />
-            <NotificationCenter
-              buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
-              iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"
-            />
+            {!isSeller ? (
+              <NotificationCenter
+                buttonClassName="size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md"
+                iconClassName="h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"
+              />
+            ) : null}
             <Button
               asChild
               size="icon"
@@ -244,6 +251,7 @@ export function MarketplaceHeader({
             stores={stores}
             categories={categories}
             defaultValue={searchDefaultValue}
+            storeSlug={searchStoreSlug ?? undefined}
             stackOnMobile
             className="w-full"
             inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-4 text-[16px] shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"

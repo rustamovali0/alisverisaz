@@ -62,7 +62,7 @@ export async function upsertProductReviewAction(
   const supabase = createSupabaseAdminClient();
   const { data: product, error: productError } = await (supabase as any)
     .from("products")
-    .select("id,slug,stores(slug)")
+    .select("id,slug,stores(slug,owner_id)")
     .eq("id", productId)
     .eq("status", "active")
     .maybeSingle();
@@ -75,6 +75,12 @@ export async function upsertProductReviewAction(
   }
 
   const store = Array.isArray(product.stores) ? product.stores[0] : product.stores;
+  if (store?.owner_id === current.user.id) {
+    return {
+      ok: false,
+      message: "Öz məhsulunuza rəy yaza bilməzsiniz.",
+    };
+  }
   const resolvedStoreSlug =
     typeof store?.slug === "string" && store.slug ? store.slug : storeSlug;
 

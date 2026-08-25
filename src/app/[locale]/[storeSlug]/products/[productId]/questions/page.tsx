@@ -35,6 +35,7 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
 
   const messages = await getProductMessagesForProduct(detail.product.id);
   const productHref = `/${detail.store.slug}/products/${detail.product.slug}`;
+  const isStoreOwner = current?.role === "seller" && current.user.id === detail.store.ownerId;
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">
@@ -54,18 +55,22 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
             <div className="min-w-0">
               <p className="truncate text-sm text-muted-foreground">{detail.product.name}</p>
               <h1 className="text-xl font-black tracking-normal md:text-2xl">Sual & Cavablar</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Məhsul haqqında sualınızı satıcıya göndərin.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {isStoreOwner ? "Alıcıların suallarını buradan cavablandırın." : "Məhsul haqqında sualınızı satıcıya göndərin."}
+              </p>
             </div>
           </div>
 
-          <ProductMessageForm
-            productId={detail.product.id}
-            storeId={detail.store.id}
-            storeSlug={detail.store.slug}
-            viewerRole={current?.role ?? null}
-            defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
-          />
-          <ProductMessageThread messages={messages} />
+          {!isStoreOwner ? (
+            <ProductMessageForm
+              productId={detail.product.id}
+              storeId={detail.store.id}
+              storeSlug={detail.store.slug}
+              viewerRole={current?.role ?? null}
+              defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
+            />
+          ) : null}
+          <ProductMessageThread messages={messages} allowReplies={isStoreOwner} />
         </section>
       </div>
     </main>

@@ -1,9 +1,12 @@
 "use client";
 
-import { MessageCircle, Star } from "lucide-react";
-import { useState } from "react";
+import { Loader2, MessageCircle, Send, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { appAlert } from "@/lib/alerts/app-alert";
+import { replyProductMessageAction } from "@/lib/messages/actions";
 import type { ProductMessage } from "@/lib/messages/data";
 import type { ProductReview } from "@/lib/reviews/data";
 
@@ -15,7 +18,56 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString("az-AZ");
 }
 
-export function ProductMessageThread({ messages }: { messages: ProductMessage[] }) {
+function ProductMessageReplyForm({ messageId }: { messageId: string }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set("messageId", messageId);
+
+    startTransition(async () => {
+      const result = await replyProductMessageAction(formData);
+      if (!result.ok) {
+        void appAlert.error(result.message, "Cavab göndərilmədi");
+        return;
+      }
+
+      form.reset();
+      void appAlert.success("Cavab göndərildi", result.message);
+      router.refresh();
+    });
+  }
+
+  return (
+    <form onSubmit={submit} className="grid gap-2 border-t pt-3">
+      <label className="sr-only" htmlFor={`reply-${messageId}`}>Cavabınız</label>
+      <textarea
+        id={`reply-${messageId}`}
+        name="replyMessage"
+        required
+        maxLength={2000}
+        rows={3}
+        className="premium-input min-h-20 resize-y text-sm"
+        placeholder="Cavabınızı yazın"
+      />
+      <Button type="submit" size="sm" disabled={isPending} className="w-full sm:w-fit">
+        {isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Send className="mr-2 size-4" />}
+        Cavab göndər
+      </Button>
+    </form>
+  );
+}
+
+export function ProductMessageThread({
+  messages,
+  allowReplies = false,
+}: {
+  messages: ProductMessage[];
+  allowReplies?: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   const orderedMessages = [...messages].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -54,6 +106,8 @@ export function ProductMessageThread({ messages }: { messages: ProductMessage[] 
               </p>
               {item.replyMessage}
             </div>
+          ) : allowReplies ? (
+            <ProductMessageReplyForm messageId={item.id} />
           ) : (
             <div className="inline-flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground md:px-3 md:py-2">
               <MessageCircle className="size-3.5" aria-hidden="true" />

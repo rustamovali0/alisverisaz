@@ -40,6 +40,7 @@ export type ProductImage = {
 
 export type MarketplaceStore = {
   id: string;
+  ownerId?: string | null;
   name: string;
   slug: string;
   description: string | null;

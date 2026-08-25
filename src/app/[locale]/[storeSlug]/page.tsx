@@ -15,6 +15,7 @@ import {
 } from "@/lib/config/domains";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 type StorePageProps = {
@@ -24,6 +25,7 @@ type StorePageProps = {
   }>;
   searchParams?: Promise<{
     category?: string;
+    q?: string;
   }>;
 };
 
@@ -78,10 +80,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const [categories, siteSettings, activeTheme] = await Promise.all([
+  const [categories, siteSettings, activeTheme, current] = await Promise.all([
     getCategoryOptions({ rootOnly: true }),
     getSiteSettings(),
     getActiveHomeThemeSetting(),
+    getCurrentUserProfile(),
   ]);
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
@@ -94,6 +97,9 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   if (!store) {
     notFound();
   }
+
+  const isStoreOwner =
+    current?.role === "seller" && current.user.id === store.ownerId;
 
   const requestHeaders = await headers();
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
@@ -125,9 +131,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         categories={storeCategories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
+        searchQuery={search?.q}
         locale={locale}
         storeBaseHref={storeBaseHref}
         productCardVariant={activeTheme.productCardVariant}
+        isStoreOwner={isStoreOwner}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,
           description: siteSettings.defaultMetaDescription,

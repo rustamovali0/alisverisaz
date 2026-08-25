@@ -63,6 +63,10 @@ export function PublicNavigationShell({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const showNavigation = shouldShowPublicNavigation(pathname);
+  const pathStoreSlug = stores.find(
+    (store) => pathname === `/${store.slug}` || pathname.startsWith(`/${store.slug}/`),
+  )?.slug;
+  const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
 
   return (
     <>
@@ -78,6 +82,7 @@ export function PublicNavigationShell({
           compactMobileSearch={isProductDetailPath(pathname)}
           mobileNavbarVariant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
+          searchStoreSlug={searchStoreSlug}
           initialRole={initialRole}
           sticky={!isProductDetailPath(pathname)}
         />

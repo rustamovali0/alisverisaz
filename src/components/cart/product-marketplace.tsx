@@ -16,6 +16,7 @@ import { GlobalLoader } from "@/components/common/global-loader";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
+import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import type {
@@ -47,6 +48,7 @@ import {
   Navigation,
   PackageSearch,
   PackageCheck,
+  Pencil,
   PawPrint,
   Phone,
   Shirt,
@@ -87,11 +89,13 @@ type StorefrontProps = {
   categories: CategoryOption[];
   locations?: StoreLocation[];
   selectedCategoryId?: string;
+  searchQuery?: string;
   locale: string;
   storeBaseHref?: string;
   productCardVariant?: string;
   footer?: FooterProps;
   labels: MarketplaceLabels;
+  isStoreOwner?: boolean;
 };
 
 type FooterProps = {
@@ -564,6 +568,7 @@ export function ProductGrid({
   productCardVariant,
   labels,
   layout = "grid",
+  isStoreOwner = false,
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -572,6 +577,7 @@ export function ProductGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
   layout?: "grid" | "related";
+  isStoreOwner?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -753,7 +759,14 @@ export function ProductGrid({
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => event.stopPropagation()}
               >
-                {requiresDetailSelection ? (
+                {isStoreOwner ? (
+                  <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
+                    <Link href={`/store/dashboard/products?edit=${product.id}#edit-product-${product.id}`}>
+                      <Pencil className="mr-2 size-4" aria-hidden="true" />
+                      Redaktə et
+                    </Link>
+                  </Button>
+                ) : requiresDetailSelection ? (
                   <Button
                     asChild
                     className={cn(
@@ -823,7 +836,7 @@ function useInfiniteProducts({
     const requestId = requestRef.current + 1;
     requestRef.current = requestId;
 
-    if (!mountedRef.current) {
+    if (!mountedRef.current && !searchQuery?.trim() && !categoryId) {
       mountedRef.current = true;
       setProducts(initialProducts);
       setCursor(initialCursor ?? null);
@@ -831,6 +844,8 @@ function useInfiniteProducts({
       setIsLoadingNext(false);
       return;
     }
+
+    mountedRef.current = true;
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -885,7 +900,7 @@ function useInfiniteProducts({
           setIsLoadingNext(false);
         }
       });
-  }, [initialCursor, initialHasMore, initialProducts, queryKey]);
+  }, [initialCursor, initialHasMore, initialProducts, queryKey, categoryId, searchQuery]);
 
   const loadNext = useCallback(async () => {
     if (isLoadingNext || !hasMore || !cursor) {
@@ -967,6 +982,7 @@ export function ProductInfiniteGrid({
   storeBaseHref,
   productCardVariant,
   labels,
+  isStoreOwner = false,
 }: {
   products: CartProduct[];
   hasMore: boolean;
@@ -977,6 +993,7 @@ export function ProductInfiniteGrid({
   storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
+  isStoreOwner?: boolean;
 }) {
   return (
     <>
@@ -987,6 +1004,7 @@ export function ProductInfiniteGrid({
         storeBaseHref={storeBaseHref}
         productCardVariant={productCardVariant}
         labels={labels}
+        isStoreOwner={isStoreOwner}
       />
       <ProductInfiniteSentinel
         disabled={!hasMore || isLoadingNext}
@@ -1011,6 +1029,7 @@ export function InfiniteProductGrid({
   storeBaseHref,
   productCardVariant,
   labels,
+  isStoreOwner = false,
 }: {
   initialProducts: CartProduct[];
   initialCursor?: string | null;
@@ -1025,6 +1044,7 @@ export function InfiniteProductGrid({
   storeBaseHref?: string;
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
+  isStoreOwner?: boolean;
 }) {
   const infinite = useInfiniteProducts({
     initialProducts,
@@ -1048,6 +1068,7 @@ export function InfiniteProductGrid({
       storeBaseHref={storeBaseHref}
       productCardVariant={productCardVariant}
       labels={labels}
+      isStoreOwner={isStoreOwner}
     />
   );
 }
@@ -1287,11 +1308,13 @@ export function Storefront({
   categories,
   locations = [],
   selectedCategoryId,
+  searchQuery,
   locale,
   storeBaseHref,
   productCardVariant,
   footer,
   labels,
+  isStoreOwner = false,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
@@ -1302,6 +1325,7 @@ export function Storefront({
     locale,
     categoryId: activeCategoryId,
     storeId: store.id,
+    searchQuery,
   });
   const primaryLocation = useMemo(
     () => locations.find((location) => location.isActive) ?? locations[0] ?? null,
@@ -1346,6 +1370,9 @@ export function Storefront({
           <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
         </nav>
 
+        {isStoreOwner ? (
+          <StoreBrandingQuickEdit store={store} />
+        ) : (
         <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
           <div className="relative h-20 bg-primary/10 sm:h-44 lg:h-56">
             {store.coverUrl ? (
@@ -1472,8 +1499,9 @@ export function Storefront({
             </div>
           </div>
         </section>
+        )}
 
-        <PublicStoreLocationSection locations={locations} />
+        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
 
         <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
           <div className="mb-6 min-w-0">
@@ -1502,6 +1530,7 @@ export function Storefront({
                 storeBaseHref={storeBaseHref}
                 productCardVariant={productCardVariant}
                 labels={{ stock: labels.stock }}
+                isStoreOwner={isStoreOwner}
               />
             </div>
           </div>

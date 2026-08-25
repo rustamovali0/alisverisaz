@@ -11,7 +11,12 @@ import { canCreateListing } from "@/lib/subscriptions/data";
 
 export const dynamic = "force-dynamic";
 
-export default async function StoreProductsPage() {
+type StoreProductsPageProps = {
+  searchParams: Promise<{ edit?: string }>;
+};
+
+export default async function StoreProductsPage({ searchParams }: StoreProductsPageProps) {
+  const { edit: openProductId } = await searchParams;
   const current = await requireRole(["seller"], "/store/dashboard/products");
   const enabled = await getSellerFeatureAccess(current.user.id, "products");
 
@@ -74,6 +79,7 @@ export default async function StoreProductsPage() {
           locations={locations}
           productLocationMap={productLocationRecord}
           imageLimit={imageLimit}
+          openProductId={openProductId}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
             limit?.allowed

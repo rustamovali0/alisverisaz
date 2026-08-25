@@ -1,4 +1,4 @@
-import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Star } from "lucide-react";
+import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Pencil, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -171,7 +171,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const reviewSummary = getReviewSummary(reviews);
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
-  const canWriteReview = current?.role === "customer" || current?.role === "seller";
+  const isStoreOwner = current?.role === "seller" && current.user.id === detail.store.ownerId;
+  const canWriteReview = !isStoreOwner && (current?.role === "customer" || current?.role === "seller");
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
   const visibleProductLocations: ProductLocationAvailability[] =
@@ -240,11 +241,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <h1 className="min-w-0 break-words text-2xl font-black tracking-normal md:text-3xl">
                 {detail.product.name}
               </h1>
-              <FavoriteToggleButton
-                productId={detail.product.id}
-                productName={detail.product.name}
-                className="shrink-0"
-              />
+              {!isStoreOwner ? (
+                <FavoriteToggleButton
+                  productId={detail.product.id}
+                  productName={detail.product.name}
+                  className="shrink-0"
+                />
+              ) : null}
             </div>
             <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
               {reviewSummary.count ? (
@@ -284,23 +287,33 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 {detail.product.description}
               </p>
             ) : null}
-            <ProductPurchaseOptions
-              product={detail.product}
-              viewerRole={viewerRole}
-              showWhatsappOrderButton={siteSettings.showWhatsappOrderButton}
-              sellerPhone={sellerPhone}
-              sellerName={detail.store.name}
-              buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
-              buyerPhone={current?.profile?.phone ?? ""}
-              disabled={!canBuy}
-            />
+            {isStoreOwner ? (
+              <Button asChild className="mt-5 h-11 w-full">
+                <Link href={`/store/dashboard/products?edit=${detail.product.id}#edit-product-${detail.product.id}`}>
+                  <Pencil className="mr-2 size-4" aria-hidden="true" />
+                  Redaktə et
+                </Link>
+              </Button>
+            ) : (
+              <ProductPurchaseOptions
+                product={detail.product}
+                viewerRole={viewerRole}
+                showWhatsappOrderButton={siteSettings.showWhatsappOrderButton}
+                sellerPhone={sellerPhone}
+                sellerName={detail.store.name}
+                buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
+                buyerPhone={current?.profile?.phone ?? ""}
+                disabled={!canBuy}
+              />
+            )}
             <Button asChild variant="outline" className="mt-3 h-11 w-full border-primary/20 bg-background text-foreground hover:bg-primary/5">
               <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                 <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                 Sual & Cavablar
               </Link>
             </Button>
-            <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
+            {!isStoreOwner ? (
+              <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
                   {detail.store.logoUrl ? (
@@ -351,13 +364,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   </Button>
                 ) : null}
               </div>
-            </div>
+              </div>
+            ) : null}
           </div>
         </section>
 
-        <div className="mt-5 md:mt-6">
-          <ProductLocationSection locations={visibleProductLocations} />
-        </div>
+        {!isStoreOwner ? (
+          <div className="mt-5 md:mt-6">
+            <ProductLocationSection locations={visibleProductLocations} />
+          </div>
+        ) : null}
 
         {relatedProducts ? (
           <div className="mt-5 md:mt-6">

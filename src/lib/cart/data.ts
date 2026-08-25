@@ -81,12 +81,13 @@ const PUBLIC_PRODUCT_SELECT_NO_STORE =
 const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
   "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 const PRODUCT_DETAIL_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings)";
 const PRODUCT_DETAIL_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(id,name,slug,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
+  owner_id?: string | null;
   name: string;
   slug: string;
   description: string | null;
@@ -782,7 +783,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
   const supabase = createSupabaseAdminClient();
   const { data: store, error: storeError } = await (supabase as any)
     .from("stores")
-    .select("id,name,slug,description,logo_url,cover_url,settings")
+    .select("id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings")
     .eq("slug", input.slug)
     .eq("status", "active")
     .maybeSingle();
@@ -839,6 +840,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
 
   return {
     id: store.id,
+    ownerId: store.owner_id ?? null,
     name: store.name,
     slug: store.slug,
     description: store.description,
@@ -972,6 +974,7 @@ async function getMarketplaceProductByIdUncached(input: {
     },
     store: {
       id: row.stores.id,
+      ownerId: row.stores.owner_id ?? null,
       name: row.stores.name,
       slug: row.stores.slug,
       description: row.stores.description,
