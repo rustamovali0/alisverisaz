@@ -15,7 +15,7 @@ import { NotificationCenter } from "@/components/notifications/notification-cent
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
+import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type { AuthRole } from "@/lib/auth/types";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
@@ -65,11 +65,11 @@ export function MarketplaceHeader({
   const common = useTranslations("common");
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
-  const profile = useClientAuthProfile();
+  const { profile, isResolved } = useClientAuthProfileState();
   const isHomePage = pathname === "/";
   const resolvedRole =
-    profile.status === "loading"
-      ? initialRole ?? null
+    !isResolved && initialRole
+      ? initialRole
       : profile.status === "authenticated"
         ? profile.role
         : null;
@@ -141,12 +141,12 @@ export function MarketplaceHeader({
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
             <ThemeToggle
-              className="size-11 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-12"
-              iconClassName="size-6 min-[400px]:size-7"
+              className="size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-14"
+              iconClassName="size-7 min-[400px]:size-8"
             />
             <NotificationCenter
-              buttonClassName="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
-              iconClassName="size-6 min-[400px]:size-7"
+              buttonClassName="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
+              iconClassName="size-7 min-[400px]:size-8"
             />
             {isSeller ? (
               <>
@@ -154,22 +154,22 @@ export function MarketplaceHeader({
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12 max-[374px]:hidden"
                   aria-label={nav("favorites")}
                 >
                   <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className="size-6 stroke-[2.4] min-[400px]:size-7" aria-hidden="true" />
+                    <Heart className="size-6 stroke-[2.5] min-[400px]:size-7" aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  className="size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14"
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="grid place-items-center">
-                    <ShoppingCart className="size-6 stroke-[2.4] min-[400px]:size-7" aria-hidden="true" />
+                    <ShoppingCart className="size-7 stroke-[2.5] min-[400px]:size-8" aria-hidden="true" />
                   </Link>
                 </Button>
               </>

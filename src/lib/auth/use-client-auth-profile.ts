@@ -21,6 +21,12 @@ export type ClientAuthProfile =
       avatarUrl: string | null;
     };
 
+export type ClientAuthProfileState = {
+  profile: ClientAuthProfile;
+  /** True once the browser has checked the current Supabase session. */
+  isResolved: boolean;
+};
+
 const AUTH_PROFILE_RESET_EVENT = "alisveris-auth-profile-reset";
 const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v1";
 let inMemoryProfile: ClientAuthProfile | null = null;
@@ -146,10 +152,11 @@ export function clearClientAuthProfileCache() {
   }
 }
 
-export function useClientAuthProfile() {
+export function useClientAuthProfileState(): ClientAuthProfileState {
   const [profile, setProfile] = useState<ClientAuthProfile>(
     () => readCachedProfile() ?? emptyProfile,
   );
+  const [isResolved, setIsResolved] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -161,6 +168,7 @@ export function useClientAuthProfile() {
       if (isMounted) {
         cacheProfile(nextProfile);
         setProfile(nextProfile);
+        setIsResolved(true);
       }
     }
 
@@ -168,7 +176,23 @@ export function useClientAuthProfile() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        const guestProfile: ClientAuthProfile = {
+          status: "guest",
+          role: null,
+          email: null,
+          fullName: null,
+          avatarUrl: null,
+        };
+
+        cacheProfile(guestProfile);
+        setProfile(guestProfile);
+        setIsResolved(true);
+        return;
+      }
+
+      setIsResolved(false);
       void refreshProfile();
     });
 
@@ -181,5 +205,9 @@ export function useClientAuthProfile() {
     };
   }, []);
 
-  return profile;
+  return { profile, isResolved };
+}
+
+export function useClientAuthProfile() {
+  return useClientAuthProfileState().profile;
 }
