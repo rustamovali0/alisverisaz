@@ -25,6 +25,7 @@ type MobileBottomNavProps = {
   className?: string;
   variant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
+  storeHomeHref?: string;
   initialRole?: AuthRole | null;
 };
 
@@ -118,6 +119,7 @@ export function MobileBottomNav({
   className,
   variant = "classic",
   storeSubdomainSlug,
+  storeHomeHref = "/",
   initialRole,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
@@ -146,9 +148,9 @@ export function MobileBottomNav({
         : role
           ? nav("account")
           : auth("login");
-  const isStorefront = Boolean(storeSubdomainSlug);
+  const isStorefront = Boolean(storeSubdomainSlug || storeHomeHref !== "/");
   const storefrontItem = {
-    href: "/",
+    href: storeHomeHref,
     label: isStorefront ? nav("storefront") : nav("home"),
     icon: isStorefront ? Store : Home,
   };

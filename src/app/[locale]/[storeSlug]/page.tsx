@@ -9,7 +9,6 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
   getStoreSubdomainSlug,
-  getStorePath,
   getStorefrontUrl,
   isReservedStoreSubdomain,
 } from "@/lib/config/domains";
@@ -103,7 +102,9 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const requestHeaders = await headers();
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
-  const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : getStorePath(store.slug);
+  // Keep direct storefront visits on their own public home path instead of
+  // taking visitors back through the marketplace store alias.
+  const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : `/${store.slug}`;
 
   const storeCategories = categories.filter((category) =>
     store.categoryIds.includes(category.id),
