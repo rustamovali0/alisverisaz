@@ -4,6 +4,8 @@ import { routing } from "@/i18n/routing";
 import {
   getSharedCookieDomain,
   getStoreSubdomainSlug,
+  isReservedStoreSubdomain,
+  isValidStoreSlug,
 } from "@/lib/config/domains";
 import { updateSession } from "@/lib/supabase/middleware";
 
@@ -147,6 +149,24 @@ function resolveSubdomainPath(pathname: string, storeSlug: string) {
   return pathname;
 }
 
+function resolveStorePath(pathname: string) {
+  const match = pathname.match(
+    /^\/store\/([^/]+)(\/products\/[^/]+(?:\/questions)?)?\/?$/,
+  );
+
+  if (!match) {
+    return pathname;
+  }
+
+  const [, storeSlug, suffix = ""] = match;
+
+  if (!isValidStoreSlug(storeSlug) || isReservedStoreSubdomain(storeSlug)) {
+    return pathname;
+  }
+
+  return `/${storeSlug}${suffix}`;
+}
+
 async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: NextResponse) {
   const sessionResponse = await updateSession(request);
 
@@ -170,7 +190,7 @@ export async function proxy(request: NextRequest) {
   const storeSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
-    : visiblePathname;
+    : resolveStorePath(visiblePathname);
 
   const rewriteResponse = createLocalizedRewrite(
     request,

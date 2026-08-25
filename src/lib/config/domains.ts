@@ -111,6 +111,17 @@ export function getStorefrontUrl(storeSlug: string, path = "") {
   }`;
 }
 
+export function getStorePath(storeSlug: string, path = "") {
+  const safeSlug = storeSlug.trim().toLowerCase();
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  if (!isValidStoreSlug(safeSlug) || isReservedStoreSubdomain(safeSlug)) {
+    return "/stores";
+  }
+
+  return `/store/${safeSlug}${normalizedPath === "/" ? "" : normalizedPath}`;
+}
+
 export function getSharedCookieDomain(hostname: string | null | undefined) {
   const host = normalizeHostname(hostname);
   const rootDomain = getStoreRootDomain();

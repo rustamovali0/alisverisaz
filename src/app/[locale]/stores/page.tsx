@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
+import { getStorePath } from "@/lib/config/domains";
 
 type StoresPageProps = {
   params: Promise<{
@@ -46,7 +47,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
           {stores.map((store) => (
             <Link
               key={store.id}
-              href={`/${store.slug}`}
+              href={getStorePath(store.slug)}
               className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:border-primary/40 hover:shadow-md"
             >
               <div className="grid aspect-[16/9] place-items-center border-b bg-muted/50 p-4">

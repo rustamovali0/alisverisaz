@@ -21,6 +21,7 @@ import {
   homeThemeColorPresets,
 } from "@/lib/cms/defaults";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
+import { getStorePath } from "@/lib/config/domains";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 
@@ -178,7 +179,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
 
   return (
     <article className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
-      <Link href={`/${store.slug}`} className="block h-full min-w-0">
+      <Link href={getStorePath(store.slug)} className="block h-full min-w-0">
         <div className="border-b bg-muted/60 p-2.5">
           <div className="grid h-28 place-items-center overflow-hidden rounded-md bg-background sm:h-32 lg:h-36">
             {store.logoUrl ? (

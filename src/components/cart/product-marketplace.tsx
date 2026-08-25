@@ -25,6 +25,7 @@ import type {
   MarketplaceStore,
 } from "@/lib/cart/types";
 import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
+import { getStorePath } from "@/lib/config/domains";
 import type { StoreLocation } from "@/lib/locations/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { getRequiredSelectableProductOptions } from "@/lib/products/variant-utils";
@@ -167,7 +168,7 @@ function ProductListLoader({ show }: { show: boolean }) {
 }
 
 function buildStoreProductHref(storeSlug: string, productSlug: string, storeBaseHref?: string) {
-  const baseHref = storeBaseHref ?? `/${storeSlug}`;
+  const baseHref = storeBaseHref ?? getStorePath(storeSlug);
 
   return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
@@ -1485,7 +1486,7 @@ export function Storefront({
               <CategoryFilters
                 categories={categories}
                 selectedCategoryId={activeCategoryId}
-                baseHref={storeBaseHref ?? `/${store.slug}`}
+                baseHref={storeBaseHref ?? getStorePath(store.slug)}
                 allLabel={t("allCategories")}
                 onSelect={selectCategory}
               />

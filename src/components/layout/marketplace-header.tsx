@@ -16,6 +16,7 @@ import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
+import type { AuthRole } from "@/lib/auth/types";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
@@ -34,6 +35,7 @@ type MarketplaceHeaderProps = {
   showBottomNav?: boolean;
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
+  initialRole?: AuthRole | null;
   sticky?: boolean;
 };
 
@@ -56,6 +58,7 @@ export function MarketplaceHeader({
   showBottomNav = true,
   mobileNavbarVariant,
   storeSubdomainSlug,
+  initialRole,
   sticky = true,
 }: MarketplaceHeaderProps) {
   const nav = useTranslations("nav");
@@ -64,7 +67,13 @@ export function MarketplaceHeader({
   const pathname = usePathname();
   const profile = useClientAuthProfile();
   const isHomePage = pathname === "/";
-  const isSeller = profile.status === "authenticated" && profile.role === "seller";
+  const resolvedRole =
+    profile.status === "loading"
+      ? initialRole ?? null
+      : profile.status === "authenticated"
+        ? profile.role
+        : null;
+  const isSeller = resolvedRole === "seller";
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
   const isProductsActive = pathname.startsWith("/products");
@@ -132,11 +141,11 @@ export function MarketplaceHeader({
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
             <ThemeToggle
-              className="size-10 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-12"
-              iconClassName="size-5 min-[400px]:size-6"
+              className="size-11 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-12"
+              iconClassName="size-6 min-[400px]:size-7"
             />
             <NotificationCenter
-              buttonClassName="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+              buttonClassName="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
               iconClassName="size-6 min-[400px]:size-7"
             />
             {isSeller ? (
@@ -145,7 +154,7 @@ export function MarketplaceHeader({
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  className="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
                   aria-label={nav("favorites")}
                 >
                   <Link href="/favorites" prefetch className="grid place-items-center">
@@ -156,7 +165,7 @@ export function MarketplaceHeader({
                   asChild
                   size="icon"
                   variant="ghost"
-                  className="size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
+                  className="size-11 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12"
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="grid place-items-center">
@@ -245,6 +254,7 @@ export function MarketplaceHeader({
         <MobileBottomNav
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
+          initialRole={initialRole}
         />
       ) : null}
     </>

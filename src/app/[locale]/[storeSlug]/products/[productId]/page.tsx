@@ -25,7 +25,7 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById, getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
-import { getStoreSubdomainSlug, getStorefrontUrl } from "@/lib/config/domains";
+import { getStorePath, getStoreSubdomainSlug, getStorefrontUrl } from "@/lib/config/domains";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import {
   getLocationsForStores,
@@ -200,7 +200,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       : null;
   const requestHeaders = await headers();
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
-  const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : `/${detail.store.slug}`;
+  const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : getStorePath(detail.store.slug);
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -295,7 +295,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               disabled={!canBuy}
             />
             <Button asChild variant="outline" className="mt-3 h-11 w-full border-primary/20 bg-background text-foreground hover:bg-primary/5">
-              <Link href={`/${detail.store.slug}/products/${detail.product.slug}/questions`}>
+              <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                 <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                 Sual & Cavablar
               </Link>

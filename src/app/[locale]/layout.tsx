@@ -12,6 +12,7 @@ import { StructuredData } from "@/components/seo/structured-data";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
@@ -159,7 +160,7 @@ export default async function LocaleLayout({
   );
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const loadPublicNavigation = shouldLoadPublicNavigation(visiblePathname);
-  const [messages, siteSettings, navStores, navCategories] = await Promise.all([
+  const [messages, siteSettings, navStores, navCategories, currentUser] = await Promise.all([
     getMessages({
       locale,
     }),
@@ -170,6 +171,7 @@ export default async function LocaleLayout({
     loadPublicNavigation
       ? getCategoryOptions({ rootOnly: true })
       : Promise.resolve([]),
+    loadPublicNavigation ? getCurrentUserProfile() : Promise.resolve(null),
   ]);
   const isMaintenanceBlocked =
     siteSettings.maintenanceMode && !canBypassMaintenance(visiblePathname);
@@ -220,6 +222,7 @@ export default async function LocaleLayout({
             categories={navCategories}
             mobileNavbarVariant={siteSettings.mobileNavbarVariant}
             storeSubdomainSlug={storeSubdomainSlug}
+            initialRole={currentUser?.role ?? null}
           >
             {children}
           </PublicNavigationShell>

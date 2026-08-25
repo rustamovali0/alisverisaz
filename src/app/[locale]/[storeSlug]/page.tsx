@@ -9,6 +9,7 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
   getStoreSubdomainSlug,
+  getStorePath,
   getStorefrontUrl,
   isReservedStoreSubdomain,
 } from "@/lib/config/domains";
@@ -96,7 +97,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const requestHeaders = await headers();
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
-  const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : `/${store.slug}`;
+  const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : getStorePath(store.slug);
 
   const storeLocations = await getLocationsForStores([store.id]);
   const storeCategories = categories.filter((category) =>

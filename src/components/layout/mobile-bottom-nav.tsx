@@ -17,6 +17,7 @@ import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
+import { getStorePath } from "@/lib/config/domains";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ type MobileBottomNavProps = {
   className?: string;
   variant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
+  initialRole?: AuthRole | null;
 };
 
 const CART_KEY = "alisveris_cart";
@@ -116,6 +118,7 @@ export function MobileBottomNav({
   className,
   variant = "classic",
   storeSubdomainSlug,
+  initialRole,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
   const nav = useTranslations("nav");
@@ -127,8 +130,13 @@ export function MobileBottomNav({
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
-  const isAuthLoading = profile.status === "loading";
-  const actualRole = profile.status === "authenticated" ? profile.role : null;
+  const isAuthLoading = profile.status === "loading" && !initialRole;
+  const actualRole =
+    profile.status === "loading"
+      ? initialRole ?? null
+      : profile.status === "authenticated"
+        ? profile.role
+        : null;
   const role = actualRole === "admin" ? null : actualRole;
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
@@ -173,7 +181,7 @@ export function MobileBottomNav({
       const store = data as { slug?: string | null } | null;
 
       if (active && store?.slug) {
-        setSellerStoreHref(`/${store.slug}`);
+        setSellerStoreHref(getStorePath(store.slug));
       }
     }
 
