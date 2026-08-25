@@ -390,7 +390,7 @@ export function ProductForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid min-w-0 gap-4 overflow-hidden rounded-md border bg-card p-4 text-card-foreground shadow-sm [&_input]:min-w-0 [&_input]:w-full [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
+      className="grid min-w-0 gap-4 overflow-hidden rounded-md border bg-card p-4 text-card-foreground shadow-sm [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       {mode === "store-create" ? (

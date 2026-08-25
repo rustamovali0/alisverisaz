@@ -142,7 +142,7 @@ export function MobileBottomNav({
   const accountText = isAuthLoading
     ? nav("account")
     : role === "seller"
-        ? "İdarə paneli"
+        ? "Panel"
         : role
           ? nav("account")
           : auth("login");
@@ -206,7 +206,7 @@ export function MobileBottomNav({
             label: nav("addProduct"),
             icon: Plus,
           },
-          { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
+          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
           storefrontItem,
@@ -262,9 +262,11 @@ export function MobileBottomNav({
     setPendingHref(null);
   }, [pathname]);
 
-  const isAccountActive =
+  const isAccountRoute =
     (role === "seller" && pathname === "/store/dashboard") ||
     (role !== "seller" && pathname.startsWith("/dashboard"));
+  const currentItemHref = items.find((item) => isNavItemActive(item.href))?.href ?? null;
+  const activeHref = pendingHref ?? currentItemHref ?? (isAccountRoute ? accountHref : null);
 
   useEffect(() => {
     function syncCartCount() {
@@ -318,7 +320,7 @@ export function MobileBottomNav({
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
-          const isActive = (pendingHref ?? (isNavItemActive(item.href) ? item.href : null)) === item.href;
+          const isActive = activeHref === item.href;
 
           return (
             <button
@@ -375,9 +377,9 @@ export function MobileBottomNav({
             "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            isAccountActive && "bg-primary/10 text-primary",
+            activeHref === accountHref && "bg-primary/10 text-primary",
           )}
-          aria-current={isAccountActive ? "page" : undefined}
+          aria-current={activeHref === accountHref ? "page" : undefined}
           aria-disabled={isAuthLoading}
           aria-label={accountText}
         >

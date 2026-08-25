@@ -125,7 +125,7 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Aktiv məhsullar" value={overview.products.active} description="Satışda olan məhsullar" href="/store/dashboard/products" />
         <Stat label="Draft məhsullar" value={overview.products.draft} description="Tamamlanmamış məhsullar" href="/store/dashboard/products" />
-        <Stat label="Yeni sifarişlər" value={overview.orders.new} description="Yeni və təsdiqlənmiş sifarişlər" href="/store/dashboard/orders" tone="warning" />
+        <Stat label="Yeni sifarişlər" value={overview.orders.new} description="Yeni və təsdiqlənmiş sifarişlər" href="/seller/orders" tone="warning" />
         <Stat label="Oxunmamış bildirişlər" value={overview.unreadNotifications} description="Seller hesabına gələn bildirişlər" href="/store/dashboard/messages" />
       </section>
 
@@ -136,10 +136,10 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
       />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <Stat label="Hazırlanır" value={overview.orders.processing} href="/store/dashboard/orders" />
-        <Stat label="Göndərildi" value={overview.orders.shipped} href="/store/dashboard/orders" />
-        <Stat label="Çatdırıldı" value={overview.orders.completed} href="/store/dashboard/orders" tone="success" />
-        <Stat label="Ləğv edildi" value={overview.orders.cancelled} href="/store/dashboard/orders" />
+        <Stat label="Hazırlanır" value={overview.orders.processing} href="/seller/orders" />
+        <Stat label="Göndərildi" value={overview.orders.shipped} href="/seller/orders" />
+        <Stat label="Çatdırıldı" value={overview.orders.completed} href="/seller/orders" tone="success" />
+        <Stat label="Ləğv edildi" value={overview.orders.cancelled} href="/seller/orders" />
         <Stat label="Arxiv məhsullar" value={overview.products.archived} href="/store/dashboard/products" />
       </section>
 
@@ -153,7 +153,7 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
             <Stat label="Bu gün" value={formatMoney(overview.sales.today, overview.currency)} href="/store/dashboard/earnings" />
             <Stat label="Son 7 gün" value={formatMoney(overview.sales.last7Days, overview.currency)} href="/store/dashboard/earnings" />
             <Stat label="Bu ay" value={formatMoney(overview.sales.month, overview.currency)} href="/store/dashboard/earnings" />
-            <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} href="/store/dashboard/orders" />
+            <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} href="/seller/orders" />
           </div>
         </div>
 
@@ -163,14 +163,14 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
               <ShoppingCart className="size-5 text-primary" aria-hidden="true" />
               <h2 className="text-base font-black">Son sifarişlər</h2>
             </div>
-            <Link href="/store/dashboard/orders" className="text-sm font-bold text-primary">
+            <Link href="/seller/orders" className="text-sm font-bold text-primary">
               Hamısına bax
             </Link>
           </div>
           {overview.orders.recent.length > 0 ? (
             <div className="grid gap-3">
               {overview.orders.recent.map((order) => (
-                <Link key={order.id} href="/store/dashboard/orders" className="grid gap-2 rounded-lg border bg-background p-3 transition hover:-translate-y-0.5">
+                <Link key={order.id} href="/seller/orders" className="grid gap-2 rounded-lg border bg-background p-3 transition hover:-translate-y-0.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black">#{order.orderNumber}</p>

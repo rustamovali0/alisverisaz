@@ -134,7 +134,16 @@
   input,
   textarea,
   select {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
     color: hsl(var(--foreground));
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+  textarea,
+  select {
+    width: 100%;
   }
 
   select {

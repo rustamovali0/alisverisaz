@@ -227,13 +227,19 @@ export function MarketplaceSearch({
   }
 
   function submitSearch(value: string) {
-    if (!value) {
+    const searchQuery = value.trim();
+
+    setIsFocused(false);
+    inputRef.current?.blur();
+
+    if (!searchQuery) {
       router.push(storeSlug ? `/${storeSlug}` : "/products");
       return;
     }
 
-    recordSearch(value);
-    router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(value)}` : `/products?q=${encodeURIComponent(value)}`);
+    recordSearch(searchQuery);
+    const query = encodeURIComponent(searchQuery);
+    router.push(storeSlug ? `/${storeSlug}?q=${query}` : `/products?q=${query}`);
   }
 
   function selectSuggestion(suggestion: SearchSuggestion) {
@@ -299,11 +305,11 @@ export function MarketplaceSearch({
         size={buttonSize}
         className={cn(
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
-          compactActions && "size-11 px-0",
+          compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
         )}
         aria-label={resolvedButtonLabel}
       >
-        {compactActions ? <Search className="size-4" aria-hidden="true" /> : resolvedButtonLabel}
+        {compactActions ? <Search className="size-5" aria-hidden="true" /> : resolvedButtonLabel}
         {!compactActions && buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
