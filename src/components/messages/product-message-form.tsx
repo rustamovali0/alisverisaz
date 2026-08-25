@@ -4,7 +4,6 @@ import { MessageCircle } from "lucide-react";
 import { useRef, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import type { AuthRole } from "@/lib/auth/types";
@@ -16,7 +15,6 @@ type ProductMessageFormProps = {
   storeSlug: string;
   viewerRole?: AuthRole | null;
   defaultSenderName?: string;
-  defaultSenderPhone?: string;
 };
 
 export function ProductMessageForm({
@@ -25,7 +23,6 @@ export function ProductMessageForm({
   storeSlug,
   viewerRole,
   defaultSenderName = "",
-  defaultSenderPhone = "",
 }: ProductMessageFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -63,21 +60,15 @@ export function ProductMessageForm({
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="storeId" value={storeId} />
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <div className="grid gap-2.5 sm:grid-cols-2 md:gap-3">
-        <label className="grid gap-1 text-sm font-medium">
-          Ad Soyad
-          <input
-            className="premium-input h-10 md:h-11"
-            name="senderName"
-            defaultValue={defaultSenderName}
-            placeholder="Adınızı yazın"
-          />
-        </label>
-        <label className="grid gap-1 text-sm font-medium">
-          Telefon
-          <PhoneInput name="senderPhone" defaultValue={defaultSenderPhone} className="h-10 md:h-11" />
-        </label>
-      </div>
+      <label className="grid gap-1 text-sm font-medium">
+        Ad Soyad
+        <input
+          className="premium-input h-10 md:h-11"
+          name="senderName"
+          defaultValue={defaultSenderName}
+          placeholder="Adınızı yazın"
+        />
+      </label>
       <label className="grid gap-1 text-sm font-medium">
         Mesaj
         <textarea

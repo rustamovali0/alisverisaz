@@ -352,26 +352,12 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   const supabase = await createSupabaseServerClient();
-  let email = identifier;
-
-  if (!isValidEmail(identifier)) {
-    const normalizedPhone = normalizeAzerbaijanPhone(identifier);
-    const { data: profileByPhone } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("phone", normalizedPhone)
-      .returns<Array<{ email: string | null }>>()
-      .maybeSingle();
-
-    if (profileByPhone?.email) {
-      email = profileByPhone.email.toLowerCase();
-    }
-  }
+  const email = identifier;
 
   if (!isValidEmail(email)) {
     const message = await recordLoginFailure(
       rateLimitRule,
-      "Düzgün email və ya telefon daxil edin.",
+      "Düzgün email daxil edin.",
     );
 
     return {
@@ -635,26 +621,12 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
   }
 
   const supabase = await createSupabaseServerClient();
-  let email = identifier;
-
-  if (!isValidEmail(identifier)) {
-    const normalizedPhone = normalizeAzerbaijanPhone(identifier);
-    const { data: profileByPhone } = await supabase
-      .from("profiles")
-      .select("email")
-      .eq("phone", normalizedPhone)
-      .returns<Array<{ email: string | null }>>()
-      .maybeSingle();
-
-    if (profileByPhone?.email) {
-      email = profileByPhone.email.toLowerCase();
-    }
-  }
+  const email = identifier;
 
   if (!isValidEmail(email)) {
     return {
       ok: false,
-      message: "Düzgün email və ya telefon daxil edin.",
+      message: "Düzgün email daxil edin.",
     };
   }
 

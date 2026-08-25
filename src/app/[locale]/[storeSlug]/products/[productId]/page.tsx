@@ -369,7 +369,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               storeSlug={detail.store.slug}
               viewerRole={viewerRole}
               defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
-              defaultSenderPhone={current?.profile?.phone ?? ""}
             />
             <ProductMessageThread messages={messages} />
           </div>

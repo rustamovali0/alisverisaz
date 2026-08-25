@@ -162,8 +162,8 @@ export function NotificationCenter({
                   {items.length > 0 ? `${items.length} bildiriş` : "Yeni bildiriş yoxdur"}
                 </p>
               </div>
-              <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 rounded-full" onClick={() => setOpen(false)} aria-label="Bağla">
-                <X className="size-7" aria-hidden="true" />
+              <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 rounded-full border border-transparent hover:border-border" onClick={() => setOpen(false)} aria-label="Bağla">
+                <X className="size-7 stroke-[2.8]" aria-hidden="true" />
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">

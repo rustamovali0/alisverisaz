@@ -344,11 +344,11 @@ export function RadminDashboardShell({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="size-12 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white"
                 onClick={() => setIsDrawerOpen(false)}
                 aria-label="Sidebari bağla"
               >
-                <X className="size-5" aria-hidden="true" />
+                <X className="size-7 stroke-[2.6]" aria-hidden="true" />
               </Button>
             </div>
             <div className="h-[calc(100vh-4rem)] overflow-y-auto p-3">

@@ -28,7 +28,7 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
     }
 
     startTransition(async () => {
-      formData.set("identifier", identifier.trim());
+      formData.set("identifier", identifier.trim().toLowerCase());
       formData.set("captchaToken", captchaToken);
       const result = await requestPasswordResetAction(formData);
 
@@ -65,7 +65,7 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
         </Button>
       }
       title="Şifrəni unutdum"
-      description="Email və ya hesabınıza bağlı telefon nömrəsini yazın, bərpa linki göndərək."
+      description="Hesabınıza bağlı email ünvanını yazın, bərpa linki göndərək."
       footer={
         <p>
           Yenə də giriş edə bilirsinizsə{" "}
@@ -81,10 +81,12 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
         <AuthField
           id="identifier"
           name="identifier"
-          label="Email və ya telefon"
+          label="Email"
+          type="email"
           value={identifier}
-          onChange={(event) => setIdentifier(event.target.value)}
-          hint="Hesabınıza bağlı email və ya telefon nömrəsini daxil edin."
+          onChange={(event) => setIdentifier(event.target.value.toLowerCase())}
+          inputMode="email"
+          hint="Hesabınıza bağlı email ünvanını daxil edin."
           autoComplete="email"
           required
         />

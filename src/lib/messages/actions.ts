@@ -109,7 +109,7 @@ export async function createProductMessageAction(
   const productId = readString(formData, "productId");
   const storeSlug = readString(formData, "storeSlug");
   const senderNameInput = readString(formData, "senderName");
-  const senderPhone = normalizeAzerbaijanPhone(readString(formData, "senderPhone"));
+  const senderPhoneInput = normalizeAzerbaijanPhone(readString(formData, "senderPhone"));
   const message = readString(formData, "message");
   const current = await getCurrentUserProfile();
 
@@ -125,6 +125,7 @@ export async function createProductMessageAction(
     current.profile?.full_name ||
     current.user.email ||
     "İstifadəçi";
+  const senderPhone = senderPhoneInput || normalizeAzerbaijanPhone(current.profile?.phone ?? "");
 
   if (!productId || !message) {
     return {

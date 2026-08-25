@@ -78,6 +78,41 @@
     --marketplace-muted: 215 18% 70% !important;
   }
 
+  /* Homepage presets provide light brand colors inline; dark mode must retain the
+     semantic dark surface tokens instead of inheriting those preset surfaces. */
+  .dark [data-homepage-preset] {
+    --background: 220 29% 8% !important;
+    --foreground: 210 32% 96% !important;
+    --card: 220 25% 11% !important;
+    --card-foreground: 210 32% 96% !important;
+    --popover: 220 25% 11% !important;
+    --popover-foreground: 210 32% 96% !important;
+    --primary: 178 70% 42% !important;
+    --primary-foreground: 220 29% 8% !important;
+    --secondary: 219 21% 18% !important;
+    --secondary-foreground: 210 40% 98% !important;
+    --muted: 219 21% 17% !important;
+    --muted-foreground: 215 18% 70% !important;
+    --accent: 42 91% 58% !important;
+    --accent-foreground: 220 29% 8% !important;
+    --border: 218 17% 22% !important;
+    --input: 218 17% 22% !important;
+    --ring: 178 70% 42% !important;
+    --home-hero-bg: hsl(var(--background)) !important;
+    --home-categories-bg: hsl(var(--background)) !important;
+    --home-stores-bg: hsl(var(--background)) !important;
+    --home-products-bg: hsl(var(--background)) !important;
+    --home-benefits-bg: hsl(var(--background)) !important;
+    --home-button-bg: hsl(var(--primary)) !important;
+    --home-button-text: hsl(var(--primary-foreground)) !important;
+    --home-border: hsl(var(--border)) !important;
+    --marketplace-primary: 331 84% 62% !important;
+    --marketplace-primary-hover: 331 78% 56% !important;
+    --marketplace-primary-soft: 331 44% 18% !important;
+    --marketplace-navy: 210 32% 96% !important;
+    --marketplace-muted: 215 18% 70% !important;
+  }
+
   * {
     @apply border-border;
   }
@@ -481,8 +516,8 @@
     }
 
     .mobile-performance-surface {
-      backdrop-filter: none !important;
-      -webkit-backdrop-filter: none !important;
+      backdrop-filter: blur(12px) saturate(1.15) !important;
+      -webkit-backdrop-filter: blur(12px) saturate(1.15) !important;
     }
 
     .soft-grid-bg {

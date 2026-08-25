@@ -240,14 +240,14 @@ export function ProductDetailGallery({
               />
               <button
                 type="button"
-                className="grid size-10 shrink-0 place-items-center rounded-lg border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:size-11"
+                className="grid size-12 shrink-0 place-items-center rounded-xl border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={(event) => {
                   event.stopPropagation();
                   setIsOpen(false);
                 }}
                 aria-label="Bağla"
               >
-                <X className="size-5" aria-hidden="true" />
+                <X className="size-7 stroke-[2.7]" aria-hidden="true" />
               </button>
             </div>
           </div>

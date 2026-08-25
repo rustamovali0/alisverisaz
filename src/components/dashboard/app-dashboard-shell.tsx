@@ -251,11 +251,11 @@ export function AppDashboardShell({
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-3 top-3 bg-background"
+              className="absolute right-3 top-3 size-12 rounded-xl bg-background shadow-sm"
               onClick={() => setIsOpen(false)}
               aria-label="Menyunu bağla"
             >
-              <X className="size-5" aria-hidden="true" />
+              <X className="size-7 stroke-[2.6]" aria-hidden="true" />
             </Button>
           </m.div>
         </div>

@@ -26,25 +26,25 @@ const CART_KEY = "alisveris_cart";
 
 const navVariantClass: Record<MobileNavbarVariant, string> = {
   classic:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/88 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] backdrop-blur-md dark:border-border dark:bg-background/88",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/82 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-border dark:bg-background/82",
   floating:
-    "inset-x-3 bottom-3 rounded-2xl border border-white/70 bg-white/86 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.18)] backdrop-blur-md dark:border-border dark:bg-background/86",
+    "inset-x-3 bottom-3 rounded-2xl border border-white/70 bg-white/80 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-border dark:bg-background/80",
   pill:
-    "inset-x-4 bottom-3 rounded-full border border-slate-200 bg-white/90 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-md dark:border-border dark:bg-background/90",
+    "inset-x-4 bottom-3 rounded-full border border-slate-200 bg-white/84 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.16)] backdrop-blur-xl dark:border-border dark:bg-background/84",
   compact:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/92 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.08)] backdrop-blur-sm dark:border-border dark:bg-background/92",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/86 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.08)] backdrop-blur-lg dark:border-border dark:bg-background/86",
   outlined:
-    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/20 bg-background/90 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur-md",
+    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/20 bg-background/84 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl",
   soft:
-    "inset-x-0 bottom-0 border-t border-primary/10 bg-primary/5 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.07)] backdrop-blur-sm",
+    "inset-x-0 bottom-0 border-t border-primary/10 bg-primary/5 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.07)] backdrop-blur-lg",
   solid:
     "inset-x-0 bottom-0 border-t border-primary/20 bg-background px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)]",
   glass:
-    "inset-x-3 bottom-3 rounded-2xl border border-white/60 bg-white/72 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.18)] backdrop-blur-lg dark:border-white/10 dark:bg-background/68",
+    "inset-x-3 bottom-3 rounded-2xl border border-white/60 bg-white/68 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.18)] backdrop-blur-2xl dark:border-white/10 dark:bg-background/64",
   minimal:
-    "inset-x-0 bottom-0 bg-background/94 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-sm",
+    "inset-x-0 bottom-0 bg-background/88 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-lg",
   rail:
-    "inset-x-2 bottom-2 rounded-lg border border-slate-200 bg-white/90 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-md dark:border-border dark:bg-background/90",
+    "inset-x-2 bottom-2 rounded-lg border border-slate-200 bg-white/84 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-border dark:bg-background/84",
 };
 
 const itemVariantClass: Record<MobileNavbarVariant, string> = {

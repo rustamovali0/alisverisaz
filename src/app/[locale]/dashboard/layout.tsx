@@ -35,7 +35,7 @@ export default async function CustomerDashboardLayout({
   ];
 
   return (
-    <main className="min-h-screen bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
+    <main className="min-h-screen max-w-full overflow-x-clip bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <MobileCustomerDashboard
         userLabel={userLabel}
         userContact={userContact}

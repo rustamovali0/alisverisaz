@@ -10,6 +10,10 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { createCheckoutOrdersAction, getCartProductsAction } from "@/lib/cart/actions";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
+import type {
+  DeliverySettings,
+  DeliveryStoreOverride,
+} from "@/lib/delivery/types";
 import {
   findMatchingProductVariant,
   formatProductVariantSelection,
@@ -25,6 +29,8 @@ type CartCheckoutProps = {
   defaultPhone?: string;
   locale?: string;
   checkoutOnly?: boolean;
+  deliverySettings: DeliverySettings;
+  deliveryStoreOverrides: DeliveryStoreOverride[];
 };
 
 type DeliveryMethod = "pickup" | "courier" | "region";
@@ -55,6 +61,8 @@ export function CartCheckout({
   defaultPhone = "",
   locale = "az",
   checkoutOnly = false,
+  deliverySettings,
+  deliveryStoreOverrides,
 }: CartCheckoutProps) {
   const common = useTranslations("common");
   const cartUi = useTranslations("cartUi");
@@ -89,6 +97,61 @@ export function CartCheckout({
 
     return sum + unit * entry.item.quantity;
   }, 0);
+  const deliverySummary = useMemo(() => {
+    const storeSubtotals = new Map<string, number>();
+    const overrides = new Map(
+      deliveryStoreOverrides.map((override) => [override.storeId, override]),
+    );
+
+    for (const { item, product } of visibleItems) {
+      const unitPrice = getProductVariantUnitPrice({
+        priceAmount: product.priceAmount,
+        discountAmount: product.discountAmount,
+        variants: product.variantCombinations,
+        selection: item.selectedOptions,
+      });
+
+      storeSubtotals.set(
+        product.storeId,
+        (storeSubtotals.get(product.storeId) ?? 0) + unitPrice * item.quantity,
+      );
+    }
+
+    let amount = 0;
+    const estimates = new Set<string>();
+
+    for (const [storeId, subtotal] of storeSubtotals) {
+      const override = overrides.get(storeId);
+      const freeDeliveryThreshold =
+        override?.freeDeliveryThreshold ?? deliverySettings.freeDeliveryThreshold;
+      const price =
+        deliveryMethod === "pickup"
+          ? 0
+          : deliveryMethod === "courier"
+            ? (override?.bakuPrice ?? deliverySettings.bakuPrice)
+            : (override?.regionPrice ?? deliverySettings.regionPrice);
+      const estimate =
+        deliveryMethod === "pickup"
+          ? (override?.pickupEstimate ?? deliverySettings.pickupEstimate)
+          : deliveryMethod === "courier"
+            ? (override?.courierEstimate ?? deliverySettings.courierEstimate)
+            : (override?.regionEstimate ?? deliverySettings.regionEstimate);
+
+      amount +=
+        freeDeliveryThreshold !== null && subtotal >= freeDeliveryThreshold
+          ? 0
+          : price;
+
+      if (estimate) {
+        estimates.add(estimate);
+      }
+    }
+
+    return {
+      amount,
+      estimate: Array.from(estimates).join(" · "),
+    };
+  }, [deliveryMethod, deliverySettings, deliveryStoreOverrides, visibleItems]);
   const firstProduct = visibleItems[0]?.product;
   const returnHref =
     firstProduct?.storeSlug && firstProduct?.slug
@@ -447,9 +510,23 @@ export function CartCheckout({
             <span className="text-sm text-muted-foreground">Məhsullar</span>
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">
-            Çatdırılma məbləği mağaza qaydalarına görə serverdə hesablanacaq.
-          </p>
+          <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">Çatdırılma</span>
+            <span className="font-semibold">
+              {deliverySummary.amount === 0 ? "Pulsuz" : formatMoney(deliverySummary.amount)}
+            </span>
+          </div>
+          {deliverySummary.estimate ? (
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Təxmini müddət: {deliverySummary.estimate}
+            </p>
+          ) : null}
+          <div className="mt-3 flex items-center justify-between border-t pt-3">
+            <span className="text-sm font-medium">Yekun</span>
+            <span className="text-base font-bold">
+              {formatMoney(total + deliverySummary.amount)}
+            </span>
+          </div>
           <Button
             type="submit"
             className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] md:bg-primary md:hover:bg-primary/90"

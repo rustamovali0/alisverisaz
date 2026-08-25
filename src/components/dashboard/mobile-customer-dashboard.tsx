@@ -18,10 +18,10 @@ import {
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type MobileCustomerDashboardProps = {
   userLabel: string;
@@ -80,18 +80,30 @@ export function MobileCustomerDashboard({
   children,
 }: MobileCustomerDashboardProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const showMenu = isDashboardRoot(pathname);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
-  const visibleItems = [
-    ...accountItems,
-    ...(role === "customer" ? customerOnlyItems : []),
-    ...sharedBuyerItems,
-  ];
+  const visibleItems = useMemo(
+    () => [
+      ...accountItems,
+      ...(role === "customer" ? customerOnlyItems : []),
+      ...sharedBuyerItems,
+    ],
+    [role],
+  );
 
   useEffect(() => {
     setPendingHref(null);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    visibleItems.forEach((item) => router.prefetch(item.href));
+  }, [isMenuOpen, router, visibleItems]);
 
   return (
     <section className="min-w-0 max-w-full overflow-x-clip bg-background px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 text-foreground md:hidden">
@@ -99,25 +111,24 @@ export function MobileCustomerDashboard({
         <Link
           href={showMenu ? "/dashboard/profile" : "/dashboard"}
           onClick={resetDashboardScroll}
-          className="grid min-w-0 grid-cols-[54px_minmax(0,1fr)] items-center gap-3"
+          className="flex min-w-0 items-center gap-3"
         >
-          <span className="relative grid size-12 place-items-center rounded-full bg-muted text-muted-foreground">
-            <UserRound className="size-7" strokeWidth={2.1} aria-hidden="true" />
-            <span className="absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-card bg-emerald-500" />
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+            <UserRound className="size-6" strokeWidth={2.2} aria-hidden="true" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-base font-black">{userLabel}</span>
-            {userContact ? <span className="mt-0.5 block truncate text-sm text-muted-foreground">{userContact}</span> : null}
+            <span className="block truncate text-base font-black">Hesabım</span>
+            <span className="mt-0.5 block truncate text-sm text-muted-foreground">{userLabel || userContact}</span>
           </span>
         </Link>
         <button
           type="button"
           onClick={() => setIsMenuOpen((open) => !open)}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold text-foreground"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border bg-background px-3 text-sm font-semibold text-foreground touch-manipulation"
           aria-expanded={isMenuOpen}
           aria-controls="mobile-account-sections"
         >
-          {isMenuOpen ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
+          {isMenuOpen ? <X className="size-6 stroke-[2.6]" aria-hidden="true" /> : <Menu className="size-6" aria-hidden="true" />}
           Bölmələr
         </button>
       </div>

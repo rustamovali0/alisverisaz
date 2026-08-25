@@ -379,7 +379,7 @@ export function RegisterForm({
             autoComplete="email"
             value={email}
             onChange={(event) => {
-              setEmail(event.target.value);
+              setEmail(event.target.value.toLowerCase());
               setFieldErrors((current) => ({ ...current, email: undefined }));
             }}
             error={fieldErrors.email}

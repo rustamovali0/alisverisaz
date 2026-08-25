@@ -100,7 +100,7 @@ function statusTone(status: OrderStatus) {
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   return (
-    <span className={cn("inline-flex rounded-full border px-2.5 py-1 text-xs font-bold", statusTone(status))}>
+    <span className={cn("inline-flex shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-bold", statusTone(status))}>
       {statusLabel(status)}
     </span>
   );
@@ -118,7 +118,7 @@ function MetricCard({
   href?: string;
 }) {
   const content = (
-    <article className="rounded-lg border bg-card p-4 shadow-sm">
+    <article className="min-w-0 rounded-lg border bg-card p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-semibold text-muted-foreground">{label}</p>
         <Icon className="size-5 text-primary" aria-hidden="true" />
@@ -140,7 +140,7 @@ function ProfileOverview({ profile }: { profile: CustomerProfileSummary }) {
   const name = profile.fullName || profile.email || "Hesabım";
 
   return (
-    <section className="rounded-lg border bg-card p-4 shadow-sm">
+    <section className="hidden min-w-0 rounded-lg border bg-card p-4 shadow-sm md:block">
       <div className="flex min-w-0 items-center gap-3">
         <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
           {profile.avatarUrl ? (
@@ -163,14 +163,14 @@ function OrderPreviewCard({ order }: { order: ManagedOrder }) {
   return (
     <Link
       href={`/dashboard/orders/${order.id}`}
-      className="block rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5"
+      className="block min-w-0 overflow-hidden rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-black">Sifariş #{order.orderNumber}</p>
+      <div className="grid min-w-0 gap-2 sm:flex sm:items-start sm:justify-between">
+        <div className="min-w-0 max-w-full">
+          <p className="max-w-full break-all text-sm font-black leading-5 sm:truncate sm:whitespace-nowrap">Sifariş #{order.orderNumber}</p>
           <p className="mt-1 truncate text-sm text-muted-foreground">{order.storeName}</p>
         </div>
-        <StatusBadge status={order.status} />
+        <div className="justify-self-start sm:shrink-0"><StatusBadge status={order.status} /></div>
       </div>
       <p className="mt-3 text-base font-black">{formatMoney(order.totalAmount, order.currency)}</p>
     </Link>
@@ -205,7 +205,7 @@ export async function CustomerAccountHome({
   const t = await getTranslations("customerAccount");
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5 overflow-x-clip">
       <ProfileOverview profile={profile} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <MetricCard label={t("stats.activeOrders")} value={overview.stats.activeOrders} icon={Package} href="/dashboard/orders" />
@@ -214,9 +214,9 @@ export async function CustomerAccountHome({
       </div>
       <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base font-black">{t("activeOrders")}</h2>
-            <Link href="/dashboard/orders" className="text-sm font-bold text-primary">
+          <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+            <h2 className="min-w-0 truncate text-base font-black">{t("activeOrders")}</h2>
+            <Link href="/dashboard/orders" className="shrink-0 text-sm font-bold text-primary">
               {t("viewAll")}
             </Link>
           </div>
@@ -229,9 +229,9 @@ export async function CustomerAccountHome({
           )}
         </div>
         <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base font-black">{t("notifications")}</h2>
-            <Link href="/dashboard/notifications" className="text-sm font-bold text-primary">
+          <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+            <h2 className="min-w-0 truncate text-base font-black">{t("notifications")}</h2>
+            <Link href="/dashboard/notifications" className="shrink-0 text-sm font-bold text-primary">
               {t("viewAll")}
             </Link>
           </div>
@@ -250,18 +250,18 @@ export async function CustomerOrdersView({ orders }: { orders: ManagedOrder[] })
   }
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3 overflow-x-clip">
       {orders.map((order) => (
-        <Link key={order.id} href={`/dashboard/orders/${order.id}`} className="block rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-base font-black">#{order.orderNumber}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.storeName}</p>
+        <Link key={order.id} href={`/dashboard/orders/${order.id}`} className="block min-w-0 overflow-hidden rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
+          <div className="grid min-w-0 gap-3 sm:flex sm:items-start sm:justify-between">
+            <div className="min-w-0 max-w-full">
+              <p className="max-w-full break-all text-base font-black leading-5 sm:truncate sm:whitespace-nowrap">#{order.orderNumber}</p>
+              <p className="mt-1 truncate text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.storeName}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t("products")}: {order.items.length}</p>
               <p className="mt-1 text-sm text-muted-foreground">{t("deliveryMethod")}: {deliveryMethodLabel(order.deliveryMethod)}</p>
               {order.estimatedDelivery ? <p className="mt-1 text-sm text-muted-foreground">{t("estimatedDelivery")}: {order.estimatedDelivery}</p> : null}
             </div>
-            <div className="flex items-center justify-between gap-3 sm:block sm:text-right">
+            <div className="flex items-center justify-between gap-3 sm:block sm:shrink-0 sm:text-right">
               <StatusBadge status={order.status} />
               <p className="mt-2 text-base font-black">{formatMoney(order.totalAmount, order.currency)}</p>
             </div>
@@ -274,10 +274,10 @@ export async function CustomerOrdersView({ orders }: { orders: ManagedOrder[] })
               </div>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-            <span>{t("subtotal")}: {formatMoney(order.subtotalAmount, order.currency)}</span>
-            <span>{t("delivery")}: {formatMoney(order.shippingAmount, order.currency)}</span>
-            <span>{t("total")}: {formatMoney(order.totalAmount, order.currency)}</span>
+          <div className="mt-3 grid gap-1 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground sm:grid-cols-3 sm:gap-2">
+            <span className="truncate">{t("subtotal")}: {formatMoney(order.subtotalAmount, order.currency)}</span>
+            <span className="truncate">{t("delivery")}: {formatMoney(order.shippingAmount, order.currency)}</span>
+            <span className="truncate">{t("total")}: {formatMoney(order.totalAmount, order.currency)}</span>
           </div>
           <p className="mt-3 text-sm font-bold text-primary">{t("viewDetails")}</p>
         </Link>
@@ -327,15 +327,15 @@ export async function CustomerOrderDetailView({ order }: { order: ManagedOrder }
   const t = await getTranslations("customerAccount");
 
   return (
-    <div className="space-y-5">
+    <div className="min-w-0 space-y-5 overflow-x-clip">
       <Link href="/dashboard/orders" className="text-sm font-bold text-primary">{t("backToOrders")}</Link>
-      <section className="rounded-lg border bg-card p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-xl font-black">#{order.orderNumber}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.storeName}</p>
+      <section className="min-w-0 overflow-hidden rounded-lg border bg-card p-4 shadow-sm">
+        <div className="grid min-w-0 gap-3 sm:flex sm:items-start sm:justify-between">
+          <div className="min-w-0 max-w-full">
+            <h1 className="max-w-full break-all text-xl font-black leading-6 sm:truncate sm:whitespace-nowrap">#{order.orderNumber}</h1>
+            <p className="mt-1 truncate text-sm text-muted-foreground">{formatDate(order.createdAt)} · {order.storeName}</p>
           </div>
-          <StatusBadge status={order.status} />
+          <div className="justify-self-start sm:shrink-0"><StatusBadge status={order.status} /></div>
         </div>
       </section>
       <section className="grid gap-5 lg:grid-cols-[1fr_320px]">

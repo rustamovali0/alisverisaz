@@ -309,7 +309,7 @@ function LogoUploadField({
             setSelectedName("");
           }}
         >
-          <X className="mr-2 size-4" aria-hidden="true" />
+          <X className="mr-2 size-5 stroke-[2.5]" aria-hidden="true" />
           Seçiləni sil
         </Button>
       ) : null}

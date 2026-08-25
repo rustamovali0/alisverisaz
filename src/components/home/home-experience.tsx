@@ -117,8 +117,8 @@ function createHomeThemeStyle(
   colors: HomeThemeColors,
 ): CSSProperties & Record<string, string> {
   return {
-    backgroundColor: colors.pageBackground,
-    color: colors.text,
+    backgroundColor: "hsl(var(--background))",
+    color: "hsl(var(--foreground))",
     "--background": hexToHslTriplet(colors.pageBackground, "0 0% 100%"),
     "--foreground": hexToHslTriplet(colors.text, "222 47% 11%"),
     "--card": hexToHslTriplet(colors.cardBackground, "0 0% 100%"),

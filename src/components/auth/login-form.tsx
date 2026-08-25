@@ -26,7 +26,7 @@ type FieldErrors = {
 };
 
 function getInitialIdentifier(params: URLSearchParams) {
-  return params.get("email") ?? params.get("identifier") ?? "";
+  return (params.get("email") ?? params.get("identifier") ?? "").toLowerCase();
 }
 
 export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormProps) {
@@ -54,7 +54,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
     const nextErrors: FieldErrors = {};
 
     if (!identifier.trim()) {
-      nextErrors.identifier = "Email və ya telefon daxil edin.";
+      nextErrors.identifier = "Email daxil edin.";
     }
 
     if (!password.trim()) {
@@ -84,7 +84,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       return;
     }
 
-    formData.set("identifier", identifier.trim());
+    formData.set("identifier", identifier.trim().toLowerCase());
     formData.set("password", password);
     formData.set("rememberMe", rememberMe ? "on" : "");
     formData.set("next", next);
@@ -208,16 +208,16 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         <AuthField
           id="identifier"
           name="identifier"
-          label="Email və ya telefon"
-          type="text"
-          autoComplete="username"
+          label="Email"
+          type="email"
+          autoComplete="email"
           inputMode="email"
           value={identifier}
           onChange={(event) => {
-            setIdentifier(event.target.value);
+            setIdentifier(event.target.value.toLowerCase());
             setFieldErrors((current) => ({ ...current, identifier: undefined }));
           }}
-          hint="Hesabınıza bağlı email və ya telefon nömrəsi."
+          hint="Hesabınıza bağlı email ünvanını daxil edin."
           error={fieldErrors.identifier}
           required
         />
