@@ -83,7 +83,7 @@ const colorGroups: Array<{
       { key: "categoriesBackground", name: "categoriesBackgroundColor", label: "Categories" },
       { key: "storesBackground", name: "storesBackgroundColor", label: "Stores" },
       { key: "productsBackground", name: "productsBackgroundColor", label: "Products" },
-      { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Info" },
+      { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Məlumat bloku" },
     ],
   },
 ];

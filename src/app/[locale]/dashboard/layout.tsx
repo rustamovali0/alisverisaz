@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { CustomerDashboardNavigation } from "@/components/dashboard/customer-dashboard-navigation";
 import { MobileCustomerDashboard } from "@/components/dashboard/mobile-customer-dashboard";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
 import { getSiteSettings } from "@/lib/cms/data";
 import { requireRole } from "@/lib/auth/session";
 import { getTranslations } from "next-intl/server";
@@ -37,7 +36,11 @@ export default async function CustomerDashboardLayout({
 
   return (
     <main className="min-h-screen bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <MobileCustomerDashboard userLabel={userLabel} userContact={userContact}>
+      <MobileCustomerDashboard
+        userLabel={userLabel}
+        userContact={userContact}
+        role={current.role as "customer" | "seller"}
+      >
         {children}
       </MobileCustomerDashboard>
       <section className="hidden border-b bg-card md:block">
@@ -48,13 +51,7 @@ export default async function CustomerDashboardLayout({
           </div>
           <LogoutButton />
         </div>
-        <div className="container flex gap-2 overflow-x-auto pb-4">
-          {navItems.map((item) => (
-            <Button key={item.href} asChild variant="outline" size="sm" className="shrink-0">
-              <Link href={item.href}>{item.label}</Link>
-            </Button>
-          ))}
-        </div>
+        <CustomerDashboardNavigation items={navItems} />
       </section>
       <div className="container hidden py-6 md:block">{children}</div>
       <div className="hidden md:block">

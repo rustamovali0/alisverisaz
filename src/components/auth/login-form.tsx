@@ -211,7 +211,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           label="Email və ya telefon"
           type="text"
           autoComplete="username"
-          inputMode="text"
+          inputMode="email"
           value={identifier}
           onChange={(event) => {
             setIdentifier(event.target.value);

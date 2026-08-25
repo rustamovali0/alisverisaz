@@ -8,13 +8,13 @@ type ErrorPageProps = {
   reset: () => void;
 };
 
-export default function ErrorPage({ error, reset }: ErrorPageProps) {
+export default function ErrorPage({ reset }: ErrorPageProps) {
   return (
     <RootShell>
       <ErrorState
         title="Xəta baş verdi"
-        description={error.message}
-        actionLabel="Yeniden cehd et"
+        description="Səhifə hazırda açılmadı. Zəhmət olmasa bir az sonra yenidən cəhd edin."
+        actionLabel="Yenidən cəhd et"
         onAction={reset}
       />
     </RootShell>

@@ -278,6 +278,7 @@ export function HomeExperience({
           <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
             {heroTitle}
           </h1>
+          <div data-home-search-sentinel className="h-px w-full" aria-hidden="true" />
           <MarketplaceSearch
             stores={stores}
             categories={categories}
@@ -387,6 +388,7 @@ export function HomeExperience({
 
       {featuredStores.length > 0 ? (
         <section
+          id="featured-stores"
           className="py-6 md:py-10"
           style={{ backgroundColor: "var(--home-stores-bg)" }}
         >
@@ -398,7 +400,7 @@ export function HomeExperience({
               </h2>
             </div>
             <Button asChild variant="outline">
-              <Link href="/products">{home("allStores")}</Link>
+              <a href="#featured-stores">{home("allStores")}</a>
             </Button>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

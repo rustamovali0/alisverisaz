@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -92,7 +92,7 @@ export function FavoriteToggleButton({
   const router = useRouter();
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isMutating, setIsMutating] = useState(false);
   const isActive = Boolean(favoriteId);
 
   useEffect(() => {
@@ -146,7 +146,12 @@ export function FavoriteToggleButton({
     event.preventDefault();
     event.stopPropagation();
 
-    startTransition(async () => {
+    if (isMutating) {
+      showToast({ title: "Bir az gözləyin...", description: "Əməliyyat davam edir.", variant: "info" });
+      return;
+    }
+
+    void (async () => {
       const supabase = createSupabaseBrowserClient();
       const {
         data: { user },
@@ -166,7 +171,14 @@ export function FavoriteToggleButton({
         favoriteProductCache = null;
       }
 
-      if (favoriteId) {
+      const previousFavoriteId = favoriteId;
+      const wasActive = Boolean(previousFavoriteId);
+      setIsMutating(true);
+      setFavoriteId(wasActive ? null : productId);
+      updateFavoriteProductCache(user.id, productId, !wasActive);
+
+      try {
+        if (wasActive) {
         let deleteQuery = (supabase as any)
           .from("favorites")
           .delete()
@@ -174,27 +186,20 @@ export function FavoriteToggleButton({
 
         deleteQuery = compact
           ? deleteQuery.eq("product_id", productId)
-          : deleteQuery.eq("id", favoriteId);
+          : deleteQuery.eq("id", previousFavoriteId);
 
         const { error } = await deleteQuery;
 
-        if (error) {
-          showToast({
-            title: "Əməliyyatı tamamlamaq mümkün olmadı.",
-            description: "Yenidən cəhd edin.",
-            variant: "error",
-          });
-          return;
-        }
+          if (error) {
+            throw error;
+          }
 
-        setFavoriteId(null);
-        updateFavoriteProductCache(user.id, productId, false);
         showToast({
           title: "Məhsul seçilmişlərdən çıxarıldı.",
           variant: "info",
         });
         return;
-      }
+        }
 
       const { data, error } = await (supabase as any)
         .from("favorites")
@@ -205,14 +210,9 @@ export function FavoriteToggleButton({
         .select("id")
         .single();
 
-      if (error) {
-        showToast({
-          title: "Əməliyyatı tamamlamaq mümkün olmadı.",
-          description: "Yenidən cəhd edin.",
-          variant: "error",
-        });
-        return;
-      }
+        if (error) {
+          throw error;
+        }
 
       setFavoriteId(data.id);
       updateFavoriteProductCache(user.id, productId, true);
@@ -220,7 +220,18 @@ export function FavoriteToggleButton({
         title: "Məhsul seçilmişlərə əlavə edildi.",
         variant: "success",
       });
-    });
+      } catch {
+        setFavoriteId(previousFavoriteId);
+        updateFavoriteProductCache(user.id, productId, wasActive);
+        showToast({
+          title: "Əməliyyatı tamamlamaq mümkün olmadı.",
+          description: "Yenidən cəhd edin.",
+          variant: "error",
+        });
+      } finally {
+        setIsMutating(false);
+      }
+    })();
   }
 
   return (
@@ -232,7 +243,7 @@ export function FavoriteToggleButton({
           : `${productName} seçilmişlərə əlavə et`
       }
       aria-pressed={isActive}
-      disabled={!isReady || isPending}
+      disabled={!isReady}
       onClick={toggleFavorite}
       className={cn(
         "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 md:hover:shadow-md",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { Bell, CheckCircle2, Info, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,11 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function getPreview(value?: string | null, limit = 150) {
+  const normalized = value?.replace(/\s+/g, " ").trim() ?? "";
+  return normalized.length > limit ? `${normalized.slice(0, limit).trimEnd()}...` : normalized;
+}
+
 export function NotificationCenter({
   className,
   buttonClassName,
@@ -70,7 +76,7 @@ export function NotificationCenter({
       if (newestUnread) {
         showToast({
           title: newestUnread.title,
-          description: newestUnread.body ?? undefined,
+          description: getPreview(newestUnread.body) || undefined,
           variant: newestUnread.type === "warning" ? "warning" : "info",
         });
         shownRef.current.add(newestUnread.id);
@@ -95,6 +101,26 @@ export function NotificationCenter({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [open]);
+
   const unreadCount = useMemo(() => items.filter((item) => !item.readAt).length, [items]);
 
   function openModal() {
@@ -112,32 +138,13 @@ export function NotificationCenter({
     });
   }
 
-  return (
-    <div className={cn("relative", className)}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={openModal}
-        className={cn(
-          "relative size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
-          buttonClassName,
-        )}
-        aria-label="Bildirişlər"
-      >
-        <Bell className={cn("size-7 stroke-[2.3]", iconClassName)} aria-hidden="true" />
-        {unreadCount > 0 ? (
-          <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        ) : null}
-      </Button>
-
-      {open ? (
+  const modal = open && typeof document !== "undefined"
+    ? createPortal(
         <div
-          className="fixed inset-0 z-[999] bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
+          aria-label="Bildirişlər"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setOpen(false);
@@ -145,21 +152,21 @@ export function NotificationCenter({
           }}
         >
           <div
-            className="mx-auto flex max-h-[min(620px,calc(100dvh-48px))] w-full max-w-md flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"
+            className="flex max-h-[calc(100dvh-24px)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b px-4 py-3">
+            <div className="flex items-center justify-between border-b px-4 py-3 sm:px-5">
               <div>
                 <h2 className="text-lg font-black tracking-normal">Bildirişlər</h2>
                 <p className="text-sm text-muted-foreground">
                   {items.length > 0 ? `${items.length} bildiriş` : "Yeni bildiriş yoxdur"}
                 </p>
               </div>
-              <Button type="button" variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => setOpen(false)} aria-label="Bağla">
-                <X className="size-6" aria-hidden="true" />
+              <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 rounded-full" onClick={() => setOpen(false)} aria-label="Bağla">
+                <X className="size-7" aria-hidden="true" />
               </Button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
               {isPending && items.length === 0 ? (
                 <div className="space-y-2">
                   <div className="h-16 animate-pulse rounded-xl bg-muted" />
@@ -184,7 +191,7 @@ export function NotificationCenter({
                           <time className="shrink-0 text-xs text-muted-foreground">{formatDate(item.createdAt)}</time>
                         </span>
                         {item.body ? (
-                          <span className="mt-1 block break-words text-sm leading-5 text-muted-foreground">{item.body}</span>
+                          <span className="mt-1 block break-words text-sm leading-5 text-muted-foreground">{getPreview(item.body)}</span>
                         ) : null}
                       </span>
                     </article>
@@ -197,8 +204,33 @@ export function NotificationCenter({
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div className={cn("relative", className)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={openModal}
+        className={cn(
+          "relative size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+          buttonClassName,
+        )}
+        aria-label="Bildirişlər"
+      >
+        <Bell className={cn("size-7 stroke-[2.3]", iconClassName)} aria-hidden="true" />
+        {unreadCount > 0 ? (
+          <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        ) : null}
+      </Button>
+
+      {modal}
     </div>
   );
 }

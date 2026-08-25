@@ -5,6 +5,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { SellProductButton } from "@/components/auth/sell-product-button";
@@ -18,6 +19,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
+import { cn } from "@/lib/utils";
 
 type MarketplaceHeaderProps = {
   siteName?: string;
@@ -57,13 +59,43 @@ export function MarketplaceHeader({
   const common = useTranslations("common");
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
+  const isHomePage = pathname === "/";
   const isProductsActive = pathname.startsWith("/products");
   const isAboutActive = pathname.startsWith("/about");
+  const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
+
+  useEffect(() => {
+    if (!isHomePage) {
+      setIsHomeSearchVisible(false);
+      return;
+    }
+
+    let observer: IntersectionObserver | null = null;
+    const frame = window.requestAnimationFrame(() => {
+      const sentinel = document.querySelector("[data-home-search-sentinel]");
+      if (!sentinel) {
+        return;
+      }
+
+      observer = new IntersectionObserver(
+        ([entry]) => setIsHomeSearchVisible(entry?.isIntersecting ?? false),
+        { rootMargin: "-74px 0px 0px 0px", threshold: 0 },
+      );
+      observer.observe(sentinel);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
+  }, [isHomePage]);
+
+  const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
 
   return (
     <>
       <header
-        className={sticky ? "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0" : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
+        className={sticky ? cn("marketplace-header relative z-40 border-b shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0", isHomePage ? "bg-background/80 backdrop-blur-xl" : "bg-background/95") : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-3 py-3 xl:flex-nowrap">
           <Link href="/" prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
@@ -162,7 +194,7 @@ export function MarketplaceHeader({
           </div>
         </div>
       </header>
-      {showMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+      {showMobileSearch && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
         <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}

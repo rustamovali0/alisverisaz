@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import type { AuthRole } from "@/lib/auth/types";
@@ -7,7 +8,7 @@ import type { Database } from "@/types/database";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 
-export async function getCurrentUserProfile() {
+export const getCurrentUserProfile = cache(async function getCurrentUserProfile() {
   const supabase = await createSupabaseServerClient();
   const {
     data: { user },
@@ -30,7 +31,7 @@ export async function getCurrentUserProfile() {
     profile,
     role: profile?.role ?? "customer",
   };
-}
+});
 
 export async function requireUser(nextPath?: string) {
   const current = await getCurrentUserProfile();

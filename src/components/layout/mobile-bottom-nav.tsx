@@ -1,12 +1,9 @@
 "use client";
 
 import {
-  Bell,
   Grid2X2,
   Heart,
   Home,
-  Package,
-  Settings,
   ShoppingCart,
   Store,
   UserRound,
@@ -81,7 +78,7 @@ function readCartCount() {
 
 function accountPath(role: AuthRole | null) {
   if (role === "seller") {
-    return "/store/dashboard/settings";
+    return "/store/dashboard";
   }
 
   return role === "customer" ? "/dashboard" : "/login?next=/dashboard";
@@ -114,29 +111,22 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const pathname = usePathname();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const isAuthLoading = profile.status === "loading";
   const actualRole = profile.status === "authenticated" ? profile.role : null;
   const role = actualRole === "admin" ? null : actualRole;
-  const isSeller = role === "seller";
-  const items = isSeller
-    ? [
-        { href: "/store/dashboard", label: "İcmal", icon: Home },
-        { href: "/store/dashboard/products", label: nav("products"), icon: Grid2X2 },
-        { href: "/store/dashboard/orders", label: nav("orders"), icon: Package },
-        { href: "/store/dashboard/messages", label: nav("notifications"), icon: Bell },
-      ]
-    : [
-        { href: "/", label: nav("home"), icon: Home },
-        { href: "/products", label: nav("catalog"), icon: Grid2X2 },
-        { href: "/favorites", label: nav("favorites"), icon: Heart },
-        { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
-      ];
+  const items = [
+    { href: "/", label: nav("home"), icon: Home },
+    { href: "/products", label: nav("catalog"), icon: Grid2X2 },
+    { href: "/favorites", label: nav("favorites"), icon: Heart },
+    { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
+  ];
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
     ? nav("account")
     : role === "seller"
-        ? nav("settings")
+        ? "İdarə paneli"
         : role
           ? nav("account")
           : auth("login");
@@ -166,6 +156,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
       }
 
       lastNavigationRef.current = { href, at: now };
+      setPendingHref(href);
       router.push(href, { scroll: true });
       scrollPageToTop();
     },
@@ -178,14 +169,14 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         return pathname === "/";
       }
 
-      if (href === "/store/dashboard") {
-        return pathname === href;
-      }
-
       return pathname === href || pathname.startsWith(`${href}/`);
     },
     [pathname],
   );
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   useEffect(() => {
     function syncCartCount() {
@@ -215,7 +206,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;
-          const isActive = isNavItemActive(item.href);
+          const isActive = (pendingHref ?? (isNavItemActive(item.href) ? item.href : null)) === item.href;
 
           return (
             <button
@@ -229,7 +220,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
               }}
               onClick={() => navigate(item.href)}
               className={cn(
-                "relative grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
                 itemVariantClass[variant],
                 isActive && "bg-primary/10 text-primary",
               )}
@@ -269,15 +260,15 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
           }}
           disabled={isAuthLoading}
           className={cn(
-            "grid min-h-[52px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            ((role === "seller" && pathname.startsWith("/store/dashboard/settings")) ||
+            ((role === "seller" && pathname.startsWith("/store/dashboard")) ||
               (role !== "seller" && pathname.startsWith("/dashboard"))) &&
               "bg-primary/10 text-primary",
           )}
           aria-current={
-            (role === "seller" && pathname.startsWith("/store/dashboard/settings")) ||
+            (role === "seller" && pathname.startsWith("/store/dashboard")) ||
             (role !== "seller" && pathname.startsWith("/dashboard"))
               ? "page"
               : undefined
@@ -285,11 +276,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
           aria-disabled={isAuthLoading}
           aria-label={accountText}
         >
-          {role === "seller" ? (
-            <Settings className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />
-          ) : (
-            <AccountIcon role={role} />
-          )}
+          <AccountIcon role={role} />
           <span className="max-w-full truncate leading-none">{accountText}</span>
         </button>
       </div>

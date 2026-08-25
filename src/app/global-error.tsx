@@ -9,15 +9,15 @@ type GlobalErrorProps = {
   reset: () => void;
 };
 
-export default function GlobalError({ error, reset }: GlobalErrorProps) {
+export default function GlobalError({ reset }: GlobalErrorProps) {
   return (
     <html lang="az">
       <body>
         <main className="min-h-screen px-4 py-12">
           <ErrorState
             title="Sistem xətası"
-            description={error.message}
-            actionLabel="Yeniden cehd et"
+            description="Səhifə hazırda açılmadı. Zəhmət olmasa bir az sonra yenidən cəhd edin."
+            actionLabel="Yenidən cəhd et"
             onAction={reset}
           />
         </main>

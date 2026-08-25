@@ -25,6 +25,13 @@ function normalizePath(href: string) {
   return href.replace(/^\/(admin|store\/dashboard)/, "/radmin");
 }
 
+function getActiveNavHref(navItems: DashboardNavItem[], pathname: string) {
+  return navItems
+    .map((item) => ({ item, href: normalizePath(item.href).split(/[?#]/)[0] }))
+    .filter(({ href }) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((left, right) => right.href.length - left.href.length)[0]?.item.href;
+}
+
 function getItemLabel(item: DashboardNavItem) {
   return item.title;
 }
@@ -155,15 +162,17 @@ export function RadminDashboardShell({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = usePersistentBoolean("alisveris-radmin-collapsed", false);
   const [search, setSearch] = useState("");
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
+  const activeHref = useMemo(() => getActiveNavHref(navItems, pathname), [navItems, pathname]);
   const activeItem = useMemo(
-    () =>
-      navItems.find((item) =>
-        normalizePath(item.href) === pathname ||
-        pathname.startsWith(`${normalizePath(item.href)}/`),
-      ) ?? navItems[0],
-    [navItems, pathname],
+    () => navItems.find((item) => item.href === activeHref) ?? navItems[0],
+    [activeHref, navItems],
   );
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("az-AZ");
@@ -262,7 +271,7 @@ export function RadminDashboardShell({
           <nav className="flex-1 space-y-1 overflow-y-auto p-3">
             {navItems.map((item) => {
               const href = normalizePath(item.href);
-              const isActive = pathname === href || pathname.startsWith(`${href}/`);
+              const isActive = (pendingHref ?? activeHref) === item.href;
               const Icon = (
                 <DashboardIconView
                   name={item.icon}
@@ -274,6 +283,8 @@ export function RadminDashboardShell({
                 <Link
                   key={item.href}
                   href={href}
+                  prefetch
+                  onClick={() => setPendingHref(item.href)}
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium transition",
                     isActive
@@ -343,18 +354,22 @@ export function RadminDashboardShell({
             <div className="h-[calc(100vh-4rem)] overflow-y-auto p-3">
               {navItems.map((item) => {
                 const href = normalizePath(item.href);
-                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                const isActive = (pendingHref ?? activeHref) === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={href}
+                    prefetch
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium",
                       isActive
                         ? "bg-primary text-primary-foreground"
                         : "text-slate-300 hover:bg-slate-800 hover:text-white",
                     )}
-                    onClick={() => setIsDrawerOpen(false)}
+                    onClick={() => {
+                      setPendingHref(item.href);
+                      setIsDrawerOpen(false);
+                    }}
                   >
                     <DashboardIconView name={item.icon} className="size-5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{getItemLabel(item)}</span>

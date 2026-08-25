@@ -1,8 +1,8 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Fragment, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { m } from "framer-motion";
 
 import { LogoutButton } from "@/components/auth/logout-button";
@@ -19,8 +19,33 @@ type AppDashboardShellProps = {
   navItems: DashboardNavItem[];
   returnHref?: string;
   returnLabel?: string;
+  mobileRail?: boolean;
   children: ReactNode;
 };
+
+function getPathWithoutHash(href: string) {
+  return href.split(/[?#]/)[0];
+}
+
+function getActiveNavHref(navItems: DashboardNavItem[], pathname: string, hash: string) {
+  const exactHashMatch = navItems.find((item) => {
+    const [path, fragment] = item.href.split("#");
+    return Boolean(fragment) && path === pathname && `#${fragment}` === hash;
+  });
+
+  if (exactHashMatch) {
+    return exactHashMatch.href;
+  }
+
+  return navItems
+    .filter((item) => !item.href.includes("#"))
+    .filter((item) => {
+      const href = getPathWithoutHash(item.href);
+      return pathname === href || pathname.startsWith(`${href}/`);
+    })
+    .sort((left, right) => getPathWithoutHash(right.href).length - getPathWithoutHash(left.href).length)[0]
+    ?.href;
+}
 
 export function AppDashboardShell({
   title,
@@ -29,11 +54,31 @@ export function AppDashboardShell({
   navItems,
   returnHref,
   returnLabel = "Sayta qayıt",
+  mobileRail = true,
   children,
 }: AppDashboardShellProps) {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
+  const [hash, setHash] = useState("");
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
+  useEffect(() => {
+    function syncHash() {
+      setHash(window.location.hash);
+    }
+
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, [pathname]);
+
+  const activeHref = useMemo(() => getActiveNavHref(navItems, pathname, hash), [hash, navItems, pathname]);
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [hash, pathname]);
 
   function resetDashboardScroll() {
     if (typeof window === "undefined") {
@@ -52,17 +97,12 @@ export function AppDashboardShell({
     });
   }
 
-  function handleDashboardLinkClick() {
+  function handleDashboardLinkClick(href?: string) {
+    if (href) {
+      setPendingHref(href);
+    }
     setIsOpen(false);
     resetDashboardScroll();
-  }
-
-  function isActive(href: string) {
-    if (href === "/admin" || href === "/radmin" || href === "/dashboard") {
-      return pathname === href;
-    }
-
-    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   function adminGroupTitle(href: string) {
@@ -106,7 +146,7 @@ export function AppDashboardShell({
     let previousGroup: string | null = null;
 
     return navItems.map((item) => {
-      const active = isActive(item.href);
+      const active = (pendingHref ?? activeHref) === item.href;
       const group = adminGroupTitle(item.href);
       const showGroup = Boolean(group && group !== previousGroup);
       previousGroup = group;
@@ -120,7 +160,8 @@ export function AppDashboardShell({
           ) : null}
           <Link
             href={item.href}
-            onClick={handleDashboardLinkClick}
+            prefetch
+            onClick={() => handleDashboardLinkClick(item.href)}
             title={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
             aria-label={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
             className={cn(
@@ -136,7 +177,7 @@ export function AppDashboardShell({
                   : "text-muted-foreground hover:translate-x-0.5 hover:bg-primary/10 hover:text-foreground",
             )}
           >
-            <DashboardIconView name={item.icon} className={compact ? "size-5 shrink-0" : "size-4 shrink-0"} />
+            <DashboardIconView name={item.icon} className={compact ? "size-6 shrink-0" : "size-5 shrink-0"} />
             {compact ? null : <span>{item.titleKey ? t(item.titleKey as any) : item.title}</span>}
           </Link>
         </Fragment>
@@ -161,7 +202,7 @@ export function AppDashboardShell({
     </aside>
   );
 
-  const mobileRail = (
+  const mobileRailNavigation = (
     <aside className="fixed inset-y-0 left-0 z-40 flex w-16 flex-col border-r bg-background/95 shadow-lg shadow-slate-950/5 backdrop-blur-xl lg:hidden">
       <div className="grid h-16 place-items-center border-b">
         <button
@@ -171,7 +212,7 @@ export function AppDashboardShell({
           aria-label="Menyunu böyüt"
           aria-expanded={isOpen}
         >
-          a
+          <Menu className="size-6" aria-hidden="true" />
         </button>
       </div>
       <nav className="flex-1 space-y-2 overflow-y-auto px-2 py-3" data-dashboard-scroll-root>
@@ -184,18 +225,18 @@ export function AppDashboardShell({
   );
 
   return (
-    <div className="app-dashboard-shell min-h-screen bg-background soft-grid-bg">
-      <div className="hidden min-h-screen lg:fixed lg:inset-y-0 lg:flex">
+    <div className="app-dashboard-shell min-h-screen min-w-0 overflow-x-clip bg-background soft-grid-bg">
+      <div className={cn("hidden min-h-screen lg:fixed lg:flex", mobileRail ? "lg:inset-y-0" : "lg:bottom-0 lg:top-[73px]")}>
         {sidebar}
       </div>
-      {mobileRail}
+      {mobileRail ? mobileRailNavigation : null}
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden">
           <button
             type="button"
             aria-label="Menyunu bağla"
-            className="absolute inset-y-0 left-16 right-0 bg-background/75 backdrop-blur-sm"
+            className={cn("absolute inset-y-0 right-0 bg-background/75 backdrop-blur-sm", mobileRail ? "left-16" : "left-0")}
             onClick={() => setIsOpen(false)}
           />
           <m.div
@@ -203,7 +244,7 @@ export function AppDashboardShell({
             animate={{ x: 0 }}
             exit={{ x: -320 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative ml-16 h-full w-72 max-w-[calc(100vw-4rem)]"
+            className={cn("relative h-full w-72 max-w-[calc(100vw-4rem)]", mobileRail && "ml-16")}
           >
             {sidebar}
             <Button
@@ -220,9 +261,21 @@ export function AppDashboardShell({
         </div>
       ) : null}
 
-      <div className="pl-16 lg:pl-72">
-        <header className="sticky top-0 z-30 border-b bg-background/[0.82] backdrop-blur-xl">
+      <div className={cn(mobileRail ? "pl-16" : "pl-0", "lg:pl-72")}>
+        <header className={cn("z-30 border-b bg-background/[0.82] backdrop-blur-xl", mobileRail && "sticky top-0")}>
           <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
+            {!mobileRail ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="size-11 shrink-0 lg:hidden"
+                onClick={() => setIsOpen(true)}
+                aria-label="Panel menyusu"
+              >
+                <Menu className="size-6" aria-hidden="true" />
+              </Button>
+            ) : null}
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-semibold tracking-normal">
                 {title}
@@ -233,19 +286,14 @@ export function AppDashboardShell({
             </div>
             {returnHref ? (
               <Button asChild variant="outline" size="sm" className="shrink-0">
-                <Link href={returnHref} onClick={handleDashboardLinkClick}>{returnLabel}</Link>
+                <Link href={returnHref} prefetch onClick={() => handleDashboardLinkClick()}>{returnLabel}</Link>
               </Button>
             ) : null}
           </div>
         </header>
-        <m.main
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22, ease: "easeOut" }}
-          className="px-4 py-6 sm:px-6 lg:px-8"
-        >
+        <main className="min-w-0 px-3 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
           {children}
-        </m.main>
+        </main>
       </div>
     </div>
   );

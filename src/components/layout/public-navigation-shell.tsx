@@ -22,7 +22,6 @@ type PublicNavigationShellProps = {
 const hiddenPrefixes = [
   "/admin",
   "/radmin",
-  "/store/dashboard",
 ];
 
 const hiddenPaths = new Set([

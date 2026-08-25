@@ -75,7 +75,7 @@ function shouldLoadPublicNavigation(pathname: string) {
     return false;
   }
 
-  return !["/admin", "/radmin", "/store/dashboard"].some(
+  return !["/admin", "/radmin"].some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }

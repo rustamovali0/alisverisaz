@@ -24,6 +24,7 @@ export function SellerDashboardShell({
       navItems={navItems}
       returnHref="/"
       returnLabel="Sayta qayıt"
+      mobileRail={false}
     >
       {children}
     </AppDashboardShell>
