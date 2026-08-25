@@ -189,6 +189,7 @@ export function MarketplaceSearch({
 
   const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
   const showSuggestions = isFocused && query.trim().length > 0 && suggestions.length > 0;
+  const showNoResults = isFocused && query.trim().length > 0 && suggestions.length === 0;
 
   return (
     <form
@@ -257,7 +258,7 @@ export function MarketplaceSearch({
           {compactActions ? <X className="size-4" aria-hidden="true" /> : common("close")}
         </Button>
       ) : null}
-      {showPopularSearches || showSuggestions ? (
+      {showPopularSearches || showSuggestions || showNoResults ? (
         <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
             <div className="border-b px-3 py-3 last:border-b-0">
@@ -299,6 +300,11 @@ export function MarketplaceSearch({
                   suggestions={suggestionGroups.products}
                 />
               ) : null}
+            </div>
+          ) : null}
+          {showNoResults ? (
+            <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+              {marketplace("noSearchResults")}
             </div>
           ) : null}
         </div>

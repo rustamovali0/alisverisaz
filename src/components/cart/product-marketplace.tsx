@@ -282,11 +282,13 @@ function MarketplaceDropdown({
   value,
   options,
   onChange,
+  compact = false,
 }: {
   label: string;
   value: string;
   options: MarketplaceDropdownOption[];
   onChange: (value: string) => void;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -320,7 +322,10 @@ function MarketplaceDropdown({
     <div ref={containerRef} className="relative w-full">
       <button
         type="button"
-        className="flex h-10 w-full items-center justify-between gap-3 rounded-lg border border-input bg-background px-3 text-left text-sm font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className={cn(
+          "flex w-full items-center justify-between gap-3 rounded-lg border border-input bg-background text-left font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          compact ? "h-9 px-2.5 text-xs" : "h-10 px-3 text-sm",
+        )}
         aria-label={label}
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -333,7 +338,10 @@ function MarketplaceDropdown({
         <div
           role="listbox"
           aria-label={label}
-          className="absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl"
+          className={cn(
+            "absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl",
+            compact && "min-w-[12rem]",
+          )}
         >
           {options.map((option) => {
             const selected = option.value === value;
@@ -344,7 +352,8 @@ function MarketplaceDropdown({
                 role="option"
                 aria-selected={selected}
                 className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition hover:bg-primary/10",
+                  "flex w-full items-center justify-between gap-2 rounded-md text-left transition hover:bg-primary/10",
+                  compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm",
                   selected && "bg-primary/10 font-semibold text-primary",
                 )}
                 onClick={() => {
@@ -379,7 +388,6 @@ function MarketplaceFilterBar({
   onMinPrice,
   onMaxPrice,
   onStockOnly,
-  onReset,
 }: {
   categories: CategoryOption[];
   selectedCategoryId?: string;
@@ -396,18 +404,13 @@ function MarketplaceFilterBar({
   onMinPrice: (value: string) => void;
   onMaxPrice: (value: string) => void;
   onStockOnly: (value: boolean) => void;
-  onReset: () => void;
 }) {
   const t = useTranslations("marketplace");
-  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
-  const hasActiveFilters = Boolean(
-    selectedCategoryId || color || size || minPrice || maxPrice || inStockOnly,
-  );
 
   return (
-    <section className="relative z-20 rounded-xl border bg-card p-3 shadow-sm sm:p-4">
-      <h2 className="mb-3 text-sm font-bold text-foreground">{t("filters")}</h2>
-      <div className="space-y-3">
+    <section className="relative z-20 rounded-lg border bg-card p-2.5 shadow-sm">
+      <h2 className="mb-2 text-xs font-bold text-foreground">{t("filters")}</h2>
+      <div className="space-y-2">
         <MarketplaceDropdown
           label={t("categoryFilter")}
           value={selectedCategoryId ?? ""}
@@ -416,6 +419,7 @@ function MarketplaceFilterBar({
             ...categories.map((category) => ({ value: category.id, label: category.name })),
           ]}
           onChange={(value) => onCategory(categories.find((category) => category.id === value))}
+          compact
         />
 
         <MarketplaceDropdown
@@ -426,6 +430,7 @@ function MarketplaceFilterBar({
             ...colors.map((value) => ({ value, label: value })),
           ]}
           onChange={onColor}
+          compact
         />
 
         <MarketplaceDropdown
@@ -436,6 +441,7 @@ function MarketplaceFilterBar({
             ...sizes.map((value) => ({ value, label: value })),
           ]}
           onChange={onSize}
+          compact
         />
 
         <div className="flex min-w-0 items-center gap-2">
@@ -447,7 +453,7 @@ function MarketplaceFilterBar({
             onChange={(event) => onMinPrice(event.target.value)}
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
-            className="h-10 min-w-0 w-1/2 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+            className="h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
           />
           <input
             type="number"
@@ -457,11 +463,11 @@ function MarketplaceFilterBar({
             onChange={(event) => onMaxPrice(event.target.value)}
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
-            className="h-10 min-w-0 w-1/2 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+            className="h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
           />
         </div>
 
-        <label className="flex min-h-10 items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-semibold text-foreground">
+        <label className="flex min-h-9 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -471,11 +477,6 @@ function MarketplaceFilterBar({
           {t("inStockOnly")}
         </label>
 
-        {hasActiveFilters ? (
-          <Button type="button" variant="ghost" className="h-10 w-full px-3 text-sm text-primary" onClick={onReset}>
-            {t("clearFilters")}
-          </Button>
-        ) : null}
       </div>
     </section>
   );
@@ -1179,6 +1180,9 @@ export function ProductMarketplace({
   const hasLocalFilters = Boolean(
     colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
   );
+  const hasActiveProductFilters = Boolean(
+    activeCategoryId || activeSort !== "newest" || hasLocalFilters,
+  );
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
@@ -1251,7 +1255,6 @@ export function ProductMarketplace({
       onMinPrice={setMinPrice}
       onMaxPrice={setMaxPrice}
       onStockOnly={setInStockOnly}
-      onReset={resetFilters}
     />
   );
 
@@ -1315,6 +1318,15 @@ export function ProductMarketplace({
                   <SlidersHorizontal className="size-4" aria-hidden="true" />
                   {t("filters")}
                   <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-10 px-3 text-sm text-primary"
+                  disabled={!hasActiveProductFilters}
+                  onClick={resetFilters}
+                >
+                  {t("clearFilters")}
                 </Button>
                 <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
               </div>
@@ -1541,7 +1553,7 @@ export function Storefront({
         <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
           <div className="mb-6 min-w-0">
             <h2 className="break-words text-xl font-black tracking-normal">
-              {t("storeOffers", { storeName: store.name, count: store.productCount })}
+              {t("storeProducts")}
             </h2>
           </div>
           <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
