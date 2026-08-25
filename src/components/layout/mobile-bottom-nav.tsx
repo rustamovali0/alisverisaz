@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 type MobileBottomNavProps = {
   className?: string;
   variant?: MobileNavbarVariant;
+  storeSubdomainSlug?: string | null;
 };
 
 const CART_KEY = "alisveris_cart";
@@ -111,7 +112,11 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
   return <UserRound className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
 }
 
-export function MobileBottomNav({ className, variant = "classic" }: MobileBottomNavProps) {
+export function MobileBottomNav({
+  className,
+  variant = "classic",
+  storeSubdomainSlug,
+}: MobileBottomNavProps) {
   const common = useTranslations("common");
   const nav = useTranslations("nav");
   const auth = useTranslations("auth");
@@ -133,6 +138,12 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
         : role
           ? nav("account")
           : auth("login");
+  const isStorefront = Boolean(storeSubdomainSlug);
+  const storefrontItem = {
+    href: "/",
+    label: isStorefront ? nav("storefront") : nav("home"),
+    icon: isStorefront ? Store : Home,
+  };
 
   useEffect(() => {
     if (role !== "seller") {
@@ -176,7 +187,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
   const items =
     role === "seller"
       ? [
-          { href: "/", label: nav("home"), icon: Home },
+          storefrontItem,
           {
             href: sellerStoreHref ?? "/store/dashboard/products",
             label: "Mağazam",
@@ -190,7 +201,7 @@ export function MobileBottomNav({ className, variant = "classic" }: MobileBottom
           { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
-          { href: "/", label: nav("home"), icon: Home },
+          storefrontItem,
           { href: "/products", label: nav("products"), icon: Package },
           { href: "/favorites", label: nav("favorites"), icon: Heart },
           { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },

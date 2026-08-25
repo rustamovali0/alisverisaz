@@ -13,6 +13,7 @@ import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
+import { getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
 import { buildDesignCssVariables } from "@/lib/design/presets";
 import { getCategoryOptions } from "@/lib/products/data";
@@ -96,7 +97,6 @@ export async function generateMetadata({
   const visiblePathname = normalizeVisiblePath(
     requestHeaders.get("x-current-path") ?? "/",
   );
-
   return {
     title: {
       default: seoTitle,
@@ -157,6 +157,7 @@ export default async function LocaleLayout({
   const visiblePathname = normalizeVisiblePath(
     requestHeaders.get("x-current-path") ?? "/",
   );
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const loadPublicNavigation = shouldLoadPublicNavigation(visiblePathname);
   const [messages, siteSettings, navStores, navCategories] = await Promise.all([
     getMessages({
@@ -218,6 +219,7 @@ export default async function LocaleLayout({
             stores={navStores}
             categories={navCategories}
             mobileNavbarVariant={siteSettings.mobileNavbarVariant}
+            storeSubdomainSlug={storeSubdomainSlug}
           >
             {children}
           </PublicNavigationShell>

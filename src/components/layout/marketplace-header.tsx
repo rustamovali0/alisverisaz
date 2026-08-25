@@ -33,6 +33,7 @@ type MarketplaceHeaderProps = {
   compactMobileSearch?: boolean;
   showBottomNav?: boolean;
   mobileNavbarVariant?: MobileNavbarVariant;
+  storeSubdomainSlug?: string | null;
   sticky?: boolean;
 };
 
@@ -54,6 +55,7 @@ export function MarketplaceHeader({
   showMobileSearch = false,
   showBottomNav = true,
   mobileNavbarVariant,
+  storeSubdomainSlug,
   sticky = true,
 }: MarketplaceHeaderProps) {
   const nav = useTranslations("nav");
@@ -239,7 +241,12 @@ export function MarketplaceHeader({
           />
         </div>
       ) : null}
-      {showBottomNav ? <MobileBottomNav variant={mobileNavbarVariant} /> : null}
+      {showBottomNav ? (
+        <MobileBottomNav
+          variant={mobileNavbarVariant}
+          storeSubdomainSlug={storeSubdomainSlug}
+        />
+      ) : null}
     </>
   );
 }

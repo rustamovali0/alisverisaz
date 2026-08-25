@@ -17,6 +17,7 @@ type PublicNavigationShellProps = {
   stores: MarketplaceStore[];
   categories: CategoryOption[];
   mobileNavbarVariant?: MobileNavbarVariant;
+  storeSubdomainSlug?: string | null;
 };
 
 const hiddenPrefixes = [
@@ -54,6 +55,7 @@ export function PublicNavigationShell({
   stores,
   categories,
   mobileNavbarVariant,
+  storeSubdomainSlug,
 }: PublicNavigationShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -72,6 +74,7 @@ export function PublicNavigationShell({
           showMobileSearch
           compactMobileSearch={isProductDetailPath(pathname)}
           mobileNavbarVariant={mobileNavbarVariant}
+          storeSubdomainSlug={storeSubdomainSlug}
           sticky={!isProductDetailPath(pathname)}
         />
       ) : null}
