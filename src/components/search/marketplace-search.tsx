@@ -5,7 +5,7 @@ import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,6 @@ type SearchSuggestion = {
   key: string;
   label: string;
   description: string;
-  href: string;
   type: "store" | "product";
 };
 
@@ -90,12 +89,10 @@ export function MarketplaceSearch({
             type: "store",
             label: store.name,
             description: marketplace("productCount", { count: store.productCount }),
-            href: `/${store.slug}`,
           }));
     const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
     const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
       const productStore = scopedStores.find((store) => store.id === product.storeId);
-      const productStoreSlug = product.storeSlug ?? productStore?.slug;
       const productStoreName = product.storeName ?? productStore?.name ?? marketplace("store");
 
       return {
@@ -103,7 +100,6 @@ export function MarketplaceSearch({
         type: "product" as const,
         label: product.name,
         description: productStoreName,
-        href: productStoreSlug ? `/${productStoreSlug}/products/${product.slug}` : "/products",
       };
     });
 
@@ -236,17 +232,14 @@ export function MarketplaceSearch({
       return;
     }
 
-    const exact = suggestions.find(
-      (suggestion) => normalize(suggestion.label) === normalize(value),
-    );
-
-    if (exact) {
-      router.push(exact.href);
-      return;
-    }
-
     recordSearch(value);
     router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(value)}` : `/products?q=${encodeURIComponent(value)}`);
+  }
+
+  function selectSuggestion(suggestion: SearchSuggestion) {
+    setQuery(suggestion.label);
+    setIsFocused(false);
+    inputRef.current?.blur();
   }
 
   function closeMobileSearch() {
@@ -364,12 +357,14 @@ export function MarketplaceSearch({
                 <SearchSuggestionGroup
                   label={marketplace("stores")}
                   suggestions={suggestionGroups.stores}
+                  onSelect={selectSuggestion}
                 />
               ) : null}
               {suggestionGroups.products.length > 0 ? (
                 <SearchSuggestionGroup
                   label={common("products")}
                   suggestions={suggestionGroups.products}
+                  onSelect={selectSuggestion}
                 />
               ) : null}
             </div>
@@ -388,18 +383,22 @@ export function MarketplaceSearch({
 function SearchSuggestionGroup({
   label,
   suggestions,
+  onSelect,
 }: {
   label: string;
   suggestions: SearchSuggestion[];
+  onSelect: (suggestion: SearchSuggestion) => void;
 }) {
   return (
     <section className="border-b px-1 py-1 last:border-b-0">
       <p className="px-2 pb-1 pt-1 text-xs font-semibold text-muted-foreground">{label}</p>
       {suggestions.map((suggestion) => (
-        <Link
+        <button
           key={suggestion.key}
-          href={suggestion.href}
-          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition hover:bg-muted"
+          type="button"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => onSelect(suggestion)}
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10">
             {suggestionIcon(suggestion.type)}
@@ -408,7 +407,7 @@ function SearchSuggestionGroup({
             <span className="block truncate font-semibold">{suggestion.label}</span>
             <span className="block truncate text-xs text-muted-foreground">{suggestion.description}</span>
           </span>
-        </Link>
+        </button>
       ))}
     </section>
   );
