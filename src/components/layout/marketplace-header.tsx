@@ -36,6 +36,7 @@ type MarketplaceHeaderProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  brandHomeHref?: string;
   productsHref?: string;
   searchStoreSlug?: string | null;
   initialRole?: AuthRole | null;
@@ -62,6 +63,7 @@ export function MarketplaceHeader({
   mobileNavbarVariant,
   storeSubdomainSlug,
   storeHomeHref = "/",
+  brandHomeHref = storeHomeHref,
   productsHref = "/products",
   searchStoreSlug,
   initialRole,
@@ -125,7 +127,7 @@ export function MarketplaceHeader({
         className={sticky ? cn("marketplace-header relative z-40 border-b shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0", isHomePage ? "bg-background/80 backdrop-blur-xl" : "bg-background/95") : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 py-3 sm:gap-3 xl:flex-nowrap">
-          <Link href={storeHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          <Link href={brandHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
               <span className="grid size-10 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm md:size-10 md:rounded-md">
                 <img

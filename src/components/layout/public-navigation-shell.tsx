@@ -84,6 +84,7 @@ export function PublicNavigationShell({
         : `/${pathStoreSlug}`
       : "/";
   const productsHref = pathStoreSlug ? `${storeHomeHref}#products` : "/products";
+  const brandHomeHref = isLegacyStorePath ? "/" : storeHomeHref;
 
   return (
     <>
@@ -100,6 +101,7 @@ export function PublicNavigationShell({
           mobileNavbarVariant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
+          brandHomeHref={brandHomeHref}
           productsHref={productsHref}
           searchStoreSlug={searchStoreSlug}
           initialRole={initialRole}
