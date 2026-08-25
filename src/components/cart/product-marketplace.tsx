@@ -35,22 +35,15 @@ import {
   Baby,
   BookOpen,
   BriefcaseBusiness,
-  Bus,
   Car,
   Check,
-  Clock,
   ChevronDown,
   Dumbbell,
-  ExternalLink,
   Home as HomeIcon,
   Laptop,
-  MapPin,
-  Navigation,
   PackageSearch,
-  PackageCheck,
   Pencil,
   PawPrint,
-  Phone,
   Shirt,
   SlidersHorizontal,
   Sparkles,
@@ -126,24 +119,6 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
       {store.name.slice(0, 1).toUpperCase()}
     </span>
   );
-}
-
-function getStoreLocationMapUrl(location: StoreLocation | null, fallbackAddress?: string | null) {
-  if (location?.mapLink) {
-    return location.mapLink;
-  }
-
-  if (location?.latitude !== null && location?.longitude !== null && location?.latitude !== undefined && location?.longitude !== undefined) {
-    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
-  }
-
-  const query = location
-    ? [location.city, location.district, location.address].filter(Boolean).join(", ")
-    : fallbackAddress;
-
-  return query
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
-    : null;
 }
 
 function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
@@ -1369,18 +1344,6 @@ export function Storefront({
     storeId: store.id,
     searchQuery,
   });
-  const primaryLocation = useMemo(
-    () => locations.find((location) => location.isActive) ?? locations[0] ?? null,
-    [locations],
-  );
-  const primaryAddress =
-    primaryLocation && primaryLocation.showAddress
-      ? [primaryLocation.city, primaryLocation.district, primaryLocation.address]
-          .filter(Boolean)
-          .join(", ")
-      : store.address;
-  const primaryPhone = primaryLocation?.phone || store.phone;
-  const primaryMapUrl = getStoreLocationMapUrl(primaryLocation, primaryAddress);
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
   const visibleProducts = useMemo(
@@ -1421,7 +1384,7 @@ export function Storefront({
           <StoreBrandingQuickEdit store={store} />
         ) : (
         <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
-          <div className="relative h-20 bg-primary/10 sm:h-44 lg:h-56">
+          <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
             {store.coverUrl ? (
               <div className="absolute inset-0 overflow-hidden">
                 <img
@@ -1431,126 +1394,25 @@ export function Storefront({
                 />
               </div>
             ) : (
-              <div className="absolute inset-0 grid h-full w-full place-items-center overflow-hidden bg-[linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--accent)/0.18))] text-primary">
-                <div className="flex items-center gap-3 rounded-lg border border-primary/15 bg-background/75 px-4 py-3 shadow-sm backdrop-blur">
-                  <Store className="size-5" aria-hidden="true" />
-                  <span className="max-w-[220px] truncate text-sm font-semibold">
-                    {store.name}
-                  </span>
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-muted" />
             )}
-            <div className="absolute bottom-0 left-3 z-20 translate-y-1/2 md:left-8">
-              <StoreLogo store={store} className="size-14 shadow-sm sm:size-24" />
-            </div>
-          </div>
-          <div className="grid min-w-0 gap-3 p-3 pt-9 md:grid-cols-[minmax(0,1fr)_260px] md:gap-5 md:p-7 md:pt-14">
-            <div className="flex min-w-0 gap-3 md:gap-4">
-              <div className="min-w-0">
-                <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal md:text-3xl">
-                    {store.name}
-                  </h1>
-                  <p className="text-sm font-semibold text-muted-foreground md:text-base">
-                      {t("productCount", { count: store.productCount })}
-                  </p>
-                </div>
-                {store.description ? (
-                  <p className="mt-2 hidden max-w-2xl break-words text-sm leading-6 text-muted-foreground md:mt-3 md:line-clamp-2 md:block md:text-foreground">
-                    {store.description}
-                  </p>
-                ) : null}
-                <div className="mt-2 flex min-w-0 flex-wrap gap-1.5 text-xs text-muted-foreground md:mt-4 md:gap-2 md:text-sm">
-                  {primaryAddress ? (
-                    <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-background px-2.5 py-1.5 md:gap-2 md:px-3">
-                      <MapPin className="size-3.5 shrink-0 text-primary md:size-4" aria-hidden="true" />
-                      <span className="min-w-0 truncate">{primaryAddress}</span>
-                    </span>
-                  ) : null}
-                  {primaryLocation?.showMetro && primaryLocation.nearestMetro ? (
-                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
-                      <Navigation className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">
-                        {primaryLocation.nearestMetro}
-                        {primaryLocation.metroWalkMinutes
-                          ? ` · ${primaryLocation.metroWalkMinutes} dəq. piyada`
-                          : ""}
-                        {primaryLocation.metroDistanceMeters
-                          ? ` · ${primaryLocation.metroDistanceMeters} m`
-                          : ""}
-                      </span>
-                    </span>
-                  ) : null}
-                  {primaryLocation?.showBus &&
-                  (primaryLocation.busStopName || primaryLocation.busRoutes.length) ? (
-                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
-                      <Bus className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">
-                        {primaryLocation.busStopName ?? "Avtobus"}
-                        {primaryLocation.busRoutes.length
-                          ? ` · ${primaryLocation.busRoutes.join(", ")}`
-                          : ""}
-                      </span>
-                    </span>
-                  ) : null}
-                  {primaryLocation?.workingHours ? (
-                    <span className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 sm:inline-flex">
-                      <Clock className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">
-                        {primaryLocation.workingHours}
-                      </span>
-                    </span>
-                  ) : null}
-                  {primaryPhone ? (
-                    <a
-                      href={`tel:${primaryPhone.replace(/\s/g, "")}`}
-                      className="hidden min-w-0 items-center gap-2 rounded-full border bg-background px-3 py-1.5 transition hover:border-primary/40 hover:text-primary sm:inline-flex"
-                    >
-                      <Phone className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{primaryPhone}</span>
-                    </a>
-                  ) : null}
-                  {primaryLocation?.pickupAvailable ? (
-                    <span className="hidden min-w-0 items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary sm:inline-flex">
-                      <PackageCheck className="size-3.5 shrink-0" aria-hidden="true" />
-                      Özün götürmə
-                    </span>
-                  ) : null}
-                  {primaryLocation?.deliveryAvailable ? (
-                    <span className="hidden min-w-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-200 sm:inline-flex">
-                      <Truck className="size-3.5 shrink-0" aria-hidden="true" />
-                      Çatdırılma
-                    </span>
-                  ) : null}
-                </div>
+            <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+            <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
+              <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
+              <div className="min-w-0 pb-0.5 text-white">
+                <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal sm:text-3xl md:text-4xl">
+                  {store.name}
+                </h1>
+                <p className="mt-1 text-sm font-medium text-white/85 sm:text-base">
+                  {t("productCount", { count: store.productCount })}
+                </p>
               </div>
-            </div>
-            <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-1 md:content-start md:gap-3">
-              {primaryPhone ? (
-                <Button asChild className="h-10 w-full min-w-0 rounded-xl text-xs md:h-10 md:text-sm">
-                  <a href={`tel:${primaryPhone.replace(/\s/g, "")}`}>
-                    <Phone className="mr-1.5 size-4 shrink-0 md:mr-2" aria-hidden="true" />
-                    <span className="truncate">{t("showPhone")}</span>
-                  </a>
-                </Button>
-              ) : null}
-              {primaryMapUrl ? (
-                <Button asChild variant="outline" className="h-10 w-full min-w-0 rounded-xl border-primary/20 bg-background text-xs hover:bg-primary/5 md:h-10 md:text-sm">
-                  <a href={primaryMapUrl} target="_blank" rel="noreferrer">
-                    <MapPin className="mr-1.5 size-4 shrink-0 md:mr-2" aria-hidden="true" />
-                    <span className="truncate">Xəritədə göstər</span>
-                    <ExternalLink className="ml-1.5 size-4 shrink-0 md:ml-2" aria-hidden="true" />
-                  </a>
-                </Button>
-              ) : null}
             </div>
           </div>
         </section>
         )}
 
-        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
-
-        <section className="mt-6 min-w-0 rounded-lg bg-card p-4 shadow-sm md:p-8">
+        <section className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
           <div className="mb-6 min-w-0">
             <h2 className="break-words text-xl font-black tracking-normal">
               {t("storeProducts")}
@@ -1583,6 +1445,7 @@ export function Storefront({
             </div>
           </div>
         </section>
+        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
       </div>
       <SiteFooter {...footer} />
     </main>

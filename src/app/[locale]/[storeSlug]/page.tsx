@@ -105,10 +105,10 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const storeBaseHref = storeSubdomainSlug === store.slug ? "/" : getStorePath(store.slug);
 
-  const storeLocations = await getLocationsForStores([store.id]);
   const storeCategories = categories.filter((category) =>
     store.categoryIds.includes(category.id),
   );
+  const storeLocations = await getLocationsForStores([store.id]);
 
   after(() => {
     void trackActivityEvent({
