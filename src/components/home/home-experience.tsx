@@ -286,6 +286,7 @@ export function HomeExperience({
             inputClassName="h-12 border-transparent bg-background"
             buttonSize="lg"
             stackOnMobile
+            compactActions
           />
           <div className="mt-5 flex flex-wrap gap-2">
             {activeCategories.slice(0, 6).map((category) => (

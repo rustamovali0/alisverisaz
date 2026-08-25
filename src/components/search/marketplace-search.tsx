@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, PackageSearch, Search, Store, TrendingUp } from "lucide-react";
+import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ type MarketplaceSearchProps = {
   buttonLabel?: string;
   stackOnMobile?: boolean;
   storeSlug?: string;
+  compactActions?: boolean;
 };
 
 type SearchSuggestion = {
@@ -53,6 +54,7 @@ export function MarketplaceSearch({
   buttonLabel,
   stackOnMobile = false,
   storeSlug,
+  compactActions = false,
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
   const marketplace = useTranslations("marketplace");
@@ -229,10 +231,14 @@ export function MarketplaceSearch({
       <Button
         type="submit"
         size={buttonSize}
-        className={cn(stackOnMobile && "w-auto shrink-0 sm:w-auto")}
+        className={cn(
+          stackOnMobile && "w-auto shrink-0 sm:w-auto",
+          compactActions && "size-11 px-0",
+        )}
+        aria-label={resolvedButtonLabel}
       >
-        {resolvedButtonLabel}
-        {buttonSize === "lg" ? (
+        {compactActions ? <Search className="size-4" aria-hidden="true" /> : resolvedButtonLabel}
+        {!compactActions && buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
@@ -241,10 +247,14 @@ export function MarketplaceSearch({
           type="button"
           variant="ghost"
           size={buttonSize}
-          className="shrink-0 md:hidden"
+          className={cn(
+            "shrink-0 md:hidden",
+            compactActions && "size-11 px-0",
+          )}
           onClick={closeMobileSearch}
+          aria-label={common("close")}
         >
-          {common("close")}
+          {compactActions ? <X className="size-4" aria-hidden="true" /> : common("close")}
         </Button>
       ) : null}
       {showPopularSearches || showSuggestions ? (
