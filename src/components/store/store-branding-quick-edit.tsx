@@ -35,6 +35,12 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
 
     startTransition(async () => {
       const result = await updateSellerStoreSettingsAction(formData);
+      const input = kind === "logo" ? logoInputRef.current : bannerInputRef.current;
+
+      if (input) {
+        input.value = "";
+      }
+
       if (!result.ok) {
         void appAlert.error(result.message, "Şəkil yenilənmədi");
         return;
