@@ -1371,21 +1371,99 @@ export function Storefront({
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }
 
-  return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
-      <div className="container max-w-full py-4 md:py-6">
-        <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
-          <Link href="/products" className="hover:text-primary">
-            {t("stores")}
-          </Link>
-          <span className="mx-2">·</span>
-          <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
-        </nav>
+  const productsSection = (
+    <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
+      <div className="mb-6 min-w-0">
+        <h2 className="break-words text-xl font-black tracking-normal">
+          {t("storeProducts")}
+        </h2>
+      </div>
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+          <CategoryFilters
+            categories={categories}
+            selectedCategoryId={activeCategoryId}
+            baseHref={storeBaseHref ?? getStorePath(store.slug)}
+            allLabel={t("allCategories")}
+            onSelect={selectCategory}
+          />
+        </aside>
+        <div className="min-w-0">
+          <ProductInfiniteGrid
+            products={visibleProducts}
+            hasMore={infinite.hasMore}
+            isLoadingNext={infinite.isLoadingNext}
+            onLoadNext={infinite.loadNext}
+            storeSlug={store.slug}
+            storeName={store.name}
+            storeBaseHref={storeBaseHref}
+            productCardVariant={productCardVariant}
+            labels={{ stock: labels.stock }}
+            isStoreOwner={isStoreOwner}
+            forceMobileTwoColumns
+          />
+        </div>
+      </div>
+    </section>
+  );
 
-        {isStoreOwner ? (
-          <StoreBrandingQuickEdit store={store} />
-        ) : (
-          <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+  if (legacyLayout) {
+    return (
+      <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
+        <div className="container max-w-full py-4 md:py-6">
+          <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
+            <Link href="/products" className="hover:text-primary">
+              {t("stores")}
+            </Link>
+            <span className="mx-2">·</span>
+            <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
+          </nav>
+
+          {isStoreOwner ? (
+            <StoreBrandingQuickEdit store={store} />
+          ) : (
+            <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
+              <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
+                {store.coverUrl ? (
+                  <div className="absolute inset-0 overflow-hidden">
+                    <img
+                      src={store.coverUrl}
+                      alt={store.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-muted" />
+                )}
+                <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
+                <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
+                  <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
+                  <div className="min-w-0 pb-0.5 text-white">
+                    <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal sm:text-3xl md:text-4xl">
+                      {store.name}
+                    </h1>
+                    <p className="mt-1 text-sm font-medium text-white/85 sm:text-base">
+                      {t("productCount", { count: store.productCount })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
+          {productsSection}
+        </div>
+        <SiteFooter {...footer} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
+      <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-xl shadow-teal-950/10 sm:rounded-lg">
+        <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
+          <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
             <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
               {store.coverUrl ? (
                 <div className="absolute inset-0 overflow-hidden">
@@ -1398,57 +1476,35 @@ export function Storefront({
               ) : (
                 <div className="absolute inset-0 bg-muted" />
               )}
-              <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
-              <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
-                <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
-                <div className="min-w-0 pb-0.5 text-white">
-                  <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal sm:text-3xl md:text-4xl">
+              <div className="absolute inset-0 bg-slate-950/70" aria-hidden="true" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.88),rgba(15,23,42,0.62),rgba(2,6,23,0.78))]" aria-hidden="true" />
+              <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
+                <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
+                <div className="mt-5 min-w-0">
+                  <span className="inline-flex rounded-full border border-white/20 bg-slate-950/55 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur">
+                    {t("store")}
+                  </span>
+                  <h1 className="mt-4 max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
                     {store.name}
                   </h1>
-                  <p className="mt-1 text-sm font-medium text-white/85 sm:text-base">
+                  {store.description ? (
+                    <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/92 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)] sm:text-base">
+                      {store.description}
+                    </p>
+                  ) : null}
+                  <p className="mt-4 text-sm font-bold text-white/85">
                     {t("productCount", { count: store.productCount })}
                   </p>
                 </div>
               </div>
             </div>
-          </section>
-        )}
-
-        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
-
-        <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
-          <div className="mb-6 min-w-0">
-            <h2 className="break-words text-xl font-black tracking-normal">
-              {t("storeProducts")}
-            </h2>
-          </div>
-          <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-            <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-              <CategoryFilters
-                categories={categories}
-                selectedCategoryId={activeCategoryId}
-                baseHref={storeBaseHref ?? getStorePath(store.slug)}
-                allLabel={t("allCategories")}
-                onSelect={selectCategory}
-              />
-            </aside>
-            <div className="min-w-0">
-              <ProductInfiniteGrid
-                products={visibleProducts}
-                hasMore={infinite.hasMore}
-                isLoadingNext={infinite.isLoadingNext}
-                onLoadNext={infinite.loadNext}
-                storeSlug={store.slug}
-                storeName={store.name}
-                storeBaseHref={storeBaseHref}
-                productCardVariant={productCardVariant}
-                labels={{ stock: labels.stock }}
-                isStoreOwner={isStoreOwner}
-                forceMobileTwoColumns
-              />
-            </div>
           </div>
         </section>
+        <div className="px-4 pb-6 sm:px-6 lg:px-7">
+          {isStoreOwner ? <StoreBrandingQuickEdit store={store} /> : null}
+          {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
+          {productsSection}
+        </div>
       </div>
       <SiteFooter {...footer} />
     </main>
