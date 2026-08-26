@@ -27,7 +27,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   const copy = visualCopy[variant];
 
   return (
-    <aside className="hidden h-[min(680px,calc(100dvh-5rem))] min-h-[520px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
+    <aside className="relative hidden h-[min(680px,calc(100dvh-5rem))] min-h-[520px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
       <Image
         src="/auth/auth-marketplace-panel.png"
         alt="Alisveris marketplace auth banner"
