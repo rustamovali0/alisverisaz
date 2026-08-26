@@ -127,7 +127,7 @@ export function MarketplaceHeader({
         className={
           sticky
             ? cn(
-                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/92 shadow-sm shadow-teal-950/[0.04] backdrop-blur-xl md:sticky md:top-0",
+                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] md:sticky md:top-0",
                 !isHomePage && "bg-white/95",
               )
             : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04]"

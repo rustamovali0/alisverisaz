@@ -51,6 +51,8 @@
     "description": "Real Supabase məhsulları",
     "emptyTitle": "Aktiv məhsul yoxdur",
     "emptyDescription": "Satıcılar məhsul əlavə etdikcə burada görünəcək.",
+    "loadMore": "Daha çox göstər",
+    "loadingMore": "Yüklənir",
     "searchPlaceholder": "Məhsul, mağaza və ya kateqoriya axtar",
     "category": "Kateqoriya",
     "productCount": "{count} məhsul",

@@ -173,41 +173,6 @@ function buildStoreProductHref(storeSlug: string, productSlug: string, storeBase
   return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
 
-function ProductInfiniteSentinel({
-  onIntersect,
-  disabled,
-}: {
-  onIntersect: () => void;
-  disabled: boolean;
-}) {
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (disabled || !ref.current) {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          onIntersect();
-        }
-      },
-      {
-        root: null,
-        rootMargin: "560px 0px",
-        threshold: 0,
-      },
-    );
-
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [disabled, onIntersect]);
-
-  return <div ref={ref} className="h-px w-full" aria-hidden="true" />;
-}
-
 function CategoryFilters({
   categories,
   selectedCategoryId,
@@ -920,7 +885,7 @@ function useInfiniteProducts({
 
     const params = new URLSearchParams({
       locale,
-      limit: "20",
+      limit: "50",
       cursor,
       sort: sort ?? "newest",
     });
@@ -1001,6 +966,8 @@ export function ProductInfiniteGrid({
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
 }) {
+  const t = useTranslations("marketplace");
+
   return (
     <>
       <ProductGrid
@@ -1013,10 +980,19 @@ export function ProductInfiniteGrid({
         isStoreOwner={isStoreOwner}
         forceMobileTwoColumns={forceMobileTwoColumns}
       />
-      <ProductInfiniteSentinel
-        disabled={!hasMore || isLoadingNext}
-        onIntersect={onLoadNext}
-      />
+      {hasMore ? (
+        <div className="mt-6 flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 rounded-full px-6 font-bold"
+            disabled={isLoadingNext}
+            onClick={onLoadNext}
+          >
+            {isLoadingNext ? t("loadingMore") : t("loadMore")}
+          </Button>
+        </div>
+      ) : null}
       <ProductListLoader show={isLoadingNext} />
     </>
   );
@@ -1650,7 +1626,7 @@ export function Storefront({
                 key={category.id}
                 type="button"
                 className={cn(
-                  "flex h-11 min-w-[10rem] flex-[1_1_calc(50%-0.75rem)] items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:flex-[1_1_calc(33.333%-0.75rem)]",
+                  "flex h-11 min-w-[10rem] flex-[1_1_calc(50%-0.75rem)] items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/40 hover:shadow-md sm:flex-[1_1_calc(33.333%-0.75rem)]",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-cyan-300 bg-cyan-50 text-cyan-800",
                 )}

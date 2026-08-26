@@ -4,7 +4,7 @@ import { getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const limitValue = Number(searchParams.get("limit") ?? "20");
+  const limitValue = Number(searchParams.get("limit") ?? "50");
 
   try {
     const page = await getSimilarMarketplaceProductPage(
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
         productId: searchParams.get("productId") ?? "",
         categoryId: searchParams.get("categoryId") ?? "",
         cursor: searchParams.get("cursor"),
-        limit: Number.isFinite(limitValue) ? limitValue : 20,
+        limit: Number.isFinite(limitValue) ? limitValue : 50,
       },
     );
 

@@ -127,8 +127,9 @@ export function SiteFooter({
   }, []);
 
   return (
-    <footer className="w-full max-w-full overflow-x-clip border-t border-cyan-100 bg-[#f5fbf9] text-slate-900">
-      <div className="container grid max-w-full grid-cols-2 gap-x-5 gap-y-5 py-5 md:grid-cols-2 md:gap-8 md:py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+    <footer className="w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-3 py-3 text-slate-900 sm:px-4 md:py-5">
+      <div className="mx-auto max-w-[1220px] overflow-hidden rounded-lg border border-cyan-100 bg-[#f5fbf9]">
+      <div className="grid grid-cols-2 gap-x-5 gap-y-5 px-4 py-5 sm:px-6 md:grid-cols-2 md:gap-8 md:px-8 md:py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="col-span-2 min-w-0 md:col-span-1">
           <Link href="/" className="inline-flex min-w-0 items-center gap-2">
             <span className="grid size-8 place-items-center rounded-md bg-slate-950 text-sm font-black text-white shadow-sm md:size-11 md:rounded-lg md:text-lg">
@@ -226,9 +227,10 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-cyan-100 bg-white/60">
-        <div className="container flex max-w-full flex-col gap-2 py-2 pb-[calc(4.6rem+env(safe-area-inset-bottom))] text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between md:py-4 md:pb-4 md:text-sm">
+        <div className="flex flex-col gap-2 px-4 py-2 pb-[calc(4.6rem+env(safe-area-inset-bottom))] text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-4 md:pb-4 md:text-sm">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
         </div>
+      </div>
       </div>
     </footer>
   );

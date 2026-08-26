@@ -51,6 +51,8 @@
     "description": "Реальные товары из Supabase",
     "emptyTitle": "Активных товаров нет",
     "emptyDescription": "Товары появятся здесь после добавления продавцами.",
+    "loadMore": "Показать ещё",
+    "loadingMore": "Загрузка",
     "searchPlaceholder": "Искать товары, магазины или категории",
     "category": "Категория",
     "productCount": "{count} товаров",

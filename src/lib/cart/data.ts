@@ -98,8 +98,8 @@ type StoreRow = {
 };
 
 const MAX_PUBLIC_LIST_LIMIT = 120;
-const DEFAULT_PRODUCT_PAGE_LIMIT = 20;
-const MAX_PRODUCT_PAGE_LIMIT = 30;
+const DEFAULT_PRODUCT_PAGE_LIMIT = 50;
+const MAX_PRODUCT_PAGE_LIMIT = 50;
 const MAX_SEARCH_LENGTH = 120;
 
 type ProductCursor = {

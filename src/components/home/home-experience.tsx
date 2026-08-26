@@ -181,7 +181,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const marketplace = useTranslations("marketplace");
 
   return (
-    <article className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-slate-900/10">
+    <article className="group h-full min-w-0 overflow-hidden rounded-md border bg-card shadow-sm transition-[border-color,box-shadow] [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:240px] hover:border-primary/40 hover:shadow-md hover:shadow-slate-900/10">
       <Link href={getStorePath(store.slug)} className="block h-full min-w-0">
         <div className="border-b bg-muted/60 p-2.5">
           <div className="grid h-28 place-items-center overflow-hidden rounded-md bg-background sm:h-32 lg:h-36">
@@ -362,7 +362,7 @@ export function HomeExperience({
                   <div key={category.id} className="shrink-0">
                     <Link
                       href={`/products?category=${category.slug}`}
-                      className="flex h-11 min-w-40 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:min-w-36"
+                      className="flex h-11 min-w-40 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/40 hover:shadow-md md:min-w-36"
                     >
                       <span className="min-w-0 truncate">{category.name}</span>
                       <ArrowRight className="size-4 text-muted-foreground" />
