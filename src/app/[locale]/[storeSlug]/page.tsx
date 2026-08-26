@@ -144,6 +144,8 @@ export default async function StorePage({ params, searchParams }: StorePageProps
         isStoreOwner={isStoreOwner}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,
+          logoUrl: siteSettings.logoUrl,
+          darkLogoUrl: siteSettings.darkLogoUrl,
           description: siteSettings.defaultMetaDescription,
           socialLinks: {
             instagram: siteSettings.socialLinks.instagram,

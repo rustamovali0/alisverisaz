@@ -3,7 +3,6 @@
 import type { CSSProperties } from "react";
 import {
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -39,6 +38,9 @@ type HomeExperienceProps = {
 };
 
 type HomeThemeColors = Record<keyof typeof defaultHomeThemeColors, string>;
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+const LEGACY_HERO_TITLE = "Alışverişdə hər mağaza öz vitrinini qurur";
+const DEFAULT_HERO_TITLE = "ALISVERIS.AZ Alışverişin ünvanı";
 
 function getThemeDefaults(themeKey: string): HomeThemeColors {
   const preset = (homeThemeColorPresets as Record<string, Partial<HomeThemeColors>>)[
@@ -177,6 +179,10 @@ function stringSetting(section: HomepageSection | undefined, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeHeroTitle(value: string) {
+  return value.trim() === LEGACY_HERO_TITLE ? DEFAULT_HERO_TITLE : value;
+}
+
 function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const marketplace = useTranslations("marketplace");
 
@@ -236,8 +242,7 @@ export function HomeExperience({
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
-  const benefitsSection = sectionByKey(sections, "benefits");
-  const heroTitle = hero?.title || title;
+  const heroTitle = normalizeHeroTitle(hero?.title || title);
   const heroDescription = hero?.description || description;
   const heroShowTitle = hero?.showTitle ?? true;
   const heroShowDescription = hero?.showDescription ?? true;
@@ -260,7 +265,7 @@ export function HomeExperience({
     visibleLimit(featuredSection, 8),
   );
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
-  const heroImageUrl = hero?.imageUrl.trim();
+  const heroImageUrl = hero?.imageUrl.trim() || DEFAULT_MARKETPLACE_BANNER_URL;
   const mobileHeroImageUrl = stringSetting(hero, "mobileImageUrl");
   const heroPills = activeCategories.slice(0, 5);
 
@@ -439,33 +444,11 @@ export function HomeExperience({
           </section>
         ) : null}
 
-        <section
-          className="hidden md:block"
-          style={{ backgroundColor: "var(--home-benefits-bg)" }}
-        >
-          <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-7">
-            <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
-              <div className="grid gap-4 md:grid-cols-3">
-                {[
-                  home("secureStructure"),
-                  home("storePanel"),
-                  benefitsSection?.title || home("quickShopping"),
-                ].map((itemTitle) => (
-                  <div
-                    key={itemTitle}
-                    className="rounded-lg border bg-background/70 p-4"
-                  >
-                    <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
-                    <h3 className="mt-3 text-sm font-bold">{itemTitle}</h3>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
       <SiteFooter
         siteName={siteSettings.shortName || siteSettings.siteName}
+        logoUrl={siteSettings.logoUrl}
+        darkLogoUrl={siteSettings.darkLogoUrl}
         description={siteSettings.defaultMetaDescription}
         socialLinks={{
           instagram: siteSettings.socialLinks.instagram,

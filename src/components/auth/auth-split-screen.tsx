@@ -16,7 +16,7 @@ export function AuthSplitScreen({
 }: AuthSplitScreenProps) {
   return (
     <div className={cn("w-full", className)}>
-      <div className="mx-auto grid w-full max-w-[1180px] gap-6 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:py-[clamp(1rem,4vh,3rem)]">
+      <div className="mx-auto grid w-full max-w-[1120px] gap-5 lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:py-[clamp(0.75rem,2.5vh,1.5rem)]">
         <div className="flex w-full justify-center">
           <div className="w-full max-w-[520px]">{children}</div>
         </div>

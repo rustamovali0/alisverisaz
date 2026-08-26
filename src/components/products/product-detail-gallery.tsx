@@ -167,8 +167,10 @@ export function ProductDetailGallery({
               className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
             />
           ) : (
-            <div className="grid h-full place-items-center text-muted-foreground">
-              Şəkil yoxdur
+            <div className="grid h-full place-items-center bg-muted/70 text-muted-foreground">
+              <span className="grid size-20 place-items-center rounded-full border border-primary/15 bg-background/85 text-primary shadow-sm">
+                <ShoppingCart className="size-10 stroke-[2.4]" aria-hidden="true" />
+              </span>
             </div>
           )}
         </button>

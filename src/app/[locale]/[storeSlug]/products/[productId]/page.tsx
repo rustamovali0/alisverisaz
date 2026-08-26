@@ -313,57 +313,57 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </Link>
             </Button>
             {!isStoreOwner ? (
-              <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
-                  {detail.store.logoUrl ? (
-                    <img
-                      src={detail.store.logoUrl}
-                      alt={detail.store.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-lg font-black text-muted-foreground">
-                      {detail.store.name.slice(0, 1)}
+              <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10 sm:p-3.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-3">
+                  <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
+                    {detail.store.logoUrl ? (
+                      <img
+                        src={detail.store.logoUrl}
+                        alt={detail.store.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-base font-black text-muted-foreground">
+                        {detail.store.name.slice(0, 1)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-[10rem] flex-1">
+                    <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
+                    <h2 className="truncate text-base font-black leading-5 tracking-normal">
+                      {detail.store.name}
+                    </h2>
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs text-muted-foreground sm:justify-center">
+                    <span className="inline-flex h-8 items-center gap-1 rounded-full bg-background px-2.5">
+                      <Package className="size-3.5 text-primary" aria-hidden="true" />
+                      <span className="whitespace-nowrap">{detail.store.productCount} məhsul</span>
                     </span>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
-                  <h2 className="truncate text-base font-black leading-5 tracking-normal">
-                    {detail.store.name}
-                  </h2>
-                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Package className="size-3.5" aria-hidden="true" />
-                      {detail.store.productCount} məhsul
-                    </span>
-                    <span className="inline-flex min-w-0 items-center gap-1">
-                      <Clock3 className="size-3.5 shrink-0" aria-hidden="true" />
+                    <span className="inline-flex h-8 min-w-0 items-center gap-1 rounded-full bg-background px-2.5">
+                      <Clock3 className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
                       <span className="truncate">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
+                    {sellerAddress ? (
+                      <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
+                        <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                        <span className="truncate">{sellerAddress}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:w-auto">
+                    <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs hover:bg-primary/5">
+                      <Link href={storeBaseHref}>Mağazaya keç</Link>
+                    </Button>
+                    {sellerMapUrl ? (
+                      <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs text-primary hover:bg-primary/5">
+                        <a href={sellerMapUrl} target="_blank" rel="noreferrer">
+                          Xəritədə göstər
+                          <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
+                        </a>
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
-              </div>
-              {sellerAddress ? (
-                <p className="mt-3 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                  <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                  <span className="truncate">{sellerAddress}</span>
-                </p>
-              ) : null}
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <Button asChild variant="outline" className="h-11 w-full border-primary/20 bg-background hover:bg-primary/5">
-                  <Link href={storeBaseHref}>Mağazaya keç</Link>
-                </Button>
-                {sellerMapUrl ? (
-                  <Button asChild variant="outline" className="h-11 w-full border-primary/20 bg-background text-primary hover:bg-primary/5">
-                    <a href={sellerMapUrl} target="_blank" rel="noreferrer">
-                      Xəritədə göstər
-                      <ExternalLink className="ml-2 size-4" aria-hidden="true" />
-                    </a>
-                  </Button>
-                ) : null}
-              </div>
               </div>
             ) : null}
           </div>
@@ -410,6 +410,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       </div>
       <SiteFooter
         siteName={siteSettings.shortName || siteSettings.siteName}
+        logoUrl={siteSettings.logoUrl}
+        darkLogoUrl={siteSettings.darkLogoUrl}
         description={siteSettings.defaultMetaDescription}
         socialLinks={{
           instagram: siteSettings.socialLinks.instagram,

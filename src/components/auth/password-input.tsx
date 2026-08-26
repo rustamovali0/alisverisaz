@@ -38,7 +38,7 @@ export function PasswordInput({
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className={cn("grid gap-2 text-sm font-medium", className)} htmlFor={id}>
+    <label className={cn("grid gap-1.5 text-sm font-medium", className)} htmlFor={id}>
       <span>{label}</span>
       <div className="relative">
         <input
@@ -51,13 +51,13 @@ export function PasswordInput({
           minLength={minLength}
           placeholder={placeholder}
           required={required}
-          className="h-12 w-full rounded-xl border border-input bg-background px-4 pr-14 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-12 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
         />
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1 size-11 text-muted-foreground"
+          className="absolute right-1 top-1 size-9 text-muted-foreground"
           onClick={() => setIsVisible((current) => !current)}
           aria-label={isVisible ? "Şifrəni gizlət" : "Şifrəni göstər"}
         >

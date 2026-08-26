@@ -28,7 +28,7 @@ export function PhoneInput({
   return (
     <div
       className={cn(
-        "flex h-12 overflow-hidden rounded-xl border border-input bg-background text-sm outline-none focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30",
+        "flex h-11 overflow-hidden rounded-xl border border-input bg-background text-sm outline-none focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30",
         className,
       )}
     >

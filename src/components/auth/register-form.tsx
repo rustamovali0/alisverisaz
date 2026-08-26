@@ -304,7 +304,7 @@ export function RegisterForm({
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
             <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-            Geri
+            Ana səhifə
           </Link>
         </Button>
       }
@@ -342,9 +342,9 @@ export function RegisterForm({
         </div>
       ) : null}
       {canRegister ? (
-        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-4">
+        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3">
           <AuthErrorAlert message={serverError} />
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <AuthField
               id="firstName"
               name="firstName"
@@ -450,7 +450,7 @@ export function RegisterForm({
                 <button
                   type="button"
                   onClick={() => setRole("customer")}
-                  className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
                     role === "customer"
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-background text-foreground hover:border-primary/50"
@@ -465,7 +465,7 @@ export function RegisterForm({
                 <button
                   type="button"
                   onClick={() => setRole("seller")}
-                  className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
                     role === "seller"
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-background text-foreground hover:border-primary/50"
@@ -479,14 +479,14 @@ export function RegisterForm({
             </div>
           </fieldset>
           {role === "seller" ? (
-            <div className="grid gap-4 rounded-xl border bg-muted/20 p-4">
+            <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
               <div>
                 <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   Logo və banneri URL ilə yox, şəkil faylı kimi əlavə edin.
                 </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+              <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
                 <SellerImageDropzone
                   name="avatarFile"
                   label="Profil şəkli / Logo"
@@ -500,7 +500,7 @@ export function RegisterForm({
               </div>
             </div>
           ) : null}
-          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-4 text-sm">
+          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm">
             <input
               type="checkbox"
               checked={termsAccepted}
@@ -524,7 +524,7 @@ export function RegisterForm({
           {fieldErrors.terms ? (
             <p className="text-xs font-medium text-destructive">{fieldErrors.terms}</p>
           ) : null}
-          <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
+          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-xl">
             {isPending ? "Yaradılır" : "Hesab yarat"}
           </Button>
         </form>
@@ -538,7 +538,7 @@ export function RegisterForm({
           <Button
             type="submit"
             variant="outline"
-            className="h-12 w-full rounded-xl"
+            className="h-11 w-full rounded-xl"
             disabled={isGooglePending}
           >
             <Chrome className="mr-2 size-4" aria-hidden="true" />

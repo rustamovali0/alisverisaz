@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { EmptyState } from "@/components/common/empty-state";
 import { PublicNavigationShell } from "@/components/layout/public-navigation-shell";
 import { ScrollToTopButton } from "@/components/layout/scroll-to-top-button";
+import { CookieConsentBanner } from "@/components/privacy/cookie-consent-banner";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
@@ -200,6 +201,7 @@ export default async function LocaleLayout({
       >
         <ScrollToTopButton />
         <ToastViewport />
+        <CookieConsentBanner />
         <StructuredData />
         {isMaintenanceBlocked ? (
           <main className="grid min-h-screen place-items-center bg-background px-4">

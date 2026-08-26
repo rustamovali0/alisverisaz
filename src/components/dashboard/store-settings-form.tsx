@@ -113,6 +113,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const publicUrl = getStorefrontUrl(store.slug);
   const heroTitle = readSetting(store.settings, "heroTitle");
+  const heroSubtitle = readSetting(store.settings, "heroSubtitle");
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -180,7 +181,16 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
         <input
           name="heroTitle"
           defaultValue={heroTitle}
-          placeholder={`${store.name}ya xoş gəlmisiniz`}
+          placeholder={`${store.name} mağazası`}
+          className="premium-input h-11"
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-medium">
+        Mağaza səhifəsində alt mətn
+        <input
+          name="heroSubtitle"
+          defaultValue={heroSubtitle}
+          placeholder="390 məhsul • Elektronika və daha çox"
           className="premium-input h-11"
         />
       </label>

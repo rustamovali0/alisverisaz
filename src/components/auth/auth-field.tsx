@@ -8,11 +8,11 @@ type AuthFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 
 export function AuthField({ label, hint, error, id, ...props }: AuthFieldProps) {
   return (
-    <label className="grid gap-2 text-sm font-medium" htmlFor={id}>
+    <label className="grid gap-1.5 text-sm font-medium" htmlFor={id}>
       <span>{label}</span>
       <input
         id={id}
-        className="h-12 rounded-xl border border-input bg-background px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
         {...props}
       />
       {hint ? <span className="text-xs font-normal text-muted-foreground">{hint}</span> : null}
@@ -37,11 +37,11 @@ export function AuthSelect({
   ...props
 }: AuthSelectProps) {
   return (
-    <label className="grid gap-2 text-sm font-medium" htmlFor={id}>
+    <label className="grid gap-1.5 text-sm font-medium" htmlFor={id}>
       <span>{label}</span>
       <select
         id={id}
-        className="h-12 rounded-xl border border-input bg-background px-4 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
         {...props}
       >
         {children}

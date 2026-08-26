@@ -11,6 +11,8 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SiteFooterProps = {
   siteName?: string;
+  logoUrl?: string;
+  darkLogoUrl?: string;
   description?: string;
   socialLinks?: {
     instagram?: string;
@@ -59,6 +61,8 @@ function formatBrandName(value?: string) {
 
 export function SiteFooter({
   siteName = "Alışveriş",
+  logoUrl,
+  darkLogoUrl,
   socialLinks,
 }: SiteFooterProps) {
   const common = useTranslations("common");
@@ -132,9 +136,26 @@ export function SiteFooter({
       <div className="grid grid-cols-2 gap-x-5 gap-y-5 px-4 py-5 sm:px-6 md:grid-cols-2 md:gap-8 md:px-8 md:py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="col-span-2 min-w-0 md:col-span-1">
           <Link href="/" className="inline-flex min-w-0 items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-md bg-slate-950 text-sm font-black text-white shadow-sm md:size-11 md:rounded-lg md:text-lg">
-              a
-            </span>
+            {logoUrl ? (
+              <span className="grid size-8 place-items-center overflow-hidden rounded-md border border-cyan-100 bg-white shadow-sm md:size-11 md:rounded-lg">
+                <img
+                  src={logoUrl}
+                  alt={displaySiteName}
+                  className={darkLogoUrl ? "h-full w-full object-contain p-1.5 dark:hidden" : "h-full w-full object-contain p-1.5"}
+                />
+                {darkLogoUrl ? (
+                  <img
+                    src={darkLogoUrl}
+                    alt={displaySiteName}
+                    className="hidden h-full w-full object-contain p-1.5 dark:block"
+                  />
+                ) : null}
+              </span>
+            ) : (
+              <span className="grid size-8 place-items-center rounded-md bg-slate-950 text-sm font-black text-white shadow-sm md:size-11 md:rounded-lg md:text-lg">
+                a
+              </span>
+            )}
             <span className="min-w-0 truncate text-lg font-black tracking-normal md:text-xl">
               {displaySiteName}
             </span>

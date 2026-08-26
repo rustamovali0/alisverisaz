@@ -52,7 +52,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     categoryId: selectedCategory?.id,
     searchQuery: search?.q,
     sort: search?.sort,
-    limit: 20,
+    limit: 50,
   });
 
   return (
@@ -72,6 +72,8 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       productCardVariant={activeTheme.productCardVariant}
       footer={{
         siteName: siteSettings.shortName || siteSettings.siteName,
+        logoUrl: siteSettings.logoUrl,
+        darkLogoUrl: siteSettings.darkLogoUrl,
         description: siteSettings.defaultMetaDescription,
         socialLinks: {
           instagram: siteSettings.socialLinks.instagram,

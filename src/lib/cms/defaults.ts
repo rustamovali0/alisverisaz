@@ -170,7 +170,7 @@ export const defaultSiteSettings: SiteSettings = {
 export const defaultHomepageSections = [
   {
     key: "hero",
-    title: "Alışverişdə hər mağaza öz vitrinini qurur",
+    title: "ALISVERIS.AZ Alışverişin ünvanı",
     description:
       "Sevdiyiniz məhsulları kəşf edin, mağazanızı rahat idarə edin və sifarişləri bir yerdən izləyin.",
     imageUrl: "",

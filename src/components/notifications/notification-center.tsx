@@ -17,6 +17,7 @@ type NotificationCenterProps = {
   className?: string;
   buttonClassName?: string;
   iconClassName?: string;
+  requireAuth?: boolean;
 };
 
 const SHOWN_STORAGE_KEY = "alisveris-shown-notifications";
@@ -60,6 +61,7 @@ export function NotificationCenter({
   className,
   buttonClassName,
   iconClassName,
+  requireAuth = false,
 }: NotificationCenterProps) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<UserNotification[]>([]);
@@ -67,6 +69,11 @@ export function NotificationCenter({
   const shownRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    if (requireAuth) {
+      setItems([]);
+      return;
+    }
+
     shownRef.current = getShownIds();
     startTransition(async () => {
       const result = await loadMyNotificationsAction();
@@ -83,7 +90,7 @@ export function NotificationCenter({
         saveShownIds(shownRef.current);
       }
     });
-  }, []);
+  }, [requireAuth]);
 
   useEffect(() => {
     if (!open) {
@@ -124,6 +131,15 @@ export function NotificationCenter({
   const unreadCount = useMemo(() => items.filter((item) => !item.readAt).length, [items]);
 
   function openModal() {
+    if (requireAuth) {
+      showToast({
+        title: "Giriş tələb olunur",
+        description: "Zəhmət olmasa əvvəlcə giriş edin.",
+        variant: "info",
+      });
+      return;
+    }
+
     setOpen(true);
     if (unreadCount === 0) {
       return;

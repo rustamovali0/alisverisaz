@@ -58,6 +58,8 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
       </section>
       <SiteFooter
         siteName={siteSettings.shortName || siteSettings.siteName}
+        logoUrl={siteSettings.logoUrl}
+        darkLogoUrl={siteSettings.darkLogoUrl}
         description={siteSettings.defaultMetaDescription}
         socialLinks={{
           instagram: siteSettings.socialLinks.instagram,

@@ -57,6 +57,8 @@ export default async function CustomerDashboardLayout({
       <div className="hidden md:block">
         <SiteFooter
           siteName={siteSettings.siteName}
+          logoUrl={siteSettings.logoUrl}
+          darkLogoUrl={siteSettings.darkLogoUrl}
           description={siteSettings.defaultMetaDescription}
           socialLinks={siteSettings.socialLinks}
         />

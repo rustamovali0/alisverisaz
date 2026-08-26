@@ -852,6 +852,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     slug: store.slug,
     description: store.description,
     heroTitle: readSetting(store.settings, "heroTitle"),
+    heroSubtitle: readSetting(store.settings, "heroSubtitle"),
     address: readSetting(store.settings, "address"),
     phone: readSetting(store.settings, "phone"),
     logoUrl: store.logo_url,

@@ -77,6 +77,7 @@ export async function updateSellerStoreSettingsAction(
   const storeId = readString(formData, "storeId");
   const name = readString(formData, "name");
   const heroTitle = readString(formData, "heroTitle");
+  const heroSubtitle = readString(formData, "heroSubtitle");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
 
@@ -107,13 +108,19 @@ export async function updateSellerStoreSettingsAction(
   try {
     const payload: Record<string, unknown> = { name };
 
-    if (formData.has("heroTitle")) {
+    if (formData.has("heroTitle") || formData.has("heroSubtitle")) {
       const settings = readSettings(store.settings);
 
-      if (heroTitle) {
+      if (formData.has("heroTitle") && heroTitle) {
         settings.heroTitle = heroTitle;
-      } else {
+      } else if (formData.has("heroTitle")) {
         delete settings.heroTitle;
+      }
+
+      if (formData.has("heroSubtitle") && heroSubtitle) {
+        settings.heroSubtitle = heroSubtitle;
+      } else if (formData.has("heroSubtitle")) {
+        delete settings.heroSubtitle;
       }
 
       payload.settings = settings;

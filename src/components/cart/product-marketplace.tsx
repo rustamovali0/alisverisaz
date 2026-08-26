@@ -47,6 +47,7 @@ import {
   Pencil,
   PawPrint,
   Shirt,
+  ShoppingCart,
   SlidersHorizontal,
   Sparkles,
   Star,
@@ -95,8 +96,12 @@ type StorefrontProps = {
   legacyLayout?: boolean;
 };
 
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+
 type FooterProps = {
   siteName?: string;
+  logoUrl?: string;
+  darkLogoUrl?: string;
   description?: string;
   socialLinks?: {
     instagram?: string;
@@ -124,21 +129,24 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
   );
 }
 
-function getWelcomeTitle(store: MarketplaceStore) {
+function getStoreHeroTitle(store: MarketplaceStore) {
   if (store.heroTitle?.trim()) {
     return store.heroTitle.trim();
   }
 
-  const name = store.name.trim();
-  const letters = name.toLocaleLowerCase("az-AZ").replace(/[^a-zəıöüğçş]/g, "");
-  const lastLetter = letters.at(-1) ?? "";
-  const lastVowel = [...letters].reverse().find((letter) => "aıouəeiöü".includes(letter));
-  const frontSuffix = lastVowel ? "əeiöü".includes(lastVowel) : false;
-  const suffix = "aıouəeiöü".includes(lastLetter)
-    ? frontSuffix ? "yə" : "ya"
-    : frontSuffix ? "ə" : "a";
+  return `${store.name.trim()} mağazası`;
+}
 
-  return `${name}${suffix} xoş gəlmisiniz`;
+function getStoreHeroSubtitle(store: MarketplaceStore, primaryCategoryName?: string) {
+  if (store.heroSubtitle?.trim()) {
+    return store.heroSubtitle.trim();
+  }
+
+  const productCount = `${store.productCount} məhsul`;
+
+  return primaryCategoryName
+    ? `${productCount} • ${primaryCategoryName} və daha çox`
+    : productCount;
 }
 
 function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
@@ -649,8 +657,10 @@ export function ProductGrid({
                   )}
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <PackageSearch className="size-8" aria-hidden="true" />
+                <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
+                  <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
+                    <ShoppingCart className="size-7 stroke-[2.4]" aria-hidden="true" />
+                  </span>
                 </div>
               )}
               <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
@@ -822,7 +832,7 @@ function useInfiniteProducts({
 
     const params = new URLSearchParams({
       locale,
-      limit: "20",
+      limit: "50",
       sort: sort ?? "newest",
     });
 
@@ -1449,7 +1459,13 @@ export function Storefront({
       }),
     [categories, storeProductCategoryIds],
   );
+  const primaryStoreCategory = sortedStoreCategories.find((category) =>
+    storeProductCategoryIds.has(category.id),
+  );
   const heroCategories = sortedStoreCategories.slice(0, 5);
+  const heroTitle = getStoreHeroTitle(store);
+  const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
+  const categoryColumnCount = Math.max(Math.ceil(sortedStoreCategories.length / 2), 1);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1616,7 +1632,12 @@ export function Storefront({
             {home("allCategories")}
           </Button>
         </div>
-        <div className="flex max-w-full flex-wrap gap-3">
+        <div
+          className="grid max-w-full grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{
+            gridTemplateColumns: `repeat(${categoryColumnCount}, minmax(10rem, 1fr))`,
+          }}
+        >
           {sortedStoreCategories.map((category) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
@@ -1626,7 +1647,7 @@ export function Storefront({
                 key={category.id}
                 type="button"
                 className={cn(
-                  "flex h-11 min-w-[10rem] flex-[1_1_calc(50%-0.75rem)] items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/40 hover:shadow-md sm:flex-[1_1_calc(33.333%-0.75rem)]",
+                  "flex h-11 w-full min-w-0 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/40 hover:shadow-md",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-cyan-300 bg-cyan-50 text-cyan-800",
                 )}
@@ -1713,17 +1734,13 @@ export function Storefront({
           ) : (
             <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
               <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
-                {store.coverUrl ? (
-                  <div className="absolute inset-0 overflow-hidden">
-                    <img
-                      src={store.coverUrl}
-                      alt={store.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="absolute inset-0 bg-muted" />
-                )}
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
+                    alt={store.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
                 <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
                   <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
@@ -1754,27 +1771,23 @@ export function Storefront({
         <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
           <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
             <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
-              {store.coverUrl ? (
-                <div className="absolute inset-0 overflow-hidden">
-                  <img
-                    src={store.coverUrl}
-                    alt={store.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="absolute inset-0 bg-muted" />
-              )}
+              <div className="absolute inset-0 overflow-hidden">
+                <img
+                  src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
+                  alt={store.name}
+                  className="h-full w-full object-cover"
+                />
+              </div>
               <div className="absolute inset-0 bg-slate-950/52" aria-hidden="true" />
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.7),rgba(15,23,42,0.42),rgba(2,6,23,0.62))]" aria-hidden="true" />
               <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
                 <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
                 <div className="mt-5 min-w-0">
                   <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
-                    {getWelcomeTitle(store)}
+                    {heroTitle}
                   </h1>
                   <p className="mt-4 text-sm font-bold text-white/85">
-                    {t("productCount", { count: store.productCount })}
+                    {heroSubtitle}
                   </p>
                 </div>
                 <MarketplaceSearch

@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type { AuthRole } from "@/lib/auth/types";
+import { showToast } from "@/lib/toast";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
@@ -84,6 +85,7 @@ export function MarketplaceHeader({
         ? profile.role
         : null;
   const isSeller = resolvedRole === "seller";
+  const isGuest = resolvedRole === null;
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
@@ -92,6 +94,14 @@ export function MarketplaceHeader({
   const sellerUtilityButtonClass =
     "size-12 rounded-xl !border-0 !bg-transparent !shadow-none hover:!bg-muted hover:!text-primary min-[400px]:size-14";
   const sellerUtilityIconClass = "size-7 stroke-[2.5] min-[400px]:size-8";
+
+  function showLoginRequiredToast() {
+    showToast({
+      title: "Giriş tələb olunur",
+      description: "Zəhmət olmasa əvvəlcə giriş edin.",
+      variant: "info",
+    });
+  }
 
   useEffect(() => {
     if (!isHomePage) {
@@ -168,6 +178,7 @@ export function MarketplaceHeader({
               iconClassName={isSeller ? sellerUtilityIconClass : "size-7 min-[400px]:size-8"}
             />
             <NotificationCenter
+              requireAuth={isGuest}
               buttonClassName={cn(
                 "size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14",
                 isSeller && sellerUtilityButtonClass,
@@ -255,6 +266,7 @@ export function MarketplaceHeader({
               iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"}
             />
             <NotificationCenter
+              requireAuth={isGuest}
               buttonClassName={cn(
                 "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
                 isSeller && sellerUtilityButtonClass,
@@ -262,18 +274,24 @@ export function MarketplaceHeader({
               iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"}
             />
             <Button
-              asChild
               size="icon"
               variant="ghost"
+              type={isGuest ? "button" : undefined}
+              asChild={!isGuest}
+              onClick={isGuest ? showLoginRequiredToast : undefined}
               className={cn(
                 "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
                 isSeller && sellerUtilityButtonClass,
               )}
               aria-label={nav("favorites")}
             >
-              <Link href="/favorites" prefetch className="grid place-items-center">
+              {isGuest ? (
                 <Heart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
-              </Link>
+              ) : (
+                <Link href="/favorites" prefetch className="grid place-items-center">
+                  <Heart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
+                </Link>
+              )}
             </Button>
             <Button
               asChild

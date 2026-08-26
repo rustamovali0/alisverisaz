@@ -26,6 +26,8 @@ import type { ReactNode } from "react";
 function footerFromSettings(settings: Awaited<ReturnType<typeof getSiteSettings>>) {
   return {
     siteName: settings.shortName || settings.siteName,
+    logoUrl: settings.logoUrl,
+    darkLogoUrl: settings.darkLogoUrl,
     description: settings.defaultMetaDescription,
     socialLinks: {
       instagram: settings.socialLinks.instagram,

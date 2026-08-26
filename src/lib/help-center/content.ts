@@ -146,49 +146,153 @@ export const helpPages: HelpPageContent[] = [
     description:
       "Alışveriş.az platformasından istifadə qaydalarını və tərəflərin məsuliyyətini izah edən əsas sənəd.",
     summary:
-      "Qeydiyyat, hesab təhlükəsizliyi, elan yerləşdirmə, qadağan edilən məhsullar və mübahisə həllini əhatə edən ümumi hüquqi çərçivə.",
-    lastUpdated: contentDate,
+      "Qeydiyyat, hesab təhlükəsizliyi, məlumatların saxlanılması, sifariş, ödəniş, çatdırılma və məsuliyyət hədlərini əhatə edən hüquqi çərçivə.",
+    lastUpdated: "2026-08-25",
     sections: [
       {
         heading: "Ümumi müddəalar",
         paragraphs: [
-          "Bu razılaşma platformadan istifadə edən hər kəs üçün tətbiq olunur. Sayta daxil olmaq, qeydiyyatdan keçmək və ya xidmətlərdən yararlanmaq bu şərtləri qəbul etdiyini göstərir.",
-          "Platforma marketplace məntiqi ilə işləyir və istifadəçi ilə satıcı arasındakı münasibətdə vasitəçi rolunu oynayır.",
+          "Alışveriş.az istifadəçilərə məhsullara baxmaq, məhsul sifariş etmək, alış-veriş etmək və Saytda təqdim olunan digər xidmətlərdən istifadə etmək imkanı yaradan elektron ticarət platformasıdır.",
+          "Saytdan istifadə edən şəxs bu Qaydalar və Şərtlərlə tanış olduğunu, onları qəbul etdiyini və Saytdan istifadə zamanı onlara əməl edəcəyini təsdiq edir.",
+          "Alışveriş.az xidmətlərin fasiləsiz, tam təhlükəsiz və xətasız fəaliyyət göstərəcəyinə mütləq zəmanət vermir.",
+          "Saytda texniki xidmət, yenilənmə, təhlükəsizlik tədbirləri, server və ya internet problemləri ilə əlaqədar müvəqqəti fasilələr yarana bilər.",
         ],
       },
       {
-        heading: "Terminlər",
+        heading: "İstifadəçi hesabı",
         paragraphs: [
-          "Məhsul, elan, satıcı, alıcı, hesab, mağaza və sifariş kimi terminlər bu sənəddə bir-biri ilə əlaqəli şəkildə istifadə olunur.",
+          "İstifadəçi qeydiyyat zamanı təqdim etdiyi məlumatların düzgün, tam və aktual olmasına görə məsuliyyət daşıyır.",
+          "İstifadəçi öz hesabının giriş məlumatlarını, parolunu və digər autentifikasiya vasitələrini məxfi saxlamalıdır.",
+          "İstifadəçi öz hesabını üçüncü şəxslərə verməməli və hesabından icazəsiz istifadəyə şərait yaratmamalıdır.",
+          "Hesabın üçüncü şəxs tərəfindən ələ keçirildiyi və ya icazəsiz girişin baş verdiyi ehtimal edildikdə, İstifadəçi dərhal Alışveriş.az ilə əlaqə saxlamalıdır.",
+          "İstifadəçinin parolunu üçüncü şəxslə paylaşması, təhlükəsiz olmayan paroldan istifadə etməsi, elektron poçtunun və ya cihazının təhlükəsizliyini təmin etməməsi nəticəsində yaranan icazəsiz girişlərə görə Alışveriş.az yalnız Azərbaycan Respublikasının qanunvericiliyində nəzərdə tutulmuş məsuliyyət həddində cavabdehdir.",
+          "Alışveriş.az təhlükəsizlik məqsədilə hesabın müvəqqəti bloklanmasını, əlavə təsdiqləmə tələb edilməsini və digər təhlükəsizlik tədbirlərinin tətbiqini həyata keçirə bilər.",
+        ],
+      },
+      {
+        heading: "Hesabın bloklanması və silinməsi",
+        paragraphs: [
+          "İstifadəçinin qanunsuz fəaliyyət göstərməsi, saxtakarlıq etməsi, digər istifadəçilərin hüquqlarını pozması, Saytın təhlükəsizliyinə təhdid yaratması və ya bu Qaydaları pozması halında hesab məhdudlaşdırıla, dayandırıla və ya silinə bilər.",
+          "Texniki, təhlükəsizlik və ya hüquqi səbəblərdən hesabın müvəqqəti dayandırılması mümkün ola bilər.",
+          "Hesab silindikdə həmin hesabla əlaqəli məlumatların əvvəlki vəziyyətə qaytarılmasına və ya hesabın bərpa olunmasına zəmanət verilmir.",
+          "Bu müddəalar istifadəçinin Azərbaycan Respublikasının qanunvericiliyindən irəli gələn hüquqlarını məhdudlaşdırmır.",
+        ],
+      },
+      {
+        heading: "Məlumatların və faylların saxlanılması",
+        paragraphs: [
+          "Alışveriş.az istifadəçi hesabları, məhsul məlumatları, şəkillər və digər elektron məlumatların saxlanılması üçün üçüncü tərəf texnologiyalarından və infrastruktur xidmətlərindən istifadə edə bilər.",
+          "Alışveriş.az-ın texniki infrastrukturunda Supabase və digər üçüncü tərəf xidmətlərindən istifadə edilə bilər.",
+          "Alışveriş.az məlumatların təhlükəsizliyinin təmin edilməsi üçün texniki və təşkilati tədbirlər görməyə çalışır.",
+          "Bununla belə, internet infrastrukturu, serverlər, üçüncü tərəf xidmətləri, proqram təminatı xətaları, kibertəhlükəsizlik hadisələri, məlumatların korlanması və digər texniki səbəblərlə məlumatların və faylların müvəqqəti və ya daimi əlçatmaz olması və ya itirilməsi riski mövcuddur.",
+          "Alışveriş.az məlumatların və faylların heç bir halda itirilməyəcəyinə dair mütləq zəmanət vermir.",
+          "İstifadəçi özü üçün vacib olan məlumat və faylların ayrıca ehtiyat nüsxəsini saxlamağa məsuldur.",
+          "Üçüncü tərəf xidmət təminatçılarının fəaliyyətində yaranan nasazlıqlar, xidmətlərin dayandırılması və ya texniki dəyişikliklər nəticəsində yaranan fasilələrə görə Alışveriş.az Azərbaycan Respublikasının qanunvericiliyində müəyyən edilmiş məsuliyyət həddindən artıq məsuliyyət daşımır.",
+        ],
+      },
+      {
+        heading: "Hesabın oğurlanması və kibertəhlükəsizlik",
+        paragraphs: [
+          "Alışveriş.az istifadəçi məlumatlarının qorunması üçün ağlabatan texniki və təşkilati təhlükəsizlik tədbirlərindən istifadə edir.",
+          "Heç bir internet sistemi tamamilə təhlükəsiz hesab edilə bilmədiyindən Sayt rəhbərliyi bütün kibertəhlükələrin tamamilə qarşısının alınacağına zəmanət vermir.",
+          "Haker hücumu, fişinq, zərərli proqram, istifadəçinin cihazının və ya elektron poçt hesabının ələ keçirilməsi, üçüncü tərəf sistemlərinin komprometasiyası və Alışveriş.az-ın ağlabatan nəzarətindən kənarda olan digər hadisələr təhlükəsizlik riski yarada bilər.",
+          "Təhlükəsizlik insidenti aşkar edildikdə Alışveriş.az qanunvericiliyin tələb etdiyi və texniki baxımdan mümkün olan tədbirləri görür.",
+          "İstifadəçi hesabına icazəsiz giriş barədə Alışveriş.az-a mümkün qədər tez məlumat verməlidir.",
+        ],
+      },
+      {
+        heading: "Sifarişlər",
+        paragraphs: [
+          "İstifadəçi sifariş zamanı təqdim etdiyi məlumatların düzgünlüyünə görə məsuliyyət daşıyır.",
+          "Məhsulun qiyməti, mövcudluğu və ya digər məlumatlarında texniki səhv aşkar edildikdə, Alışveriş.az qanunvericiliyin tələblərinə uyğun olaraq müvafiq tədbir görə bilər.",
+          "Məhsulun mövcud olmaması, texniki xəta və ya digər əsaslı səbəbdən sifarişin icrası mümkün olmadıqda istifadəçiyə mümkün qədər tez məlumat verilir.",
+          "Sifariş üzrə ödənilmiş vəsaitin geri qaytarılması qanunvericiliyə və tətbiq olunan qaydalara uyğun həyata keçirilir.",
+        ],
+      },
+      {
+        heading: "Ödənişlər",
+        paragraphs: [
+          "Alışveriş.az-da ödənişlər Saytda təqdim olunan ödəniş üsulları vasitəsilə həyata keçirilir.",
+          "Ödənişlərin emalı üçün üçüncü tərəf ödəniş xidmətlərindən istifadə edilə bilər.",
+          "Ödəniş xidmətlərinin texniki nasazlığı və ya həmin xidmətlərdə yaranan fasilələr ödəniş prosesinə təsir göstərə bilər.",
+          "Alışveriş.az qanunvericiliklə tələb olunmadığı halda istifadəçinin bank kartının tam məlumatlarını öz sistemində saxlamağı nəzərdə tutmur.",
+        ],
+      },
+      {
+        heading: "Çatdırılma",
+        paragraphs: [
+          "Məhsullar sifariş zamanı və ya Saytda göstərilən çatdırılma şərtlərinə uyğun olaraq çatdırılır.",
+          "Çatdırılma müddətinə kuryer xidmətləri, nəqliyyat problemləri, hava şəraiti, fövqəladə hallar və Alışveriş.az-ın nəzarətindən kənar digər hallar təsir göstərə bilər.",
+          "Alışveriş.az istehlakçıların qanunvericiliklə müəyyən edilmiş hüquqlarını məhdudlaşdırmır.",
+        ],
+      },
+      {
+        heading: "Məhsulların qaytarılması və pulun geri ödənilməsi",
+        paragraphs: [
+          "Məhsulların qaytarılması və pul vəsaitlərinin geri ödənilməsi Azərbaycan Respublikasının qanunvericiliyinə və Alışveriş.az-da elan edilmiş qaydalara uyğun həyata keçirilir.",
+          "İstehlakçının qanunvericiliklə müəyyən edilmiş hüquqları bu Qaydalarla məhdudlaşdırıla bilməz.",
+          "Qaytarılma qaydaları məhsulun xüsusiyyətindən və tətbiq olunan qanunvericilikdən asılı olaraq fərqlənə bilər.",
+        ],
+      },
+      {
+        heading: "Fərdi məlumatlar",
+        paragraphs: [
+          "İstifadəçinin fərdi məlumatlarının toplanması, saxlanılması və işlənməsi Alışveriş.az-ın ayrıca Məxfilik Siyasəti ilə tənzimlənir.",
+          "Alışveriş.az fərdi məlumatların qorunması üçün Azərbaycan Respublikasının qanunvericiliyinin tələblərinə uyğun tədbirlər görür.",
+          "Fərdi məlumatlar qanuni əsas olduqda və müəyyən edilmiş məqsədlər çərçivəsində işlənilir.",
+          "Xidmətlərin göstərilməsi üçün zəruri olduğu hallarda məlumatlar müvafiq üçüncü tərəf xidmət təminatçıları vasitəsilə işlənilə bilər.",
+          "İstifadəçinin fərdi məlumatlarla bağlı hüquqları və həmin məlumatların işlənilməsi barədə ətraflı məlumat Məxfilik Siyasətində göstərilir.",
+        ],
+      },
+      {
+        heading: "Məsuliyyətin məhdudlaşdırılması",
+        paragraphs: [
+          "Alışveriş.az xidmətlərin fasiləsiz və tamamilə xətasız fəaliyyətinə mütləq zəmanət vermir.",
+          "Alışveriş.az istifadəçinin öz hesab təhlükəsizliyini lazımi səviyyədə təmin etməməsi, giriş məlumatlarını üçüncü şəxslərə verməsi və ya istifadəçinin cihazının və elektron poçt hesabının təhlükəsizliyinin pozulması nəticəsində yaranan hallara görə Azərbaycan Respublikasının qanunvericiliyində müəyyən edilmiş məsuliyyət həddindən artıq məsuliyyət daşımır.",
+          "Alışveriş.az-ın ağlabatan nəzarətindən kənarda olan internet problemləri, server nasazlıqları, üçüncü tərəf xidmətlərinin dayanması, kibertəhlükəsizlik hadisələri və digər texniki hallar Saytın fəaliyyətinə təsir göstərə bilər.",
+          "Alışveriş.az hosting, verilənlər bazası, autentifikasiya, ödəniş və digər üçüncü tərəf texniki xidmətlərinin fasiləsiz fəaliyyətinə mütləq zəmanət vermir.",
+          "Alışveriş.az istifadəçinin vacib məlumatlarının və fayllarının ayrıca ehtiyat nüsxəsini saxlamağını tövsiyə edir.",
+          "Bu bölmədəki heç bir müddəa Azərbaycan Respublikasının qanunvericiliyinə əsasən məhdudlaşdırılması və ya istisna edilməsi mümkün olmayan məsuliyyəti istisna etmir.",
+          "Bu Qaydalar istehlakçının qanunvericiliklə müəyyən edilmiş hüquqlarını məhdudlaşdırmaq məqsədi daşımır.",
+        ],
+      },
+      {
+        heading: "Fors-major",
+        paragraphs: [
+          "Təbii fəlakət, müharibə, fövqəladə vəziyyət, kütləvi rabitə və internet infrastrukturu problemləri, dövlət orqanlarının qərarları və tərəflərin ağlabatan nəzarətindən kənarda olan digər hallar xidmətlərin fəaliyyətinə təsir göstərə bilər.",
+        ],
+      },
+      {
+        heading: "Qaydaların dəyişdirilməsi",
+        paragraphs: [
+          "Alışveriş.az bu Qaydalara dəyişiklik etmək hüququna malikdir.",
+          "Yeni redaksiya Saytda dərc edildiyi tarixdən və ya həmin redaksiyada göstərilən tarixdən qüvvəyə minir.",
+          "Qanunvericiliyin tələb etdiyi hallarda istifadəçilərə müvafiq dəyişikliklər barədə əlavə məlumat verilə bilər.",
+        ],
+      },
+      {
+        heading: "Tətbiq olunan hüquq",
+        paragraphs: [
+          "Bu Qaydalar Azərbaycan Respublikasının qanunvericiliyinə uyğun olaraq tətbiq edilir və şərh olunur.",
+          "Bu Qaydaların hər hansı müddəasının etibarsız hesab edilməsi digər müddəaların qüvvəsinə təsir etmir.",
+          "Tərəflər arasında yaranan mübahisələr ilk növbədə qarşılıqlı razılaşma yolu ilə həll edilməyə çalışılır.",
+          "Mübahisənin qarşılıqlı razılaşma yolu ilə həlli mümkün olmadıqda tərəflərin Azərbaycan Respublikasının qanunvericiliyində nəzərdə tutulmuş hüquqları, o cümlədən məhkəməyə müraciət etmək hüququ saxlanılır.",
+        ],
+      },
+      {
+        heading: "Hüquqi məlumatlar və əlaqə",
+        paragraphs: [
+          "Sayt: Alışveriş.az",
+          "Hüquqi sahib, VÖEN, hüquqi ünvan, rəsmi e-poçt, telefon və məxfilik müraciətləri üçün əlaqə məlumatları platforma sahibi tərəfindən tamamlanmalıdır.",
         ],
         bullets: [
-          "Satıcı: məhsul yerləşdirən və ya mağaza idarə edən istifadəçi.",
-          "Alıcı: məhsula baxan, səbət yaradan və sifariş verən istifadəçi.",
-          "Platforma: Alışveriş.az veb tətbiqi və ona bağlı xidmətlər.",
-        ],
-      },
-      {
-        heading: "Platformadan istifadə",
-        paragraphs: [
-          "İstifadəçi sistemi dürüst və qanuni məqsədlə işlətməlidir. Saxta məlumat vermək, spam göndərmək və ya sistemi pozan davranışlar qadağandır.",
-        ],
-      },
-      {
-        heading: "Qeydiyyat və hesab təhlükəsizliyi",
-        paragraphs: [
-          "Qeydiyyat zamanı təqdim olunan məlumatların doğruluğuna istifadəçi cavabdehdir. Hesab şifrəsi, sessiya və giriş cihazları təhlükəsiz saxlanmalıdır.",
-        ],
-      },
-      {
-        heading: "Marketplace qaydaları",
-        paragraphs: [
-          "Elan məzmunu aldadıcı olmamalı, məhsul şəkilləri real və aydın olmalı, qiymət və stok məlumatı isə aktual saxlanmalıdır.",
-        ],
-      },
-      {
-        heading: "Məsuliyyət və dəyişikliklər",
-        paragraphs: [
-          "Platforma qaydaları yenilənə bilər. Dəyişikliklər dərc edildiyi andan qüvvədə olur və istifadəçi yenilənmiş qaydaları izləməlidir.",
+          "Hüquqi sahib: [Şirkətin və ya fərdi sahibkarın tam adı]",
+          "VÖEN: [VÖEN]",
+          "Hüquqi ünvan: [Hüquqi ünvan]",
+          "E-poçt: [Rəsmi e-poçt ünvanı]",
+          "Telefon: [Əlaqə nömrəsi]",
+          "Məxfilik və məlumatlarla bağlı müraciətlər: [E-poçt ünvanı]",
+          "Qaydaların son yenilənməsi: 25 avqust 2026",
         ],
       },
     ],

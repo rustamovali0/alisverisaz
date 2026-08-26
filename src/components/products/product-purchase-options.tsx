@@ -104,19 +104,19 @@ export function ProductPurchaseOptions({
   return (
     <div className="mt-5 grid min-w-0 gap-4">
       {visibleOptions.length > 0 ? (
-        <div className="grid gap-3 rounded-xl border border-primary/15 bg-primary/[0.035] p-3.5 shadow-sm dark:bg-primary/10 sm:p-4">
+        <div className="grid gap-2.5 rounded-lg border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10">
           <div className="flex min-w-0 items-center justify-between gap-3">
-            <p className="text-sm font-black">Seçimlər</p>
-            <span className="shrink-0 rounded-full bg-background px-2.5 py-1 text-[11px] font-bold text-muted-foreground">
+            <p className="text-[13px] font-black">Seçimlər</p>
+            <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
               Məhsul variantı
             </span>
           </div>
           {visibleOptions.map((option) => (
-            <div key={option.type} className="grid gap-2">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <div key={option.type} className="grid gap-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
                 {option.name}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {option.values.map((value) => {
                   const isSelected = normalizedSelection[option.type] === value.value;
                   const isAvailable = optionValueWouldBeAvailable({
@@ -138,7 +138,7 @@ export function ProductPurchaseOptions({
                         }))
                       }
                       className={cn(
-                        "inline-flex min-h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-bold shadow-sm transition",
+                        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold shadow-sm transition",
                         isSelected
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-primary/15 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
@@ -147,12 +147,12 @@ export function ProductPurchaseOptions({
                     >
                       {option.type === "color" ? (
                         <span
-                          className="size-4 rounded-full border border-black/10"
+                          className="size-3.5 shrink-0 rounded-full border border-black/10"
                           style={{ backgroundColor: value.colorHex ?? "#e5e7eb" }}
                           aria-hidden="true"
                         />
                       ) : null}
-                      {value.value}
+                      <span className="min-w-0 max-w-[9rem] truncate">{value.value}</span>
                     </button>
                   );
                 })}
@@ -160,7 +160,7 @@ export function ProductPurchaseOptions({
             </div>
           ))}
           {unitPrice !== Math.max(product.priceAmount - product.discountAmount, 0) ? (
-            <p className="text-sm font-semibold text-primary">
+            <p className="text-xs font-semibold text-primary">
               Seçilmiş qiymət: {formatAznPrice(unitPrice)}
             </p>
           ) : null}

@@ -147,7 +147,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
             <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-            Geri
+            Ana səhifə
           </Link>
         </Button>
       }
@@ -191,7 +191,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         </div>
       }
     >
-      <form action={handleSubmit} className="grid gap-4">
+      <form action={handleSubmit} className="grid gap-3">
         <input name="next" type="hidden" value={next} />
         <input name="mode" type="hidden" value={mode} />
         <AuthField
@@ -245,7 +245,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         <Button
           type="submit"
           disabled={isPending || !captchaToken}
-          className="h-12 w-full rounded-xl"
+          className="h-11 w-full rounded-xl"
         >
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>
@@ -261,7 +261,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             <Button
               type="submit"
               variant="outline"
-              className="h-12 w-full rounded-xl"
+              className="h-11 w-full rounded-xl"
               disabled={isGooglePending || !captchaToken}
             >
               <Chrome className="mr-2 size-4" aria-hidden="true" />

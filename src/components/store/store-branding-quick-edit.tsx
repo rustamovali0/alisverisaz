@@ -13,12 +13,14 @@ type StoreBrandingQuickEditProps = {
     id: string;
     name: string;
     heroTitle?: string | null;
+    heroSubtitle?: string | null;
     logoUrl: string | null;
     coverUrl: string | null;
   };
 };
 
 const IMAGE_ACCEPT = "image/*,.heic,.heif,.avif,.tif,.tiff,.bmp";
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
 
 export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
   const router = useRouter();
@@ -76,7 +78,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
       <input ref={bannerInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("banner", event.target.files?.[0] ?? null)} />
       <input ref={logoInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("logo", event.target.files?.[0] ?? null)} />
       <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={isPending} className="group relative block h-28 w-full overflow-hidden bg-primary/10 text-left disabled:cursor-wait sm:h-48 lg:h-56" aria-label="Banneri dəyiş">
-        {store.coverUrl ? <img src={store.coverUrl} alt="" className="h-full w-full object-cover" /> : <span className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.22),hsl(var(--accent)/0.16))]" />}
+        <img src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL} alt="" className="h-full w-full object-cover" />
         <span className="absolute inset-0 grid place-items-center bg-black/0 transition group-hover:bg-black/25 group-focus-visible:bg-black/25">
           <span className="inline-flex items-center gap-2 rounded-lg bg-background/95 px-3 py-2 text-sm font-semibold text-foreground opacity-0 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
             {isPending ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
@@ -91,12 +93,18 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
         </Button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-black tracking-normal sm:text-3xl">{store.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Banner, logo və mağaza title-ni buradan yeniləyin.</p>
-          <form action={updateTitle} className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
+          <p className="mt-1 text-sm text-muted-foreground">Banner, logo, mağaza title və alt mətni buradan yeniləyin.</p>
+          <form action={updateTitle} className="mt-3 grid min-w-0 gap-2 lg:grid-cols-[1fr_1fr_auto]">
             <input
               name="heroTitle"
               defaultValue={store.heroTitle ?? ""}
-              placeholder={`${store.name}ya xoş gəlmisiniz`}
+              placeholder={`${store.name} mağazası`}
+              className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
+            />
+            <input
+              name="heroSubtitle"
+              defaultValue={store.heroSubtitle ?? ""}
+              placeholder="390 məhsul • Elektronika və daha çox"
               className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
             />
             <Button type="submit" disabled={isPending} className="h-10 gap-2">
