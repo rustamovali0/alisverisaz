@@ -171,6 +171,12 @@ function stringArraySetting(section: HomepageSection | undefined, key: string) {
   return [];
 }
 
+function stringSetting(section: HomepageSection | undefined, key: string) {
+  const value = section?.settings?.[key];
+
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const marketplace = useTranslations("marketplace");
 
@@ -255,6 +261,7 @@ export function HomeExperience({
   );
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
   const heroImageUrl = hero?.imageUrl.trim();
+  const mobileHeroImageUrl = stringSetting(hero, "mobileImageUrl");
   const heroPills = activeCategories.slice(0, 5);
 
   return (
@@ -271,7 +278,19 @@ export function HomeExperience({
                 <img
                   src={heroImageUrl}
                   alt={heroTitle}
-                  className="h-full w-full object-cover"
+                  className={cn(
+                    "h-full w-full object-cover",
+                    mobileHeroImageUrl && "hidden md:block",
+                  )}
+                  loading="eager"
+                  decoding="async"
+                />
+              ) : null}
+              {mobileHeroImageUrl ? (
+                <img
+                  src={mobileHeroImageUrl}
+                  alt={heroTitle}
+                  className="h-full w-full object-cover md:hidden"
                   loading="eager"
                   decoding="async"
                 />
@@ -341,12 +360,12 @@ export function HomeExperience({
                   <Link href="/categories">{home("allCategories")}</Link>
                 </Button>
               </div>
-              <div className="flex max-w-full gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="grid max-w-full grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-2 [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden">
                 {activeCategories.map((category) => (
                   <div key={category.id} className="shrink-0">
                     <Link
                       href={`/products?category=${category.slug}`}
-                      className="flex h-11 min-w-36 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                      className="flex h-11 min-w-40 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:min-w-36"
                     >
                       <span className="min-w-0 truncate">{category.name}</span>
                       <ArrowRight className="size-4 text-muted-foreground" />

@@ -414,9 +414,11 @@ export async function updateHomepageSectionAction(
 
   settings.showTitle = readBoolean(formData, "showTitle");
   settings.showDescription = readBoolean(formData, "showDescription");
+  settings.mobileImageUrl = readString(formData, "mobileImageUrl");
 
   try {
     const imageFile = readFile(formData, "imageFile");
+    const mobileImageFile = readFile(formData, "mobileImageFile");
 
     if (imageFile) {
       imageUrl = await uploadCmsMediaFile({
@@ -424,6 +426,15 @@ export async function updateHomepageSectionAction(
         currentUserId: current.user.id,
         folder: "homepage-sections",
         altText: readString(formData, "title") || "Ana səhifə bölməsi",
+      });
+    }
+
+    if (mobileImageFile) {
+      settings.mobileImageUrl = await uploadCmsMediaFile({
+        file: mobileImageFile,
+        currentUserId: current.user.id,
+        folder: "homepage-sections/mobile",
+        altText: `${readString(formData, "title") || "Ana səhifə bölməsi"} mobil`,
       });
     }
   } catch (error) {
@@ -461,7 +472,15 @@ export async function updateHomepageSectionAction(
     };
   }
 
-  await deleteR2MediaAssetsByUrls([previousImageUrl !== imageUrl ? previousImageUrl : ""]);
+  const previousMobileImageUrl =
+    typeof previousSettings?.mobileImageUrl === "string" ? previousSettings.mobileImageUrl : "";
+  const nextMobileImageUrl =
+    typeof settings.mobileImageUrl === "string" ? settings.mobileImageUrl : "";
+
+  await deleteR2MediaAssetsByUrls([
+    previousImageUrl !== imageUrl ? previousImageUrl : "",
+    previousMobileImageUrl !== nextMobileImageUrl ? previousMobileImageUrl : "",
+  ]);
   invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/homepage-sections");
 

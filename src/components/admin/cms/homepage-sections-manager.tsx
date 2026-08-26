@@ -35,6 +35,12 @@ function stringArraySetting(settings: Record<string, unknown> | null | undefined
     : [];
 }
 
+function stringSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  const value = settings?.[key];
+
+  return typeof value === "string" ? value : "";
+}
+
 function mergeSectionSettings(section: HomepageSection | undefined, formData: FormData) {
   if (!section) {
     return;
@@ -266,6 +272,14 @@ export function HomepageSectionsManager({
                   placeholder="Şəkil URL"
                   className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
+                {section.key === "hero" ? (
+                  <input
+                    name="mobileImageUrl"
+                    defaultValue={stringSetting(section.settings, "mobileImageUrl")}
+                    placeholder="Mobil hero şəkil URL"
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                ) : null}
                 <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/20 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
                   <ImagePlus className="size-6 text-primary" aria-hidden="true" />
                   <span className="font-semibold">
@@ -281,6 +295,21 @@ export function HomepageSectionsManager({
                     className="sr-only"
                   />
                 </label>
+                {section.key === "hero" ? (
+                  <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-cyan-500/5 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
+                    <Smartphone className="size-6 text-primary" aria-hidden="true" />
+                    <span className="font-semibold">Mobil hero şəklini seç</span>
+                    <span className="text-xs text-muted-foreground">
+                      Telefon görünüşü üçün ayrıca şəkil, maksimum 5MB
+                    </span>
+                    <input
+                      name="mobileImageFile"
+                      type="file"
+                      accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
+                      className="sr-only"
+                    />
+                  </label>
+                ) : null}
                 <input
                   name="buttonLabel"
                   defaultValue={section.buttonLabel}
