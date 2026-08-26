@@ -743,7 +743,7 @@ export function ProductGrid({
               >
                 {isStoreOwner ? (
                   <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
-                    <Link href={`/store/dashboard/products?edit=${product.id}#edit-product-${product.id}`}>
+                    <Link href={`/store/dashboard/products/${product.id}/edit`}>
                       <Pencil className="mr-2 size-4" aria-hidden="true" />
                       Redaktə et
                     </Link>

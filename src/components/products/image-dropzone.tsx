@@ -62,6 +62,21 @@ export function ImageDropzone({
     onFilesChange([...files, ...imageFiles]);
   }
 
+  function makeMainImage(index: number) {
+    if (index <= 0 || index >= files.length) {
+      return;
+    }
+
+    const selectedFile = files[index];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    const nextFiles = files.filter((_, fileIndex) => fileIndex !== index);
+    onFilesChange([selectedFile, ...nextFiles]);
+  }
+
   return (
     <div className="grid gap-3">
       <button
@@ -122,11 +137,11 @@ export function ImageDropzone({
                 type="button"
                 variant="secondary"
                 size="icon"
-                className="absolute right-3 top-3 size-12 rounded-xl shadow-md"
+                className="absolute right-2 top-2 size-8 rounded-lg shadow-md sm:size-9"
                 onClick={() => onFilesChange(files.slice(1))}
                 aria-label="Əsas şəkli sil"
               >
-                <X className="size-7 stroke-[2.8]" aria-hidden="true" />
+                <X className="size-4 stroke-[2.8]" aria-hidden="true" />
               </Button>
             </div>
             <p className="truncate px-3 py-2 text-sm text-muted-foreground">
@@ -144,11 +159,19 @@ export function ImageDropzone({
                     className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
                   >
                     <FilePreview file={file} alt={`${realIndex + 1}. şəkil`} />
+                    <button
+                      type="button"
+                      className="absolute inset-x-1 bottom-1 rounded bg-background/90 px-1.5 py-1 text-[10px] font-bold text-foreground opacity-0 shadow-sm transition hover:bg-primary hover:text-primary-foreground group-hover:opacity-100 group-focus-within:opacity-100"
+                      onClick={() => makeMainImage(realIndex)}
+                      aria-label="Əsas şəkil et"
+                    >
+                      Əsas et
+                    </button>
                     <Button
                       type="button"
                       variant="secondary"
                       size="icon"
-                      className="absolute right-1.5 top-1.5 size-10 rounded-lg opacity-95 shadow-sm"
+                      className="absolute right-1 top-1 size-6 rounded-md opacity-95 shadow-sm sm:size-7"
                       onClick={() => {
                         onFilesChange(
                           files.filter((_, fileIndex) => fileIndex !== realIndex),
@@ -156,7 +179,7 @@ export function ImageDropzone({
                       }}
                       aria-label="Şəkli sil"
                     >
-                      <X className="size-6 stroke-[2.8]" aria-hidden="true" />
+                      <X className="size-3.5 stroke-[2.8]" aria-hidden="true" />
                     </Button>
                   </div>
                 );

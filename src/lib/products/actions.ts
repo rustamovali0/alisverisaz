@@ -850,23 +850,25 @@ export async function createStoreProductAction(
   }
 
   try {
-    await replaceVariants({
-      productId: product.id,
-      options: payload.variantOptions,
-      combinations: payload.variantCombinations,
-      legacyVariants: payload.variants,
-    });
-    await replaceProductLocations({
-      productId: product.id,
-      storeId,
-      formData,
-    });
-    await uploadProductImages({
-      userId: current.user.id,
-      productId: product.id,
-      productName: payload.name,
-      files: imageFiles,
-    });
+    await Promise.all([
+      replaceVariants({
+        productId: product.id,
+        options: payload.variantOptions,
+        combinations: payload.variantCombinations,
+        legacyVariants: payload.variants,
+      }),
+      replaceProductLocations({
+        productId: product.id,
+        storeId,
+        formData,
+      }),
+      uploadProductImages({
+        userId: current.user.id,
+        productId: product.id,
+        productName: payload.name,
+        files: imageFiles,
+      }),
+    ]);
   } catch (error) {
     return {
       ok: false,
