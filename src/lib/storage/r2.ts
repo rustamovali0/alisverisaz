@@ -6,6 +6,7 @@ import { serverEnv } from "@/lib/config/env.server";
 
 const WEBP_CONTENT_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 82;
+const MAX_IMAGE_DIMENSION = 2400;
 const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/*"];
 const RASTER_IMAGE_EXTENSIONS = new Set([
   "jpg",
@@ -33,6 +34,7 @@ const EXTENSION_MIME_TYPES: Record<string, string> = {
   tiff: "image/tiff",
   bmp: "image/bmp",
 };
+const ORIGINAL_UPLOAD_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 const IMAGE_PROCESSING_ERROR =
   "Şəkil emalı alınmadı. Faylın real şəkil formatında olduğundan əmin olun.";
 
@@ -49,8 +51,16 @@ export type UploadedR2Image = {
   key: string;
   url: string;
   fileName: string;
-  mimeType: typeof WEBP_CONTENT_TYPE;
+  mimeType: string;
   sizeBytes: number;
+  width: number | null;
+  height: number | null;
+};
+
+type ProcessedImage = {
+  data: Buffer;
+  fileName: string;
+  mimeType: string;
   width: number | null;
   height: number | null;
 };
@@ -90,9 +100,13 @@ function sanitizeFolder(folder: string) {
     .join("/");
 }
 
-function webpFileName(name: string) {
+function fileNameWithExtension(name: string, extension: string) {
   const baseName = name.replace(/\.[^.]+$/, "");
-  return `${sanitizePathPart(baseName, "image")}.webp`;
+  return `${sanitizePathPart(baseName, "image")}.${extension}`;
+}
+
+function webpFileName(name: string) {
+  return fileNameWithExtension(name, "webp");
 }
 
 function publicUrlForKey(key: string) {
@@ -102,16 +116,66 @@ function publicUrlForKey(key: string) {
   return `${baseUrl}/${encodedKey}`;
 }
 
-async function convertImageToWebp(input: Buffer) {
+async function convertImageToWebp(input: Buffer, fileName: string): Promise<ProcessedImage> {
   try {
     const sharp = (await import("sharp")).default;
-
-    return await sharp(input)
+    const converted = await sharp(input, {
+      failOn: "none",
+      limitInputPixels: false,
+    })
       .rotate()
+      .resize({
+        width: MAX_IMAGE_DIMENSION,
+        height: MAX_IMAGE_DIMENSION,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .toColorspace("srgb")
       .webp({ quality: DEFAULT_WEBP_QUALITY })
       .toBuffer({ resolveWithObject: true });
-  } catch {
-    throw new Error(IMAGE_PROCESSING_ERROR);
+
+    return {
+      data: converted.data,
+      fileName: webpFileName(fileName),
+      mimeType: WEBP_CONTENT_TYPE,
+      width: converted.info.width ?? null,
+      height: converted.info.height ?? null,
+    };
+  } catch (error) {
+    try {
+      const sharp = (await import("sharp")).default;
+      const normalized = await sharp(input, {
+        failOn: "none",
+        limitInputPixels: false,
+      })
+        .rotate()
+        .flatten({ background: "#ffffff" })
+        .jpeg({ quality: 92, mozjpeg: true })
+        .toBuffer();
+      const converted = await sharp(normalized)
+        .resize({
+          width: MAX_IMAGE_DIMENSION,
+          height: MAX_IMAGE_DIMENSION,
+          fit: "inside",
+          withoutEnlargement: true,
+        })
+        .webp({ quality: DEFAULT_WEBP_QUALITY })
+        .toBuffer({ resolveWithObject: true });
+
+      return {
+        data: converted.data,
+        fileName: webpFileName(fileName),
+        mimeType: WEBP_CONTENT_TYPE,
+        width: converted.info.width ?? null,
+        height: converted.info.height ?? null,
+      };
+    } catch (fallbackError) {
+      console.error("Image processing failed", {
+        primary: error instanceof Error ? error.message : String(error),
+        fallback: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+      });
+      throw new Error(IMAGE_PROCESSING_ERROR);
+    }
   }
 }
 
@@ -149,6 +213,48 @@ function looksLikeSvg(input: Buffer) {
   return head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg"));
 }
 
+function detectOriginalImage(input: Buffer, fileName: string) {
+  const extension = extensionOf(fileName);
+
+  if (!ORIGINAL_UPLOAD_EXTENSIONS.has(extension)) {
+    return null;
+  }
+
+  if (input.length >= 3 && input[0] === 0xff && input[1] === 0xd8 && input[2] === 0xff) {
+    return {
+      extension: extension === "jpg" ? "jpg" : "jpeg",
+      mimeType: "image/jpeg",
+    };
+  }
+
+  if (
+    input.length >= 8 &&
+    input[0] === 0x89 &&
+    input[1] === 0x50 &&
+    input[2] === 0x4e &&
+    input[3] === 0x47 &&
+    input[4] === 0x0d &&
+    input[5] === 0x0a &&
+    input[6] === 0x1a &&
+    input[7] === 0x0a
+  ) {
+    return { extension: "png", mimeType: "image/png" };
+  }
+
+  if (input.length >= 12 && input.subarray(0, 4).toString("ascii") === "RIFF" && input.subarray(8, 12).toString("ascii") === "WEBP") {
+    return { extension: "webp", mimeType: "image/webp" };
+  }
+
+  if (input.length >= 6) {
+    const signature = input.subarray(0, 6).toString("ascii");
+    if (signature === "GIF87a" || signature === "GIF89a") {
+      return { extension: "gif", mimeType: "image/gif" };
+    }
+  }
+
+  return null;
+}
+
 function keyFromPublicUrl(url: string) {
   const baseUrl = serverEnv.r2PublicUrl.replace(/\/+$/, "");
   const prefix = `${baseUrl}/`;
@@ -184,16 +290,35 @@ export async function uploadImageToR2({
     throw new Error("SVG şəkillər qəbul edilmir.");
   }
 
-  const converted = await convertImageToWebp(input);
-  const fileName = webpFileName(file.name);
-  const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${fileName}`;
+  let processed: ProcessedImage;
+
+  try {
+    processed = await convertImageToWebp(input, file.name);
+  } catch (error) {
+    const originalImage = detectOriginalImage(input, file.name);
+
+    if (!originalImage) {
+      throw error;
+    }
+
+    processed = {
+      data: input,
+      fileName: fileNameWithExtension(file.name, originalImage.extension),
+      mimeType: originalImage.mimeType,
+      sizeBytes: input.byteLength,
+      width: null,
+      height: null,
+    } as ProcessedImage & { sizeBytes: number };
+  }
+
+  const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${processed.fileName}`;
 
   await getR2Client().send(
     new PutObjectCommand({
       Bucket: serverEnv.r2BucketName,
       Key: key,
-      Body: converted.data,
-      ContentType: WEBP_CONTENT_TYPE,
+      Body: processed.data,
+      ContentType: processed.mimeType,
       CacheControl: "public, max-age=31536000, immutable",
     }),
   );
@@ -201,11 +326,11 @@ export async function uploadImageToR2({
   return {
     key,
     url: publicUrlForKey(key),
-    fileName,
-    mimeType: WEBP_CONTENT_TYPE,
-    sizeBytes: converted.data.byteLength,
-    width: converted.info.width ?? null,
-    height: converted.info.height ?? null,
+    fileName: processed.fileName,
+    mimeType: processed.mimeType,
+    sizeBytes: processed.data.byteLength,
+    width: processed.width,
+    height: processed.height,
   };
 }
 
