@@ -16,6 +16,7 @@ import { GlobalLoader } from "@/components/common/global-loader";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
+import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -32,6 +33,7 @@ import type { CategoryOption } from "@/lib/products/types";
 import { getRequiredSelectableProductOptions } from "@/lib/products/variant-utils";
 import { cn } from "@/lib/utils";
 import {
+  ArrowRight,
   Baby,
   BookOpen,
   BriefcaseBusiness,
@@ -1336,6 +1338,7 @@ export function Storefront({
   legacyLayout = false,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
+  const home = useTranslations("home");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
@@ -1352,6 +1355,8 @@ export function Storefront({
     () => infinite.products.filter((product) => product.storeId === store.id),
     [infinite.products, store.id],
   );
+  const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
+  const heroCategories = categories.slice(0, 5);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1383,7 +1388,7 @@ export function Storefront({
           <CategoryFilters
             categories={categories}
             selectedCategoryId={activeCategoryId}
-            baseHref={storeBaseHref ?? getStorePath(store.slug)}
+            baseHref={storeHomeHref}
             allLabel={t("allCategories")}
             onSelect={selectCategory}
           />
@@ -1404,6 +1409,83 @@ export function Storefront({
           />
         </div>
       </div>
+    </section>
+  );
+
+  const modernCategoriesSection =
+    categories.length > 0 ? (
+      <section
+        data-home-categories
+        className="px-4 py-5 sm:px-6 lg:px-7"
+      >
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-black sm:text-2xl">{home("categories")}</h2>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
+            onClick={() => selectCategory()}
+          >
+            {home("allCategories")}
+          </Button>
+        </div>
+        <div className="grid max-w-full grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-2 [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden">
+          {categories.map((category) => {
+            const isSelected = activeCategoryId === category.id;
+
+            return (
+              <button
+                key={category.id}
+                type="button"
+                className={cn(
+                  "flex h-11 min-w-40 shrink-0 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:min-w-36",
+                  isSelected && "border-cyan-300 bg-cyan-50 text-cyan-800",
+                )}
+                onClick={() => selectCategory(category)}
+              >
+                <span className="min-w-0 truncate">{category.name}</span>
+                <ArrowRight className="size-4 text-muted-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    ) : null;
+
+  const modernProductsSection = (
+    <section
+      id="products"
+      className="px-4 py-5 sm:px-6 lg:px-7"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black sm:text-2xl">{home("recentlyListed")}</h2>
+        </div>
+        <Button
+          asChild
+          variant="outline"
+          className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
+        >
+          <Link href={`${storeHomeHref === "/" ? "" : storeHomeHref}#products`}>
+            {t("storeProducts")}
+          </Link>
+        </Button>
+      </div>
+      <ProductInfiniteGrid
+        products={visibleProducts}
+        hasMore={infinite.hasMore}
+        isLoadingNext={infinite.isLoadingNext}
+        onLoadNext={infinite.loadNext}
+        storeSlug={store.slug}
+        storeName={store.name}
+        storeBaseHref={storeBaseHref}
+        productCardVariant={productCardVariant}
+        labels={{ stock: labels.stock }}
+        isStoreOwner={isStoreOwner}
+        forceMobileTwoColumns
+      />
     </section>
   );
 
@@ -1496,14 +1578,41 @@ export function Storefront({
                     {t("productCount", { count: store.productCount })}
                   </p>
                 </div>
+                <MarketplaceSearch
+                  stores={[store]}
+                  defaultValue={searchQuery}
+                  storeSlug={store.slug}
+                  searchBaseHref={storeHomeHref}
+                  className="mt-7 max-w-3xl rounded-full bg-white p-1.5 shadow-2xl shadow-black/25"
+                  inputClassName="h-12 rounded-full border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
+                  buttonClassName="!size-11 !min-w-11 rounded-full bg-cyan-400 p-0 text-white hover:bg-cyan-500"
+                  buttonSize="lg"
+                  stackOnMobile
+                  compactActions
+                />
+                {heroCategories.length > 0 ? (
+                  <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
+                    {heroCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white hover:text-primary"
+                        onClick={() => selectCategory(category)}
+                      >
+                        {category.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         </section>
-        <div className="px-4 pb-6 sm:px-6 lg:px-7">
+        <div className="pb-6">
           {isStoreOwner ? <StoreBrandingQuickEdit store={store} /> : null}
           {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
-          {productsSection}
+          {modernCategoriesSection}
+          {modernProductsSection}
         </div>
       </div>
       <SiteFooter {...footer} />

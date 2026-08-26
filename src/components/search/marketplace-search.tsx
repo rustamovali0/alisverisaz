@@ -19,6 +19,7 @@ type MarketplaceSearchProps = {
   buttonClassName?: string;
   stackOnMobile?: boolean;
   storeSlug?: string;
+  searchBaseHref?: string;
   compactActions?: boolean;
 };
 
@@ -55,6 +56,7 @@ export function MarketplaceSearch({
   buttonClassName,
   stackOnMobile = false,
   storeSlug,
+  searchBaseHref,
   compactActions = false,
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
@@ -236,6 +238,7 @@ export function MarketplaceSearch({
 
   function submitSearch(value: string) {
     const searchQuery = value.trim();
+    const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
 
     setQuery(searchQuery);
     setIsFocused(false);
@@ -244,13 +247,13 @@ export function MarketplaceSearch({
     inputRef.current?.blur();
 
     if (!searchQuery) {
-      router.push(storeSlug ? `/${storeSlug}` : "/products", { scroll: true });
+      router.push(baseHref, { scroll: true });
       return;
     }
 
     recordSearch(searchQuery);
     const encodedQuery = encodeURIComponent(searchQuery);
-    router.push(storeSlug ? `/${storeSlug}?q=${encodedQuery}` : `/products?q=${encodedQuery}`, {
+    router.push(`${baseHref}?q=${encodedQuery}`, {
       scroll: true,
     });
   }
