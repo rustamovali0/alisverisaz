@@ -305,10 +305,9 @@ export async function uploadImageToR2({
       data: input,
       fileName: fileNameWithExtension(file.name, originalImage.extension),
       mimeType: originalImage.mimeType,
-      sizeBytes: input.byteLength,
       width: null,
       height: null,
-    } as ProcessedImage & { sizeBytes: number };
+    };
   }
 
   const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${processed.fileName}`;
