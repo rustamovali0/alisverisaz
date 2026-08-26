@@ -12,8 +12,22 @@ type RecordImageMediaAssetInput = {
   metadata?: Record<string, unknown>;
 };
 
-function isMissingTableError(error: { code?: string } | null | undefined) {
+type SupabaseErrorLike = {
+  code?: string;
+  message?: string;
+};
+
+function isMissingTableError(error: SupabaseErrorLike | null | undefined) {
   return Boolean(error && ["42P01", "PGRST205"].includes(error.code ?? ""));
+}
+
+function isMissingColumnError(error: SupabaseErrorLike | null | undefined) {
+  return Boolean(
+    error &&
+      (error.code === "PGRST204" ||
+        error.code === "42703" ||
+        error.message?.includes("schema cache")),
+  );
 }
 
 export async function recordImageMediaAsset({
@@ -24,7 +38,7 @@ export async function recordImageMediaAsset({
   metadata,
 }: RecordImageMediaAssetInput) {
   const supabaseAdmin = createSupabaseAdminClient();
-  const { error } = await (supabaseAdmin as any).from("media_assets").insert({
+  const payload = {
     bucket: serverEnv.r2BucketName,
     path: uploaded.key,
     url: uploaded.url,
@@ -37,11 +51,27 @@ export async function recordImageMediaAsset({
     metadata: metadata ?? {},
     created_by: userId,
     updated_by: userId,
-  });
+  };
+  const { error } = await (supabaseAdmin as any).from("media_assets").insert(payload);
 
-  if (error && !isMissingTableError(error)) {
-    throw new Error(error.message);
+  if (!error || isMissingTableError(error)) {
+    return;
   }
+
+  if (isMissingColumnError(error)) {
+    const { width: _width, height: _height, ...legacyPayload } = payload;
+    const { error: legacyError } = await (supabaseAdmin as any)
+      .from("media_assets")
+      .insert(legacyPayload);
+
+    if (!legacyError || isMissingTableError(legacyError) || isMissingColumnError(legacyError)) {
+      return;
+    }
+
+    throw new Error(legacyError.message);
+  }
+
+  throw new Error(error.message);
 }
 
 export async function deleteR2MediaAssetsByUrls(urls: Array<string | null | undefined>) {
