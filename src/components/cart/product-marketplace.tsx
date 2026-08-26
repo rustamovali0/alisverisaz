@@ -1340,6 +1340,13 @@ export function Storefront({
   const t = useTranslations("marketplace");
   const home = useTranslations("home");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const [activeSort, setActiveSort] = useState<MarketplaceProductSort>("newest");
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [colorFilter, setColorFilter] = useState("");
+  const [sizeFilter, setSizeFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
     initialCursor: store.productNextCursor,
@@ -1348,6 +1355,7 @@ export function Storefront({
     categoryId: activeCategoryId,
     storeId: store.id,
     searchQuery,
+    sort: activeSort,
   });
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
@@ -1357,6 +1365,73 @@ export function Storefront({
   );
   const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
   const heroCategories = categories.slice(0, 5);
+  const variantFilterValues = useMemo(() => {
+    const values = {
+      color: new Set<string>(),
+      size: new Set<string>(),
+    };
+
+    infinite.products.forEach((product) => {
+      product.options?.forEach((option) => {
+        if (option.type !== "color" && option.type !== "size") {
+          return;
+        }
+
+        option.values.forEach((value) => {
+          if (option.type === "color") {
+            values.color.add(value.value);
+          } else {
+            values.size.add(value.value);
+          }
+        });
+      });
+    });
+
+    return {
+      colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
+      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+    };
+  }, [infinite.products]);
+  const filteredVisibleProducts = useMemo(() => {
+    const min = minPrice.trim() ? Number(minPrice) : null;
+    const max = maxPrice.trim() ? Number(maxPrice) : null;
+
+    return visibleProducts.filter((product) => {
+      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
+      const values = product.options?.flatMap((option) => option.values.map((value) => ({
+        type: option.type,
+        value: value.value,
+      }))) ?? [];
+
+      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
+        return false;
+      }
+
+      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
+        return false;
+      }
+
+      if (min !== null && Number.isFinite(min) && finalPrice < min) {
+        return false;
+      }
+
+      if (max !== null && Number.isFinite(max) && finalPrice > max) {
+        return false;
+      }
+
+      return !inStockOnly || product.stockQuantity > 0;
+    });
+  }, [colorFilter, inStockOnly, maxPrice, minPrice, sizeFilter, visibleProducts]);
+  const hasLocalFilters = Boolean(
+    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
+  );
+  const hasActiveProductFilters = Boolean(
+    activeCategoryId || activeSort !== "newest" || hasLocalFilters,
+  );
+
+  useEffect(() => {
+    setActiveCategoryId(selectedCategoryId);
+  }, [selectedCategoryId]);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1376,13 +1451,104 @@ export function Storefront({
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   }
 
+  function selectSort(nextSort: MarketplaceProductSort) {
+    setActiveSort(nextSort);
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+
+    if (nextSort === "newest") {
+      url.searchParams.delete("sort");
+    } else {
+      url.searchParams.set("sort", nextSort);
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+
+  function resetFilters() {
+    setColorFilter("");
+    setSizeFilter("");
+    setMinPrice("");
+    setMaxPrice("");
+    setInStockOnly(false);
+    selectCategory();
+    selectSort("newest");
+  }
+
+  const filterBar = (
+    <MarketplaceFilterBar
+      categories={categories}
+      selectedCategoryId={activeCategoryId}
+      colors={variantFilterValues.colors}
+      sizes={variantFilterValues.sizes}
+      color={colorFilter}
+      size={sizeFilter}
+      minPrice={minPrice}
+      maxPrice={maxPrice}
+      inStockOnly={inStockOnly}
+      onCategory={selectCategory}
+      onColor={setColorFilter}
+      onSize={setSizeFilter}
+      onMinPrice={setMinPrice}
+      onMaxPrice={setMaxPrice}
+      onStockOnly={setInStockOnly}
+    />
+  );
+
+  const sortControl = (
+    <MarketplaceDropdown
+      label={t("sortFilter")}
+      value={activeSort}
+      options={[
+        { value: "newest", label: t("sortNewest") },
+        { value: "oldest", label: t("sortOldest") },
+        { value: "price_asc", label: t("sortPriceAsc") },
+        { value: "price_desc", label: t("sortPriceDesc") },
+      ]}
+      onChange={(value) => selectSort(value as MarketplaceProductSort)}
+    />
+  );
+
   const productsSection = (
     <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
-      <div className="mb-6 min-w-0">
-        <h2 className="break-words text-xl font-black tracking-normal">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="break-words text-xl font-black tracking-normal sm:text-2xl">
           {t("storeProducts")}
         </h2>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant={isFiltersOpen ? "default" : "outline"}
+            className="h-10 gap-2 rounded-full px-3 text-sm"
+            aria-expanded={isFiltersOpen}
+            aria-controls="storefront-filters"
+            onClick={() => setIsFiltersOpen((current) => !current)}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            {t("filters")}
+            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 rounded-full px-3 text-sm text-primary"
+            disabled={!hasActiveProductFilters}
+            onClick={resetFilters}
+          >
+            {t("clearFilters")}
+          </Button>
+          <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+        </div>
       </div>
+      {isFiltersOpen ? (
+        <div id="storefront-filters" className="relative z-20 mb-5 w-full max-w-sm">
+          {filterBar}
+        </div>
+      ) : null}
       <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <CategoryFilters
@@ -1395,9 +1561,9 @@ export function Storefront({
         </aside>
         <div className="min-w-0">
           <ProductInfiniteGrid
-            products={visibleProducts}
-            hasMore={infinite.hasMore}
-            isLoadingNext={infinite.isLoadingNext}
+            products={filteredVisibleProducts}
+            hasMore={!hasLocalFilters && infinite.hasMore}
+            isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
             onLoadNext={infinite.loadNext}
             storeSlug={store.slug}
             storeName={store.name}
@@ -1459,24 +1625,44 @@ export function Storefront({
       id="products"
       className="px-4 py-5 sm:px-6 lg:px-7"
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-black sm:text-2xl">{home("recentlyListed")}</h2>
         </div>
-        <Button
-          asChild
-          variant="outline"
-          className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
-        >
-          <Link href={`${storeHomeHref === "/" ? "" : storeHomeHref}#products`}>
-            {t("storeProducts")}
-          </Link>
-        </Button>
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant={isFiltersOpen ? "default" : "outline"}
+            className="h-10 gap-2 rounded-full px-3 text-sm"
+            aria-expanded={isFiltersOpen}
+            aria-controls="storefront-modern-filters"
+            onClick={() => setIsFiltersOpen((current) => !current)}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            {t("filters")}
+            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 rounded-full px-3 text-sm text-primary"
+            disabled={!hasActiveProductFilters}
+            onClick={resetFilters}
+          >
+            {t("clearFilters")}
+          </Button>
+          <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+        </div>
       </div>
+      {isFiltersOpen ? (
+        <div id="storefront-modern-filters" className="relative z-20 mb-5 w-full max-w-sm">
+          {filterBar}
+        </div>
+      ) : null}
       <ProductInfiniteGrid
-        products={visibleProducts}
-        hasMore={infinite.hasMore}
-        isLoadingNext={infinite.isLoadingNext}
+        products={filteredVisibleProducts}
+        hasMore={!hasLocalFilters && infinite.hasMore}
+        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
         onLoadNext={infinite.loadNext}
         storeSlug={store.slug}
         storeName={store.name}
@@ -1558,8 +1744,8 @@ export function Storefront({
               ) : (
                 <div className="absolute inset-0 bg-muted" />
               )}
-              <div className="absolute inset-0 bg-slate-950/70" aria-hidden="true" />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.88),rgba(15,23,42,0.62),rgba(2,6,23,0.78))]" aria-hidden="true" />
+              <div className="absolute inset-0 bg-slate-950/52" aria-hidden="true" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.7),rgba(15,23,42,0.42),rgba(2,6,23,0.62))]" aria-hidden="true" />
               <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
                 <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
                 <div className="mt-5 min-w-0">

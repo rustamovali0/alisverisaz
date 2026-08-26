@@ -295,13 +295,10 @@ export function HomeExperience({
                   decoding="async"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-slate-950/70" />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.88),rgba(15,23,42,0.66),rgba(2,6,23,0.78))]" />
+              <div className="absolute inset-0 bg-slate-950/48" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.66),rgba(15,23,42,0.38),rgba(2,6,23,0.58))]" />
             </div>
             <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
-              <span className="mb-5 inline-flex rounded-full border border-white/20 bg-slate-950/55 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur">
-                {home("marketplaceBadge")}
-              </span>
               {heroShowTitle ? (
                 <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
                   {heroTitle}
