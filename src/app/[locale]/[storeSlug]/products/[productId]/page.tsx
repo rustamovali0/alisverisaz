@@ -10,7 +10,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import {
   ProductReviewList,
 } from "@/components/products/product-feedback-lists";
-import { ProductLocationSection } from "@/components/products/product-location-section";
 import { ProductPurchaseOptions } from "@/components/products/product-purchase-options";
 import { RelatedProductList } from "@/components/products/related-product-list";
 import {
@@ -368,12 +367,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             ) : null}
           </div>
         </section>
-
-        {!isStoreOwner ? (
-          <div className="mt-5 md:mt-6">
-            <ProductLocationSection locations={visibleProductLocations} />
-          </div>
-        ) : null}
 
         {relatedProducts ? (
           <div className="mt-5 md:mt-6">
