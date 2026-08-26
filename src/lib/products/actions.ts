@@ -977,8 +977,6 @@ export async function updateProductAction(
           variant_options: payload.variantOptions,
           variant_combinations: payload.variantCombinations,
         };
-  let replacedImageUrls: Array<string | null> = [];
-
   const { error } = await (supabase as any)
     .from("products")
     .update({
@@ -1022,7 +1020,7 @@ export async function updateProductAction(
         formData,
       });
     }
-    replacedImageUrls = await replaceProductImages({
+    await uploadProductImages({
       userId: current.user.id,
       productId,
       productName: payload.name,
@@ -1046,7 +1044,6 @@ export async function updateProductAction(
     storeSlug: existingStore?.slug,
     homepage: status === "active" || existing.metadata?.featured === true,
   });
-  await deleteR2ImagesByUrls(replacedImageUrls);
 
   return {
     ok: true,
@@ -1200,6 +1197,98 @@ export async function deleteProductImageAction(
   return {
     ok: true,
     message: "Şəkil silindi.",
+  };
+}
+
+export async function setPrimaryProductImageAction(
+  formData: FormData,
+): Promise<ProductActionResult> {
+  const current = await requireRole(
+    ["seller", "customer", "admin"],
+    "/dashboard/listings",
+  );
+  const imageId = readString(formData, "imageId");
+
+  if (!imageId) {
+    return {
+      ok: false,
+      message: "Şəkil tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: image } = await (supabaseAdmin as any)
+    .from("product_images")
+    .select("id,product_id")
+    .eq("id", imageId)
+    .maybeSingle();
+
+  if (!image) {
+    return {
+      ok: false,
+      message: "Şəkil tapılmadı.",
+    };
+  }
+
+  const { data: product } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id,owner_id,store_id,category_id,status,stores(slug,owner_id)")
+    .eq("id", image.product_id)
+    .maybeSingle();
+  const productStore = Array.isArray(product?.stores)
+    ? product?.stores[0]
+    : product?.stores;
+
+  if (
+    !product ||
+    (current.role !== "admin" &&
+      product.owner_id !== current.user.id &&
+      productStore?.owner_id !== current.user.id)
+  ) {
+    return {
+      ok: false,
+      message: "Bu şəkli dəyişmək icazəniz yoxdur.",
+    };
+  }
+
+  const { error: clearError } = await (supabaseAdmin as any)
+    .from("product_images")
+    .update({ is_primary: false })
+    .eq("product_id", image.product_id);
+
+  if (clearError) {
+    return {
+      ok: false,
+      message: clearError.message,
+    };
+  }
+
+  const { error } = await (supabaseAdmin as any)
+    .from("product_images")
+    .update({ is_primary: true, sort_order: 0 })
+    .eq("id", imageId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/store/dashboard/products");
+  revalidatePath("/dashboard/listings");
+  revalidatePath("/radmin/products");
+  revalidateMarketplaceSurfaces({
+    productId: image.product_id,
+    storeId: product.store_id,
+    categoryId: product.category_id,
+    storeSlug: productStore?.slug,
+    homepage: product.status === "active",
+  });
+
+  return {
+    ok: true,
+    message: "Əsas şəkil yeniləndi.",
   };
 }
 

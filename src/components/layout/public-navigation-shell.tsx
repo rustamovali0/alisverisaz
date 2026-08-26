@@ -28,11 +28,7 @@ const hiddenPrefixes = [
 ];
 
 const hiddenPaths = new Set([
-  "/forgot-password",
-  "/login",
   "/logout",
-  "/register",
-  "/reset-password",
 ]);
 
 function shouldShowPublicNavigation(pathname: string) {

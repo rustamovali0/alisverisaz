@@ -9,6 +9,8 @@ import { appAlert } from "@/lib/alerts/app-alert";
 import {
   createPersonalListingAction,
   createStoreProductAction,
+  deleteProductImageAction,
+  setPrimaryProductImageAction,
   updateProductAction,
 } from "@/lib/products/actions";
 import type {
@@ -337,6 +339,97 @@ function getButtonLabel(mode: ProductFormMode, isPending: boolean) {
   return "Məhsul əlavə et";
 }
 
+function ExistingProductImages({
+  product,
+  disabled,
+}: {
+  product: ManagedProduct;
+  disabled?: boolean;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  function runImageAction(action: "primary" | "delete", imageId: string) {
+    if (isPending || disabled) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.set("imageId", imageId);
+
+    startTransition(async () => {
+      const result =
+        action === "primary"
+          ? await setPrimaryProductImageAction(formData)
+          : await deleteProductImageAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Şəkil əməliyyatı alınmadı");
+        return;
+      }
+
+      void appAlert.success("Uğurludur", result.message);
+      router.refresh();
+    });
+  }
+
+  if (product.images.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3 rounded-md border bg-background p-3">
+      <div>
+        <p className="text-sm font-semibold">Mövcud şəkillər</p>
+        <p className="mt-1 text-xs font-medium text-muted-foreground">
+          Əsas şəkli aşağı hissədən seçə bilərsiniz.
+        </p>
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        {product.images.map((image) => (
+          <div
+            key={image.id}
+            className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
+          >
+            <img
+              src={image.url}
+              alt={image.altText ?? product.name}
+              className="h-full w-full object-cover"
+            />
+            {image.isPrimary ? (
+              <span className="absolute left-1 top-1 rounded bg-primary px-1.5 py-1 text-[10px] font-bold text-primary-foreground">
+                Əsas
+              </span>
+            ) : (
+              <button
+                type="button"
+                className="absolute inset-x-1 bottom-1 rounded bg-background/95 px-1.5 py-1 text-[10px] font-bold text-foreground shadow-sm transition hover:bg-primary hover:text-primary-foreground"
+                onClick={() => runImageAction("primary", image.id)}
+                disabled={disabled || isPending}
+              >
+                Əsas et
+              </button>
+            )}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              className="absolute right-1 top-1 size-7 rounded-md border border-white/80 bg-destructive text-destructive-foreground opacity-100 shadow-sm hover:bg-destructive/90"
+              onClick={() => runImageAction("delete", image.id)}
+              disabled={disabled || isPending}
+              aria-label="Şəkli sil"
+            >
+              <span aria-hidden="true" className="text-base font-black leading-none">
+                ×
+              </span>
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProductForm({
   mode,
   categories,
@@ -355,6 +448,9 @@ export function ProductForm({
     productLocations.map((item) => [item.locationId, item]),
   );
   const showLocationSection = mode !== "personal-create" && locations.length > 0;
+  const existingImageCount = mode === "edit" ? product?.images.length ?? 0 : 0;
+  const newImageLimit =
+    imageLimit === null ? null : Math.max(imageLimit - existingImageCount, 0);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -606,16 +702,22 @@ export function ProductForm({
 
       <label className="grid gap-2 text-sm font-medium">
         Şəkillər
+        {mode === "edit" && product ? (
+          <ExistingProductImages product={product} disabled={disabled || isPending} />
+        ) : null}
         <ImageDropzone
           files={imageFiles}
           onFilesChange={setImageFiles}
           disabled={disabled}
-          maxFiles={imageLimit}
+          maxFiles={newImageLimit}
+          title={mode === "edit" ? "Yeni şəkil əlavə et" : "Şəkil əlavə et"}
         />
         <span className="text-xs font-medium text-muted-foreground">
           {imageLimit === null
             ? "Şəkil limiti limitsizdir."
-            : `Maksimum ${imageLimit} şəkil`}
+            : mode === "edit"
+              ? `${existingImageCount + imageFiles.length}/${imageLimit} şəkil`
+              : `Maksimum ${imageLimit} şəkil`}
         </span>
       </label>
 

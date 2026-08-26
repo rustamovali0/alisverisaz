@@ -4,6 +4,7 @@ import { ImagePlus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { isRealImageFile } from "@/lib/images/client-file-validation";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ type ImageDropzoneProps = {
   onFilesChange: (files: File[]) => void;
   disabled?: boolean;
   maxFiles?: number | null;
+  title?: string;
 };
 
 function FilePreview({ file, alt }: { file: File; alt: string }) {
@@ -34,6 +36,7 @@ export function ImageDropzone({
   onFilesChange,
   disabled = false,
   maxFiles = 5,
+  title = "Yeni şəkil əlavə et",
 }: ImageDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -41,10 +44,19 @@ export function ImageDropzone({
 
   async function addFiles(nextFiles: FileList | File[]) {
     const incomingFiles = Array.from(nextFiles);
+    const availableSlots = maxFiles === null ? incomingFiles.length : maxFiles - files.length;
+
+    if (maxFiles !== null && incomingFiles.length > availableSlots) {
+      const message = `Maksimum ${maxFiles} şəkil seçə bilərsiniz.`;
+      setValidationError(message);
+      void appAlert.error(message, "Şəkil limiti");
+      return;
+    }
+
     const allowedFiles =
       maxFiles === null
         ? incomingFiles
-        : incomingFiles.slice(0, Math.max(maxFiles - files.length, 0));
+        : incomingFiles.slice(0, Math.max(availableSlots, 0));
     const imageChecks = await Promise.all(allowedFiles.map(async (file) => ({
       file,
       isImage: await isRealImageFile(file),
@@ -77,37 +89,10 @@ export function ImageDropzone({
     onFilesChange([selectedFile, ...nextFiles]);
   }
 
+  const hasRemainingSlots = maxFiles === null || files.length < maxFiles;
+
   return (
     <div className="grid gap-3">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-          void addFiles(event.dataTransfer.files);
-        }}
-        className={cn(
-          "flex min-h-36 flex-col items-center justify-center rounded-md border border-dashed bg-background p-6 text-center transition-colors",
-          isDragging ? "border-primary bg-primary/5" : "border-input",
-          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-        )}
-      >
-        <ImagePlus className="mb-3 size-7 text-muted-foreground" aria-hidden="true" />
-        <span className="text-sm font-medium sm:hidden">Şəkil seç</span>
-        <span className="hidden text-sm font-medium sm:inline">Şəkilləri seç və ya buraya sürüklə</span>
-        {maxFiles !== null ? (
-          <span className="mt-2 text-xs font-semibold text-muted-foreground">
-            {files.length}/{maxFiles} şəkil
-          </span>
-        ) : null}
-      </button>
       <input
         ref={inputRef}
         type="file"
@@ -137,7 +122,7 @@ export function ImageDropzone({
                 type="button"
                 variant="secondary"
                 size="icon"
-                className="absolute right-2 top-2 size-8 rounded-lg shadow-md sm:size-9"
+                className="absolute right-2 top-2 size-8 rounded-lg border border-white/80 bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 sm:size-9"
                 onClick={() => onFilesChange(files.slice(1))}
                 aria-label="Əsas şəkli sil"
               >
@@ -171,7 +156,7 @@ export function ImageDropzone({
                       type="button"
                       variant="secondary"
                       size="icon"
-                      className="absolute right-1 top-1 size-6 rounded-md opacity-95 shadow-sm sm:size-7"
+                      className="absolute right-1 top-1 size-7 rounded-md border border-white/80 bg-destructive text-destructive-foreground opacity-100 shadow-sm hover:bg-destructive/90"
                       onClick={() => {
                         onFilesChange(
                           files.filter((_, fileIndex) => fileIndex !== realIndex),
@@ -188,6 +173,43 @@ export function ImageDropzone({
           ) : null}
         </div>
       ) : null}
+      <p className="rounded-md bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
+        Əsas şəkli aşağıdakı kiçik şəkillərdən seçə bilərsiniz.
+      </p>
+      {hasRemainingSlots ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragging(false);
+            void addFiles(event.dataTransfer.files);
+          }}
+          className={cn(
+            "flex min-h-28 flex-col items-center justify-center rounded-md border border-dashed bg-background p-4 text-center transition-colors",
+            isDragging ? "border-primary bg-primary/5" : "border-input",
+            disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+          )}
+        >
+          <ImagePlus className="mb-2 size-6 text-muted-foreground" aria-hidden="true" />
+          <span className="text-sm font-medium">{title}</span>
+          {maxFiles !== null ? (
+            <span className="mt-2 text-xs font-semibold text-muted-foreground">
+              {files.length}/{maxFiles} şəkil
+            </span>
+          ) : null}
+        </button>
+      ) : (
+        <p className="rounded-md border border-input bg-background px-3 py-2 text-xs font-semibold text-muted-foreground">
+          Şəkil limiti dolub.
+        </p>
+      )}
     </div>
   );
 }

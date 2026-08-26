@@ -72,6 +72,8 @@ export type ManagedProduct = {
     id: string;
     url: string;
     altText: string | null;
+    isPrimary: boolean;
+    sortOrder: number;
   }>;
   variants: ProductVariantInput[];
   options: ProductOptionInput[];

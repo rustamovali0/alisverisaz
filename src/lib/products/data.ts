@@ -49,6 +49,8 @@ type ProductRow = {
     id: string;
     url: string;
     alt_text: string | null;
+    is_primary?: boolean | null;
+    sort_order?: number | null;
   }>;
   product_variants?: Array<{
     id?: string;
@@ -92,9 +94,9 @@ const publicRootCategorySlugs = [
 ];
 
 const MANAGED_PRODUCT_SELECT =
-  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
 const MANAGED_PRODUCT_SELECT_LEGACY =
-  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text),product_variants(name,value,price_delta_amount,stock_quantity)";
+  "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 
 function isMissingVariantSchemaError(error: unknown) {
   const value = error as { code?: string; message?: string; details?: string } | null;
@@ -181,11 +183,21 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,
     depositValue: Number(row.deposit_value ?? 0),
-    images: (row.product_images ?? []).map((image) => ({
-      id: image.id,
-      url: image.url,
-      altText: image.alt_text,
-    })),
+    images: [...(row.product_images ?? [])]
+      .sort((a, b) => {
+        if (Boolean(a.is_primary) !== Boolean(b.is_primary)) {
+          return a.is_primary ? -1 : 1;
+        }
+
+        return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+      })
+      .map((image, index) => ({
+        id: image.id,
+        url: image.url,
+        altText: image.alt_text,
+        isPrimary: Boolean(image.is_primary) || index === 0,
+        sortOrder: image.sort_order ?? index,
+      })),
     variants: flatVariants.map((variant) => ({
       name: variant.name,
       value: variant.value,

@@ -66,11 +66,7 @@ function canBypassMaintenance(pathname: string) {
 
 function shouldLoadPublicNavigation(pathname: string) {
   const hiddenExactPaths = new Set([
-    "/forgot-password",
-    "/login",
     "/logout",
-    "/register",
-    "/reset-password",
   ]);
 
   if (hiddenExactPaths.has(pathname)) {
