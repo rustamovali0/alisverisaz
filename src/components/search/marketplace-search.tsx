@@ -244,8 +244,7 @@ export function MarketplaceSearch({
 
   function selectSuggestion(suggestion: SearchSuggestion) {
     setQuery(suggestion.label);
-    setIsFocused(false);
-    inputRef.current?.blur();
+    submitSearch(suggestion.label);
   }
 
   function closeMobileSearch() {
@@ -346,9 +345,7 @@ export function MarketplaceSearch({
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
                       setQuery(term);
-                      setIsFocused(false);
-                      recordSearch(term);
-                      router.push(storeSlug ? `/${storeSlug}?q=${encodeURIComponent(term)}` : `/products?q=${encodeURIComponent(term)}`);
+                      submitSearch(term);
                     }}
                   >
                     {term}
