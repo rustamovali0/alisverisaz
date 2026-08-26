@@ -197,7 +197,11 @@ export function MobileBottomNav({
   const items =
     role === "seller"
       ? [
-          storefrontItem,
+          {
+            href: "/",
+            label: nav("home"),
+            icon: Home,
+          },
           {
             href: sellerStoreHref ?? "/store/dashboard/products",
             label: "Mağazam",
