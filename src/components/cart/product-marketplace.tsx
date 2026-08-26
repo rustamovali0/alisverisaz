@@ -1414,7 +1414,7 @@ export function Storefront({
           </section>
         )}
 
-        {!isStoreOwner && !legacyLayout ? <PublicStoreLocationSection locations={locations} /> : null}
+        {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
 
         <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
           <div className="mb-6 min-w-0">
@@ -1449,7 +1449,6 @@ export function Storefront({
             </div>
           </div>
         </section>
-        {!isStoreOwner && legacyLayout ? <PublicStoreLocationSection locations={locations} /> : null}
       </div>
       <SiteFooter {...footer} />
     </main>
