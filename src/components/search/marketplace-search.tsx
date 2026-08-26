@@ -117,6 +117,12 @@ export function MarketplaceSearch({
   );
 
   useEffect(() => {
+    setQuery(defaultValue);
+    setRemoteProducts(null);
+    setIsSearching(false);
+  }, [defaultValue]);
+
+  useEffect(() => {
     if (!isFocused || typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches) {
       return;
     }
@@ -229,21 +235,29 @@ export function MarketplaceSearch({
   function submitSearch(value: string) {
     const searchQuery = value.trim();
 
+    setQuery(searchQuery);
     setIsFocused(false);
+    setRemoteProducts(null);
+    setIsSearching(false);
     inputRef.current?.blur();
 
     if (!searchQuery) {
-      router.push(storeSlug ? `/${storeSlug}` : "/products");
+      router.push(storeSlug ? `/${storeSlug}` : "/products", { scroll: true });
       return;
     }
 
     recordSearch(searchQuery);
-    const query = encodeURIComponent(searchQuery);
-    router.push(storeSlug ? `/${storeSlug}?q=${query}` : `/products?q=${query}`);
+    const encodedQuery = encodeURIComponent(searchQuery);
+    router.push(storeSlug ? `/${storeSlug}?q=${encodedQuery}` : `/products?q=${encodedQuery}`, {
+      scroll: true,
+    });
+  }
+
+  function submitCurrentSearch() {
+    submitSearch(inputRef.current?.value ?? query);
   }
 
   function selectSuggestion(suggestion: SearchSuggestion) {
-    setQuery(suggestion.label);
     submitSearch(suggestion.label);
   }
 
@@ -266,7 +280,7 @@ export function MarketplaceSearch({
       autoComplete="off"
       onSubmit={(event) => {
         event.preventDefault();
-        submitSearch(query.trim());
+        submitCurrentSearch();
       }}
       className={cn(
         "relative flex w-full min-w-0 gap-2",
@@ -306,6 +320,12 @@ export function MarketplaceSearch({
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
           compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
         )}
+        onPointerDown={(event) => {
+          if (event.pointerType === "touch") {
+            event.preventDefault();
+            submitCurrentSearch();
+          }
+        }}
         aria-label={resolvedButtonLabel}
       >
         {compactActions ? <Search className="size-5" aria-hidden="true" /> : resolvedButtonLabel}
@@ -343,10 +363,7 @@ export function MarketplaceSearch({
                     type="button"
                     className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm font-medium transition hover:bg-primary hover:text-primary-foreground"
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => {
-                      setQuery(term);
-                      submitSearch(term);
-                    }}
+                    onClick={() => submitSearch(term)}
                   >
                     {term}
                   </button>
