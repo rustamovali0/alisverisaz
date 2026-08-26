@@ -3,10 +3,7 @@
 import type { CSSProperties } from "react";
 import {
   ArrowRight,
-  PackageSearch,
   ShieldCheck,
-  Sparkles,
-  Store,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -229,7 +226,6 @@ export function HomeExperience({
   description,
   productsLabel,
 }: HomeExperienceProps) {
-  const common = useTranslations("common");
   const home = useTranslations("home");
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
@@ -257,212 +253,200 @@ export function HomeExperience({
     0,
     visibleLimit(featuredSection, 8),
   );
-  const totalProductCount = stores.reduce((sum, store) => sum + store.productCount, 0);
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
+  const heroImageUrl =
+    hero?.imageUrl ||
+    "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1800&q=82";
+  const heroPills = activeCategories.slice(0, 5);
 
   return (
     <main
-      className="min-h-screen w-full max-w-full overflow-x-clip pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-[#9fd5d1] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-12"
       data-homepage-preset={siteSettings.design.homepagePreset}
-      style={themeStyle}
+      style={{ ...themeStyle, backgroundColor: "#9fd5d1" }}
     >
-      <section
-        className="grid items-center gap-8 py-8 lg:min-h-[560px] lg:py-14"
-        style={{ backgroundColor: "var(--home-hero-bg)" }}
-      >
-        <div className="container grid items-center gap-8 lg:grid-cols-[1.08fr_0.92fr]">
-        <div className="min-w-0 max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground shadow-sm">
-            <Sparkles className="size-4 text-primary" aria-hidden="true" />
-            {home("marketplaceBadge")}
-          </span>
-          <h1 className="mt-5 max-w-2xl break-words text-[clamp(2.5rem,8vw,4rem)] font-black leading-tight tracking-normal text-foreground lg:text-6xl">
-            {heroTitle}
-          </h1>
-          <div data-home-search-sentinel className="h-px w-full" aria-hidden="true" />
-          <MarketplaceSearch
-            stores={stores}
-            className="mt-7 rounded-lg border bg-card p-2 shadow-xl shadow-slate-900/10 md:grid md:grid-cols-[1fr_auto]"
-            inputClassName="h-12 border-transparent bg-background"
-            buttonSize="lg"
-            stackOnMobile
-            compactActions
-          />
-          <div className="mt-5 flex flex-wrap gap-2">
-            {activeCategories.slice(0, 6).map((category) => (
-              <Link
-                key={category.id}
-                href={`/products?category=${category.slug}`}
-                className="max-w-full rounded-full border bg-card px-3 py-1.5 text-sm text-muted-foreground transition hover:border-primary/50 hover:text-primary"
-              >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative hidden lg:block">
-          <div className="overflow-hidden rounded-lg border bg-card shadow-2xl shadow-slate-900/12">
-            <div className="relative aspect-[4/3] bg-muted">
-              {hero?.imageUrl ? (
-                <img
-                  src={hero.imageUrl}
-                  alt={heroTitle}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-[linear-gradient(135deg,hsl(var(--primary)/0.10),hsl(var(--accent)/0.12))]" />
-              )}
-              <div
-                className={cn(
-                  "absolute inset-0 grid place-items-center p-8 text-center",
-                  hero?.imageUrl && "bg-background/68 backdrop-blur-[1px]",
-                )}
-              >
-                  <div className="max-w-sm">
-                    <div className="mx-auto grid size-16 place-items-center rounded-lg border border-primary/20 bg-background/80 text-primary shadow-sm">
-                      <Store className="size-8" aria-hidden="true" />
-                    </div>
-                    {heroShowTitle ? (
-                      <h2 className="mt-5 text-2xl font-black tracking-normal">
-                        {heroTitle}
-                      </h2>
-                    ) : null}
-                    {heroShowDescription ? (
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        {heroDescription}
-                      </p>
-                    ) : null}
-                  </div>
+      <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-2xl shadow-teal-950/20 sm:rounded-lg">
+        <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
+          <div className="relative overflow-hidden rounded-lg bg-slate-950">
+            <div className="absolute inset-0">
+              <img
+                src={heroImageUrl}
+                alt={heroTitle}
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+              />
+              <div className="absolute inset-0 bg-slate-950/52" />
+            </div>
+            <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
+              <span className="mb-5 inline-flex rounded-full bg-white/92 px-4 py-2 text-xs font-bold text-slate-800 shadow-sm">
+                {home("marketplaceBadge")}
+              </span>
+              {heroShowTitle ? (
+                <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal">
+                  {heroTitle}
+                </h1>
+              ) : null}
+              {heroShowDescription ? (
+                <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/86 sm:text-base">
+                  {heroDescription}
+                </p>
+              ) : null}
+              <div data-home-search-sentinel className="h-px w-full" aria-hidden="true" />
+              <MarketplaceSearch
+                stores={stores}
+                className="mt-7 max-w-3xl rounded-full bg-white p-1.5 shadow-2xl shadow-black/25"
+                inputClassName="h-12 rounded-full border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
+                buttonClassName="!size-11 !min-w-11 rounded-full bg-cyan-400 p-0 text-white hover:bg-cyan-500"
+                buttonSize="lg"
+                stackOnMobile
+                compactActions
+              />
+              {heroPills.length > 0 ? (
+                <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
+                  {heroPills.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/products?category=${category.slug}`}
+                      className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white hover:text-primary"
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
                 </div>
+              ) : null}
             </div>
           </div>
-          <div
-            className="absolute -bottom-5 right-5 rounded-lg p-4 shadow-xl"
-            style={{
-              backgroundColor: "var(--home-button-bg)",
-              color: "var(--home-button-text)",
-            }}
+        </section>
+
+        {activeCategories.length > 0 ? (
+          <section
+            data-home-categories
+            className="px-4 py-5 sm:px-6 lg:px-7"
+            style={{ backgroundColor: "var(--home-categories-bg)" }}
           >
-            <p className="text-sm opacity-90">{home("activeProducts")}</p>
-            <p className="text-3xl font-black">{totalProductCount}</p>
-          </div>
-        </div>
-        </div>
-      </section>
-
-      {activeCategories.length > 0 ? (
-        <section
-          data-home-categories
-          className="py-6 md:py-10"
-          style={{ backgroundColor: "var(--home-categories-bg)" }}
-        >
-          <div className="container">
-          <div className="mb-5 flex items-end justify-between">
             <div>
-              <h2 className="text-2xl font-black">
-                {categorySection?.title || home("categories")}
-              </h2>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="/categories">{home("allCategories")}</Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4">
-            {activeCategories.map((category) => (
-              <div
-                key={category.id}
-              >
-                <Link
-                  href={`/products?category=${category.slug}`}
-                className="flex min-h-20 items-center justify-between rounded-lg border bg-card px-3 py-3 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg sm:min-h-24 sm:p-4"
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black sm:text-2xl">
+                    {categorySection?.title || home("categories")}
+                  </h2>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
                 >
-                  <span className="line-clamp-2 min-w-0 break-words text-sm font-bold sm:text-base">{category.name}</span>
-                  <ArrowRight className="size-4 text-muted-foreground" />
-                </Link>
+                  <Link href="/categories">{home("allCategories")}</Link>
+                </Button>
               </div>
-            ))}
-          </div>
-          </div>
-        </section>
-      ) : null}
-
-      {featuredStores.length > 0 ? (
-        <section
-          id="featured-stores"
-          className="py-6 md:py-10"
-          style={{ backgroundColor: "var(--home-stores-bg)" }}
-        >
-          <div className="container">
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="text-2xl font-black">
-                {featuredSection?.title || home("featuredStores")}
-              </h2>
+              <div className="flex max-w-full gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {activeCategories.map((category) => (
+                  <div key={category.id} className="shrink-0">
+                    <Link
+                      href={`/products?category=${category.slug}`}
+                      className="flex h-11 min-w-36 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+                    >
+                      <span className="min-w-0 truncate">{category.name}</span>
+                      <ArrowRight className="size-4 text-muted-foreground" />
+                    </Link>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Button asChild variant="outline">
-              <Link href="/stores">{home("allStores")}</Link>
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {featuredStores.map((store, index) => (
-              <div key={store.id} className={cn(index >= 4 && "hidden md:block")}>
-                <HomeStoreCard store={store} />
-              </div>
-            ))}
-          </div>
-          </div>
-        </section>
-      ) : null}
+          </section>
+        ) : null}
 
-      {products.length > 0 ? (
-        <section
-          className="py-6 md:py-10"
-          style={{ backgroundColor: "var(--home-products-bg)" }}
-        >
-          <div className="container">
-          <div className="mb-5 flex items-end justify-between">
+        {featuredStores.length > 0 ? (
+          <section
+            id="featured-stores"
+            className="px-4 py-5 sm:px-6 lg:px-7"
+            style={{ backgroundColor: "var(--home-stores-bg)" }}
+          >
             <div>
-              <h2 className="text-2xl font-black">{common("products")}</h2>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black sm:text-2xl">
+                    {featuredSection?.title || home("featuredStores")}
+                  </h2>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
+                >
+                  <Link href="/stores">{home("allStores")}</Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {featuredStores.map((store, index) => (
+                  <div key={store.id} className={cn(index >= 4 && "hidden md:block")}>
+                    <HomeStoreCard store={store} />
+                  </div>
+                ))}
+              </div>
             </div>
-            <Button asChild variant="outline">
-              <Link href="/products">{productsLabel}</Link>
-            </Button>
-          </div>
-          <InfiniteProductGrid
-            initialProducts={products}
-            initialCursor={productNextCursor}
-            initialHasMore={productHasMore}
-            locale={locale}
-            sort="newest"
-            productCardVariant={productCardVariant}
-            labels={{ stock: "Stok" }}
-          />
+          </section>
+        ) : null}
+
+        {products.length > 0 ? (
+          <section
+            className="px-4 py-5 sm:px-6 lg:px-7"
+            style={{ backgroundColor: "var(--home-products-bg)" }}
+          >
+            <div>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black sm:text-2xl">
+                    {home("recentlyListed")}
+                  </h2>
+                </div>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
+                >
+                  <Link href="/products">{productsLabel}</Link>
+                </Button>
+              </div>
+              <InfiniteProductGrid
+                initialProducts={products}
+                initialCursor={productNextCursor}
+                initialHasMore={productHasMore}
+                locale={locale}
+                sort="newest"
+                productCardVariant={productCardVariant}
+                labels={{ stock: "Stok" }}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        <section
+          className="hidden md:block"
+          style={{ backgroundColor: "var(--home-benefits-bg)" }}
+        >
+          <div className="px-4 pb-8 pt-5 sm:px-6 lg:px-7">
+            <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  home("secureStructure"),
+                  home("storePanel"),
+                  benefitsSection?.title || home("quickShopping"),
+                ].map((itemTitle) => (
+                  <div
+                    key={itemTitle}
+                    className="rounded-lg border bg-background/70 p-4"
+                  >
+                    <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
+                    <h3 className="mt-3 text-sm font-bold">{itemTitle}</h3>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
-      ) : null}
-
-      <section
-        className="hidden md:block"
-        style={{ backgroundColor: "var(--home-benefits-bg)" }}
-      >
-        <div className="container pb-12 pt-8">
-        <div className="rounded-lg border bg-card p-4 shadow-sm sm:p-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              home("secureStructure"),
-              home("storePanel"),
-              benefitsSection?.title || home("quickShopping"),
-            ].map((itemTitle) => (
-              <div key={itemTitle} className="rounded-lg border bg-background/70 p-4">
-                <ShieldCheck className="size-5 text-primary" aria-hidden="true" />
-                <h3 className="mt-3 text-sm font-bold">{itemTitle}</h3>
-              </div>
-            ))}
-          </div>
-        </div>
-        </div>
-      </section>
+      </div>
       <SiteFooter
         siteName={siteSettings.shortName || siteSettings.siteName}
         description={siteSettings.defaultMetaDescription}

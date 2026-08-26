@@ -16,6 +16,7 @@ type MarketplaceSearchProps = {
   inputClassName?: string;
   buttonSize?: "default" | "lg";
   buttonLabel?: string;
+  buttonClassName?: string;
   stackOnMobile?: boolean;
   storeSlug?: string;
   compactActions?: boolean;
@@ -51,6 +52,7 @@ export function MarketplaceSearch({
   inputClassName,
   buttonSize = "default",
   buttonLabel,
+  buttonClassName,
   stackOnMobile = false,
   storeSlug,
   compactActions = false,
@@ -319,6 +321,7 @@ export function MarketplaceSearch({
         className={cn(
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
           compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
+          buttonClassName,
         )}
         onPointerDown={(event) => {
           if (event.pointerType === "touch") {
