@@ -44,6 +44,7 @@ export type MarketplaceStore = {
   name: string;
   slug: string;
   description: string | null;
+  heroTitle?: string | null;
   address: string | null;
   phone: string | null;
   logoUrl: string | null;

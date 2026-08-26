@@ -113,9 +113,6 @@ export default async function StorePage({ params, searchParams }: StorePageProps
       ? getStorePath(store.slug)
       : `/${store.slug}`;
 
-  const storeCategories = categories.filter((category) =>
-    store.categoryIds.includes(category.id),
-  );
   const storeLocations = await getLocationsForStores([store.id]);
 
   after(() => {
@@ -136,7 +133,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
       <ViewTracker storeId={store.id} />
       <Storefront
         store={store}
-        categories={storeCategories}
+        categories={categories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
         searchQuery={search?.q}

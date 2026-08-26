@@ -16,8 +16,15 @@ type StoreSettingsFormProps = {
     slug: string;
     logo_url: string | null;
     cover_url: string | null;
+    settings: Record<string, unknown> | null;
   };
 };
+
+function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  const value = settings?.[key];
+
+  return typeof value === "string" ? value : "";
+}
 
 function MediaPicker({
   name,
@@ -105,6 +112,7 @@ function MediaPicker({
 export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const publicUrl = getStorefrontUrl(store.slug);
+  const heroTitle = readSetting(store.settings, "heroTitle");
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -165,6 +173,15 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
           defaultValue={store.name}
           className="premium-input h-11"
           required
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-medium">
+        Mağaza səhifəsində title
+        <input
+          name="heroTitle"
+          defaultValue={heroTitle}
+          placeholder={`${store.name}ya xoş gəlmisiniz`}
+          className="premium-input h-11"
         />
       </label>
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">

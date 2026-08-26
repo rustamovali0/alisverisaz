@@ -18,7 +18,7 @@ export default async function StoreSettingsPage() {
   const supabase = await createSupabaseServerClient();
   const { data: store } = await (supabase as any)
     .from("stores")
-    .select("id,name,slug,logo_url,cover_url")
+    .select("id,name,slug,logo_url,cover_url,settings")
     .eq("owner_id", current.user.id)
     .order("created_at", { ascending: true })
     .limit(1)

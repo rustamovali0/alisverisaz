@@ -36,6 +36,12 @@ function readFile(formData: FormData, key: string) {
   return value instanceof File && value.size > 0 ? value : null;
 }
 
+function readSettings(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? { ...(value as Record<string, unknown>) }
+    : {};
+}
+
 async function uploadStoreMedia(input: {
   file: File;
   userId: string;
@@ -70,6 +76,7 @@ export async function updateSellerStoreSettingsAction(
   const current = await requireRole(["seller"], "/store/dashboard/settings");
   const storeId = readString(formData, "storeId");
   const name = readString(formData, "name");
+  const heroTitle = readString(formData, "heroTitle");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
 
@@ -83,7 +90,7 @@ export async function updateSellerStoreSettingsAction(
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: store } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id,owner_id,slug,logo_url,cover_url")
+    .select("id,owner_id,slug,logo_url,cover_url,settings")
     .eq("id", storeId)
     .eq("owner_id", current.user.id)
     .maybeSingle();
@@ -98,7 +105,20 @@ export async function updateSellerStoreSettingsAction(
   const replacedUrls: string[] = [];
 
   try {
-    const payload: Record<string, string> = { name };
+    const payload: Record<string, unknown> = { name };
+
+    if (formData.has("heroTitle")) {
+      const settings = readSettings(store.settings);
+
+      if (heroTitle) {
+        settings.heroTitle = heroTitle;
+      } else {
+        delete settings.heroTitle;
+      }
+
+      payload.settings = settings;
+    }
+
     if (logoFile) {
       replacedUrls.push(store.logo_url);
       payload.logo_url = await uploadStoreMedia({

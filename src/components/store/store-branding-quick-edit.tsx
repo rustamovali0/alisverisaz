@@ -1,6 +1,6 @@
 "use client";
 
-import { ImagePlus, Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, Save } from "lucide-react";
 import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,7 @@ type StoreBrandingQuickEditProps = {
   store: {
     id: string;
     name: string;
+    heroTitle?: string | null;
     logoUrl: string | null;
     coverUrl: string | null;
   };
@@ -51,6 +52,25 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
     });
   }
 
+  function updateTitle(formData: FormData) {
+    if (isPending) return;
+
+    formData.set("storeId", store.id);
+    formData.set("name", store.name);
+
+    startTransition(async () => {
+      const result = await updateSellerStoreSettingsAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Title saxlanmadı");
+        return;
+      }
+
+      void appAlert.success("Title yeniləndi", result.message);
+      router.refresh();
+    });
+  }
+
   return (
     <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
       <input ref={bannerInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("banner", event.target.files?.[0] ?? null)} />
@@ -69,7 +89,22 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
           {store.logoUrl ? <img src={store.logoUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-2xl font-black text-primary">{store.name.slice(0, 1)}</span>}
           <span className="absolute inset-0 grid place-items-center bg-black/45 text-white opacity-0 transition hover:opacity-100 focus-within:opacity-100"><ImagePlus className="size-5" /></span>
         </Button>
-        <div className="min-w-0"><h1 className="truncate text-2xl font-black tracking-normal sm:text-3xl">{store.name}</h1><p className="mt-1 text-sm text-muted-foreground">Banner və logoya toxunaraq yeniləyin.</p></div>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-2xl font-black tracking-normal sm:text-3xl">{store.name}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Banner, logo və mağaza title-ni buradan yeniləyin.</p>
+          <form action={updateTitle} className="mt-3 flex min-w-0 flex-col gap-2 sm:flex-row">
+            <input
+              name="heroTitle"
+              defaultValue={store.heroTitle ?? ""}
+              placeholder={`${store.name}ya xoş gəlmisiniz`}
+              className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30"
+            />
+            <Button type="submit" disabled={isPending} className="h-10 gap-2">
+              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              Saxla
+            </Button>
+          </form>
+        </div>
       </div>
     </section>
   );

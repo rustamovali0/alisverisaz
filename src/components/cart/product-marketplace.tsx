@@ -124,6 +124,23 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
   );
 }
 
+function getWelcomeTitle(store: MarketplaceStore) {
+  if (store.heroTitle?.trim()) {
+    return store.heroTitle.trim();
+  }
+
+  const name = store.name.trim();
+  const letters = name.toLocaleLowerCase("az-AZ").replace(/[^a-zəıöüğçş]/g, "");
+  const lastLetter = letters.at(-1) ?? "";
+  const lastVowel = [...letters].reverse().find((letter) => "aıouəeiöü".includes(letter));
+  const frontSuffix = lastVowel ? "əeiöü".includes(lastVowel) : false;
+  const suffix = "aıouəeiöü".includes(lastLetter)
+    ? frontSuffix ? "yə" : "ya"
+    : frontSuffix ? "ə" : "a";
+
+  return `${name}${suffix} xoş gəlmisiniz`;
+}
+
 function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
   const seen = new Set(current.map((product) => product.id));
   const merged = [...current];
@@ -366,6 +383,7 @@ function MarketplaceFilterBar({
   onMinPrice,
   onMaxPrice,
   onStockOnly,
+  layout = "stacked",
 }: {
   categories: CategoryOption[];
   selectedCategoryId?: string;
@@ -382,13 +400,15 @@ function MarketplaceFilterBar({
   onMinPrice: (value: string) => void;
   onMaxPrice: (value: string) => void;
   onStockOnly: (value: boolean) => void;
+  layout?: "stacked" | "wide";
 }) {
   const t = useTranslations("marketplace");
+  const isWide = layout === "wide";
 
   return (
-    <section className="relative z-20 rounded-lg border bg-card p-2.5 shadow-sm">
-      <h2 className="mb-2 text-xs font-bold text-foreground">{t("filters")}</h2>
-      <div className="space-y-2">
+    <section className={cn("relative z-20 rounded-lg border bg-card shadow-sm", isWide ? "p-3 md:p-4" : "p-2.5")}>
+      <h2 className={cn("text-xs font-bold text-foreground", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
+      <div className={cn(isWide ? "grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))_minmax(11rem,0.8fr)] md:items-center" : "space-y-2")}>
         <MarketplaceDropdown
           label={t("categoryFilter")}
           value={selectedCategoryId ?? ""}
@@ -431,7 +451,7 @@ function MarketplaceFilterBar({
             onChange={(event) => onMinPrice(event.target.value)}
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
-            className="h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30", !isWide && "sm:w-24")}
           />
           <input
             type="number"
@@ -441,7 +461,7 @@ function MarketplaceFilterBar({
             onChange={(event) => onMaxPrice(event.target.value)}
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
-            className="h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30 sm:w-24"
+            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30", !isWide && "sm:w-24")}
           />
         </div>
 
@@ -1364,7 +1384,6 @@ export function Storefront({
     [infinite.products, store.id],
   );
   const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
-  const heroCategories = categories.slice(0, 5);
   const variantFilterValues = useMemo(() => {
     const values = {
       color: new Set<string>(),
@@ -1432,6 +1451,29 @@ export function Storefront({
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
   }, [selectedCategoryId]);
+  const storeProductCategoryIds = useMemo(
+    () => new Set(store.categoryIds),
+    [store.categoryIds],
+  );
+  const legacyCategories = useMemo(
+    () => categories.filter((category) => storeProductCategoryIds.has(category.id)),
+    [categories, storeProductCategoryIds],
+  );
+  const sortedStoreCategories = useMemo(
+    () =>
+      [...categories].sort((a, b) => {
+        const aHasProducts = storeProductCategoryIds.has(a.id);
+        const bHasProducts = storeProductCategoryIds.has(b.id);
+
+        if (aHasProducts !== bHasProducts) {
+          return aHasProducts ? -1 : 1;
+        }
+
+        return a.name.localeCompare(b.name, "az");
+      }),
+    [categories, storeProductCategoryIds],
+  );
+  const heroCategories = sortedStoreCategories.slice(0, 5);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1496,6 +1538,7 @@ export function Storefront({
       onMinPrice={setMinPrice}
       onMaxPrice={setMaxPrice}
       onStockOnly={setInStockOnly}
+      layout="wide"
     />
   );
 
@@ -1545,14 +1588,14 @@ export function Storefront({
         </div>
       </div>
       {isFiltersOpen ? (
-        <div id="storefront-filters" className="relative z-20 mb-5 w-full max-w-sm">
+        <div id="storefront-filters" className="relative z-20 mb-5 w-full">
           {filterBar}
         </div>
       ) : null}
       <div className="grid min-w-0 gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
           <CategoryFilters
-            categories={categories}
+            categories={legacyCategories}
             selectedCategoryId={activeCategoryId}
             baseHref={storeHomeHref}
             allLabel={t("allCategories")}
@@ -1579,7 +1622,7 @@ export function Storefront({
   );
 
   const modernCategoriesSection =
-    categories.length > 0 ? (
+    sortedStoreCategories.length > 0 ? (
       <section
         data-home-categories
         className="px-4 py-5 sm:px-6 lg:px-7"
@@ -1597,16 +1640,18 @@ export function Storefront({
             {home("allCategories")}
           </Button>
         </div>
-        <div className="grid max-w-full grid-flow-col grid-rows-2 gap-2 overflow-x-auto pb-2 [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden">
-          {categories.map((category) => {
+        <div className="flex max-w-full flex-wrap gap-3">
+          {sortedStoreCategories.map((category) => {
             const isSelected = activeCategoryId === category.id;
+            const hasProducts = storeProductCategoryIds.has(category.id);
 
             return (
               <button
                 key={category.id}
                 type="button"
                 className={cn(
-                  "flex h-11 min-w-40 shrink-0 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md md:min-w-36",
+                  "flex h-11 min-w-[10rem] flex-[1_1_calc(50%-0.75rem)] items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md sm:flex-[1_1_calc(33.333%-0.75rem)]",
+                  !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-cyan-300 bg-cyan-50 text-cyan-800",
                 )}
                 onClick={() => selectCategory(category)}
@@ -1655,7 +1700,7 @@ export function Storefront({
         </div>
       </div>
       {isFiltersOpen ? (
-        <div id="storefront-modern-filters" className="relative z-20 mb-5 w-full max-w-sm">
+        <div id="storefront-modern-filters" className="relative z-20 mb-5 w-full">
           {filterBar}
         </div>
       ) : null}
@@ -1749,17 +1794,9 @@ export function Storefront({
               <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
                 <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
                 <div className="mt-5 min-w-0">
-                  <span className="inline-flex rounded-full border border-white/20 bg-slate-950/55 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur">
-                    {t("store")}
-                  </span>
-                  <h1 className="mt-4 max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
-                    {store.name}
+                  <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
+                    {getWelcomeTitle(store)}
                   </h1>
-                  {store.description ? (
-                    <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/92 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)] sm:text-base">
-                      {store.description}
-                    </p>
-                  ) : null}
                   <p className="mt-4 text-sm font-bold text-white/85">
                     {t("productCount", { count: store.productCount })}
                   </p>

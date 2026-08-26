@@ -170,9 +170,9 @@ export const defaultSiteSettings: SiteSettings = {
 export const defaultHomepageSections = [
   {
     key: "hero",
-    title: "Alışveriş marketplace",
+    title: "Alışverişdə hər mağaza öz vitrinini qurur",
     description:
-      "Azərbaycanda mağaza açmaq, yeni məhsul satmaq və sifarişləri idarə etmək üçün müasir e-ticarət marketplace platforması.",
+      "Sevdiyiniz məhsulları kəşf edin, mağazanızı rahat idarə edin və sifarişləri bir yerdən izləyin.",
     imageUrl: "",
     settings: {
       showTitle: true,

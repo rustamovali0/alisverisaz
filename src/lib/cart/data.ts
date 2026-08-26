@@ -833,6 +833,13 @@ async function getMarketplaceStoreBySlugUncached(input: {
   }
 
   const productRows = (products ?? []) as ProductRow[];
+  const { data: categoryRows, error: categoryRowsError } = await (supabase as any)
+    .from("products")
+    .select("category_id")
+    .eq("store_id", store.id)
+    .eq("status", "active")
+    .not("category_id", "is", null)
+    .limit(1000);
   const pageProducts = productRows
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
     .map((product) => toCartProduct(product));
@@ -844,6 +851,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     name: store.name,
     slug: store.slug,
     description: store.description,
+    heroTitle: readSetting(store.settings, "heroTitle"),
     address: readSetting(store.settings, "address"),
     phone: readSetting(store.settings, "phone"),
     logoUrl: store.logo_url,
@@ -858,7 +866,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
         : null,
     categoryIds: Array.from(
       new Set(
-        productRows
+        (categoryRowsError ? productRows : ((categoryRows ?? []) as Array<{ category_id: string | null }>))
           .map((product) => product.category_id)
           .filter((value): value is string => Boolean(value)),
       ),
