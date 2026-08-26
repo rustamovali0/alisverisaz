@@ -124,12 +124,19 @@ export function MarketplaceHeader({
   return (
     <>
       <header
-        className={sticky ? cn("marketplace-header relative z-40 border-b shadow-sm shadow-slate-950/[0.03] md:sticky md:top-0", isHomePage ? "bg-background/80 backdrop-blur-xl" : "bg-background/95") : "marketplace-header relative z-40 border-b bg-background/95 shadow-sm shadow-slate-950/[0.03]"}
+        className={
+          sticky
+            ? cn(
+                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/92 shadow-sm shadow-teal-950/[0.04] backdrop-blur-xl md:sticky md:top-0",
+                !isHomePage && "bg-white/95",
+              )
+            : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04]"
+        }
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 py-3 sm:gap-3 xl:flex-nowrap">
           <Link href={brandHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
-              <span className="grid size-10 place-items-center overflow-hidden rounded-lg border bg-background shadow-sm md:size-10 md:rounded-md">
+              <span className="grid size-10 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm md:size-10 md:rounded-md">
                 <img
                   src={logoUrl}
                   alt={displaySiteName}
@@ -144,11 +151,11 @@ export function MarketplaceHeader({
                 ) : null}
               </span>
             ) : (
-              <span className="grid size-10 place-items-center rounded-lg bg-primary text-lg font-black text-primary-foreground shadow-sm md:size-10 md:rounded-md md:text-lg">
+              <span className="grid size-10 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm md:size-10 md:rounded-md md:text-lg">
                 a
               </span>
             )}
-            <span className="min-w-0 truncate text-xl font-black tracking-normal min-[400px]:text-2xl md:text-xl">
+            <span className="min-w-0 truncate text-xl font-black tracking-normal text-slate-950 min-[400px]:text-2xl md:text-xl">
               {displaySiteName}
             </span>
           </Link>
@@ -201,12 +208,26 @@ export function MarketplaceHeader({
             ) : null}
           </div>
           <nav className="hidden min-w-0 items-center gap-1 lg:flex">
-            <Button asChild variant={isProductsActive ? "secondary" : "ghost"}>
+            <Button
+              asChild
+              variant={isProductsActive ? "secondary" : "ghost"}
+              className={cn(
+                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800",
+                isProductsActive && "bg-cyan-50 text-cyan-800",
+              )}
+            >
               <Link href={productsHref} prefetch>
                 {nav("products")}
               </Link>
             </Button>
-            <Button asChild variant={isAboutActive ? "secondary" : "ghost"}>
+            <Button
+              asChild
+              variant={isAboutActive ? "secondary" : "ghost"}
+              className={cn(
+                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800",
+                isAboutActive && "bg-cyan-50 text-cyan-800",
+              )}
+            >
               <Link href="/about" prefetch>
                 {nav("about")}
               </Link>
@@ -218,7 +239,9 @@ export function MarketplaceHeader({
                 stores={stores}
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
-                className="min-w-0 flex-1"
+                className="min-w-0 flex-1 rounded-full border border-cyan-100 bg-white p-1 shadow-sm"
+                inputClassName="h-10 rounded-full border-0 bg-[#f6fbfa] pl-11 pr-4 text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-cyan-200"
+                buttonClassName="rounded-full bg-[#0f7f8f] px-5 text-white hover:bg-[#0c6c79]"
               />
             </div>
           ) : null}
@@ -226,14 +249,14 @@ export function MarketplaceHeader({
             <LanguageSwitcher className="hidden lg:flex" />
             <ThemeToggle
               className={cn(
-                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-background hover:text-primary hover:shadow-md md:size-12",
+                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-800 hover:shadow-md md:size-12",
                 isSeller && sellerUtilityButtonClass,
               )}
               iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"}
             />
             <NotificationCenter
               buttonClassName={cn(
-                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
                 isSeller && sellerUtilityButtonClass,
               )}
               iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"}
@@ -243,7 +266,7 @@ export function MarketplaceHeader({
               size="icon"
               variant="ghost"
               className={cn(
-                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
                 isSeller && sellerUtilityButtonClass,
               )}
               aria-label={nav("favorites")}
@@ -257,7 +280,7 @@ export function MarketplaceHeader({
               size="icon"
               variant="ghost"
               className={cn(
-                "size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
+                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
                 isSeller && sellerUtilityButtonClass,
               )}
               aria-label={common("cart")}

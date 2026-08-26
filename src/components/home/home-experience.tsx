@@ -254,41 +254,42 @@ export function HomeExperience({
     visibleLimit(featuredSection, 8),
   );
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 8));
-  const heroImageUrl =
-    hero?.imageUrl ||
-    "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1800&q=82";
+  const heroImageUrl = hero?.imageUrl.trim();
   const heroPills = activeCategories.slice(0, 5);
 
   return (
     <main
-      className="min-h-screen w-full max-w-full overflow-x-clip bg-[#9fd5d1] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-12"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-12"
       data-homepage-preset={siteSettings.design.homepagePreset}
-      style={{ ...themeStyle, backgroundColor: "#9fd5d1" }}
+      style={{ ...themeStyle, backgroundColor: "#e9f6f2" }}
     >
-      <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-2xl shadow-teal-950/20 sm:rounded-lg">
+      <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-xl shadow-teal-950/10 sm:rounded-lg">
         <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
-          <div className="relative overflow-hidden rounded-lg bg-slate-950">
+          <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
             <div className="absolute inset-0">
-              <img
-                src={heroImageUrl}
-                alt={heroTitle}
-                className="h-full w-full object-cover"
-                loading="eager"
-                decoding="async"
-              />
-              <div className="absolute inset-0 bg-slate-950/52" />
+              {heroImageUrl ? (
+                <img
+                  src={heroImageUrl}
+                  alt={heroTitle}
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                  decoding="async"
+                />
+              ) : null}
+              <div className="absolute inset-0 bg-slate-950/70" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.88),rgba(15,23,42,0.66),rgba(2,6,23,0.78))]" />
             </div>
             <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
-              <span className="mb-5 inline-flex rounded-full bg-white/92 px-4 py-2 text-xs font-bold text-slate-800 shadow-sm">
+              <span className="mb-5 inline-flex rounded-full border border-white/20 bg-slate-950/55 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur">
                 {home("marketplaceBadge")}
               </span>
               {heroShowTitle ? (
-                <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal">
+                <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
                   {heroTitle}
                 </h1>
               ) : null}
               {heroShowDescription ? (
-                <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/86 sm:text-base">
+                <p className="mt-4 max-w-2xl text-sm font-semibold leading-6 text-white/92 drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)] sm:text-base">
                   {heroDescription}
                 </p>
               ) : null}
