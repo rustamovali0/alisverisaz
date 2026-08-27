@@ -21,6 +21,7 @@ type MarketplaceSearchProps = {
   storeSlug?: string;
   searchBaseHref?: string;
   compactActions?: boolean;
+  placeholder?: string;
 };
 
 type SearchSuggestion = {
@@ -58,6 +59,7 @@ export function MarketplaceSearch({
   storeSlug,
   searchBaseHref,
   compactActions = false,
+  placeholder,
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
   const marketplace = useTranslations("marketplace");
@@ -125,19 +127,6 @@ export function MarketplaceSearch({
     setRemoteProducts(null);
     setIsSearching(false);
   }, [defaultValue]);
-
-  useEffect(() => {
-    if (!isFocused || typeof window === "undefined" || !window.matchMedia("(pointer: coarse)").matches) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isFocused]);
 
   useEffect(() => {
     if (!isFocused || query.trim() || loadedPopularSearches.current) {
@@ -311,7 +300,7 @@ export function MarketplaceSearch({
           spellCheck={false}
           className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
           name="marketplace-search"
-          placeholder={marketplace("searchPlaceholder")}
+          placeholder={placeholder ?? marketplace("searchPlaceholder")}
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}

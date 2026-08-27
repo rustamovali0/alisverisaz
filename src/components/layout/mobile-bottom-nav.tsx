@@ -131,6 +131,7 @@ export function MobileBottomNav({
   const [cartCount, setCartCount] = useState(0);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const isAuthLoading = !isResolved && !initialRole;
   const actualRole =
@@ -294,6 +295,44 @@ export function MobileBottomNav({
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+    const initialHeight = viewport.height;
+
+    function syncKeyboardState() {
+      const activeElement = document.activeElement;
+      const isTextInput =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        activeElement instanceof HTMLSelectElement ||
+        activeElement?.getAttribute("contenteditable") === "true";
+      const viewportShrink = initialHeight - viewport.height;
+
+      setIsKeyboardOpen(Boolean(isTextInput && viewportShrink > 90));
+    }
+
+    syncKeyboardState();
+    viewport.addEventListener("resize", syncKeyboardState);
+    viewport.addEventListener("scroll", syncKeyboardState);
+    window.addEventListener("focusin", syncKeyboardState);
+    window.addEventListener("focusout", syncKeyboardState);
+
+    return () => {
+      viewport.removeEventListener("resize", syncKeyboardState);
+      viewport.removeEventListener("scroll", syncKeyboardState);
+      window.removeEventListener("focusin", syncKeyboardState);
+      window.removeEventListener("focusout", syncKeyboardState);
+    };
+  }, []);
+
+  if (isKeyboardOpen) {
+    return null;
+  }
 
   if (isAuthLoading) {
     return (

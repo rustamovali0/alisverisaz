@@ -277,7 +277,7 @@ export function HomeExperience({
     >
       <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-xl shadow-teal-950/10 sm:rounded-lg">
         <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
-          <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
+          <div className="relative overflow-hidden rounded-lg bg-[#07111b]">
             <div className="absolute inset-0">
               {heroImageUrl ? (
                 <img
@@ -288,7 +288,8 @@ export function HomeExperience({
                     mobileHeroImageUrl && "hidden md:block",
                   )}
                   loading="eager"
-                  decoding="async"
+                  decoding="sync"
+                  fetchPriority="high"
                 />
               ) : null}
               {mobileHeroImageUrl ? (
@@ -297,7 +298,8 @@ export function HomeExperience({
                   alt={heroTitle}
                   className="h-full w-full object-cover md:hidden"
                   loading="eager"
-                  decoding="async"
+                  decoding="sync"
+                  fetchPriority="high"
                 />
               ) : null}
               <div className="absolute inset-0 bg-slate-950/48" />
@@ -323,6 +325,7 @@ export function HomeExperience({
                 buttonSize="lg"
                 stackOnMobile
                 compactActions
+                placeholder="Məhsul və ya mağaza axtar"
               />
               {heroPills.length > 0 ? (
                 <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">

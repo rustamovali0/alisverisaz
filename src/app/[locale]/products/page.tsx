@@ -52,7 +52,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     categoryId: selectedCategory?.id,
     searchQuery: search?.q,
     sort: search?.sort,
-    limit: 50,
+    limit: 52,
   });
 
   return (

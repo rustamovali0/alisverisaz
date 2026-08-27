@@ -97,6 +97,7 @@ type StorefrontProps = {
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+const PRODUCT_PAGE_SIZE = 52;
 
 type FooterProps = {
   siteName?: string;
@@ -580,8 +581,8 @@ export function ProductGrid({
               centerRelatedCards && "md:justify-center",
             )
           : forceMobileTwoColumns
-            ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-4"
-            : "grid min-w-0 grid-cols-[repeat(auto-fit,minmax(158px,1fr))] gap-3 sm:grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] sm:gap-4",
+            ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
+            : "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
       )}
     >
       {products.map((product) => {
@@ -832,7 +833,7 @@ function useInfiniteProducts({
 
     const params = new URLSearchParams({
       locale,
-      limit: "50",
+      limit: String(PRODUCT_PAGE_SIZE),
       sort: sort ?? "newest",
     });
 
@@ -895,7 +896,7 @@ function useInfiniteProducts({
 
     const params = new URLSearchParams({
       locale,
-      limit: "50",
+      limit: String(PRODUCT_PAGE_SIZE),
       cursor,
       sort: sort ?? "newest",
     });

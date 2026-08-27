@@ -28,8 +28,8 @@ export default async function AuthLayout({ children, params }: AuthLayoutProps) 
   }
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,hsl(var(--muted)/0.48),hsl(var(--background))_22%)]">
-      <div className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+    <main className="h-[calc(100dvh-4.75rem)] overflow-hidden bg-[linear-gradient(180deg,hsl(var(--muted)/0.48),hsl(var(--background))_22%)]">
+      <div className="h-full overflow-hidden px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         {children}
       </div>
     </main>

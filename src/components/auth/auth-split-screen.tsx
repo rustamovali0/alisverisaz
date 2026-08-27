@@ -15,10 +15,12 @@ export function AuthSplitScreen({
   className,
 }: AuthSplitScreenProps) {
   return (
-    <div className={cn("w-full", className)}>
-      <div className="mx-auto grid w-full max-w-[1120px] gap-5 lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start lg:py-[clamp(0.75rem,2.5vh,1.5rem)]">
-        <div className="flex w-full justify-center">
-          <div className="w-full max-w-[520px]">{children}</div>
+    <div className={cn("h-full w-full", className)}>
+      <div className="mx-auto grid h-full min-h-0 w-full max-w-[1120px] gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
+        <div className="flex min-h-0 w-full justify-center overflow-hidden">
+          <div className="max-h-full w-full max-w-[520px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+            {children}
+          </div>
         </div>
         <AuthVisualPanel variant={variant} />
       </div>
