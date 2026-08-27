@@ -113,11 +113,11 @@ export function PublicStoreLocationSection({
 
       {activeLocations.length > 0 ? (
         <div className="p-3 md:p-4">
-          <div className="min-w-0 overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm">
-            {activeLocations.map((location, index) => (
+          <div className="grid min-w-0 gap-2 md:grid-cols-2">
+            {activeLocations.map((location) => (
               <article
                 key={location.id}
-                className="min-w-0 p-3 md:p-4"
+                className="min-w-0 rounded-lg border border-cyan-100 bg-white p-3 shadow-sm md:p-4"
               >
                 <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-2.5">
@@ -129,8 +129,8 @@ export function PublicStoreLocationSection({
                       {location.name}
                     </h3>
                     {location.showAddress ? (
-                      <div className="mt-1 max-w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        <p className="w-max whitespace-nowrap text-sm leading-5 text-slate-500">
+                      <div className="mt-1 max-w-full">
+                        <p className="break-words text-sm leading-5 text-slate-500">
                           {[location.city, location.district, location.address].filter(Boolean).join(", ")}
                         </p>
                       </div>
@@ -147,11 +147,11 @@ export function PublicStoreLocationSection({
                 ) : null}
               </div>
 
-              <div className="mt-3 flex max-w-full items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <div className="mt-3 flex max-w-full flex-wrap items-center gap-1.5">
                 {location.showMetro && location.nearestMetro ? (
-                  <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6fbfa] px-3 py-1.5 text-xs font-medium text-slate-500">
+                  <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f6fbfa] px-2.5 py-1.5 text-xs font-medium text-slate-500">
                     <Navigation className="size-3.5 shrink-0 text-cyan-700" aria-hidden="true" />
-                    <span className="whitespace-nowrap">
+                    <span className="min-w-0 break-words">
                       {location.nearestMetro}
                       {location.metroWalkMinutes ? ` · ${location.metroWalkMinutes} dəq.` : ""}
                       {location.metroDistanceMeters ? ` · ${location.metroDistanceMeters} m` : ""}
@@ -160,9 +160,9 @@ export function PublicStoreLocationSection({
                 ) : null}
 
                 {location.showBus && (location.busStopName || location.busRoutes.length) ? (
-                  <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6fbfa] px-3 py-1.5 text-xs font-medium text-slate-500">
+                  <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f6fbfa] px-2.5 py-1.5 text-xs font-medium text-slate-500">
                     <Bus className="size-3.5 shrink-0 text-cyan-700" aria-hidden="true" />
-                    <span className="whitespace-nowrap">
+                    <span className="min-w-0 break-words">
                       {location.busStopName ?? "Avtobus"}
                       {location.busRoutes.length ? ` · ${location.busRoutes.join(", ")}` : ""}
                     </span>
@@ -170,21 +170,21 @@ export function PublicStoreLocationSection({
                 ) : null}
 
                 {location.workingHours ? (
-                  <div className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6fbfa] px-3 py-1.5 text-xs font-medium text-slate-500">
+                  <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f6fbfa] px-2.5 py-1.5 text-xs font-medium text-slate-500">
                     <Clock className="size-3.5 shrink-0 text-cyan-700" aria-hidden="true" />
-                    <span className="whitespace-nowrap">{location.workingHours}</span>
+                    <span className="min-w-0 break-words">{location.workingHours}</span>
                   </div>
                 ) : null}
 
                 {location.deliveryAvailable ? (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1.5 text-xs font-bold text-emerald-700">
                     <Truck className="size-3.5" aria-hidden="true" />
                     Çatdırılma var
                   </span>
                 ) : null}
 
                 {location.pickupAvailable ? (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-800">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-50 px-2.5 py-1.5 text-xs font-bold text-cyan-800">
                     <PackageCheck className="size-3.5" aria-hidden="true" />
                     Özün götürmə
                   </span>
@@ -193,16 +193,13 @@ export function PublicStoreLocationSection({
                 {location.phone ? (
                   <a
                     href={`tel:${location.phone.replace(/\s/g, "")}`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#f6fbfa] px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:text-cyan-700"
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#f6fbfa] px-2.5 py-1.5 text-xs font-bold text-slate-500 transition hover:text-cyan-700"
                   >
                     <Phone className="size-3.5 shrink-0 text-cyan-700" aria-hidden="true" />
-                    <span className="whitespace-nowrap">{location.phone}</span>
+                    <span className="min-w-0 break-words">{location.phone}</span>
                   </a>
                 ) : null}
               </div>
-                {index < activeLocations.length - 1 ? (
-                  <div className="mt-3 border-b border-cyan-100" aria-hidden="true" />
-                ) : null}
               </article>
             ))}
           </div>

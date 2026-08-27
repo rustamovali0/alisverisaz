@@ -335,19 +335,19 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                       </h2>
                     </div>
                   </div>
-                  <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 text-xs text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
                       <Package className="size-3.5 text-primary" aria-hidden="true" />
-                      <span className="whitespace-nowrap">{detail.store.productCount} məhsul</span>
+                      <span className="break-words">{detail.store.productCount} məhsul</span>
                     </span>
-                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
+                    <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
                       <Clock3 className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="whitespace-nowrap">{formatLastActive(detail.store.updatedAt)}</span>
+                      <span className="break-words">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
                     {sellerAddress ? (
-                      <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
+                      <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
                         <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                        <span className="whitespace-nowrap">{sellerAddress}</span>
+                        <span className="break-words">{sellerAddress}</span>
                       </span>
                     ) : null}
                   </div>

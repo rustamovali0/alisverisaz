@@ -12,8 +12,10 @@ import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
+import { clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
 import { showToast } from "@/lib/toast";
 import { Link, useRouter } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
   mode?: "public" | "admin";
@@ -40,6 +42,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   const [captchaToken, setCaptchaToken] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const next = searchParams.get("next") ?? "";
+  const isAdminMode = mode === "admin";
 
   const visualLabel = useMemo(
     () =>
@@ -109,7 +112,9 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         dedupeKey: "login-success",
         persistAcrossNavigation: true,
       });
+      clearClientAuthProfileCache();
       router.replace(result.redirectTo);
+      router.refresh();
     });
   }
 
@@ -142,7 +147,11 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
 
   return (
     <AuthCard
-      className="mx-auto max-w-[520px]"
+      className={cn(
+        "mx-auto max-w-[520px]",
+        isAdminMode &&
+          "border-emerald-500/25 bg-black/72 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
+      )}
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
@@ -165,7 +174,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           </Button>
         )
       }
-      title={mode === "admin" ? "RAdmin girişi" : "Giriş"}
+      title={mode === "admin" ? "Admin giriş" : "Giriş"}
       description={visualLabel}
       footer={
         <div className="space-y-3">
@@ -233,9 +242,11 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             />
             Məni xatırla
           </label>
-          <Link className="font-medium text-primary hover:underline" href="/forgot-password">
-            Şifrəni unutmusunuz?
-          </Link>
+          {mode === "public" ? (
+            <Link className="font-medium text-primary hover:underline" href="/forgot-password">
+              Şifrəni unutmusunuz?
+            </Link>
+          ) : null}
         </div>
         <TurnstileField
           token={captchaToken}

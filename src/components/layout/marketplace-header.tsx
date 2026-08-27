@@ -106,6 +106,14 @@ export function MarketplaceHeader({
   const isGuest = resolvedRole === null;
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
+  const shouldSuppressSearch =
+    isSellerDashboard ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/seller") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/radmin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register");
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
@@ -168,7 +176,7 @@ export function MarketplaceHeader({
 
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
-    !isSellerDashboard && (!isHomePage || !isHomeSearchVisible);
+    !shouldSuppressSearch && (!isHomePage || !isHomeSearchVisible);
 
   return (
     <>
@@ -176,7 +184,7 @@ export function MarketplaceHeader({
         className={
           sticky
             ? cn(
-                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none md:sticky md:top-0",
+                "marketplace-header sticky top-0 z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none",
                 !isHomePage && "bg-white/95 dark:bg-slate-950/95",
               )
             : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none"
@@ -253,7 +261,7 @@ export function MarketplaceHeader({
                   <Link href="/cart" prefetch className="relative grid place-items-center">
                     <ShoppingCart className={sellerCommerceIconClass} aria-hidden="true" />
                     {cartCount > 0 ? (
-                      <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                      <span className="absolute -right-1 -top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                         {cartCount > 99 ? "99+" : cartCount}
                       </span>
                     ) : null}
@@ -350,7 +358,7 @@ export function MarketplaceHeader({
               <Link href="/cart" prefetch className="relative grid place-items-center">
                 <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
                 {cartCount > 0 ? (
-                  <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                  <span className="absolute -right-1 -top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 ) : null}
@@ -365,8 +373,8 @@ export function MarketplaceHeader({
           </div>
         </div>
       </header>
-      {showMobileSearch && !isSellerDashboard && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
-        <div className="mobile-performance-surface relative z-30 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+      {showMobileSearch && !shouldSuppressSearch && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+        <div className="mobile-performance-surface sticky top-[73px] z-30 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}

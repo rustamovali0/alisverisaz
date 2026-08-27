@@ -139,7 +139,13 @@ export function MobileBottomNav({
       : profile.status === "authenticated"
         ? profile.role
         : null;
-  const role = actualRole === "admin" ? null : actualRole;
+  const routeRole: AuthRole | null =
+    pathname.startsWith("/store/dashboard") || pathname.startsWith("/seller")
+      ? "seller"
+      : pathname.startsWith("/dashboard")
+        ? "customer"
+        : null;
+  const role = actualRole === "admin" ? null : actualRole ?? routeRole;
   const accountHref = isAuthLoading ? null : accountPath(role);
   const accountText = isAuthLoading
     ? nav("account")
@@ -354,7 +360,7 @@ export function MobileBottomNav({
                   aria-hidden="true"
                 />
                 {badge > 0 ? (
-                  <span className="absolute -right-2.5 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                  <span className="absolute -right-1 -top-1.5 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}

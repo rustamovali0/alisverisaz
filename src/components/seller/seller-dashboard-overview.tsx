@@ -59,14 +59,14 @@ function Stat({
   const content = (
     <article
       className={cn(
-        "rounded-lg border bg-card p-4 shadow-sm",
+        "min-h-[92px] rounded-lg border bg-card p-3 shadow-sm sm:min-h-[116px] sm:p-4",
         tone === "warning" && "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30",
         tone === "success" && "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30",
       )}
     >
-      <p className="text-sm font-semibold text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-black tracking-normal">{value}</p>
-      {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
+      <p className="text-xs font-semibold text-muted-foreground sm:text-sm">{label}</p>
+      <p className="mt-1 text-xl font-black tracking-normal sm:mt-2 sm:text-2xl">{value}</p>
+      {description ? <p className="mt-1 hidden text-sm text-muted-foreground sm:block">{description}</p> : null}
     </article>
   );
 
@@ -84,7 +84,7 @@ function LimitWarning({
 }) {
   if (limit === null) {
     return (
-      <div className="rounded-lg border bg-card p-4 text-sm font-semibold text-muted-foreground">
+      <div className="rounded-lg border bg-card p-3 text-xs font-semibold text-muted-foreground sm:p-4 sm:text-sm">
         Məhsul limiti: limitsiz
       </div>
     );
@@ -94,7 +94,7 @@ function LimitWarning({
     const remaining = Math.max(limit - usage, 0);
 
     return (
-      <div className="rounded-lg border bg-card p-4 text-sm font-semibold text-muted-foreground">
+      <div className="rounded-lg border bg-card p-3 text-xs font-semibold text-muted-foreground sm:p-4 sm:text-sm">
         <p>{usage} / {limit} elan istifadə olunub</p>
         <p className="mt-1">{remaining} elan limitiniz qalıb</p>
       </div>
@@ -104,7 +104,7 @@ function LimitWarning({
   const isFull = usage >= limit;
 
   return (
-    <div className={cn("flex items-start gap-3 rounded-lg border p-4", isFull ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300")}>
+    <div className={cn("flex items-start gap-2 rounded-lg border p-3 sm:gap-3 sm:p-4", isFull ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300")}>
       <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
       <div>
         <p className="text-sm font-black">{isFull ? "Məhsul limitiniz dolub." : "Məhsul limitinizə yaxınlaşırsınız."}</p>
@@ -121,8 +121,8 @@ function LimitWarning({
 
 export function SellerDashboardOverview({ overview }: SellerDashboardOverviewProps) {
   return (
-    <div className="space-y-6">
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-4 sm:space-y-6">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         <Stat label="Aktiv məhsullar" value={overview.products.active} description="Satışda olan məhsullar" href="/store/dashboard/products" />
         <Stat label="Draft məhsullar" value={overview.products.draft} description="Tamamlanmamış məhsullar" href="/store/dashboard/products" />
         <Stat label="Yeni sifarişlər" value={overview.orders.new} description="Yeni və təsdiqlənmiş sifarişlər" href="/seller/orders" tone="warning" />
@@ -135,7 +135,7 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
         usageRatio={overview.products.usageRatio}
       />
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 xl:grid-cols-5">
         <Stat label="Hazırlanır" value={overview.orders.processing} href="/seller/orders" />
         <Stat label="Göndərildi" value={overview.orders.shipped} href="/seller/orders" />
         <Stat label="Çatdırıldı" value={overview.orders.completed} href="/seller/orders" tone="success" />

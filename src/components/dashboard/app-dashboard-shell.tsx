@@ -210,6 +210,34 @@ export function AppDashboardShell({
     });
   }
 
+  function renderMobileCardNavigation() {
+    return (
+      <nav className="grid grid-cols-2 gap-2 px-3 pt-3 lg:hidden">
+        {navItems.map((item) => {
+          const active = (pendingHref ?? activeHref) === item.href;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              onClick={() => handleDashboardLinkClick(item.href)}
+              className={cn(
+                "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-bold shadow-sm transition",
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-foreground hover:border-primary/30 hover:bg-primary/5",
+              )}
+            >
+              <DashboardIconView name={item.icon} className="size-5 shrink-0" />
+              <span className="min-w-0 truncate">{item.titleKey ? t(item.titleKey as any) : item.title}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
+
   const sidebar = (
     <aside className="glass-panel flex h-full w-72 max-w-[calc(100vw-4rem)] flex-col border-r">
       <div className="border-b px-5 py-5">
@@ -256,7 +284,7 @@ export function AppDashboardShell({
       </div>
       {mobileRail ? mobileRailNavigation : null}
 
-      {isOpen ? (
+      {isOpen && mobileRail ? (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <button
             type="button"
@@ -290,16 +318,7 @@ export function AppDashboardShell({
         <header className={cn("z-30 border-b bg-background/[0.82] backdrop-blur-xl", mobileRail && "sticky top-0")}>
           <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
             {!mobileRail ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-11 shrink-0 lg:hidden"
-                onClick={() => setIsOpen(true)}
-                aria-label="Panel menyusu"
-              >
-                <Menu className="size-6" aria-hidden="true" />
-              </Button>
+              null
             ) : null}
             <div className="min-w-0 flex-1">
               <h1 className="truncate text-lg font-semibold tracking-normal">
@@ -316,6 +335,7 @@ export function AppDashboardShell({
             ) : null}
           </div>
         </header>
+        {!mobileRail ? renderMobileCardNavigation() : null}
         <main className="min-w-0 max-w-full overflow-x-clip px-3 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
           {children}
         </main>
