@@ -19,6 +19,8 @@ type PasswordInputProps = {
   minLength?: number;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
+  toggleClassName?: string;
 };
 
 export function PasswordInput({
@@ -34,6 +36,8 @@ export function PasswordInput({
   minLength,
   placeholder,
   className,
+  inputClassName,
+  toggleClassName,
 }: PasswordInputProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -51,13 +55,19 @@ export function PasswordInput({
           minLength={minLength}
           placeholder={placeholder}
           required={required}
-          className="h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+          className={cn(
+            "h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
+            inputClassName,
+          )}
         />
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-2 top-1/2 z-10 size-9 -translate-y-1/2 rounded-lg bg-background/80 text-foreground shadow-sm hover:bg-primary/10 hover:text-primary"
+          className={cn(
+            "absolute right-2 top-1/2 z-10 size-8 -translate-y-1/2 rounded-lg bg-background/80 text-foreground shadow-sm hover:bg-primary/10 hover:text-primary",
+            toggleClassName,
+          )}
           onClick={() => setIsVisible((current) => !current)}
           aria-label={isVisible ? "Şifrəni gizlət" : "Şifrəni göstər"}
         >

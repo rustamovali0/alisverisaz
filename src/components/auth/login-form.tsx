@@ -77,7 +77,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       return;
     }
 
-    if (!captchaToken) {
+    if (!isAdminMode && !captchaToken) {
       const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
       showToast({ title: "Giriş alınmadı", description: message, variant: "error" });
       return;
@@ -150,7 +150,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       className={cn(
         "mx-auto max-w-[520px]",
         isAdminMode &&
-          "border-emerald-500/25 bg-black/72 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
+          "border-emerald-500/25 bg-black/72 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
       )}
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
@@ -177,30 +177,22 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       title={mode === "admin" ? "Admin giriş" : "Giriş"}
       description={visualLabel}
       footer={
-        <div className="space-y-3">
-          {mode === "public" ? (
+        mode === "public" ? (
+          <div className="space-y-3">
             <p>
               Hesabınız yoxdur?{" "}
               <Link className="font-medium text-primary hover:underline" href="/register">
                 Qeydiyyat
               </Link>
             </p>
-          ) : (
-            <p>
-              Sayt girişinə keçmək üçün{" "}
-              <Link className="font-medium text-primary hover:underline" href="/login">
-                public login
-              </Link>{" "}
-              səhifəsindən istifadə edin.
-            </p>
-          )}
-          <Link className="font-medium text-primary hover:underline" href="/">
-            Ana səhifəyə qayıt
-          </Link>
-        </div>
+            <Link className="font-medium text-primary hover:underline" href="/">
+              Ana səhifəyə qayıt
+            </Link>
+          </div>
+        ) : null
       }
     >
-      <form action={handleSubmit} className="grid gap-3">
+      <form action={handleSubmit} className={cn("grid gap-3", isAdminMode && "gap-2.5")}>
         <input name="next" type="hidden" value={next} />
         <input name="mode" type="hidden" value={mode} />
         <AuthField
@@ -215,8 +207,10 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             setIdentifier(event.target.value.toLowerCase());
             setFieldErrors((current) => ({ ...current, identifier: undefined }));
           }}
-          hint="Hesabınıza bağlı email ünvanını daxil edin."
+          hint={isAdminMode ? undefined : "Hesabınıza bağlı email ünvanını daxil edin."}
           error={fieldErrors.identifier}
+          className={isAdminMode ? "gap-1 text-[13px]" : undefined}
+          inputClassName={isAdminMode ? "h-10 rounded-lg px-3" : undefined}
           required
         />
         <PasswordInput
@@ -230,6 +224,13 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             setFieldErrors((current) => ({ ...current, password: undefined }));
           }}
           error={fieldErrors.password}
+          className={isAdminMode ? "gap-1 text-[13px]" : undefined}
+          inputClassName={isAdminMode ? "h-10 rounded-lg px-3 pr-10" : undefined}
+          toggleClassName={
+            isAdminMode
+              ? "right-1.5 size-8 border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 shadow-none hover:bg-emerald-400/15 hover:text-emerald-100 [&_svg]:size-5"
+              : undefined
+          }
           required
         />
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -248,15 +249,21 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             </Link>
           ) : null}
         </div>
-        <TurnstileField
-          token={captchaToken}
-          onTokenChange={setCaptchaToken}
-          siteKey={turnstileSiteKey}
-        />
+        {isAdminMode ? <input type="hidden" name="captchaToken" value="" /> : (
+          <TurnstileField
+            token={captchaToken}
+            onTokenChange={setCaptchaToken}
+            siteKey={turnstileSiteKey}
+          />
+        )}
         <Button
           type="submit"
-          disabled={isPending || !captchaToken}
-          className="h-11 w-full rounded-xl"
+          disabled={isPending || (!isAdminMode && !captchaToken)}
+          className={cn(
+            "h-11 w-full rounded-xl",
+            isAdminMode &&
+              "h-10 rounded-lg bg-emerald-400 font-black text-slate-950 shadow-lg shadow-emerald-500/15 hover:bg-emerald-300",
+          )}
         >
           {isPending ? "Daxil olunur" : "Daxil ol"}
         </Button>

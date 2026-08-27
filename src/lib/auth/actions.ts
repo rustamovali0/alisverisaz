@@ -458,7 +458,10 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
+  const captcha =
+    mode === "admin"
+      ? { ok: true, message: "" }
+      : await verifyCaptchaToken(readCaptchaToken(formData), ip);
 
   if (!captcha.ok) {
     if (mode === "admin") {
