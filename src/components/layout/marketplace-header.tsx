@@ -110,11 +110,8 @@ export function MarketplaceHeader({
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
   const [cartCount, setCartCount] = useState(0);
-  const sellerUtilityButtonClass =
-    "size-12 rounded-xl !border-0 !bg-transparent !shadow-none hover:!bg-muted hover:!text-primary min-[400px]:size-14";
-  const sellerUtilityIconClass = "size-7 stroke-[2.5] min-[400px]:size-8";
   const commerceUtilityButtonClass =
-    "group size-12 rounded-xl border border-cyan-100 bg-transparent text-slate-900 transition duration-200 hover:border-cyan-200 hover:!bg-transparent hover:text-cyan-800 hover:shadow-none";
+    "group size-12 rounded-xl border border-transparent bg-transparent text-slate-900 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-cyan-800 hover:shadow-none dark:border-transparent dark:text-slate-100 dark:hover:!border-transparent dark:hover:text-cyan-200";
   const commerceUtilityIconClass =
     "h-6 w-6 min-h-6 min-w-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110";
   const sellerCommerceIconClass =
@@ -179,16 +176,16 @@ export function MarketplaceHeader({
         className={
           sticky
             ? cn(
-                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] md:sticky md:top-0",
-                !isHomePage && "bg-white/95",
+                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none md:sticky md:top-0",
+                !isHomePage && "bg-white/95 dark:bg-slate-950/95",
               )
-            : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04]"
+            : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none"
         }
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 py-3 sm:gap-3 xl:flex-nowrap">
           <Link href={brandHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
-              <span className="grid size-10 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm md:size-10 md:rounded-md">
+              <span className="grid size-10 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
                 <img
                   src={logoUrl}
                   alt={displaySiteName}
@@ -203,29 +200,29 @@ export function MarketplaceHeader({
                 ) : null}
               </span>
             ) : (
-              <span className="grid size-10 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm md:size-10 md:rounded-md md:text-lg">
+              <span className="grid size-10 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-10 md:rounded-md md:text-lg">
                 a
               </span>
             )}
-            <span className="min-w-0 truncate text-xl font-black tracking-normal text-slate-950 min-[400px]:text-2xl md:text-xl">
+            <span className="min-w-0 truncate text-xl font-black tracking-normal text-slate-950 dark:text-slate-100 min-[400px]:text-2xl md:text-xl">
               {displaySiteName}
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
             <ThemeToggle
               className={cn(
-                "size-12 rounded-xl border bg-background text-foreground shadow-sm transition duration-200 hover:bg-background hover:text-primary min-[400px]:size-14",
-                isSeller && sellerUtilityButtonClass,
+                "min-[400px]:size-14",
+                commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerUtilityIconClass : "size-7 min-[400px]:size-8"}
+              iconClassName={isSeller ? sellerCommerceIconClass : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"}
             />
             <NotificationCenter
               requireAuth={isGuest}
               buttonClassName={cn(
-                "size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14",
-                isSeller && sellerUtilityButtonClass,
+                "min-[400px]:size-14",
+                commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerUtilityIconClass : "size-7 min-[400px]:size-8"}
+              iconClassName={isSeller ? sellerCommerceIconClass : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"}
             />
             {isSeller ? (
               <>
@@ -270,8 +267,8 @@ export function MarketplaceHeader({
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800",
-                isProductsActive && "bg-cyan-50 text-cyan-800",
+                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-cyan-200",
+                isProductsActive && "bg-cyan-50 text-cyan-800 dark:bg-white/10 dark:text-cyan-200",
               )}
             >
               <Link href={productsHref} prefetch>
@@ -282,8 +279,8 @@ export function MarketplaceHeader({
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
-                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800",
-                isAboutActive && "bg-cyan-50 text-cyan-800",
+                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-cyan-200",
+                isAboutActive && "bg-cyan-50 text-cyan-800 dark:bg-white/10 dark:text-cyan-200",
               )}
             >
               <Link href="/about" prefetch>
@@ -307,18 +304,16 @@ export function MarketplaceHeader({
             <LanguageSwitcher className="hidden lg:flex" />
             <ThemeToggle
               className={cn(
-                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-800 hover:shadow-md md:size-12",
-                isSeller && sellerUtilityButtonClass,
+                commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4] md:size-6"}
+              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
             />
             <NotificationCenter
               requireAuth={isGuest}
               buttonClassName={cn(
-                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
-                isSeller && sellerUtilityButtonClass,
+                commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"}
+              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
             />
             <Button
               size="icon"

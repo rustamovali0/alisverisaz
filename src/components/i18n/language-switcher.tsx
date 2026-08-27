@@ -335,13 +335,13 @@ export function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="glass-panel inline-flex size-10 items-center justify-center rounded-full border bg-background/90 p-0 text-foreground shadow-sm transition hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="glass-panel inline-flex size-10 items-center justify-center rounded-full border border-transparent bg-transparent p-0 text-foreground shadow-none transition hover:border-transparent hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-slate-100"
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={`${t("language")}: ${currentLanguage?.name ?? currentLanguage?.code}`}
         title={currentLanguage?.name}
       >
-        <RoundFlag locale={displayLocale} className="size-8" />
+        <RoundFlag locale={displayLocale} className="size-7" />
       </button>
       {isOpen ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] w-48 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
