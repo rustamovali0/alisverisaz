@@ -78,6 +78,9 @@ export const serverEnv = {
   get telegramAdminPasswordHash() {
     return readOptionalServerEnv("TELEGRAM_ADMIN_PASSWORD_HASH").trim();
   },
+  get telegramAdminUnlockCodeHash() {
+    return readOptionalServerEnv("TELEGRAM_ADMIN_UNLOCK_CODE_HASH").trim();
+  },
   get hasTelegramConfig() {
     return Boolean(
       readOptionalServerEnv("TELEGRAM_BOT_TOKEN").trim() &&

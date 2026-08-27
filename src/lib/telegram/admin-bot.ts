@@ -27,6 +27,7 @@ import {
   assertTelegramRateLimit,
   recordTelegramRateLimitAttempt,
   resetTelegramRateLimit,
+  type TelegramRateScope,
 } from "@/lib/telegram/rate-limit";
 
 type TelegramChat = {
@@ -241,7 +242,7 @@ async function enforceRateLimit(command: string, ctx: TelegramContext) {
   const allowed = await assertTelegramRateLimit(rule);
 
   if (!allowed.ok) {
-    await sendTelegramMessage({ chatId: ctx.chatId, text: allowed.message });
+    await createUnlockChallenge(ctx, "command_rate_limit");
     return false;
   }
 
@@ -341,6 +342,84 @@ async function cancelPendingActions(ctx: TelegramContext) {
     chatId: ctx.chatId,
     text: "✅ Əməliyyat ləğv edildi.",
   });
+}
+
+async function createUnlockChallenge(ctx: TelegramContext, reason: string) {
+  const supabase = createSupabaseAdminClient();
+  await clearExpiredPendingActions();
+  await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .update({ used_at: new Date().toISOString() })
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "unlock")
+    .is("used_at", null);
+
+  if (!serverEnv.telegramAdminUnlockCodeHash) {
+    await sendTelegramMessage({
+      chatId: ctx.chatId,
+      text: [
+        "🚫 Çox sayda cəhd edildi. Admin komandaları müvəqqəti bloklandı.",
+        "",
+        "❌ TELEGRAM_ADMIN_UNLOCK_CODE_HASH ayarı tamamlanmayıb.",
+        "Kodla açmaq üçün bu env dəyərini əlavə edin və ya blok vaxtının bitməsini gözləyin.",
+      ].join("\n"),
+    });
+    return;
+  }
+
+  await (supabase as any).from("telegram_pending_admin_actions").insert({
+    telegram_user_id: ctx.userId,
+    telegram_chat_id: ctx.chatId,
+    command: "/unlock",
+    command_args: null,
+    phase: "unlock",
+    message_id: ctx.messageId ?? null,
+    metadata: { reason },
+    expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  });
+
+  await sendTelegramMessage({
+    chatId: ctx.chatId,
+    text: [
+      "🚫 Çox sayda cəhd edildi. Admin komandaları müvəqqəti bloklandı.",
+      "",
+      "🔓 Cəhdləri sıfırlamaq üçün bərpa kodunu daxil edin.",
+      "Ləğv etmək üçün /cancel yazın.",
+    ].join("\n"),
+  });
+}
+
+async function getPendingUnlockAction(ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  await clearExpiredPendingActions();
+  const { data } = await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .select("id")
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "unlock")
+    .is("used_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data as { id: string } | null;
+}
+
+async function resetTelegramAdminAttempts(ctx: TelegramContext) {
+  const scopes: TelegramRateScope[] = ["read", "write", "danger", "password", "unlock"];
+
+  await Promise.all(
+    scopes.map((scope) =>
+      resetTelegramRateLimit({
+        scope,
+        telegramUserId: ctx.userId,
+        telegramChatId: ctx.chatId,
+      }),
+    ),
+  );
 }
 
 async function createConfirmation(ctx: TelegramContext, command: ParsedCommand) {
@@ -844,10 +923,7 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
 
   if (!allowed.ok) {
     await markPendingUsed(pending.id);
-    await sendTelegramMessage({
-      chatId: ctx.chatId,
-      text: "🚫 Çox sayda səhv şifrə cəhdi edildi.\nAdmin komandaları müvəqqəti bloklandı.",
-    });
+    await createUnlockChallenge(ctx, "password_rate_limit");
     return;
   }
 
@@ -859,8 +935,14 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
     }));
 
   if (!verified) {
-    await recordTelegramRateLimitAttempt(passwordRule);
     await markPendingUsed(pending.id);
+    const attempt = await recordTelegramRateLimitAttempt(passwordRule);
+
+    if (attempt.isBlocked) {
+      await createUnlockChallenge(ctx, "password_failed_attempts");
+      return;
+    }
+
     await sendTelegramMessage({
       chatId: ctx.chatId,
       text: serverEnv.telegramAdminPasswordHash
@@ -891,6 +973,62 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
   await sendTelegramMessage({ chatId: ctx.chatId, text: await result });
 }
 
+async function handleUnlockCodeMessage(message: TelegramMessage, ctx: TelegramContext) {
+  const pending = await getPendingUnlockAction(ctx);
+
+  if (!pending) {
+    return;
+  }
+
+  if (ctx.messageId) {
+    void deleteTelegramMessage({ chatId: ctx.chatId, messageId: ctx.messageId });
+  }
+
+  const unlockCodeText = typeof message.text === "string" ? message.text : "";
+  const unlockRule = {
+    scope: "unlock" as const,
+    telegramUserId: ctx.userId,
+    telegramChatId: ctx.chatId,
+    maxAttempts: 5,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
+  const allowed = await assertTelegramRateLimit(unlockRule);
+
+  if (!allowed.ok) {
+    await sendTelegramMessage({
+      chatId: ctx.chatId,
+      text: "🚫 Çox sayda səhv bərpa kodu cəhdi edildi. Bir az sonra yenidən yoxlayın.",
+    });
+    return;
+  }
+
+  const verified =
+    Boolean(serverEnv.telegramAdminUnlockCodeHash) &&
+    (await verifyTelegramAdminPassword({
+      password: unlockCodeText,
+      hash: serverEnv.telegramAdminUnlockCodeHash,
+    }));
+
+  if (!verified) {
+    const attempt = await recordTelegramRateLimitAttempt(unlockRule);
+    await sendTelegramMessage({
+      chatId: ctx.chatId,
+      text: attempt.isBlocked
+        ? "🚫 Çox sayda səhv bərpa kodu cəhdi edildi. Bir az sonra yenidən yoxlayın."
+        : "❌ Bərpa kodu yanlışdır.",
+    });
+    return;
+  }
+
+  await markPendingUsed(pending.id);
+  await resetTelegramAdminAttempts(ctx);
+  await sendTelegramMessage({
+    chatId: ctx.chatId,
+    text: "✅ Cəhdlər sıfırlandı. İndi komandanı yenidən göndərə bilərsiniz.",
+  });
+}
+
 async function handleMessage(update: TelegramUpdate) {
   const message = update.message;
   const ctx = getMessageContext(message);
@@ -903,6 +1041,23 @@ async function handleMessage(update: TelegramUpdate) {
 
   if (message.text.trim() === "/cancel") {
     await cancelPendingActions(ctx);
+    return;
+  }
+
+  const unlockPending = await getPendingUnlockAction(ctx);
+
+  if (unlockPending) {
+    const maybeCommand = parseCommand(message.text);
+
+    if (maybeCommand) {
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: "🔓 Əvvəl bərpa kodunu daxil edin və ya /cancel yazın.",
+      });
+      return;
+    }
+
+    await handleUnlockCodeMessage(message, ctx);
     return;
   }
 

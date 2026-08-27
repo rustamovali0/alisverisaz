@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-type TelegramRateScope = "read" | "write" | "danger" | "password";
+export type TelegramRateScope = "read" | "write" | "danger" | "password" | "unlock";
 
 type TelegramRateRule = {
   scope: TelegramRateScope;
