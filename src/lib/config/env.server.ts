@@ -60,4 +60,30 @@ export const serverEnv = {
 
     return Boolean(process.env.TURNSTILE_SECRET_KEY?.trim());
   },
+  get telegramBotToken() {
+    return readOptionalServerEnv("TELEGRAM_BOT_TOKEN").trim();
+  },
+  get telegramAdminChatId() {
+    return (
+      readOptionalServerEnv("TELEGRAM_ADMIN_CHAT_ID").trim() ||
+      readOptionalServerEnv("TELEGRAM_CHAT_ID").trim()
+    );
+  },
+  get telegramAdminUserId() {
+    return readOptionalServerEnv("TELEGRAM_ADMIN_USER_ID").trim();
+  },
+  get telegramWebhookSecret() {
+    return readOptionalServerEnv("TELEGRAM_WEBHOOK_SECRET").trim();
+  },
+  get telegramAdminPasswordHash() {
+    return readOptionalServerEnv("TELEGRAM_ADMIN_PASSWORD_HASH").trim();
+  },
+  get hasTelegramConfig() {
+    return Boolean(
+      readOptionalServerEnv("TELEGRAM_BOT_TOKEN").trim() &&
+        (readOptionalServerEnv("TELEGRAM_ADMIN_CHAT_ID").trim() ||
+          readOptionalServerEnv("TELEGRAM_CHAT_ID").trim()) &&
+        readOptionalServerEnv("TELEGRAM_ADMIN_USER_ID").trim(),
+    );
+  },
 } as const;

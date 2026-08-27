@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
+import { recordAdminAudit } from "@/lib/admin/audit";
+import {
+  markAdminSessionActive,
+  markAdminSessionInactive,
+} from "@/lib/admin/session-control";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
@@ -11,8 +17,15 @@ import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
+import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
 import { uploadImageToR2 } from "@/lib/storage/r2";
+import {
+  notifyAdminLogin,
+  notifyAdminLoginFailed,
+  notifySellerRegistered,
+  notifyUserRegistered,
+} from "@/lib/telegram/notifications";
 import {
   assertAuthRateLimit,
   getClientIp,
@@ -97,6 +110,45 @@ async function recordLoginFailure(
   return attempt.isBlocked ? attempt.message : fallbackMessage;
 }
 
+async function getClientUserAgent() {
+  const headerList = await headers();
+
+  return headerList.get("user-agent")?.slice(0, 500) ?? "";
+}
+
+async function recordAdminLoginFailure(input: {
+  rateLimitRule: Parameters<typeof recordAuthRateLimitAttempt>[0];
+  login: string;
+  ip: string;
+  userAgent: string;
+  reason: string;
+  fallbackMessage?: string;
+}) {
+  const message = await recordLoginFailure(
+    input.rateLimitRule,
+    input.fallbackMessage ?? GENERIC_LOGIN_ERROR,
+  );
+
+  void notifyAdminLoginFailed({
+    login: input.login,
+    ip: input.ip,
+    userAgent: input.userAgent,
+    reason: input.reason,
+  });
+  void recordAdminAudit({
+    action: "ADMIN_LOGIN_FAILED",
+    success: false,
+    metadata: {
+      login: input.login,
+      ip: input.ip,
+      user_agent: input.userAgent,
+      reason: input.reason,
+    },
+  });
+
+  return message;
+}
+
 async function upsertProfile(input: {
   id: string;
   email: string | null;
@@ -133,7 +185,31 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const agreedToTerms = formData.get("terms") === "on";
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
-  const siteSettings = await getSiteSettings();
+  const [siteSettings, systemFlags] = await Promise.all([
+    getSiteSettings(),
+    getSystemFlags(),
+  ]);
+
+  if (!systemFlags.site_enabled) {
+    return {
+      ok: false,
+      message: "Sayt hazırda texniki xidmət rejimindədir.",
+    };
+  }
+
+  if (role === "customer" && !systemFlags.user_access_enabled) {
+    return {
+      ok: false,
+      message: "İstifadəçi qeydiyyatı hazırda bağlıdır.",
+    };
+  }
+
+  if (role === "seller" && !systemFlags.seller_panel_enabled) {
+    return {
+      ok: false,
+      message: "Satıcı qeydiyyatı hazırda bağlıdır.",
+    };
+  }
 
   if (role === "customer" && !siteSettings.userRegistrationEnabled) {
     return {
@@ -294,6 +370,26 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     },
   });
 
+  if (role === "seller") {
+    void notifySellerRegistered({
+      id: data.user.id,
+      storeName: fullName,
+      sellerName: fullName,
+      phone,
+      email,
+      status: "pending",
+      createdAt: data.user.created_at,
+    });
+  } else {
+    void notifyUserRegistered({
+      id: data.user.id,
+      fullName,
+      phone,
+      email,
+      createdAt: data.user.created_at,
+    });
+  }
+
   return {
     ok: true,
     message:
@@ -310,6 +406,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const nextPath = normalizeNextPath(readString(formData, "next"));
   const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
   const ip = await getClientIp();
+  const userAgent = await getClientUserAgent();
   const rateLimitRule = {
     endpoint: "login" as const,
     identifier,
@@ -336,6 +433,25 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const rateLimit = await assertAuthRateLimit(rateLimitRule);
 
   if (!rateLimit.ok) {
+    if (mode === "admin") {
+      void notifyAdminLoginFailed({
+        login: identifier,
+        ip,
+        userAgent,
+        reason: "rate_limited",
+      });
+      void recordAdminAudit({
+        action: "ADMIN_LOGIN_FAILED",
+        success: false,
+        metadata: {
+          login: identifier,
+          ip,
+          user_agent: userAgent,
+          reason: "rate_limited",
+        },
+      });
+    }
+
     return {
       ok: false,
       message: rateLimit.message,
@@ -345,6 +461,25 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
 
   if (!captcha.ok) {
+    if (mode === "admin") {
+      void notifyAdminLoginFailed({
+        login: identifier,
+        ip,
+        userAgent,
+        reason: "captcha_failed",
+      });
+      void recordAdminAudit({
+        action: "ADMIN_LOGIN_FAILED",
+        success: false,
+        metadata: {
+          login: identifier,
+          ip,
+          user_agent: userAgent,
+          reason: "captcha_failed",
+        },
+      });
+    }
+
     return {
       ok: false,
       message: captcha.message,
@@ -355,10 +490,17 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const email = identifier;
 
   if (!isValidEmail(email)) {
-    const message = await recordLoginFailure(
-      rateLimitRule,
-      "Düzgün email daxil edin.",
-    );
+    const message =
+      mode === "admin"
+        ? await recordAdminLoginFailure({
+            rateLimitRule,
+            login: identifier,
+            ip,
+            userAgent,
+            reason: "invalid_email",
+            fallbackMessage: "Düzgün email daxil edin.",
+          })
+        : await recordLoginFailure(rateLimitRule, "Düzgün email daxil edin.");
 
     return {
       ok: false,
@@ -372,7 +514,16 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   });
 
   if (error) {
-    const message = await recordLoginFailure(rateLimitRule);
+    const message =
+      mode === "admin"
+        ? await recordAdminLoginFailure({
+            rateLimitRule,
+            login: identifier,
+            ip,
+            userAgent,
+            reason: "invalid_credentials",
+          })
+        : await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
@@ -381,7 +532,16 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   }
 
   if (!data.user) {
-    const message = await recordLoginFailure(rateLimitRule);
+    const message =
+      mode === "admin"
+        ? await recordAdminLoginFailure({
+            rateLimitRule,
+            login: identifier,
+            ip,
+            userAgent,
+            reason: "missing_user",
+          })
+        : await recordLoginFailure(rateLimitRule);
 
     return {
       ok: false,
@@ -400,7 +560,13 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   if (mode === "admin" && role !== "admin") {
     await supabase.auth.signOut();
-    const message = await recordLoginFailure(rateLimitRule);
+    const message = await recordAdminLoginFailure({
+      rateLimitRule,
+      login: identifier,
+      ip,
+      userAgent,
+      reason: "role_not_admin",
+    });
 
     return {
       ok: false,
@@ -415,6 +581,52 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     return {
       ok: false,
       message,
+    };
+  }
+
+  const systemFlags = await getSystemFlags();
+
+  if (mode === "admin" && !systemFlags.admin_panel_enabled) {
+    await supabase.auth.signOut();
+    const message = await recordAdminLoginFailure({
+      rateLimitRule,
+      login: identifier,
+      ip,
+      userAgent,
+      reason: "admin_panel_offline",
+      fallbackMessage: "Admin panel hazırda deaktivdir.",
+    });
+
+    return {
+      ok: false,
+      message,
+    };
+  }
+
+  if (mode === "public" && !systemFlags.site_enabled) {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Sayt hazırda texniki xidmət rejimindədir.",
+    };
+  }
+
+  if (mode === "public" && role === "seller" && !systemFlags.seller_panel_enabled) {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Satıcı panellərinə giriş hazırda bağlıdır.",
+    };
+  }
+
+  if (mode === "public" && role === "customer" && !systemFlags.user_access_enabled) {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "İstifadəçi girişləri hazırda bağlıdır.",
     };
   }
 
@@ -475,6 +687,33 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       role,
     },
   });
+
+  if (mode === "admin" && role === "admin") {
+    void markAdminSessionActive({
+      userId: data.user.id,
+      ip,
+      userAgent,
+    });
+    void recordAdminAudit({
+      action: "ADMIN_LOGIN",
+      adminId: data.user.id,
+      metadata: {
+        login: data.user.email ?? email,
+        name: profile?.full_name ?? null,
+        role,
+        ip,
+        user_agent: userAgent,
+      },
+    });
+    void notifyAdminLogin({
+      adminId: data.user.id,
+      login: data.user.email ?? email,
+      name: profile?.full_name,
+      role,
+      ip,
+      userAgent,
+    });
+  }
   await resetAuthRateLimit({
     endpoint: "login",
     identifier,
@@ -492,11 +731,21 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
   const nextPath = normalizeNextPath(readString(formData, "next")) || "/";
   const mode = readString(formData, "mode") === "admin" ? "admin" : "public";
   const ip = await getClientIp();
+  const systemFlags = await getSystemFlags();
 
   if (mode === "admin") {
     return {
       ok: false,
       message: "Google ilə giriş yalnız public hesablar üçün aktivdir.",
+    };
+  }
+
+  if (!systemFlags.site_enabled || !systemFlags.user_access_enabled) {
+    return {
+      ok: false,
+      message: !systemFlags.site_enabled
+        ? "Sayt hazırda texniki xidmət rejimindədir."
+        : "İstifadəçi girişləri hazırda bağlıdır.",
     };
   }
 
@@ -557,6 +806,14 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
 export async function logoutAction(): Promise<AuthResult> {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
+  const { data: profile } = data.user
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .returns<{ role: AuthRole }[]>()
+        .maybeSingle()
+    : { data: null };
   const { error } = await supabase.auth.signOut();
 
   if (error) {
@@ -575,6 +832,10 @@ export async function logoutAction(): Promise<AuthResult> {
       email: data.user?.email,
     },
   });
+
+  if (profile?.role === "admin") {
+    void markAdminSessionInactive(data.user?.id);
+  }
 
   return {
     ok: true,

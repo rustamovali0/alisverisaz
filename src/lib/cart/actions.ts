@@ -14,6 +14,7 @@ import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { getCartProducts } from "@/lib/cart/data";
+import { notifyOrderCreated } from "@/lib/telegram/notifications";
 import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
 import type { ProductOptionType } from "@/lib/products/types";
 import {
@@ -655,6 +656,7 @@ export async function createCheckoutOrdersAction(
       }),
     ),
   );
+  void notifyOrderCreated(checkout.orderIds);
 
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard");

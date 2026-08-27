@@ -7,6 +7,7 @@ import {
   isReservedStoreSubdomain,
   isValidStoreSlug,
 } from "@/lib/config/domains";
+import { getSystemFlagsForProxy } from "@/lib/platform/system-settings-proxy";
 import { updateSession } from "@/lib/supabase/middleware";
 
 function copyCookies(from: NextResponse, to: NextResponse) {
@@ -81,6 +82,69 @@ function needsSessionCheck(pathname: string) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/store/dashboard")
   );
+}
+
+function createMaintenanceResponse(title: string, description: string) {
+  return new NextResponse(
+    `<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#eefaf6;color:#101828;font-family:Inter,system-ui,sans-serif}.card{max-width:560px;margin:24px;padding:32px;border:1px solid #bfeff2;border-radius:20px;background:#fff;box-shadow:0 20px 60px rgba(15,23,42,.08)}h1{margin:0 0 12px;font-size:28px}p{margin:0;color:#5f6f7d;line-height:1.6}</style></head><body><main class="card"><h1>${title}</h1><p>${description}</p></main></body></html>`,
+    {
+      status: 503,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    },
+  );
+}
+
+async function getAccessBlockResponse(pathname: string) {
+  const flags = await getSystemFlagsForProxy();
+
+  if (
+    !flags.site_enabled &&
+    !pathname.startsWith("/radmin") &&
+    pathname !== "/favicon.ico"
+  ) {
+    return createMaintenanceResponse(
+      "Sayt texniki xidmət rejimindədir",
+      "Sayt müvəqqəti olaraq texniki xidmət rejimindədir.",
+    );
+  }
+
+  if (!flags.admin_panel_enabled && pathname.startsWith("/radmin")) {
+    return createMaintenanceResponse(
+      "Admin panel offline-dır",
+      "Radmin panel müvəqqəti olaraq deaktiv edilib.",
+    );
+  }
+
+  if (
+    !flags.seller_panel_enabled &&
+    (pathname === "/admin" ||
+      pathname.startsWith("/admin/") ||
+      pathname.startsWith("/store/dashboard") ||
+      pathname.startsWith("/seller") ||
+      pathname === "/sell")
+  ) {
+    return createMaintenanceResponse(
+      "Satıcı paneli bağlıdır",
+      "Satıcı panellərinə giriş müvəqqəti olaraq deaktiv edilib.",
+    );
+  }
+
+  if (
+    !flags.user_access_enabled &&
+    (pathname === "/login" ||
+      pathname === "/register" ||
+      pathname.startsWith("/dashboard"))
+  ) {
+    return createMaintenanceResponse(
+      "İstifadəçi girişi bağlıdır",
+      "İstifadəçi girişləri və qeydiyyatı müvəqqəti olaraq deaktiv edilib.",
+    );
+  }
+
+  return null;
 }
 
 function localizedInternalPath(locale: string, pathname: string) {
@@ -191,6 +255,11 @@ export async function proxy(request: NextRequest) {
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
     : resolveStorePath(visiblePathname);
+  const accessBlockResponse = await getAccessBlockResponse(effectivePathname);
+
+  if (accessBlockResponse) {
+    return accessBlockResponse;
+  }
 
   const rewriteResponse = createLocalizedRewrite(
     request,
