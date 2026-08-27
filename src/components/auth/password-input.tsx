@@ -56,7 +56,7 @@ export function PasswordInput({
           placeholder={placeholder}
           required={required}
           className={cn(
-            "h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
+            "h-10 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
             inputClassName,
           )}
         />

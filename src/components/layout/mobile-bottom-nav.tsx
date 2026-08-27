@@ -19,6 +19,7 @@ import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
 import { getStorePath } from "@/lib/config/domains";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 type MobileBottomNavProps = {
@@ -260,6 +261,22 @@ export function MobileBottomNav({
     [isCurrentRoute, router],
   );
 
+  const handleItemNavigation = useCallback(
+    (href: string) => {
+      if (href === "/favorites" && !role) {
+        showToast({
+          title: "Giriş tələb olunur",
+          description: "Sevimlilərə əlavə etmək üçün login olmaq lazımdır.",
+          variant: "info",
+        });
+        return;
+      }
+
+      navigate(href);
+    },
+    [navigate, role],
+  );
+
   const isNavItemActive = useCallback(
     (href: string) => {
       if (href === "/") {
@@ -380,12 +397,12 @@ export function MobileBottomNav({
               onPointerUp={(event) => {
                 if (event.pointerType === "touch") {
                   event.preventDefault();
-                  navigate(item.href);
+                  handleItemNavigation(item.href);
                 }
               }}
-              onClick={() => navigate(item.href)}
+              onClick={() => handleItemNavigation(item.href)}
               className={cn(
-                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[transform] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
                 itemVariantClass[variant],
                 isActive && "bg-primary/10 text-primary",
               )}
@@ -425,7 +442,7 @@ export function MobileBottomNav({
           }}
           disabled={isAuthLoading}
           className={cn(
-            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[background-color,color,transform] duration-150 hover:bg-primary/10 hover:text-primary active:scale-95 active:bg-primary/15 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[transform] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
             activeHref === accountHref && "bg-primary/10 text-primary",

@@ -15,8 +15,8 @@ export function AuthSplitScreen({
   className,
 }: AuthSplitScreenProps) {
   return (
-    <div className={cn("h-full w-full", className)}>
-      <div className="mx-auto grid h-full min-h-0 w-full max-w-[1120px] gap-5 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
+    <div className={cn("h-full min-h-0 w-full", className)}>
+      <div className="mx-auto grid h-full min-h-0 w-full max-w-[1120px] gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
         <div className="flex min-h-0 w-full justify-center overflow-hidden">
           <div className="max-h-full w-full max-w-[520px] overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
             {children}

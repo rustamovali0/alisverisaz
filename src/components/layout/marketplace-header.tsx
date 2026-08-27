@@ -184,7 +184,7 @@ export function MarketplaceHeader({
         className={
           sticky
             ? cn(
-                "marketplace-header sticky top-0 z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none",
+                "marketplace-header relative z-40 border-b border-cyan-100 bg-white/98 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none md:sticky md:top-0",
                 !isHomePage && "bg-white/95 dark:bg-slate-950/95",
               )
             : "marketplace-header relative z-40 border-b border-cyan-100 bg-white/95 shadow-sm shadow-teal-950/[0.04] dark:border-white/10 dark:bg-slate-950/95 dark:shadow-none"
@@ -374,14 +374,14 @@ export function MarketplaceHeader({
         </div>
       </header>
       {showMobileSearch && !shouldSuppressSearch && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
-        <div className="mobile-performance-surface sticky top-[73px] z-30 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+        <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}
             storeSlug={searchStoreSlug ?? undefined}
             stackOnMobile
             className="w-full"
-            inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-4 text-[16px] shadow-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[15px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
           />
         </div>
       ) : null}

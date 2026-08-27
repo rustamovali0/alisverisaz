@@ -24,7 +24,7 @@ export function AuthCard({
   return (
     <section
       className={cn(
-        "w-full rounded-xl border border-border/80 bg-card p-4 shadow-xl shadow-slate-900/10 sm:p-5",
+        "w-full rounded-xl border border-border/80 bg-card p-3.5 shadow-xl shadow-slate-900/10 sm:p-4",
         className,
       )}
     >
@@ -34,14 +34,14 @@ export function AuthCard({
           <div className="shrink-0">{topEnd}</div>
         </div>
       ) : null}
-      <div className="mb-4 space-y-1.5">
-        <h1 className="text-[1.65rem] font-semibold leading-tight tracking-normal sm:text-[1.9rem]">
+      <div className="mb-3 space-y-1">
+        <h1 className="text-[1.45rem] font-semibold leading-tight tracking-normal sm:text-[1.7rem]">
           {title}
         </h1>
         <p className="text-sm leading-5 text-muted-foreground">{description}</p>
       </div>
       {children}
-      <div className="mt-4 text-center text-sm text-muted-foreground">
+      <div className="mt-3 text-center text-sm text-muted-foreground">
         {footer}
       </div>
     </section>

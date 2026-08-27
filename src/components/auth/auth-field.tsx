@@ -25,7 +25,7 @@ export function AuthField({
       <input
         id={id}
         className={cn(
-          "h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
+          "h-10 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
           inputClassName,
         )}
         {...props}
@@ -56,7 +56,7 @@ export function AuthSelect({
       <span>{label}</span>
       <select
         id={id}
-        className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="h-10 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
         {...props}
       >
         {children}

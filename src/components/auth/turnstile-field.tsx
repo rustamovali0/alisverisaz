@@ -13,6 +13,7 @@ declare global {
           callback: (token: string) => void;
           "expired-callback": () => void;
           "error-callback": () => void;
+          appearance?: "always" | "execute" | "interaction-only";
         },
       ) => string;
       reset: (widgetId: string) => void;
@@ -96,6 +97,7 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
 
     renderedWidgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: normalizedSiteKey,
+      appearance: "interaction-only",
       callback: onTokenChange,
       "expired-callback": () => onTokenChange(""),
       "error-callback": () => onTokenChange(""),
@@ -125,7 +127,7 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
   }
 
   return (
-    <div className="grid gap-2">
+    <div className="sr-only">
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"

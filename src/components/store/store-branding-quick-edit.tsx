@@ -106,7 +106,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
   }
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-lg bg-card shadow-sm">
+    <section className="-mx-3 min-w-0 overflow-hidden bg-card shadow-sm sm:mx-0 sm:rounded-lg">
       <input ref={bannerInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("banner", event.target.files?.[0] ?? null)} />
       <input ref={logoInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("logo", event.target.files?.[0] ?? null)} />
       <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={isPending} className="group relative block min-h-[170px] w-full overflow-hidden bg-primary/10 text-left disabled:cursor-wait sm:min-h-[240px] lg:min-h-[280px]" aria-label="Banneri dəyiş">
@@ -119,7 +119,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
           </span>
         </span>
       </button>
-      <div className="relative -mt-12 flex min-w-0 flex-col gap-4 px-4 pb-5 sm:-mt-14 sm:px-6 sm:pb-6 lg:px-7">
+      <div className="relative -mt-12 flex min-w-0 flex-col gap-4 bg-card px-4 pb-5 sm:-mt-14 sm:px-6 sm:pb-6 lg:px-7">
         <Button type="button" variant="outline" size="icon" onClick={() => logoInputRef.current?.click()} disabled={isPending} className="size-16 overflow-hidden rounded-xl border-2 border-background bg-background p-0 shadow-lg sm:size-20" aria-label="Logonu dəyiş">
           {store.logoUrl ? <img src={store.logoUrl} alt="" className="h-full w-full object-cover" /> : <span className="text-2xl font-black text-primary">{store.name.slice(0, 1)}</span>}
           <span className="absolute inset-0 grid place-items-center bg-black/45 text-white opacity-0 transition hover:opacity-100 focus-within:opacity-100"><ImagePlus className="size-5" /></span>
