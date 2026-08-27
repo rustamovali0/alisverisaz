@@ -51,17 +51,17 @@ export function PasswordInput({
           minLength={minLength}
           placeholder={placeholder}
           required={required}
-          className="h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-12 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
         />
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute right-1 top-1 size-9 text-muted-foreground"
+          className="absolute right-2 top-1/2 size-7 -translate-y-1/2 rounded-full text-muted-foreground hover:bg-primary/8 hover:text-primary"
           onClick={() => setIsVisible((current) => !current)}
           aria-label={isVisible ? "Şifrəni gizlət" : "Şifrəni göstər"}
         >
-          {isVisible ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
+          {isVisible ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
         </Button>
       </div>
       {hint ? <span className="text-xs font-normal text-muted-foreground">{hint}</span> : null}

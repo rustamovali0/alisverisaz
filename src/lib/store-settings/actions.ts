@@ -78,6 +78,8 @@ export async function updateSellerStoreSettingsAction(
   const name = readString(formData, "name");
   const heroTitle = readString(formData, "heroTitle");
   const heroSubtitle = readString(formData, "heroSubtitle");
+  const socialInstagram = readString(formData, "socialInstagram");
+  const socialTiktok = readString(formData, "socialTiktok");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
 
@@ -108,7 +110,12 @@ export async function updateSellerStoreSettingsAction(
   try {
     const payload: Record<string, unknown> = { name };
 
-    if (formData.has("heroTitle") || formData.has("heroSubtitle")) {
+    if (
+      formData.has("heroTitle") ||
+      formData.has("heroSubtitle") ||
+      formData.has("socialInstagram") ||
+      formData.has("socialTiktok")
+    ) {
       const settings = readSettings(store.settings);
 
       if (formData.has("heroTitle") && heroTitle) {
@@ -121,6 +128,18 @@ export async function updateSellerStoreSettingsAction(
         settings.heroSubtitle = heroSubtitle;
       } else if (formData.has("heroSubtitle")) {
         delete settings.heroSubtitle;
+      }
+
+      if (formData.has("socialInstagram") && socialInstagram) {
+        settings.socialInstagram = socialInstagram;
+      } else if (formData.has("socialInstagram")) {
+        delete settings.socialInstagram;
+      }
+
+      if (formData.has("socialTiktok") && socialTiktok) {
+        settings.socialTiktok = socialTiktok;
+      } else if (formData.has("socialTiktok")) {
+        delete settings.socialTiktok;
       }
 
       payload.settings = settings;

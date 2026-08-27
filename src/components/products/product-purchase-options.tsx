@@ -185,7 +185,7 @@ export function ProductPurchaseOptions({
           className="w-full border-primary/20 bg-background hover:bg-primary/5"
         />
       </div>
-      {showWhatsappOrderButton && sellerPhone ? (
+      {showWhatsappOrderButton ? (
         <WhatsAppOrderButton
           product={product}
           sellerPhone={sellerPhone}

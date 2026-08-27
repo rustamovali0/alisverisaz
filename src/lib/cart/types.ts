@@ -46,6 +46,8 @@ export type MarketplaceStore = {
   description: string | null;
   heroTitle?: string | null;
   heroSubtitle?: string | null;
+  socialInstagram?: string | null;
+  socialTiktok?: string | null;
   address: string | null;
   phone: string | null;
   logoUrl: string | null;

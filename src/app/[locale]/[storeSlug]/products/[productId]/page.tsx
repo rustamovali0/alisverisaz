@@ -192,7 +192,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     visibleProductLocations[0]?.location ??
     null;
   const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
-  const sellerPhone = sellerLocation?.phone ?? detail.store.phone ?? "";
+  const sellerPhone = sellerLocation?.phone?.trim() || detail.store.phone?.trim() || "";
   const sellerMapUrl = sellerLocation
     ? getLocationMapUrl(sellerLocation)
     : sellerAddress
@@ -203,10 +203,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : getStorePath(detail.store.slug);
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
       <ProductDetailScrollReset />
       <ViewTracker productId={detail.product.id} />
-      <div className="container max-w-full py-5 md:py-8">
+      <div className="mx-auto w-full max-w-[1220px] px-4 py-5 sm:px-6 md:py-7 lg:px-7">
         <nav className="mb-5 min-w-0 text-sm text-muted-foreground">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
             <ProductBackButton />
@@ -312,51 +312,53 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </Link>
             </Button>
             {!isStoreOwner ? (
-              <div className="mt-5 min-w-0 rounded-xl border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10 sm:p-3.5">
-                <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
-                    {detail.store.logoUrl ? (
-                      <img
-                        src={detail.store.logoUrl}
-                        alt={detail.store.name}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-base font-black text-muted-foreground">
-                        {detail.store.name.slice(0, 1)}
-                      </span>
-                    )}
+              <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10 sm:p-3.5">
+                <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(11rem,0.9fr)_minmax(0,1.4fr)_auto] lg:items-center">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
+                      {detail.store.logoUrl ? (
+                        <img
+                          src={detail.store.logoUrl}
+                          alt={detail.store.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-base font-black text-muted-foreground">
+                          {detail.store.name.slice(0, 1)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
+                      <h2 className="truncate text-base font-black leading-5 tracking-normal">
+                        {detail.store.name}
+                      </h2>
+                    </div>
                   </div>
-                  <div className="min-w-[10rem] flex-1">
-                    <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
-                    <h2 className="truncate text-base font-black leading-5 tracking-normal">
-                      {detail.store.name}
-                    </h2>
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-xs text-muted-foreground sm:justify-center">
-                    <span className="inline-flex h-8 items-center gap-1 rounded-full bg-background px-2.5">
+                  <div className="flex min-w-0 items-center gap-2 overflow-x-auto pb-1 text-xs text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
                       <Package className="size-3.5 text-primary" aria-hidden="true" />
                       <span className="whitespace-nowrap">{detail.store.productCount} məhsul</span>
                     </span>
-                    <span className="inline-flex h-8 min-w-0 items-center gap-1 rounded-full bg-background px-2.5">
+                    <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
                       <Clock3 className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="truncate">{formatLastActive(detail.store.updatedAt)}</span>
+                      <span className="whitespace-nowrap">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
                     {sellerAddress ? (
-                      <span className="inline-flex h-8 min-w-0 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
+                      <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-background px-2.5">
                         <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                        <span className="truncate">{sellerAddress}</span>
+                        <span className="whitespace-nowrap">{sellerAddress}</span>
                       </span>
                     ) : null}
                   </div>
-                  <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:w-auto">
+                  <div className="grid w-full shrink-0 grid-cols-2 gap-2 lg:w-[18rem]">
                     <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs hover:bg-primary/5">
                       <Link href={storeBaseHref}>Mağazaya keç</Link>
                     </Button>
                     {sellerMapUrl ? (
                       <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs text-primary hover:bg-primary/5">
                         <a href={sellerMapUrl} target="_blank" rel="noreferrer">
-                          Xəritədə göstər
+                          Xəritəni göstər
                           <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
                         </a>
                       </Button>

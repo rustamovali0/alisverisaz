@@ -1757,7 +1757,15 @@ export function Storefront({
             </section>
           )}
 
-          {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
+          {!isStoreOwner ? (
+            <PublicStoreLocationSection
+              locations={locations}
+              socialLinks={{
+                instagram: store.socialInstagram ?? undefined,
+                tiktok: store.socialTiktok ?? undefined,
+              }}
+            />
+          ) : null}
           {productsSection}
         </div>
         <SiteFooter {...footer} />
@@ -1769,60 +1777,71 @@ export function Storefront({
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
       <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-xl shadow-teal-950/10 sm:rounded-lg">
         <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
-          <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
-            <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
-              <div className="absolute inset-0 overflow-hidden">
-                <img
-                  src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
-                  alt={store.name}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="absolute inset-0 bg-slate-950/52" aria-hidden="true" />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.7),rgba(15,23,42,0.42),rgba(2,6,23,0.62))]" aria-hidden="true" />
-              <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
-                <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
-                <div className="mt-5 min-w-0">
-                  <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
-                    {heroTitle}
-                  </h1>
-                  <p className="mt-4 text-sm font-bold text-white/85">
-                    {heroSubtitle}
-                  </p>
+          {isStoreOwner ? (
+            <StoreBrandingQuickEdit store={store} />
+          ) : (
+            <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
+              <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
+                <div className="absolute inset-0 overflow-hidden">
+                  <img
+                    src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
+                    alt={store.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
-                <MarketplaceSearch
-                  stores={[store]}
-                  defaultValue={searchQuery}
-                  storeSlug={store.slug}
-                  searchBaseHref={storeHomeHref}
-                  className="mt-7 max-w-3xl rounded-full bg-white p-1.5 shadow-2xl shadow-black/25"
-                  inputClassName="h-12 rounded-full border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
-                  buttonClassName="!size-11 !min-w-11 rounded-full bg-cyan-400 p-0 text-white hover:bg-cyan-500"
-                  buttonSize="lg"
-                  stackOnMobile
-                  compactActions
-                />
-                {heroCategories.length > 0 ? (
-                  <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
-                    {heroCategories.map((category) => (
-                      <button
-                        key={category.id}
-                        type="button"
-                        className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white hover:text-primary"
-                        onClick={() => selectCategory(category)}
-                      >
-                        {category.name}
-                      </button>
-                    ))}
+                <div className="absolute inset-0 bg-slate-950/52" aria-hidden="true" />
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.7),rgba(15,23,42,0.42),rgba(2,6,23,0.62))]" aria-hidden="true" />
+                <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
+                  <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
+                  <div className="mt-5 min-w-0">
+                    <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
+                      {heroTitle}
+                    </h1>
+                    <p className="mt-4 text-sm font-bold text-white/85">
+                      {heroSubtitle}
+                    </p>
                   </div>
-                ) : null}
+                  <MarketplaceSearch
+                    stores={[store]}
+                    defaultValue={searchQuery}
+                    storeSlug={store.slug}
+                    searchBaseHref={storeHomeHref}
+                    className="mt-7 max-w-3xl rounded-full bg-white p-1.5 shadow-2xl shadow-black/25"
+                    inputClassName="h-12 rounded-full border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
+                    buttonClassName="!size-11 !min-w-11 rounded-full bg-cyan-400 p-0 text-white hover:bg-cyan-500"
+                    buttonSize="lg"
+                    stackOnMobile
+                    compactActions
+                  />
+                  {heroCategories.length > 0 ? (
+                    <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
+                      {heroCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white hover:text-primary"
+                          onClick={() => selectCategory(category)}
+                        >
+                          {category.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
         <div className="pb-6">
-          {isStoreOwner ? <StoreBrandingQuickEdit store={store} /> : null}
-          {!isStoreOwner ? <PublicStoreLocationSection locations={locations} /> : null}
+          {!isStoreOwner ? (
+            <PublicStoreLocationSection
+              locations={locations}
+              socialLinks={{
+                instagram: store.socialInstagram ?? undefined,
+                tiktok: store.socialTiktok ?? undefined,
+              }}
+            />
+          ) : null}
           {modernCategoriesSection}
           {modernProductsSection}
         </div>

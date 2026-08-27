@@ -317,7 +317,7 @@ export function MarketplaceHeader({
         </div>
       </header>
       {showMobileSearch && !isSellerDashboard && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
-        <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+        <div className="mobile-performance-surface relative z-30 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}

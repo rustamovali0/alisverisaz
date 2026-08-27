@@ -34,6 +34,10 @@ type WhatsAppOrderButtonProps = {
 function toWhatsAppPhone(value: string) {
   let digits = value.replace(/\D/g, "");
 
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
   if (digits.startsWith("0")) {
     digits = digits.slice(1);
   }
@@ -42,7 +46,11 @@ function toWhatsAppPhone(value: string) {
     digits = `994${digits}`;
   }
 
-  return digits.startsWith("994") && digits.length >= 12 ? digits : "";
+  if (digits.startsWith("994") && digits.length >= 12) {
+    return digits;
+  }
+
+  return digits.length >= 10 ? digits : "";
 }
 
 function formatMoney(value: number) {
@@ -92,7 +100,7 @@ export function WhatsAppOrderButton({
   const total = unitPrice * quantity;
   const whatsappPhone = toWhatsAppPhone(sellerPhone);
   const stockLimit = selectedVariant?.stockQuantity ?? product.stockQuantity;
-  const isUnavailable = disabled || stockLimit <= 0 || !whatsappPhone;
+  const isOutOfStock = disabled || stockLimit <= 0;
   const variantLabels = formatProductVariantSelection(
     product.options,
     normalizedSelection,
@@ -121,11 +129,14 @@ export function WhatsAppOrderButton({
       return;
     }
 
-    if (isUnavailable) {
+    if (isOutOfStock) {
+      void appAlert.error("Məhsul stokda yoxdur.", "WhatsApp sifarişi alınmadı");
+      return;
+    }
+
+    if (!whatsappPhone) {
       void appAlert.error(
-        whatsappPhone
-          ? "Məhsul stokda yoxdur."
-          : "Satıcının WhatsApp nömrəsi təyin edilməyib.",
+        "Satıcının WhatsApp nömrəsi düzgün təyin edilməyib.",
         "WhatsApp sifarişi alınmadı",
       );
       return;
@@ -224,7 +235,7 @@ export function WhatsAppOrderButton({
       type="button"
       variant="outline"
       onClick={handleClick}
-      disabled={isUnavailable || isPending}
+      disabled={isOutOfStock || isPending}
       className={cn("min-w-0 border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800", className)}
     >
       <WhatsAppIcon className="mr-2 size-5 shrink-0" />
