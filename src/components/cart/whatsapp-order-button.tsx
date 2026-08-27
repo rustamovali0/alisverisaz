@@ -155,10 +155,10 @@ export function WhatsAppOrderButton({
       return;
     }
 
-    if (!buyerName.trim() || !buyerPhone.trim()) {
+    if (!viewerRole && (!buyerName.trim() || !buyerPhone.trim())) {
       void appAlert.error(
-        "WhatsApp sifarişi üçün profilinizdə ad və telefon nömrəsi olmalıdır.",
-        "Profil məlumatları çatışmır",
+        "WhatsApp sifarişi üçün əvvəlcə İndi al ilə əlaqə məlumatlarınızı yazın.",
+        "Əlaqə məlumatları lazımdır",
       );
       return;
     }

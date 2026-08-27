@@ -31,6 +31,7 @@ export default async function CartPage({ params, searchParams }: CartPageProps) 
       checkoutOnly={query?.mode === "checkout"}
       defaultFullName={current?.profile?.full_name ?? current?.user.email ?? ""}
       defaultPhone={current?.profile?.phone ?? ""}
+      isAuthenticated={Boolean(current)}
       deliverySettings={deliverySettings}
       deliveryStoreOverrides={deliveryStoreOverrides}
     />

@@ -27,6 +27,7 @@ type CartCheckoutProps = {
   products?: CartProduct[];
   defaultFullName?: string;
   defaultPhone?: string;
+  isAuthenticated?: boolean;
   locale?: string;
   checkoutOnly?: boolean;
   deliverySettings: DeliverySettings;
@@ -59,6 +60,7 @@ export function CartCheckout({
   products: initialProducts = [],
   defaultFullName = "",
   defaultPhone = "",
+  isAuthenticated = false,
   locale = "az",
   checkoutOnly = false,
   deliverySettings,
@@ -159,7 +161,6 @@ export function CartCheckout({
       : "/products";
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
-  const hasSavedContact = Boolean(defaultFullName.trim() && defaultPhone.trim());
 
   useEffect(() => {
     setCheckoutRequestId(crypto.randomUUID());
@@ -445,15 +446,11 @@ export function CartCheckout({
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <div className="mt-4 grid gap-4">
-            {hasSavedContact ? (
-              <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            {isAuthenticated ? (
+              <>
                 <input type="hidden" name="fullName" value={defaultFullName} />
                 <input type="hidden" name="phone" value={defaultPhone} />
-                <p className="font-semibold">Profil məlumatları istifadə olunur</p>
-                <p className="mt-1 text-muted-foreground">
-                  {defaultFullName} · {defaultPhone}
-                </p>
-              </div>
+              </>
             ) : (
               <>
                 <label className="grid gap-2 text-sm font-medium">

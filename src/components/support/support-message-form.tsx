@@ -7,7 +7,19 @@ import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { createSupportMessageAction } from "@/lib/support/actions";
 
-export function SupportMessageForm() {
+type SupportMessageFormProps = {
+  isAuthenticated?: boolean;
+  defaultFullName?: string;
+  defaultEmail?: string;
+  defaultPhone?: string;
+};
+
+export function SupportMessageForm({
+  isAuthenticated = false,
+  defaultFullName = "",
+  defaultEmail = "",
+  defaultPhone = "",
+}: SupportMessageFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -43,22 +55,32 @@ export function SupportMessageForm() {
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
-        <input
-          name="fullName"
-          placeholder="Ad Soyad"
-          className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <input
-          name="phone"
-          placeholder="Telefon"
-          className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
+        {isAuthenticated ? (
+          <>
+            <input type="hidden" name="fullName" value={defaultFullName} />
+            <input type="hidden" name="email" value={defaultEmail} />
+            <input type="hidden" name="phone" value={defaultPhone} />
+          </>
+        ) : (
+          <>
+            <input
+              name="fullName"
+              placeholder="Ad Soyad"
+              className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <input
+              name="phone"
+              placeholder="Telefon"
+              className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </>
+        )}
         <input
           name="subject"
           placeholder="Mövzu"

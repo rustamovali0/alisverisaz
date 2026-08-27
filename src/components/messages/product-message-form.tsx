@@ -60,15 +60,7 @@ export function ProductMessageForm({
       <input type="hidden" name="productId" value={productId} />
       <input type="hidden" name="storeId" value={storeId} />
       <input type="hidden" name="storeSlug" value={storeSlug} />
-      <label className="grid gap-1 text-sm font-medium">
-        Ad Soyad
-        <input
-          className="premium-input h-10 md:h-11"
-          name="senderName"
-          defaultValue={defaultSenderName}
-          placeholder="Adınızı yazın"
-        />
-      </label>
+      <input type="hidden" name="senderName" value={defaultSenderName} />
       <label className="grid gap-1 text-sm font-medium">
         Mesaj
         <textarea

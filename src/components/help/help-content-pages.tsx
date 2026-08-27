@@ -9,6 +9,7 @@ import {
   HelpSidebar,
 } from "@/components/help/help-page-shell";
 import { Link } from "@/i18n/navigation";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
 import {
   getHelpArticle,
@@ -100,7 +101,10 @@ export async function HelpDocumentPage({
 }: {
   page: HelpPageContent;
 }) {
-  const settings = await getSiteSettings();
+  const [settings, current] = await Promise.all([
+    getSiteSettings(),
+    page.slug === "contact" ? getCurrentUserProfile() : Promise.resolve(null),
+  ]);
   const footer = footerFromSettings(settings);
 
   return (
@@ -125,7 +129,14 @@ export async function HelpDocumentPage({
         >
           {page.slug === "help" ? <HelpHubContent /> : null}
           <HelpSectionList sections={page.sections} />
-          {page.slug === "contact" ? <SupportMessageForm /> : null}
+          {page.slug === "contact" ? (
+            <SupportMessageForm
+              isAuthenticated={Boolean(current)}
+              defaultFullName={current?.profile?.full_name ?? current?.user.email ?? ""}
+              defaultEmail={current?.user.email ?? ""}
+              defaultPhone={current?.profile?.phone ?? ""}
+            />
+          ) : null}
           <HelpRelated items={relatedPageItems(page.relatedSlugs)} />
         </HelpPageShell>
       </div>

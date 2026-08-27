@@ -485,8 +485,13 @@ export async function createCheckoutOrdersAction(
     };
   }
 
-  const fullName = readString(formData, "fullName");
-  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+  const submittedFullName = readString(formData, "fullName");
+  const submittedPhone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+  const profileFullName =
+    current?.profile?.full_name?.trim() || current?.user.email?.trim() || "";
+  const profilePhone = normalizeAzerbaijanPhone(current?.profile?.phone ?? "");
+  const fullName = current ? profileFullName || submittedFullName : submittedFullName;
+  const phone = current ? profilePhone || submittedPhone : submittedPhone;
   const address = readString(formData, "address");
   const note = readString(formData, "note");
   const deliveryMethodInput = readString(formData, "deliveryMethod").toLowerCase();
@@ -513,7 +518,9 @@ export async function createCheckoutOrdersAction(
   ) {
     return {
       ok: false,
-      message: "Ad soyad, düzgün telefon və ünvan mütləqdir.",
+      message: current
+        ? "Profilinizdə ad soyad və düzgün telefon nömrəsi olmalıdır."
+        : "Ad soyad, düzgün telefon və ünvan mütləqdir.",
     };
   }
 
@@ -559,7 +566,8 @@ export async function createCheckoutOrdersAction(
     await ensureAuthProfile({
       id: current.user.id,
       email: current.user.email ?? null,
-      fullName: current.profile?.full_name ?? null,
+      fullName,
+      phone,
       role: current.role,
     });
   }
@@ -658,7 +666,7 @@ export async function createCheckoutOrdersAction(
   return {
     ok: true,
     message: isGuestCheckout
-      ? "Sifariş yaradıldı. Sifarişinizi izləmək üçün hesab yaradın."
+      ? "Sifariş yaradıldı. Sizinlə tezliklə əlaqə saxlanılacaq."
       : "Sifariş yaradıldı.",
     orderIds: checkout.orderIds,
     orders: checkout.orders,

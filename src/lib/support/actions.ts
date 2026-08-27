@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getCurrentUserProfile } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type SupportActionResult =
   | { ok: true; message: string }
@@ -28,13 +28,15 @@ export async function createSupportMessageAction(
     return { ok: false, message: "Mesaj ən azı 10 simvol olmalıdır." };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const email = readString(formData, "email") || user?.email || "";
+  const current = await getCurrentUserProfile();
+  const fullName =
+    current?.profile?.full_name?.trim() ||
+    current?.user.email?.trim() ||
+    readString(formData, "fullName");
+  const phone = current?.profile?.phone?.trim() || readString(formData, "phone");
+  const email = current?.user.email || readString(formData, "email");
 
-  if (!user && !email) {
+  if (!current && !email) {
     return {
       ok: false,
       message: "Cavab üçün email ünvanınızı yazın.",
@@ -43,10 +45,10 @@ export async function createSupportMessageAction(
 
   const supabaseAdmin = createSupabaseAdminClient();
   const { error } = await (supabaseAdmin as any).from("support_messages").insert({
-    user_id: user?.id ?? null,
-    full_name: readString(formData, "fullName"),
+    user_id: current?.user.id ?? null,
+    full_name: fullName,
     email,
-    phone: readString(formData, "phone"),
+    phone,
     subject,
     message,
     status: "open",

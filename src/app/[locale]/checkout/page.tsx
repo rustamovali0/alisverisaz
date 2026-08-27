@@ -27,6 +27,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
       checkoutOnly
       defaultFullName={current?.profile?.full_name ?? current?.user.email ?? ""}
       defaultPhone={current?.profile?.phone ?? ""}
+      isAuthenticated={Boolean(current)}
       deliverySettings={deliverySettings}
       deliveryStoreOverrides={deliveryStoreOverrides}
     />
