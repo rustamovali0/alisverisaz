@@ -341,7 +341,7 @@ export function LanguageSwitcher({
         aria-label={`${t("language")}: ${currentLanguage?.name ?? currentLanguage?.code}`}
         title={currentLanguage?.name}
       >
-        <RoundFlag locale={displayLocale} className="size-9" />
+        <RoundFlag locale={displayLocale} className="size-8" />
       </button>
       {isOpen ? (
         <div className="absolute right-0 top-[calc(100%+0.5rem)] z-[70] w-48 rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">

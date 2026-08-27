@@ -113,6 +113,12 @@ export function MarketplaceHeader({
   const sellerUtilityButtonClass =
     "size-12 rounded-xl !border-0 !bg-transparent !shadow-none hover:!bg-muted hover:!text-primary min-[400px]:size-14";
   const sellerUtilityIconClass = "size-7 stroke-[2.5] min-[400px]:size-8";
+  const commerceUtilityButtonClass =
+    "group size-12 rounded-xl border border-cyan-100 bg-transparent text-slate-900 transition duration-200 hover:border-cyan-200 hover:!bg-transparent hover:text-cyan-800 hover:shadow-none";
+  const commerceUtilityIconClass =
+    "h-6 w-6 min-h-6 min-w-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110";
+  const sellerCommerceIconClass =
+    "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8";
 
   function showLoginRequiredToast() {
     showToast({
@@ -228,13 +234,13 @@ export function MarketplaceHeader({
                   size="icon"
                   variant="ghost"
                   className={cn(
-                    "size-10 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-12 max-[374px]:hidden",
-                    sellerUtilityButtonClass,
+                    "size-10 max-[374px]:hidden min-[400px]:size-12",
+                    commerceUtilityButtonClass,
                   )}
                   aria-label={nav("favorites")}
                 >
                   <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className={sellerUtilityIconClass} aria-hidden="true" />
+                    <Heart className={sellerCommerceIconClass} aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button
@@ -242,13 +248,13 @@ export function MarketplaceHeader({
                   size="icon"
                   variant="ghost"
                   className={cn(
-                    "size-12 rounded-xl border bg-background text-foreground shadow-sm min-[400px]:size-14",
-                    sellerUtilityButtonClass,
+                    "min-[400px]:size-14",
+                    commerceUtilityButtonClass,
                   )}
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="relative grid place-items-center">
-                    <ShoppingCart className={sellerUtilityIconClass} aria-hidden="true" />
+                    <ShoppingCart className={sellerCommerceIconClass} aria-hidden="true" />
                     {cartCount > 0 ? (
                       <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                         {cartCount > 99 ? "99+" : cartCount}
@@ -321,16 +327,15 @@ export function MarketplaceHeader({
               asChild={!isGuest}
               onClick={isGuest ? showLoginRequiredToast : undefined}
               className={cn(
-                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
-                isSeller && sellerUtilityButtonClass,
+                commerceUtilityButtonClass,
               )}
               aria-label={nav("favorites")}
             >
               {isGuest ? (
-                <Heart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
+                <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
               ) : (
                 <Link href="/favorites" prefetch className="grid place-items-center">
-                  <Heart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
+                  <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
                 </Link>
               )}
             </Button>
@@ -339,13 +344,12 @@ export function MarketplaceHeader({
               size="icon"
               variant="ghost"
               className={cn(
-                "size-12 rounded-xl border border-cyan-100 bg-cyan-50/55 text-slate-900 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-200 hover:text-cyan-800 hover:shadow-md",
-                isSeller && sellerUtilityButtonClass,
+                commerceUtilityButtonClass,
               )}
               aria-label={common("cart")}
             >
               <Link href="/cart" prefetch className="relative grid place-items-center">
-                <ShoppingCart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
+                <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
                 {cartCount > 0 ? (
                   <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {cartCount > 99 ? "99+" : cartCount}
