@@ -167,6 +167,15 @@ export function CartCheckout({
   }, []);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const frame = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
     const cartItems = readCart();
     const productIds = cartItems.map((item) => item.productId);
@@ -516,9 +525,15 @@ export function CartCheckout({
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
           <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">Çatdırılma</span>
+            <span className="text-muted-foreground">
+              {deliveryMethod === "pickup" ? "Mağazadan özün götür" : "Çatdırılma"}
+            </span>
             <span className="font-semibold">
-              {deliverySummary.amount === 0 ? "Pulsuz" : formatMoney(deliverySummary.amount)}
+              {deliveryMethod === "pickup"
+                ? "Seçilib"
+                : deliverySummary.amount === 0
+                  ? "Pulsuz"
+                  : formatMoney(deliverySummary.amount)}
             </span>
           </div>
           {deliverySummary.estimate ? (

@@ -354,7 +354,7 @@ export function MobileBottomNav({
                   aria-hidden="true"
                 />
                 {badge > 0 ? (
-                  <span className="absolute -right-2 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-bold leading-none text-primary-foreground">
+                  <span className="absolute -right-2.5 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}

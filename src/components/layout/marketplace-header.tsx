@@ -44,12 +44,30 @@ type MarketplaceHeaderProps = {
   sticky?: boolean;
 };
 
+const CART_KEY = "alisveris_cart";
+
 function formatBrandName(value?: string) {
   if (!value || value.toLocaleLowerCase("az-AZ").includes("alisveris")) {
     return "Alışveriş";
   }
 
   return value;
+}
+
+function readCartCount() {
+  if (typeof window === "undefined") {
+    return 0;
+  }
+
+  try {
+    const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
+      quantity?: number;
+    }>;
+
+    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+  } catch {
+    return 0;
+  }
 }
 
 export function MarketplaceHeader({
@@ -91,6 +109,7 @@ export function MarketplaceHeader({
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
+  const [cartCount, setCartCount] = useState(0);
   const sellerUtilityButtonClass =
     "size-12 rounded-xl !border-0 !bg-transparent !shadow-none hover:!bg-muted hover:!text-primary min-[400px]:size-14";
   const sellerUtilityIconClass = "size-7 stroke-[2.5] min-[400px]:size-8";
@@ -129,7 +148,24 @@ export function MarketplaceHeader({
     };
   }, [isHomePage]);
 
+  useEffect(() => {
+    function syncCartCount() {
+      setCartCount(readCartCount());
+    }
+
+    syncCartCount();
+    window.addEventListener("storage", syncCartCount);
+    window.addEventListener("alisveris-cart-updated", syncCartCount);
+
+    return () => {
+      window.removeEventListener("storage", syncCartCount);
+      window.removeEventListener("alisveris-cart-updated", syncCartCount);
+    };
+  }, []);
+
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
+  const shouldShowDesktopSearch =
+    !isSellerDashboard && (!isHomePage || !isHomeSearchVisible);
 
   return (
     <>
@@ -211,8 +247,13 @@ export function MarketplaceHeader({
                   )}
                   aria-label={common("cart")}
                 >
-                  <Link href="/cart" prefetch className="grid place-items-center">
+                  <Link href="/cart" prefetch className="relative grid place-items-center">
                     <ShoppingCart className={sellerUtilityIconClass} aria-hidden="true" />
+                    {cartCount > 0 ? (
+                      <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                        {cartCount > 99 ? "99+" : cartCount}
+                      </span>
+                    ) : null}
                   </Link>
                 </Button>
               </>
@@ -244,7 +285,7 @@ export function MarketplaceHeader({
               </Link>
             </Button>
           </nav>
-          {!isSellerDashboard ? (
+          {shouldShowDesktopSearch ? (
             <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
               <MarketplaceSearch
                 stores={stores}
@@ -303,8 +344,13 @@ export function MarketplaceHeader({
               )}
               aria-label={common("cart")}
             >
-              <Link href="/cart" prefetch className="grid place-items-center">
+              <Link href="/cart" prefetch className="relative grid place-items-center">
                 <ShoppingCart className={isSeller ? sellerUtilityIconClass : "h-6 w-6 min-h-6 min-w-6 stroke-[2.4]"} aria-hidden="true" />
+                {cartCount > 0 ? (
+                  <span className="absolute -right-2 -top-2 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                ) : null}
               </Link>
             </Button>
             <div className="hidden min-w-[168px] lg:block">

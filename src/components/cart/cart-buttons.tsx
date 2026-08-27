@@ -387,7 +387,8 @@ export function BuyNowButton({
       },
     ]);
 
-    router.push(checkoutPath);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    router.push(checkoutPath, { scroll: true });
   }
 
   return (
