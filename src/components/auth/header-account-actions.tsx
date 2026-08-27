@@ -130,16 +130,28 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
   if (profile.status === "guest" || profile.role === "admin") {
     return (
       <div className={cn("items-center gap-2", className)}>
-        <Button asChild variant="ghost">
+        <Button
+          asChild
+          variant="ghost"
+          className="group bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
+        >
           <Link href={createNextHref(pathname, "/login")}>
             <LogIn className="mr-2 size-4" aria-hidden="true" />
-            {auth("login")}
+            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+              {auth("login")}
+            </span>
           </Link>
         </Button>
-        <Button asChild variant="outline">
+        <Button
+          asChild
+          variant="ghost"
+          className="group border border-transparent bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
+        >
           <Link href={createNextHref(pathname, "/register")}>
             <UserPlus className="mr-2 size-4" aria-hidden="true" />
-            {auth("register")}
+            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+              {auth("register")}
+            </span>
           </Link>
         </Button>
       </div>

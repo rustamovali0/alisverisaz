@@ -183,7 +183,7 @@ export function MarketplaceHeader({
         }
       >
         <div className="container flex w-full max-w-full min-w-0 flex-wrap items-center gap-2 py-3 sm:gap-3 xl:flex-nowrap">
-          <Link href={brandHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
+          <Link href={brandHomeHref} prefetch className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
               <span className="grid size-10 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
                 <img
@@ -204,7 +204,7 @@ export function MarketplaceHeader({
                 a
               </span>
             )}
-            <span className="min-w-0 truncate text-xl font-black tracking-normal text-slate-950 dark:text-slate-100 min-[400px]:text-2xl md:text-xl">
+            <span className="min-w-0 origin-left truncate text-xl font-black tracking-normal text-slate-950 transition-transform duration-200 group-hover:scale-105 dark:text-slate-100 min-[400px]:text-2xl md:text-xl">
               {displaySiteName}
             </span>
           </Link>
@@ -267,24 +267,28 @@ export function MarketplaceHeader({
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-cyan-200",
-                isProductsActive && "bg-cyan-50 text-cyan-800 dark:bg-white/10 dark:text-cyan-200",
+                "group rounded-full bg-transparent px-4 text-slate-700 shadow-none hover:!bg-transparent hover:text-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-slate-200",
+                isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
               <Link href={productsHref} prefetch>
-                {nav("products")}
+                <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+                  {nav("products")}
+                </span>
               </Link>
             </Button>
             <Button
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
-                "rounded-full px-4 text-slate-700 hover:bg-cyan-50 hover:text-cyan-800 dark:text-slate-200 dark:hover:bg-white/5 dark:hover:text-cyan-200",
-                isAboutActive && "bg-cyan-50 text-cyan-800 dark:bg-white/10 dark:text-cyan-200",
+                "group rounded-full bg-transparent px-4 text-slate-700 shadow-none hover:!bg-transparent hover:text-slate-700 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-slate-200",
+                isAboutActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
               <Link href="/about" prefetch>
-                {nav("about")}
+                <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+                  {nav("about")}
+                </span>
               </Link>
             </Button>
           </nav>

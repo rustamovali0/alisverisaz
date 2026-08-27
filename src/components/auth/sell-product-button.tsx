@@ -56,9 +56,17 @@ export function SellProductButton() {
   }
 
   return (
-    <Button type="button" onClick={handleClick} disabled={isPending}>
+    <Button
+      type="button"
+      variant="ghost"
+      className="group bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
+      onClick={handleClick}
+      disabled={isPending}
+    >
       <Plus className="mr-2 size-4" aria-hidden="true" />
-      {profile.role === "seller" ? "Məhsul sat" : "Satıcı ol"}
+      <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+        {profile.role === "seller" ? "Məhsul sat" : "Satıcı ol"}
+      </span>
     </Button>
   );
 }
