@@ -3,7 +3,6 @@
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type PasswordInputProps = {
@@ -60,19 +59,21 @@ export function PasswordInput({
             inputClassName,
           )}
         />
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
           className={cn(
-            "absolute right-2 top-1/2 z-10 size-8 -translate-y-1/2 rounded-lg bg-background/80 text-foreground shadow-sm hover:bg-primary/10 hover:text-primary",
+            "absolute right-2 top-1/2 z-10 inline-grid size-9 shrink-0 -translate-y-1/2 place-items-center rounded-lg border border-input bg-background text-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-cyan-300/50 dark:hover:text-cyan-200",
             toggleClassName,
           )}
           onClick={() => setIsVisible((current) => !current)}
           aria-label={isVisible ? "Şifrəni gizlət" : "Şifrəni göstər"}
         >
-          {isVisible ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
-        </Button>
+          {isVisible ? (
+            <EyeOff className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
+          ) : (
+            <Eye className="size-5 shrink-0 stroke-[2.4]" aria-hidden="true" />
+          )}
+        </button>
       </div>
       {hint ? <span className="text-xs font-normal text-muted-foreground">{hint}</span> : null}
       {error ? <span className="text-xs font-medium text-destructive">{error}</span> : null}

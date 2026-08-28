@@ -7,6 +7,10 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
+import {
+  getClientAuthProfileOnce,
+  useClientAuthProfileState,
+} from "@/lib/auth/use-client-auth-profile";
 import type { CartItem, CartProduct } from "@/lib/cart/types";
 import {
   findMatchingProductVariant,
@@ -14,55 +18,10 @@ import {
   getRequiredSelectableProductOptions,
   normalizeProductVariantSelection,
 } from "@/lib/products/variant-utils";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const CART_KEY = "alisveris_cart";
-type AuthListener = (hasUser: boolean | null) => void;
-
-const authListeners = new Set<AuthListener>();
-let cachedHasUser: boolean | null = null;
-let authWatcherStarted = false;
-
-function setCachedHasUser(hasUser: boolean | null) {
-  cachedHasUser = hasUser;
-  authListeners.forEach((listener) => listener(hasUser));
-}
-
-function ensureAuthWatcher() {
-  if (typeof window === "undefined" || authWatcherStarted) {
-    return;
-  }
-
-  authWatcherStarted = true;
-  const supabase = createSupabaseBrowserClient();
-
-  void supabase.auth
-    .getUser()
-    .then(({ data }) => setCachedHasUser(Boolean(data.user)))
-    .catch(() => setCachedHasUser(false));
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    setCachedHasUser(Boolean(session?.user));
-  });
-}
-
-function useSharedAuthState() {
-  const [hasUser, setHasUser] = useState(cachedHasUser);
-
-  useEffect(() => {
-    ensureAuthWatcher();
-    setHasUser(cachedHasUser);
-    authListeners.add(setHasUser);
-
-    return () => {
-      authListeners.delete(setHasUser);
-    };
-  }, []);
-
-  return hasUser;
-}
 
 function readCart(): CartItem[] {
   if (typeof window === "undefined") {
@@ -134,7 +93,8 @@ export function AddToCartButton({
 }) {
   const t = useTranslations("marketplace");
   const [quantity, setQuantity] = useState(0);
-  const hasUser = useSharedAuthState();
+  const { profile, isResolved } = useClientAuthProfileState();
+  const hasUser = isResolved ? profile.status === "authenticated" : null;
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
     product.variantCombinations ?? [],
@@ -181,16 +141,11 @@ export function AddToCartButton({
       return;
     }
 
-    const supabase = createSupabaseBrowserClient();
-    void supabase.auth
-      .getUser()
-      .then(({ data }) => {
-        const isSignedIn = Boolean(data.user);
-        setCachedHasUser(isSignedIn);
-        emitCartToast(isSignedIn);
+    void getClientAuthProfileOnce()
+      .then((authProfile) => {
+        emitCartToast(authProfile.status === "authenticated");
       })
       .catch(() => {
-        setCachedHasUser(false);
         emitCartToast(false);
       });
   }
@@ -317,7 +272,7 @@ export function AddToCartButton({
       onClick={handleAdd}
       disabled={isUnavailable}
       className={cn(
-        "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
+        "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none !text-white hover:!text-white min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
         className,
       )}
     >

@@ -4,15 +4,16 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
+import { StoreJsonLd } from "@/components/seo/json-ld";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
   getStoreSubdomainSlug,
   getStorePath,
-  getStorefrontUrl,
   isReservedStoreSubdomain,
 } from "@/lib/config/domains";
+import { siteConfig } from "@/lib/config/site";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getCurrentUserProfile } from "@/lib/auth/session";
@@ -47,24 +48,29 @@ export async function generateMetadata({
     return {};
   }
 
-  const canonicalUrl = getStorefrontUrl(store.slug);
+  const canonicalUrl = `${siteConfig.url}/store/${store.slug}`;
+  const description =
+    store.description ||
+    `${store.name} mağazasının yeni məhsulları Alışveriş-də.`;
 
   return {
     title: `${store.name} | Alışveriş`,
-    description:
-      store.description ||
-      `${store.name} mağazasının yeni məhsulları Alışveriş-də.`,
+    description,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
       title: `${store.name} | Alışveriş`,
-      description:
-        store.description ||
-        `${store.name} mağazasının aktiv yeni məhsulları.`,
+      description,
       url: canonicalUrl,
       images: store.coverUrl ? [store.coverUrl] : undefined,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${store.name} | Alışveriş`,
+      description,
+      images: store.coverUrl ? [store.coverUrl] : undefined,
     },
   };
 }
@@ -131,6 +137,7 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   return (
     <>
       <ViewTracker storeId={store.id} />
+      <StoreJsonLd store={store} url={`${siteConfig.url}/store/${store.slug}`} />
       <Storefront
         store={store}
         categories={categories}

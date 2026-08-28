@@ -638,6 +638,7 @@ export function ProductGrid({
             href={detailHref}
             className="block"
             aria-label={t("productDetailAria", { name: product.name })}
+            prefetch={false}
             scroll
           >
             <div
@@ -755,7 +756,7 @@ export function ProductGrid({
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25",
                     )}
                   >
-                    <Link href={detailHref} scroll>
+                    <Link href={detailHref} prefetch={false} scroll>
                       {t("viewDetails")}
                     </Link>
                   </Button>

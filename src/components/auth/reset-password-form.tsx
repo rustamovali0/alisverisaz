@@ -31,7 +31,7 @@ export function ResetPasswordForm() {
       }
 
       void appAlert.success("Şifrə yeniləndi", result.message);
-      router.replace(result.redirectTo);
+      router.replace("/login");
       router.refresh();
     });
   }

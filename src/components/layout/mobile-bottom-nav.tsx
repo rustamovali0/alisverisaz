@@ -170,27 +170,24 @@ export function MobileBottomNav({
   };
 
   useEffect(() => {
-    if (role !== "seller") {
+    if (
+      profile.status !== "authenticated" ||
+      profile.role !== "seller" ||
+      role !== "seller"
+    ) {
       setSellerStoreHref(null);
       return;
     }
 
     let active = true;
     const supabase = createSupabaseBrowserClient();
+    const ownerId = profile.userId;
 
     async function loadStorefrontHref() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        return;
-      }
-
       const { data } = await (supabase as any)
         .from("stores")
         .select("slug")
-        .eq("owner_id", user.id)
+        .eq("owner_id", ownerId)
         .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -206,7 +203,7 @@ export function MobileBottomNav({
     return () => {
       active = false;
     };
-  }, [role]);
+  }, [profile.status, profile.role, profile.userId, role]);
 
   const items =
     role === "seller"

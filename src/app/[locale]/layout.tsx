@@ -88,8 +88,8 @@ export async function generateMetadata({
     namespace: "seo",
   });
   const siteSettings = await getSiteSettings();
-  const seoTitle = siteSettings.defaultSeoTitle || t("title");
-  const seoDescription = siteSettings.defaultMetaDescription || t("description");
+  const seoTitle = siteSettings.defaultSeoTitle || siteConfig.defaultTitle || t("title");
+  const seoDescription = siteSettings.defaultMetaDescription || siteConfig.description || t("description");
   const faviconUrl = siteSettings.faviconUrl || undefined;
   const requestHeaders = await headers();
   const visiblePathname = normalizeVisiblePath(

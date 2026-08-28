@@ -18,13 +18,15 @@ import {
 } from "@/components/products/product-detail-gallery";
 import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
+import { ProductJsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById, getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
-import { getStorePath, getStoreSubdomainSlug, getStorefrontUrl } from "@/lib/config/domains";
+import { getStorePath, getStoreSubdomainSlug } from "@/lib/config/domains";
+import { siteConfig } from "@/lib/config/site";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import {
   getLocationsForStores,
@@ -100,23 +102,27 @@ export async function generateMetadata({
     return {};
   }
 
-  const canonicalUrl = getStorefrontUrl(
-    detail.store.slug,
-    `/products/${detail.product.slug}`,
-  );
+  const canonicalUrl = `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`;
+  const description = detail.product.description || `${detail.product.name} məhsul detalları.`;
 
   return {
     title: `${detail.product.name} | ${detail.store.name}`,
-    description: detail.product.description || `${detail.product.name} məhsul detalları.`,
+    description,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
       title: `${detail.product.name} | ${detail.store.name}`,
-      description: detail.product.description || `${detail.product.name} məhsul detalları.`,
+      description,
       url: canonicalUrl,
       images: detail.product.imageUrl ? [detail.product.imageUrl] : undefined,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${detail.product.name} | ${detail.store.name}`,
+      description,
+      images: detail.product.imageUrl ? [detail.product.imageUrl] : undefined,
     },
   };
 }
@@ -205,6 +211,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
       <ProductDetailScrollReset />
+      <ProductJsonLd
+        detail={detail}
+        url={`${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`}
+      />
       <ViewTracker productId={detail.product.id} />
       <div className="mx-auto w-full max-w-[1220px] px-4 py-5 sm:px-6 md:py-7 lg:px-7">
         <nav className="mb-5 min-w-0 text-sm text-muted-foreground">

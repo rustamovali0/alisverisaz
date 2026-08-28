@@ -101,6 +101,20 @@ function normalizeNextPath(value: string) {
   return value;
 }
 
+async function getRequestOrigin() {
+  const headerList = await headers();
+  const forwardedHost = headerList.get("x-forwarded-host");
+  const forwardedProto = headerList.get("x-forwarded-proto") ?? "https";
+  const host = forwardedHost ?? headerList.get("host");
+  const origin = headerList.get("origin");
+
+  if (origin) {
+    return origin;
+  }
+
+  return host ? `${forwardedProto}://${host}` : clientEnv.appUrl;
+}
+
 async function recordLoginFailure(
   rateLimitRule: Parameters<typeof recordAuthRateLimitAttempt>[0],
   fallbackMessage = GENERIC_LOGIN_ERROR,
@@ -886,9 +900,9 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     endpoint: "password_reset" as const,
     identifier,
     ip,
-    maxAttempts: 3,
-    windowSeconds: 15 * 60,
-    blockSeconds: 15 * 60,
+    maxAttempts: 5,
+    windowSeconds: 2 * 60,
+    blockSeconds: 2 * 60,
   };
 
   if (!identifier) {
@@ -927,11 +941,14 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   await recordAuthRateLimitAttempt(rateLimitRule);
 
-  if (process.env.AUTH_PASSWORD_RESET_EMAILS_ENABLED === "true") {
+  if (process.env.AUTH_PASSWORD_RESET_EMAILS_ENABLED !== "false") {
     const supabase = await createSupabaseServerClient();
+    const redirectUrl = new URL("/auth/callback", await getRequestOrigin());
+
+    redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
 
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${clientEnv.appUrl}/reset-password`,
+      redirectTo: redirectUrl.toString(),
     });
   }
 
@@ -980,7 +997,6 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
   return {
     ok: true,
     message: "Şifrə uğurla yeniləndi.",
-    redirectTo: "/login",
   };
 }
 

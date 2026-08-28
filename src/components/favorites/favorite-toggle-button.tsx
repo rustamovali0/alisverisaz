@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { getClientAuthProfileOnce } from "@/lib/auth/use-client-auth-profile";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ type FavoriteProductCache = {
 
 let favoriteProductCache: FavoriteProductCache | null = null;
 let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null = null;
+let favoriteProductCachePromiseUserId: string | null = null;
 const FAVORITE_UPDATED_EVENT = "alisveris-favorite-updated";
 
 type FavoriteUpdatedDetail = {
@@ -36,25 +38,32 @@ function emitFavoriteUpdate(detail: FavoriteUpdatedDetail) {
 }
 
 async function loadFavoriteProductCache() {
-  if (favoriteProductCache) {
+  const authProfile = await getClientAuthProfileOnce();
+
+  if (authProfile.status !== "authenticated") {
+    favoriteProductCache = null;
+    return null;
+  }
+
+  if (favoriteProductCache?.userId === authProfile.userId) {
     return favoriteProductCache;
   }
 
+  favoriteProductCache = null;
+
+  if (favoriteProductCachePromiseUserId !== authProfile.userId) {
+    favoriteProductCachePromise = null;
+  }
+
   if (!favoriteProductCachePromise) {
+    favoriteProductCachePromiseUserId = authProfile.userId;
     favoriteProductCachePromise = (async () => {
       const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        return null;
-      }
 
       const { data, error } = await (supabase as any)
         .from("favorites")
         .select("product_id")
-        .eq("user_id", user.id);
+        .eq("user_id", authProfile.userId);
 
       if (error) {
         return null;
@@ -68,13 +77,14 @@ async function loadFavoriteProductCache() {
       }
 
       favoriteProductCache = {
-        userId: user.id,
+        userId: authProfile.userId,
         productIds,
       };
 
       return favoriteProductCache;
     })().finally(() => {
       favoriteProductCachePromise = null;
+      favoriteProductCachePromiseUserId = null;
     });
   }
 
@@ -123,22 +133,20 @@ export function FavoriteToggleButton({
         return;
       }
 
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const authProfile = await getClientAuthProfileOnce();
 
-      if (!user) {
+      if (authProfile.status !== "authenticated") {
         if (mounted) {
           setIsReady(true);
         }
         return;
       }
 
+      const supabase = createSupabaseBrowserClient();
       const { data } = await (supabase as any)
         .from("favorites")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", authProfile.userId)
         .eq("product_id", productId)
         .maybeSingle();
 
@@ -185,12 +193,9 @@ export function FavoriteToggleButton({
     emitFavoriteUpdate({ productId, isActive: !wasActive });
 
     void (async () => {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const authProfile = await getClientAuthProfileOnce();
 
-      if (!user) {
+      if (authProfile.status !== "authenticated") {
         setFavoriteId(previousFavoriteId);
         emitFavoriteUpdate({ productId, isActive: wasActive });
         setIsMutating(false);
@@ -204,18 +209,21 @@ export function FavoriteToggleButton({
         return;
       }
 
-      if (favoriteProductCache && favoriteProductCache.userId !== user.id) {
+      const supabase = createSupabaseBrowserClient();
+      const userId = authProfile.userId;
+
+      if (favoriteProductCache && favoriteProductCache.userId !== userId) {
         favoriteProductCache = null;
       }
 
-      updateFavoriteProductCache(user.id, productId, !wasActive);
+      updateFavoriteProductCache(userId, productId, !wasActive);
 
       try {
         if (wasActive) {
         let deleteQuery = (supabase as any)
           .from("favorites")
           .delete()
-          .eq("user_id", user.id);
+          .eq("user_id", userId);
 
         deleteQuery = compact
           ? deleteQuery.eq("product_id", productId)
@@ -237,7 +245,7 @@ export function FavoriteToggleButton({
       const { data, error } = await (supabase as any)
         .from("favorites")
         .insert({
-          user_id: user.id,
+          user_id: userId,
           product_id: productId,
         })
         .select("id")
@@ -248,14 +256,14 @@ export function FavoriteToggleButton({
         }
 
       setFavoriteId(data.id);
-      updateFavoriteProductCache(user.id, productId, true);
+      updateFavoriteProductCache(userId, productId, true);
       showToast({
         title: "Məhsul seçilmişlərə əlavə edildi.",
         variant: "success",
       });
       } catch {
         setFavoriteId(previousFavoriteId);
-        updateFavoriteProductCache(user.id, productId, wasActive);
+        updateFavoriteProductCache(userId, productId, wasActive);
         emitFavoriteUpdate({ productId, isActive: wasActive });
         showToast({
           title: "Əməliyyatı tamamlamaq mümkün olmadı.",

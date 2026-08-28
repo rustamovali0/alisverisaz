@@ -2,7 +2,8 @@ import { clientEnv } from "@/lib/config/env.client";
 
 export const siteConfig = {
   name: "Alışveriş",
+  defaultTitle: "Alisveris.az — Azərbaycanın Onlayn Marketplace-i",
   description:
-    "Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə və sifarişlər üçün marketplace platforması.",
-  url: clientEnv.appUrl,
+    "Azərbaycanda mağazalar, məhsullar və sərfəli alış-veriş.",
+  url: (process.env.NEXT_PUBLIC_CANONICAL_URL ?? clientEnv.appUrl).replace(/\/+$/, ""),
 } as const;

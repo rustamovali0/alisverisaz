@@ -4,6 +4,7 @@ export const CACHE_TTL = {
   SHORT: 30,
   MEDIUM: 300,
   LONG: 3600,
+  DAY: 86_400,
 } as const;
 
 const SUPPORTED_CACHE_LOCALES = ["az", "en", "ru"] as const;
@@ -26,6 +27,11 @@ function revalidateLocalizedPath(path: string) {
   for (const locale of SUPPORTED_CACHE_LOCALES) {
     revalidatePath(`/${locale}${path === "/" ? "" : path}`);
   }
+}
+
+function revalidateSeoRoutes() {
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/robots.txt");
 }
 
 export function normalizeCacheLocale(locale: string | null | undefined): CacheLocale {
@@ -73,16 +79,19 @@ export function invalidatePublicSiteSettings() {
   revalidateTag(CACHE_TAGS.publicSiteSettings, "max");
   revalidateTag(CACHE_TAGS.homepage, "max");
   revalidateLocalizedPath("/");
+  revalidateSeoRoutes();
 }
 
 export function invalidateHomepagePublicData() {
   revalidateTag(CACHE_TAGS.homepage, "max");
   revalidateLocalizedPath("/");
+  revalidateSeoRoutes();
 }
 
 export function invalidateNavigationPublicData() {
   revalidateTag(CACHE_TAGS.navigationMenus, "max");
   revalidateLocalizedPath("/");
+  revalidateSeoRoutes();
 }
 
 export function invalidateCategoryPublicData(input: {
@@ -100,6 +109,7 @@ export function invalidateCategoryPublicData(input: {
 
   revalidateLocalizedPath("/");
   revalidateLocalizedPath("/products");
+  revalidateSeoRoutes();
 }
 
 export function invalidateProductPublicData(input: {
@@ -138,7 +148,10 @@ export function invalidateProductPublicData(input: {
 
   if (storeSlug) {
     revalidateLocalizedPath(`/${storeSlug}`);
+    revalidateLocalizedPath(`/store/${storeSlug}`);
   }
+
+  revalidateSeoRoutes();
 }
 
 export function invalidateStorePublicData(input: {
@@ -160,5 +173,8 @@ export function invalidateStorePublicData(input: {
 
   if (storeSlug) {
     revalidateLocalizedPath(`/${storeSlug}`);
+    revalidateLocalizedPath(`/store/${storeSlug}`);
   }
+
+  revalidateSeoRoutes();
 }

@@ -8,6 +8,7 @@ import { isAuthRole, type AuthRole } from "@/lib/auth/types";
 export type ClientAuthProfile =
   | {
       status: "loading" | "guest";
+      userId: null;
       role: null;
       email: null;
       fullName: null;
@@ -15,6 +16,7 @@ export type ClientAuthProfile =
     }
   | {
       status: "authenticated";
+      userId: string;
       role: AuthRole;
       email: string | null;
       fullName: string | null;
@@ -27,12 +29,28 @@ export type ClientAuthProfileState = {
   isResolved: boolean;
 };
 
-const AUTH_PROFILE_RESET_EVENT = "alisveris-auth-profile-reset";
-const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v1";
+const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v2";
 let inMemoryProfile: ClientAuthProfile | null = null;
+let didReadInitialCache = false;
+let currentProfile: ClientAuthProfile | null = null;
+let currentIsResolved = false;
+let authProfilePromise: Promise<ClientAuthProfile> | null = null;
+let authProfileVersion = 0;
+let authWatcherStarted = false;
+const profileListeners = new Set<(state: ClientAuthProfileState) => void>();
 
 const emptyProfile: ClientAuthProfile = {
   status: "loading",
+  userId: null,
+  role: null,
+  email: null,
+  fullName: null,
+  avatarUrl: null,
+};
+
+const guestProfile: ClientAuthProfile = {
+  status: "guest",
+  userId: null,
   role: null,
   email: null,
   fullName: null,
@@ -47,10 +65,14 @@ function isCachedProfile(value: unknown): value is ClientAuthProfile {
   const profile = value as Record<string, unknown>;
 
   if (profile.status === "guest") {
-    return profile.role === null;
+    return profile.userId === null && profile.role === null;
   }
 
-  return profile.status === "authenticated" && isAuthRole(profile.role);
+  return (
+    profile.status === "authenticated" &&
+    typeof profile.userId === "string" &&
+    isAuthRole(profile.role)
+  );
 }
 
 function readCachedProfile() {
@@ -99,13 +121,7 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return {
-      status: "guest",
-      role: null,
-      email: null,
-      fullName: null,
-      avatarUrl: null,
-    };
+    return guestProfile;
   }
 
   const { data: profile } = await supabase
@@ -124,6 +140,7 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
 
   return {
     status: "authenticated",
+    userId: user.id,
     role: normalizeRole(profile?.role),
     email: profile?.email ?? user.email ?? null,
     fullName:
@@ -139,7 +156,76 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
   };
 }
 
-export function clearClientAuthProfileCache() {
+function getCurrentProfile() {
+  if (!didReadInitialCache) {
+    currentProfile = readCachedProfile() ?? emptyProfile;
+    didReadInitialCache = true;
+  }
+
+  return currentProfile ?? emptyProfile;
+}
+
+function getSnapshot(): ClientAuthProfileState {
+  return {
+    profile: getCurrentProfile(),
+    isResolved: currentIsResolved,
+  };
+}
+
+function publishAuthProfile(profile: ClientAuthProfile, isResolved: boolean) {
+  currentProfile = profile;
+  currentIsResolved = isResolved;
+
+  const snapshot = getSnapshot();
+  profileListeners.forEach((listener) => listener(snapshot));
+}
+
+function cacheAndPublishAuthProfile(profile: ClientAuthProfile, isResolved = true) {
+  cacheProfile(profile);
+  publishAuthProfile(profile, isResolved);
+}
+
+export function refreshClientAuthProfile() {
+  if (authProfilePromise) {
+    return authProfilePromise;
+  }
+
+  const requestVersion = authProfileVersion;
+  const nextPromise = loadClientAuthProfile()
+    .then((nextProfile) => {
+      if (requestVersion === authProfileVersion) {
+        cacheAndPublishAuthProfile(nextProfile, true);
+        return nextProfile;
+      }
+
+      return getCurrentProfile();
+    })
+    .catch(() => {
+      const fallbackProfile = readCachedProfile() ?? guestProfile;
+      if (requestVersion === authProfileVersion) {
+        publishAuthProfile(fallbackProfile, true);
+      }
+
+      return fallbackProfile;
+    })
+    .finally(() => {
+      if (authProfilePromise === nextPromise) {
+        authProfilePromise = null;
+      }
+    });
+
+  authProfilePromise = nextPromise;
+
+  return nextPromise;
+}
+
+function reloadClientAuthProfile() {
+  authProfileVersion += 1;
+  authProfilePromise = null;
+  return refreshClientAuthProfile();
+}
+
+function clearPersistedAuthProfile() {
   inMemoryProfile = null;
 
   if (typeof window !== "undefined") {
@@ -148,64 +234,86 @@ export function clearClientAuthProfileCache() {
     } catch {
       // ignore storage failures
     }
-    window.dispatchEvent(new Event(AUTH_PROFILE_RESET_EVENT));
+  }
+}
+
+function setGuestProfile() {
+  authProfileVersion += 1;
+  authProfilePromise = null;
+  cacheAndPublishAuthProfile(guestProfile, true);
+}
+
+export function refreshCachedClientAuthProfile() {
+  clearPersistedAuthProfile();
+  publishAuthProfile(emptyProfile, false);
+  return reloadClientAuthProfile();
+}
+
+function refreshProfileAfterSessionChange() {
+  publishAuthProfile(getCurrentProfile(), false);
+  void reloadClientAuthProfile();
+}
+
+export async function getClientAuthProfileOnce() {
+  ensureAuthProfileLoaded();
+
+  const snapshot = getSnapshot();
+
+  if (snapshot.isResolved && snapshot.profile.status !== "loading") {
+    return snapshot.profile;
+  }
+
+  return refreshClientAuthProfile();
+}
+
+export function clearClientAuthProfileCache() {
+  clearPersistedAuthProfile();
+  currentProfile = emptyProfile;
+  currentIsResolved = false;
+  publishAuthProfile(emptyProfile, false);
+  void reloadClientAuthProfile();
+}
+
+function ensureAuthProfileWatcher() {
+  if (typeof window === "undefined" || authWatcherStarted) {
+    return;
+  }
+
+  authWatcherStarted = true;
+  const supabase = createSupabaseBrowserClient();
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (!session) {
+      setGuestProfile();
+      return;
+    }
+
+    refreshProfileAfterSessionChange();
+  });
+}
+
+function ensureAuthProfileLoaded() {
+  ensureAuthProfileWatcher();
+
+  if (!currentIsResolved && !authProfilePromise) {
+    void refreshClientAuthProfile();
   }
 }
 
 export function useClientAuthProfileState(): ClientAuthProfileState {
-  const [profile, setProfile] = useState<ClientAuthProfile>(
-    () => readCachedProfile() ?? emptyProfile,
-  );
-  const [isResolved, setIsResolved] = useState(false);
+  const [state, setState] = useState<ClientAuthProfileState>(() => getSnapshot());
 
   useEffect(() => {
-    let isMounted = true;
-    const supabase = createSupabaseBrowserClient();
-
-    async function refreshProfile() {
-      const nextProfile = await loadClientAuthProfile();
-
-      if (isMounted) {
-        cacheProfile(nextProfile);
-        setProfile(nextProfile);
-        setIsResolved(true);
-      }
-    }
-
-    void refreshProfile();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        const guestProfile: ClientAuthProfile = {
-          status: "guest",
-          role: null,
-          email: null,
-          fullName: null,
-          avatarUrl: null,
-        };
-
-        cacheProfile(guestProfile);
-        setProfile(guestProfile);
-        setIsResolved(true);
-        return;
-      }
-
-      setIsResolved(false);
-      void refreshProfile();
-    });
-
-    window.addEventListener(AUTH_PROFILE_RESET_EVENT, refreshProfile);
+    ensureAuthProfileLoaded();
+    setState(getSnapshot());
+    profileListeners.add(setState);
 
     return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-      window.removeEventListener(AUTH_PROFILE_RESET_EVENT, refreshProfile);
+      profileListeners.delete(setState);
     };
   }, []);
 
-  return { profile, isResolved };
+  return state;
 }
 
 export function useClientAuthProfile() {

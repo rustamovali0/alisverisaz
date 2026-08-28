@@ -1,4 +1,5 @@
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
+import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
 import { AccountLanguageSettings } from "@/components/i18n/account-language-settings";
 import { requireRole } from "@/lib/auth/session";
@@ -32,6 +33,7 @@ export default async function StoreSettingsPage() {
     <div className="grid gap-5">
       <AccountLanguageSettings />
       <StoreSettingsForm store={store} />
+      <PasswordChangeForm />
     </div>
   );
 }
