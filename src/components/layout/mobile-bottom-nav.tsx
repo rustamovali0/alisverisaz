@@ -156,11 +156,17 @@ export function MobileBottomNav({
         : role
           ? nav("account")
           : auth("login");
-  const isStorefront = Boolean(storeSubdomainSlug || storeHomeHref !== "/");
+  const isStorefrontHome = Boolean(
+    storeSubdomainSlug
+      ? pathname === "/"
+      : storeHomeHref !== "/" &&
+          !storeHomeHref.startsWith("/store/") &&
+          pathname === storeHomeHref,
+  );
   const storefrontItem = {
-    href: storeHomeHref,
-    label: isStorefront ? nav("storefront") : nav("home"),
-    icon: isStorefront ? Store : Home,
+    href: isStorefrontHome ? storeHomeHref : "/",
+    label: isStorefrontHome ? nav("storefront") : nav("home"),
+    icon: isStorefrontHome ? Store : Home,
   };
 
   useEffect(() => {

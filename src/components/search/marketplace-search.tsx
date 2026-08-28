@@ -313,9 +313,12 @@ export function MarketplaceSearch({
     submitSearch(suggestion.label);
   }
 
-  function closeMobileSearch() {
-    setIsFocused(false);
-    inputRef.current?.blur();
+  function clearSearch() {
+    setQuery("");
+    syncSearchQuery("");
+    setRemoteProducts(null);
+    setIsSearching(false);
+    inputRef.current?.focus();
   }
 
   const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
@@ -356,7 +359,11 @@ export function MarketplaceSearch({
           data-form-type="other"
           ref={inputRef}
           spellCheck={false}
-          className={cn("premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm", inputClassName)}
+          className={cn(
+            "premium-input h-11 w-full min-w-0 pl-9 pr-3 text-sm",
+            inputClassName,
+            query.trim() && "!pr-10",
+          )}
           name="marketplace-search"
           placeholder={placeholder ?? marketplace("searchPlaceholder")}
           type="text"
@@ -367,6 +374,17 @@ export function MarketplaceSearch({
           }}
           onFocus={() => setIsFocused(true)}
         />
+        {query.trim() ? (
+          <button
+            type="button"
+            className="absolute right-2 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-full text-slate-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-slate-300 md:hover:bg-slate-100 md:hover:text-slate-900 md:dark:hover:bg-slate-800 md:dark:hover:text-white"
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={clearSearch}
+            aria-label="Axtarışı təmizlə"
+          >
+            <X className="size-4 stroke-[2.2]" aria-hidden="true" />
+          </button>
+        ) : null}
       </label>
       <Button
         type="submit"
@@ -389,21 +407,6 @@ export function MarketplaceSearch({
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
-      {isFocused ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size={buttonSize}
-          className={cn(
-            "shrink-0 md:hidden",
-            compactActions && "size-11 px-0",
-          )}
-          onClick={closeMobileSearch}
-          aria-label={common("close")}
-        >
-          {compactActions ? <X className="size-4" aria-hidden="true" /> : common("close")}
-        </Button>
-      ) : null}
       {showPopularSearches || showSuggestions || showNoResults ? (
         <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (

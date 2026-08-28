@@ -79,6 +79,7 @@ export function MarketplaceHeader({
   categories = [],
   searchDefaultValue,
   showMobileSearch = false,
+  compactMobileSearch = false,
   showBottomNav = true,
   mobileNavbarVariant,
   storeSubdomainSlug,
@@ -179,9 +180,17 @@ export function MarketplaceHeader({
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
     !shouldSuppressSearch && (!isHomePage || !isHomeSearchVisible);
+  const pathnameSegments = pathname.split("/").filter(Boolean);
+  const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
-    /^\/(?:[^/]+\/)?products\/[^/]+\/?$/.test(pathname) &&
-    !pathname.startsWith("/store/");
+    compactMobileSearch ||
+    (productsSegmentIndex !== -1 &&
+      productsSegmentIndex < pathnameSegments.length - 1 &&
+      !pathname.startsWith("/store/dashboard") &&
+      !pathname.startsWith("/dashboard") &&
+      !pathname.startsWith("/seller") &&
+      !pathname.startsWith("/admin") &&
+      !pathname.startsWith("/radmin"));
   const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldGateMobileSearch = isProductDetailPage;
   const shouldShowMobileSearchToggle =
