@@ -31,6 +31,9 @@ type SearchSuggestion = {
   type: "store" | "product";
 };
 
+const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
+const SEARCH_SYNC_STORAGE_KEY = "alisveris_marketplace_search_query";
+
 function normalize(value: string) {
   return value
     .toLocaleLowerCase("az-AZ")
@@ -78,6 +81,26 @@ export function MarketplaceSearch({
     () => (storeSlug ? stores.find((store) => store.slug === storeSlug) : undefined),
     [storeSlug, stores],
   );
+  const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
+
+  function syncSearchQuery(value: string) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const detail = {
+      query: value,
+      scope: syncScope,
+    };
+
+    try {
+      sessionStorage.setItem(SEARCH_SYNC_STORAGE_KEY, JSON.stringify(detail));
+    } catch {
+      // Ignore storage failures; the live event still keeps mounted inputs synced.
+    }
+
+    window.dispatchEvent(new CustomEvent(SEARCH_SYNC_EVENT, { detail }));
+  }
 
   const suggestionGroups = useMemo(() => {
     const scopedStores = storeSlug ? stores.filter((store) => store.slug === storeSlug) : stores;
@@ -127,6 +150,40 @@ export function MarketplaceSearch({
     setRemoteProducts(null);
     setIsSearching(false);
   }, [defaultValue]);
+
+  useEffect(() => {
+    if (defaultValue.trim()) {
+      return;
+    }
+
+    try {
+      const stored = JSON.parse(
+        sessionStorage.getItem(SEARCH_SYNC_STORAGE_KEY) ?? "null",
+      ) as { query?: unknown; scope?: unknown } | null;
+
+      if (stored?.scope === syncScope && typeof stored.query === "string") {
+        setQuery(stored.query);
+      }
+    } catch {
+      // The search field can work without restoring synced text.
+    }
+  }, [defaultValue, syncScope]);
+
+  useEffect(() => {
+    function handleSearchSync(event: Event) {
+      const detail = (event as CustomEvent<{ query?: unknown; scope?: unknown }>).detail;
+
+      if (detail?.scope !== syncScope || typeof detail.query !== "string") {
+        return;
+      }
+
+      setQuery(detail.query);
+    }
+
+    window.addEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
+
+    return () => window.removeEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
+  }, [syncScope]);
 
   useEffect(() => {
     if (!isFocused || query.trim() || loadedPopularSearches.current) {
@@ -230,6 +287,7 @@ export function MarketplaceSearch({
     const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
 
     setQuery(searchQuery);
+    syncSearchQuery(searchQuery);
     setIsFocused(false);
     setRemoteProducts(null);
     setIsSearching(false);
@@ -303,7 +361,10 @@ export function MarketplaceSearch({
           placeholder={placeholder ?? marketplace("searchPlaceholder")}
           type="text"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            syncSearchQuery(event.target.value);
+          }}
           onFocus={() => setIsFocused(true)}
         />
       </label>
