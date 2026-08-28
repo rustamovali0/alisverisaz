@@ -400,10 +400,9 @@ export function MobileBottomNav({
             <button
               key={item.href}
               type="button"
-              onPointerUp={(event) => {
-                if (event.pointerType === "touch") {
-                  event.preventDefault();
-                  handleItemNavigation(item.href);
+              onPointerDown={(event) => {
+                if (event.pointerType === "touch" && !(item.href === "/favorites" && !role)) {
+                  setPendingHref(item.href);
                 }
               }}
               onClick={() => handleItemNavigation(item.href)}
@@ -433,11 +432,10 @@ export function MobileBottomNav({
         })}
         <button
           type="button"
-          onPointerUp={(event) => {
+          onPointerDown={(event) => {
             if (event.pointerType === "touch") {
-              event.preventDefault();
               if (accountHref) {
-                navigate(accountHref);
+                setPendingHref(accountHref);
               }
             }
           }}

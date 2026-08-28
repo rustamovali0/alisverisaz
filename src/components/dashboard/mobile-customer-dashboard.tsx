@@ -2,8 +2,6 @@
 
 import type { ReactNode } from "react";
 import {
-  Bell,
-  Heart,
   Home,
   MapPin,
   MessageCircle,
@@ -14,7 +12,6 @@ import {
 } from "lucide-react";
 
 import { LogoutButton } from "@/components/auth/logout-button";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
@@ -32,17 +29,12 @@ const accountItems = [
   { href: "/dashboard/orders", label: "Sifarişlər", icon: Package },
   { href: "/dashboard/profile", label: "Profil", icon: UserRound },
   { href: "/dashboard/addresses", label: "Ünvanlar", icon: MapPin },
-  { href: "/dashboard/notifications", label: "Bildirişlər", icon: Bell },
   { href: "/dashboard/security", label: "Təhlükəsizlik", icon: ShieldCheck },
   { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
 ] as const;
 
 const customerOnlyItems = [
   { href: "/dashboard/messages", label: "Mesajlar", icon: MessageCircle },
-] as const;
-
-const sharedBuyerItems = [
-  { href: "/dashboard/favorites", label: "Favorilər", icon: Heart },
 ] as const;
 
 function isDashboardRoot(pathname: string) {
@@ -83,7 +75,6 @@ export function MobileCustomerDashboard({
     () => [
       ...accountItems,
       ...(role === "customer" ? customerOnlyItems : []),
-      ...sharedBuyerItems,
     ],
     [role],
   );
@@ -124,6 +115,11 @@ export function MobileCustomerDashboard({
               key={item.href}
               href={item.href}
               prefetch
+              onPointerDown={(event) => {
+                if (event.pointerType === "touch") {
+                  setPendingHref(item.href);
+                }
+              }}
               onClick={() => {
                 setPendingHref(item.href);
                 resetDashboardScroll();
@@ -143,21 +139,8 @@ export function MobileCustomerDashboard({
         })}
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <div
-          className={cn(
-            "grid min-h-[72px] grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border bg-card p-3 text-foreground shadow-sm",
-          )}
-        >
-          <Settings className="size-6" strokeWidth={2.1} aria-hidden="true" />
-          <span className="min-w-0 truncate text-sm font-black">Görünüş</span>
-        </div>
-        <div className="grid min-h-[72px] rounded-xl border bg-card p-2 shadow-sm">
-          <ThemeToggle className="h-full w-full rounded-lg" />
-        </div>
-        <div className="col-span-2">
-          <LogoutButton className="w-full justify-center rounded-xl text-sm" />
-        </div>
+      <div className="mt-3">
+        <LogoutButton className="w-full justify-center rounded-xl text-sm" />
       </div>
       <div className="mt-5 min-w-0">{children}</div>
     </section>

@@ -2,8 +2,6 @@ import { ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
 import { requireRole } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +21,11 @@ export default async function CustomerSecurityPage() {
             <ShieldCheck className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-base font-black">{t("passwordSecurity")}</h2>
+            <h2 className="text-base font-black">Hesab qorunması</h2>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {t("passwordResetHelp")}
+              Şifrə yeniləmə bölməsi Profil səhifəsinə köçürüldü. Giriş məlumatlarınızı
+              yeniləmək üçün Profil bölməsindən istifadə edin.
             </p>
-            <Button asChild className="mt-4">
-              <Link href="/forgot-password">{t("resetPassword")}</Link>
-            </Button>
           </div>
         </div>
       </div>

@@ -8,5 +8,5 @@ export default async function CustomerAddressesPage() {
   const current = await requireRole(["customer", "seller"], "/dashboard/addresses");
   const addresses = await getCustomerAddresses(current.user.id);
 
-  return <CustomerAddressesView addresses={addresses} />;
+  return <CustomerAddressesView addresses={addresses} defaultPhone={current.profile?.phone} />;
 }

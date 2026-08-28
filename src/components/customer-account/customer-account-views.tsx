@@ -2,6 +2,7 @@ import { Bell, CheckCircle2, MapPin, Package, PackageCheck, UserRound } from "lu
 import { getTranslations } from "next-intl/server";
 
 import { EmptyState } from "@/components/common/empty-state";
+import { CustomerAddressForm } from "@/components/customer-account/customer-address-form";
 import { AccountLanguageSettings } from "@/components/i18n/account-language-settings";
 import { Link } from "@/i18n/navigation";
 import type {
@@ -446,12 +447,20 @@ export async function CustomerFavoritesView({ favorites }: { favorites: Customer
   );
 }
 
-export async function CustomerAddressesView({ addresses }: { addresses: CustomerAddress[] }) {
+export async function CustomerAddressesView({
+  addresses,
+  defaultPhone,
+}: {
+  addresses: CustomerAddress[];
+  defaultPhone?: string | null;
+}) {
   const t = await getTranslations("customerAccount");
+  const defaultAddress = addresses.find((address) => address.isDefault) ?? addresses[0] ?? null;
 
   return (
     <section className="rounded-lg border bg-card p-4 shadow-sm">
       <h1 className="mb-3 text-xl font-black">{t("addresses")}</h1>
+      <CustomerAddressForm defaultAddress={defaultAddress} defaultPhone={defaultPhone} />
       {addresses.length === 0 ? (
         <EmptyState title={t("emptyAddresses")} description={t("emptyAddressesDescription")} />
       ) : (
