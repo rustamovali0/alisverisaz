@@ -19,6 +19,7 @@ type AppDashboardShellProps = {
   navItems: DashboardNavItem[];
   returnHref?: string;
   returnLabel?: string;
+  returnAction?: "link" | "logout";
   mobileRail?: boolean;
   children: ReactNode;
 };
@@ -54,6 +55,7 @@ export function AppDashboardShell({
   navItems,
   returnHref,
   returnLabel = "Sayta qayıt",
+  returnAction = "link",
   mobileRail = true,
   children,
 }: AppDashboardShellProps) {
@@ -328,7 +330,9 @@ export function AppDashboardShell({
                 {description}
               </p>
             </div>
-            {returnHref ? (
+            {returnAction === "logout" ? (
+              <LogoutButton className="shrink-0" />
+            ) : returnHref ? (
               <Button asChild variant="outline" size="sm" className="shrink-0">
                 <Link href={returnHref} prefetch onClick={() => handleDashboardLinkClick()}>{returnLabel}</Link>
               </Button>

@@ -22,8 +22,7 @@ export function SellerDashboardShell({
       description="Məhsullar, sifarişlər, mağaza və satış göstəriciləri"
       userLabel={userLabel}
       navItems={navItems}
-      returnHref="/"
-      returnLabel="Sayta qayıt"
+      returnAction="logout"
       mobileRail={false}
     >
       {children}
