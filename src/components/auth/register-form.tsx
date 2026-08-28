@@ -530,22 +530,24 @@ export function RegisterForm({
         </form>
       ) : null}
 
-      <AuthDivider />
-      {canRegister ? (
-        <form action={handleGoogleSubmit} className="grid gap-3">
-          <input name="next" type="hidden" value={next} />
-          <input name="mode" type="hidden" value="public" />
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-11 w-full rounded-xl"
-            disabled={isGooglePending}
-          >
-            <Chrome className="mr-2 size-4" aria-hidden="true" />
-            {isGooglePending ? "Google açılır" : "Google ilə davam et"}
-          </Button>
-        </form>
-      ) : null}
+      <div className="hidden" aria-hidden="true">
+        <AuthDivider />
+        {canRegister ? (
+          <form action={handleGoogleSubmit} className="grid gap-3">
+            <input name="next" type="hidden" value={next} />
+            <input name="mode" type="hidden" value="public" />
+            <Button
+              type="submit"
+              variant="outline"
+              className="h-11 w-full rounded-xl"
+              disabled={isGooglePending}
+            >
+              <Chrome className="mr-2 size-4" aria-hidden="true" />
+              {isGooglePending ? "Google açılır" : "Google ilə davam et"}
+            </Button>
+          </form>
+        ) : null}
+      </div>
     </AuthCard>
   );
 }

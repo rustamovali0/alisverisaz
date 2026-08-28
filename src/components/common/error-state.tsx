@@ -15,7 +15,7 @@ type ErrorStateProps = {
 };
 
 export function ErrorState({
-  title = "Xəta baş verdi",
+  title = "Nə isə səhv getdi",
   description,
   actionLabel,
   onAction,
@@ -26,7 +26,7 @@ export function ErrorState({
   return (
     <section
       className={cn(
-        "mx-auto flex w-full max-w-md flex-col items-center justify-center gap-4 text-center",
+        "mx-auto flex w-full max-w-md flex-col items-center justify-center gap-4 rounded-xl border border-border/80 bg-card p-8 text-center shadow-xl shadow-slate-950/5",
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function ErrorState({
       {actionLabel ? (
         <Button
           type="button"
-          variant="outline"
+          className="rounded-lg"
           onClick={onAction ?? (() => window.location.assign("/"))}
         >
           {actionLabel}

@@ -260,19 +260,16 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const supabase = await createSupabaseServerClient();
-  const redirectTo = new URL("/auth/callback", clientEnv.appUrl);
-  const { data, error } = await supabase.auth.signUp({
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
-    options: {
-      emailRedirectTo: redirectTo.toString(),
-      data: {
-        full_name: fullName,
-        phone,
-        requested_role: role,
-        seller_application_status: role === "seller" ? "pending" : "active",
-      },
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      phone,
+      requested_role: role,
+      seller_application_status: role === "seller" ? "pending" : "active",
     },
   });
 
@@ -300,7 +297,6 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const supabaseAdmin = createSupabaseAdminClient();
   let avatarUrl: string | null = null;
   let bannerUrl: string | null = null;
 
@@ -394,8 +390,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     ok: true,
     message:
       role === "seller"
-        ? "Satıcı müraciətiniz göndərildi. Email təsdiqindən və əsas admin təsdiqindən sonra hesab aktiv olacaq."
-        : "Qeydiyyat tamamlandı. Hesabınızı aktivləşdirmək üçün email təsdiq linkini açın.",
+        ? "Qeydiyyatınız uğurla tamamlandı. Sizinlə əlaqə saxlanılacaq."
+        : "Qeydiyyat tamamlandı. İndi email təsdiqi olmadan giriş edə bilərsiniz.",
     redirectTo: "/login",
   };
 }
@@ -560,6 +556,42 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     .maybeSingle();
 
   const role: AuthRole = profile?.role ?? "customer";
+  const requestedRole =
+    typeof data.user.user_metadata?.requested_role === "string"
+      ? data.user.user_metadata.requested_role
+      : null;
+  const sellerApplicationStatus =
+    typeof data.user.user_metadata?.seller_application_status === "string"
+      ? data.user.user_metadata.seller_application_status
+      : null;
+
+  if (
+    mode === "public" &&
+    requestedRole === "seller" &&
+    sellerApplicationStatus === "pending" &&
+    role !== "seller"
+  ) {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Qeydiyyatınız uğurla tamamlandı. Sizinlə əlaqə saxlanılacaq.",
+    };
+  }
+
+  if (
+    mode === "public" &&
+    requestedRole === "seller" &&
+    sellerApplicationStatus === "rejected" &&
+    role !== "seller"
+  ) {
+    await supabase.auth.signOut();
+
+    return {
+      ok: false,
+      message: "Satıcı müraciətiniz hələ aktiv deyil.",
+    };
+  }
 
   if (mode === "admin" && role !== "admin") {
     await supabase.auth.signOut();
@@ -884,7 +916,6 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     };
   }
 
-  const supabase = await createSupabaseServerClient();
   const email = identifier;
 
   if (!isValidEmail(email)) {
@@ -896,9 +927,13 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   await recordAuthRateLimitAttempt(rateLimitRule);
 
-  await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${clientEnv.appUrl}/reset-password`,
-  });
+  if (process.env.AUTH_PASSWORD_RESET_EMAILS_ENABLED === "true") {
+    const supabase = await createSupabaseServerClient();
+
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${clientEnv.appUrl}/reset-password`,
+    });
+  }
 
   return {
     ok: true,
@@ -1127,4 +1162,175 @@ export async function updateUserRoleAction(
     ok: true,
     message: "İstifadəçi rolu yeniləndi.",
   };
+}
+
+type AdminUserMutationResult =
+  | { ok: true; message: string }
+  | { ok: false; message: string };
+
+async function revokeProfileSessions(userId: string) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  await (supabaseAdmin as any)
+    .from("profiles")
+    .update({ session_revoked_at: new Date().toISOString() })
+    .eq("id", userId);
+}
+
+export async function deactivateUserAction(
+  formData: FormData,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const userId = readString(formData, "userId");
+
+  if (!userId) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  if (current.user.id === userId) {
+    return { ok: false, message: "Öz admin hesabınızı deaktiv etmək olmaz." };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  await revokeProfileSessions(userId);
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    ban_duration: "876000h",
+  });
+
+  if (error) {
+    void recordAdminAudit({
+      action: "ADMIN_USER_DEACTIVATE",
+      adminId: current.user.id,
+      entityType: "user",
+      entityId: userId,
+      success: false,
+      metadata: { reason: error.message },
+    });
+
+    return { ok: false, message: "İstifadəçi deaktiv edilmədi." };
+  }
+
+  void recordAdminAudit({
+    action: "ADMIN_USER_DEACTIVATE",
+    adminId: current.user.id,
+    entityType: "user",
+    entityId: userId,
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+
+  return { ok: true, message: "İstifadəçi deaktiv edildi." };
+}
+
+export async function activateUserAction(
+  formData: FormData,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const userId = readString(formData, "userId");
+
+  if (!userId) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    ban_duration: "none",
+  });
+
+  if (error) {
+    return { ok: false, message: "İstifadəçi aktiv edilmədi." };
+  }
+
+  void recordAdminAudit({
+    action: "ADMIN_USER_ACTIVATE",
+    adminId: current.user.id,
+    entityType: "user",
+    entityId: userId,
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+
+  return { ok: true, message: "İstifadəçi aktiv edildi." };
+}
+
+export async function deleteUserAction(
+  formData: FormData,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const userId = readString(formData, "userId");
+
+  if (!userId) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  if (current.user.id === userId) {
+    return { ok: false, message: "Öz admin hesabınızı silmək olmaz." };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (error) {
+    void recordAdminAudit({
+      action: "ADMIN_USER_DELETE",
+      adminId: current.user.id,
+      entityType: "user",
+      entityId: userId,
+      success: false,
+      metadata: { reason: error.message },
+    });
+
+    return { ok: false, message: "İstifadəçi silinmədi." };
+  }
+
+  void recordAdminAudit({
+    action: "ADMIN_USER_DELETE",
+    adminId: current.user.id,
+    entityType: "user",
+    entityId: userId,
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+
+  return { ok: true, message: "İstifadəçi silindi." };
+}
+
+export async function updateUserPasswordByAdminAction(
+  formData: FormData,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const userId = readString(formData, "userId");
+  const password = readString(formData, "password");
+
+  if (!userId) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  if (password.length < 8) {
+    return { ok: false, message: "Şifrə minimum 8 simvol olmalıdır." };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    password,
+  });
+
+  if (error) {
+    return { ok: false, message: "Şifrə yenilənmədi." };
+  }
+
+  await revokeProfileSessions(userId);
+  void recordAdminAudit({
+    action: "ADMIN_USER_PASSWORD_UPDATE",
+    adminId: current.user.id,
+    entityType: "user",
+    entityId: userId,
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+
+  return { ok: true, message: "İstifadəçi şifrəsi yeniləndi." };
 }

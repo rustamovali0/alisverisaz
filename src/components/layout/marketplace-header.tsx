@@ -127,6 +127,8 @@ export function MarketplaceHeader({
     "h-6 w-6 min-h-6 min-w-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110";
   const sellerCommerceIconClass =
     "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8";
+  const mobileCommerceIconClass =
+    "size-8 stroke-[1.75] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-9";
 
   function showLoginRequiredToast() {
     showToast({
@@ -257,11 +259,7 @@ export function MarketplaceHeader({
                 aria-expanded={isMobileSearchOpen}
               >
                 <Search
-                  className={
-                    isSeller
-                      ? sellerCommerceIconClass
-                      : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"
-                  }
+                  className={mobileCommerceIconClass}
                   aria-hidden="true"
                 />
               </Button>
@@ -271,7 +269,7 @@ export function MarketplaceHeader({
                 "min-[400px]:size-14",
                 commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerCommerceIconClass : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"}
+              iconClassName={mobileCommerceIconClass}
             />
             <NotificationCenter
               requireAuth={isGuest}
@@ -279,7 +277,7 @@ export function MarketplaceHeader({
                 "min-[400px]:size-14",
                 commerceUtilityButtonClass,
               )}
-              iconClassName={isSeller ? sellerCommerceIconClass : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"}
+              iconClassName={mobileCommerceIconClass}
             />
             {isSeller ? (
               <>
@@ -294,7 +292,7 @@ export function MarketplaceHeader({
                   aria-label={nav("favorites")}
                 >
                   <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className={sellerCommerceIconClass} aria-hidden="true" />
+                    <Heart className={mobileCommerceIconClass} aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button
@@ -308,7 +306,7 @@ export function MarketplaceHeader({
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="relative grid place-items-center">
-                    <ShoppingCart className={sellerCommerceIconClass} aria-hidden="true" />
+                    <ShoppingCart className={mobileCommerceIconClass} aria-hidden="true" />
                     {cartCount > 0 ? (
                       <span className="absolute -right-1 -top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                         {cartCount > 99 ? "99+" : cartCount}

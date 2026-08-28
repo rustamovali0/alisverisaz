@@ -61,12 +61,6 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "sparkles",
     },
     {
-      title: "Təhlükəsizlik",
-      titleKey: "security",
-      href: "/dashboard/security",
-      icon: "shield",
-    },
-    {
       title: "Ayarlar",
       titleKey: "settings",
       href: "/dashboard/settings",

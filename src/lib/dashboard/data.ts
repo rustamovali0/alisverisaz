@@ -834,23 +834,38 @@ export async function getAdminUsers() {
     id: string;
     email: string | null;
     full_name: string | null;
+    phone: string | null;
     role: string;
     created_at: string;
-  }>("profiles", "id,email,full_name,role,created_at", [], 100);
+    session_revoked_at: string | null;
+  }>("profiles", "id,email,full_name,phone,role,created_at,session_revoked_at", [], 100);
   const supabaseAdmin = createSupabaseAdminClient();
   const { data } = await supabaseAdmin.auth.admin.listUsers({
     page: 1,
     perPage: 100,
   });
-  const authMetaById = new Map(
-    (data.users ?? []).map((user) => [user.id, user.user_metadata ?? {}]),
+  const authUserById = new Map(
+    (data.users ?? []).map((user) => [user.id, user]),
   );
 
   return users.map((user) => {
-    const metadata = authMetaById.get(user.id);
+    const authUser = authUserById.get(user.id);
+    const metadata = authUser?.user_metadata ?? {};
+    const bannedUntil =
+      typeof authUser?.banned_until === "string" ? authUser.banned_until : null;
 
     return {
       ...user,
+      banned_until: bannedUntil,
+      is_deactivated: Boolean(bannedUntil && Date.parse(bannedUntil) > Date.now()),
+      email_confirmed_at:
+        typeof authUser?.email_confirmed_at === "string"
+          ? authUser.email_confirmed_at
+          : null,
+      last_sign_in_at:
+        typeof authUser?.last_sign_in_at === "string"
+          ? authUser.last_sign_in_at
+          : null,
       requested_role:
         typeof metadata?.requested_role === "string"
           ? metadata.requested_role

@@ -270,7 +270,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       </form>
 
       {mode === "public" ? (
-        <>
+        <div className="hidden" aria-hidden="true">
           <AuthDivider />
 
           <form action={handleGoogleSubmit} className="grid gap-3">
@@ -286,7 +286,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
               {isGooglePending ? "Google açılır" : "Google ilə davam et"}
             </Button>
           </form>
-        </>
+        </div>
       ) : null}
     </AuthCard>
   );

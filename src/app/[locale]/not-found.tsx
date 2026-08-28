@@ -5,9 +5,9 @@ export default function NotFound() {
   return (
     <RootShell>
       <ErrorState
-        title="Sehife tapilmadi"
-        description="Axtardiginiz sehife movcud deyil."
-        actionLabel="Ana sehifeye qayit"
+        title="Nə isə səhv getdi"
+        description="Axtardığınız səhifə mövcud deyil."
+        actionLabel="Ana səhifəyə qayıt"
       />
     </RootShell>
   );

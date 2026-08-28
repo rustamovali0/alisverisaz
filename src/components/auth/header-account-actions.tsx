@@ -145,7 +145,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         <Button
           asChild
           variant="ghost"
-          className="group border border-transparent bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
+          className="group rounded-full border border-cyan-200 bg-cyan-50/90 px-4 text-slate-900 shadow-sm shadow-cyan-950/[0.04] hover:!bg-cyan-50 hover:text-slate-900 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-slate-100 dark:hover:!bg-cyan-400/10 dark:hover:text-slate-100"
         >
           <Link href={createNextHref(pathname, "/register")}>
             <UserPlus className="mr-2 size-4" aria-hidden="true" />

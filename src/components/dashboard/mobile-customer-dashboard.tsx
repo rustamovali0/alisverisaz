@@ -7,7 +7,6 @@ import {
   MessageCircle,
   Package,
   Settings,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
@@ -29,7 +28,6 @@ const accountItems = [
   { href: "/dashboard/orders", label: "Sifarişlər", icon: Package },
   { href: "/dashboard/profile", label: "Profil", icon: UserRound },
   { href: "/dashboard/addresses", label: "Ünvanlar", icon: MapPin },
-  { href: "/dashboard/security", label: "Təhlükəsizlik", icon: ShieldCheck },
   { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
 ] as const;
 
