@@ -61,6 +61,24 @@ function readNumber(formData: FormData, key: string) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function normalizeSeoText(value: string, fallback: string, maxLength: number) {
+  const text = (value || fallback).replace(/\s+/g, " ").trim();
+
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text;
+}
+
+function buildSeoTitle(name: string) {
+  return normalizeSeoText("", `${name} | Alışveriş`, 70);
+}
+
+function buildSeoDescription(name: string, description: string) {
+  return normalizeSeoText(
+    "",
+    description || `${name} məhsulunu Alışveriş-də kəşf edin və sifariş verin.`,
+    160,
+  );
+}
+
 function readStatus(value: string): ProductStatus {
   if (value === "active" || value === "archived") {
     return value;
@@ -699,12 +717,16 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "description_ru"),
   };
   const seoTitleTranslations = {
-    az: readString(formData, "seo_title_az"),
+    az: normalizeSeoText(readString(formData, "seo_title_az"), buildSeoTitle(name), 70),
     en: readString(formData, "seo_title_en"),
     ru: readString(formData, "seo_title_ru"),
   };
   const seoDescriptionTranslations = {
-    az: readString(formData, "seo_description_az"),
+    az: normalizeSeoText(
+      readString(formData, "seo_description_az"),
+      buildSeoDescription(name, description),
+      160,
+    ),
     en: readString(formData, "seo_description_en"),
     ru: readString(formData, "seo_description_ru"),
   };

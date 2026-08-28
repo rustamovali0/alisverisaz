@@ -619,26 +619,6 @@ export function ProductForm({
         />
       </label>
 
-      <div className="grid gap-4 rounded-md border bg-background p-4">
-        <p className="text-sm font-medium">SEO məlumatları</p>
-        <div className="grid gap-4">
-          <input
-            name="seo_title_az"
-            placeholder="SEO başlıq"
-            defaultValue={product?.seoTitleTranslations.az ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-          />
-          <textarea
-            name="seo_description_az"
-            placeholder="SEO açıqlama"
-            defaultValue={product?.seoDescriptionTranslations.az ?? ""}
-            className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-          />
-        </div>
-      </div>
-
       <input type="hidden" name="depositEnabled" value="off" />
       <input type="hidden" name="depositType" value="fixed" />
       <input type="hidden" name="depositValue" value="0" />

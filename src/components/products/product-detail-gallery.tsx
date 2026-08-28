@@ -157,7 +157,7 @@ export function ProductDetailGallery({
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-[4/3] w-full bg-muted text-left md:aspect-[4/3] md:max-h-[420px] lg:max-h-[460px]"
+          className="group relative block aspect-[16/11] w-full bg-muted text-left md:aspect-[4/3] md:max-h-[420px] lg:max-h-[460px]"
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (

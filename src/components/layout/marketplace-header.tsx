@@ -2,6 +2,7 @@
 
 import {
   Heart,
+  Search,
   ShoppingCart,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -117,6 +118,7 @@ export function MarketplaceHeader({
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
     "group size-12 rounded-xl border border-transparent bg-transparent text-slate-900 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-cyan-800 hover:shadow-none dark:border-transparent dark:text-slate-100 dark:hover:!border-transparent dark:hover:text-cyan-200";
@@ -177,6 +179,21 @@ export function MarketplaceHeader({
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
     !shouldSuppressSearch && (!isHomePage || !isHomeSearchVisible);
+  const isProductDetailPage =
+    /^\/(?:[^/]+\/)?products\/[^/]+\/?$/.test(pathname) &&
+    !pathname.startsWith("/store/");
+  const hasSearchData = stores.length > 0 || categories.length > 0;
+  const shouldGateMobileSearch = isProductDetailPage;
+  const shouldShowMobileSearchToggle =
+    showMobileSearch &&
+    !shouldSuppressSearch &&
+    shouldGateMobileSearch &&
+    shouldShowCompactMobileSearch &&
+    hasSearchData;
+
+  useEffect(() => {
+    setIsMobileSearchOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -217,6 +234,29 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-1 md:hidden">
+            {shouldShowMobileSearchToggle ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={cn(
+                  "min-[400px]:size-14",
+                  commerceUtilityButtonClass,
+                )}
+                onClick={() => setIsMobileSearchOpen((value) => !value)}
+                aria-label={isMobileSearchOpen ? "Axtarışı gizlət" : "Axtarışı aç"}
+                aria-expanded={isMobileSearchOpen}
+              >
+                <Search
+                  className={
+                    isSeller
+                      ? sellerCommerceIconClass
+                      : "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8"
+                  }
+                  aria-hidden="true"
+                />
+              </Button>
+            ) : null}
             <ThemeToggle
               className={cn(
                 "min-[400px]:size-14",
@@ -373,7 +413,11 @@ export function MarketplaceHeader({
           </div>
         </div>
       </header>
-      {showMobileSearch && !shouldSuppressSearch && shouldShowCompactMobileSearch && (stores.length > 0 || categories.length > 0) ? (
+      {showMobileSearch &&
+      !shouldSuppressSearch &&
+      shouldShowCompactMobileSearch &&
+      hasSearchData &&
+      (!shouldGateMobileSearch || isMobileSearchOpen) ? (
         <div className="mobile-performance-surface sticky top-0 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}

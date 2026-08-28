@@ -23,12 +23,13 @@ export default async function StoreProductsPage() {
     getOwnedStores(current.user.id),
     getCategoryOptions(),
   ]);
+  const storeIds = stores.map((store) => store.id);
   const [products, locations] = await Promise.all([
     getManagedProducts({
-      storeIds: stores.map((store) => store.id),
+      storeIds,
       listingType: "store",
-    }),
-    getLocationsForStores(stores.map((store) => store.id)),
+    }).catch(() => []),
+    getLocationsForStores(storeIds).catch(() => []),
   ]);
   const firstStore = stores[0];
   const limit = firstStore ? await canCreateListing(firstStore.id) : null;
