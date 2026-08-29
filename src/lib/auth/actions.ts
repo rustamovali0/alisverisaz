@@ -50,6 +50,8 @@ const GENERIC_RESET_RESPONSE =
   "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
 const PASSWORD_RESET_SEND_ERROR =
   "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
+const PASSWORD_RESET_CONFIG_ERROR =
+  "Şifrə bərpası üçün email ayarları tamamlanmayıb.";
 const PASSWORD_RESET_TIMEOUT_MS = 15_000;
 
 function readString(formData: FormData, key: string) {
@@ -981,7 +983,17 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
 
-  if (serverEnv.hasSmtpConfig && serverEnv.hasSupabaseSecretKey) {
+  if (serverEnv.hasSmtpConfig && !serverEnv.hasSupabaseSecretKey) {
+    console.error("Password reset SMTP is configured but Supabase service role key is missing");
+
+    return {
+      ok: false,
+      message: PASSWORD_RESET_CONFIG_ERROR,
+    };
+  }
+
+  if (serverEnv.hasSmtpConfig) {
+    console.info("Password reset email channel selected", { channel: "smtp" });
     const supabaseAdmin = createSupabaseAdminClient();
     let generateResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.generateLink>>;
 
@@ -1054,6 +1066,7 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
       };
     }
   } else {
+    console.info("Password reset email channel selected", { channel: "supabase" });
     const supabase = await createSupabaseServerClient();
     let resetResult: Awaited<ReturnType<typeof supabase.auth.resetPasswordForEmail>>;
 
