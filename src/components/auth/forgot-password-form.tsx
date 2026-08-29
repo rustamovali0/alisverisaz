@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
@@ -11,11 +11,25 @@ import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { requestPasswordResetAction } from "@/lib/auth/actions";
 
-export function ForgotPasswordForm() {
+type ForgotPasswordFormProps = {
+  initialError?: string | null;
+};
+
+export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormProps) {
   const [identifier, setIdentifier] = useState("");
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(initialError);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const didShowInitialError = useRef(false);
+
+  useEffect(() => {
+    if (!initialError || didShowInitialError.current) {
+      return;
+    }
+
+    didShowInitialError.current = true;
+    void appAlert.error(initialError, "Link etibarsızdır");
+  }, [initialError]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

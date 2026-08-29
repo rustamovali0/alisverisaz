@@ -16,9 +16,12 @@ export async function GET(request: Request) {
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"));
+  const expiredUrl = new URL("/forgot-password", origin);
+
+  expiredUrl.searchParams.set("reset", "expired");
 
   if (!tokenHash || type !== "recovery") {
-    return NextResponse.redirect(new URL("/forgot-password", origin));
+    return NextResponse.redirect(expiredUrl);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -28,7 +31,7 @@ export async function GET(request: Request) {
   });
 
   if (error) {
-    return NextResponse.redirect(new URL("/forgot-password", origin));
+    return NextResponse.redirect(expiredUrl);
   }
 
   return NextResponse.redirect(new URL(nextPath, origin));
