@@ -28,20 +28,27 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
     }
 
     startTransition(async () => {
-      formData.set("identifier", identifier.trim().toLowerCase());
-      formData.set("captchaToken", captchaToken);
-      const result = await requestPasswordResetAction(formData);
+      try {
+        formData.set("identifier", identifier.trim().toLowerCase());
+        formData.set("captchaToken", captchaToken);
+        const result = await requestPasswordResetAction(formData);
 
-      if (!result.ok) {
+        if (!result.ok) {
+          setCaptchaToken("");
+          setServerError(result.message);
+          void appAlert.error(result.message, "Link göndərilmədi");
+          return;
+        }
+
+        void appAlert.success("Email göndərildi", result.message);
+        router.replace(result.redirectTo);
+        router.refresh();
+      } catch {
+        const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
         setCaptchaToken("");
-        setServerError(result.message);
-        void appAlert.error(result.message, "Link göndərilmədi");
-        return;
+        setServerError(message);
+        void appAlert.error(message, "Link göndərilmədi");
       }
-
-      void appAlert.success("Email göndərildi", result.message);
-      router.replace(result.redirectTo);
-      router.refresh();
     });
   }
 

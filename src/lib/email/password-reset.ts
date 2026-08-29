@@ -4,6 +4,8 @@ import nodemailer from "nodemailer";
 
 import { serverEnv } from "@/lib/config/env.server";
 
+const SMTP_SEND_TIMEOUT_MS = 15_000;
+
 type PasswordResetEmailInput = {
   to: string;
   resetUrl: string;
@@ -44,6 +46,26 @@ function escapeHtml(value: string) {
   });
 }
 
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: NodeJS.Timeout | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error("SMTP göndərişi vaxt limitini keçdi.")),
+          timeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
+}
+
 export async function sendPasswordResetEmail({
   to,
   resetUrl,
@@ -56,23 +78,33 @@ export async function sendPasswordResetEmail({
     host: serverEnv.smtpHost,
     port: serverEnv.smtpPort,
     secure: serverEnv.smtpSecure,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: SMTP_SEND_TIMEOUT_MS,
     auth: {
       user: serverEnv.smtpUser,
       pass: serverEnv.smtpPassword,
     },
   });
 
-  await transporter.sendMail({
-    from: serverEnv.smtpFrom || serverEnv.smtpUser,
-    to,
-    subject: "Alışveriş şifrə bərpası",
-    text: [
-      "Alışveriş hesabınız üçün şifrə bərpa linki istənildi.",
-      "",
-      resetUrl,
-      "",
-      "Əgər bu sorğunu siz etməmisinizsə, bu emaili nəzərə almayın.",
-    ].join("\n"),
-    html: getPasswordResetEmailHtml(resetUrl),
-  });
+  try {
+    await withTimeout(
+      transporter.sendMail({
+        from: serverEnv.smtpFrom || serverEnv.smtpUser,
+        to,
+        subject: "Alışveriş şifrə bərpası",
+        text: [
+          "Alışveriş hesabınız üçün şifrə bərpa linki istənildi.",
+          "",
+          resetUrl,
+          "",
+          "Əgər bu sorğunu siz etməmisinizsə, bu emaili nəzərə almayın.",
+        ].join("\n"),
+        html: getPasswordResetEmailHtml(resetUrl),
+      }),
+      SMTP_SEND_TIMEOUT_MS,
+    );
+  } finally {
+    transporter.close();
+  }
 }

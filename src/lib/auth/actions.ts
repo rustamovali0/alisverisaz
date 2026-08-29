@@ -50,6 +50,7 @@ const GENERIC_RESET_RESPONSE =
   "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
 const PASSWORD_RESET_SEND_ERROR =
   "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
+const PASSWORD_RESET_TIMEOUT_MS = 15_000;
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -106,6 +107,26 @@ function isMissingAuthUserError(error: { message?: string; code?: string; status
     /user.*not.*found|not.*found|does not exist/i.test(message) ||
     /user.*not.*found|not.*found/i.test(code)
   );
+}
+
+async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
+  let timeout: NodeJS.Timeout | null = null;
+
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error(`${label} vaxt limitini keçdi.`)),
+          PASSWORD_RESET_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  }
 }
 
 function normalizeNextPath(value: string) {
@@ -962,13 +983,31 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   if (serverEnv.hasSmtpConfig && serverEnv.hasSupabaseSecretKey) {
     const supabaseAdmin = createSupabaseAdminClient();
-    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      options: {
-        redirectTo: redirectUrl.toString(),
-      },
-    });
+    let generateResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.generateLink>>;
+
+    try {
+      generateResult = await withAuthTimeout(
+        supabaseAdmin.auth.admin.generateLink({
+          type: "recovery",
+          email,
+          options: {
+            redirectTo: redirectUrl.toString(),
+          },
+        }),
+        "Bərpa linkinin yaradılması",
+      );
+    } catch (error) {
+      console.error("Password reset link generation timed out", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
+
+    const { data, error } = generateResult;
 
     if (error) {
       if (isMissingAuthUserError(error)) {
@@ -1016,9 +1055,28 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     }
   } else {
     const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl.toString(),
-    });
+    let resetResult: Awaited<ReturnType<typeof supabase.auth.resetPasswordForEmail>>;
+
+    try {
+      resetResult = await withAuthTimeout(
+        supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: redirectUrl.toString(),
+        }),
+        "Bərpa emailinin göndərilməsi",
+      );
+    } catch (error) {
+      console.error("Password reset email timed out", {
+        channel: "supabase",
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
+
+    const { error } = resetResult;
 
     if (error) {
       console.error("Password reset email failed", {
