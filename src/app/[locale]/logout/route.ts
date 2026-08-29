@@ -9,8 +9,38 @@ type LogoutRouteContext = {
   }>;
 };
 
+function isCrossSiteRequest(request: Request) {
+  const url = new URL(request.url);
+  const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+  const fetchSite = request.headers.get("sec-fetch-site");
+
+  if (fetchSite === "cross-site") {
+    return true;
+  }
+
+  if (origin && origin !== url.origin) {
+    return true;
+  }
+
+  if (referer) {
+    try {
+      return new URL(referer).origin !== url.origin;
+    } catch {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export async function GET(request: Request, context: LogoutRouteContext) {
   await context.params;
+
+  if (isCrossSiteRequest(request)) {
+    return NextResponse.json({ ok: false }, { status: 403 });
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getUser();
 

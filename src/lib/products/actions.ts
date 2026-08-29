@@ -1103,15 +1103,32 @@ export async function deleteProductAction(
   const supabase = await createSupabaseServerClient();
   const [{ data: productImages }, { data: existing }] = await Promise.all([
     (supabase as any)
-    .from("product_images")
-    .select("url")
+      .from("product_images")
+      .select("url")
       .eq("product_id", productId),
     (supabase as any)
       .from("products")
-      .select("id,store_id,category_id,status,stores(slug)")
+      .select("id,owner_id,store_id,category_id,status,stores(slug,owner_id)")
       .eq("id", productId)
       .maybeSingle(),
   ]);
+
+  const existingStore = Array.isArray(existing?.stores)
+    ? existing?.stores[0]
+    : existing?.stores;
+
+  if (
+    !existing ||
+    (current.role !== "admin" &&
+      existing.owner_id !== current.user.id &&
+      existingStore?.owner_id !== current.user.id)
+  ) {
+    return {
+      ok: false,
+      message: "Bu məhsulu silmək icazəniz yoxdur.",
+    };
+  }
+
   const { error } = await (supabase as any)
     .from("products")
     .delete()
@@ -1132,9 +1149,7 @@ export async function deleteProductAction(
     productId,
     storeId: existing?.store_id,
     categoryId: existing?.category_id,
-    storeSlug: Array.isArray(existing?.stores)
-      ? existing?.stores[0]?.slug
-      : existing?.stores?.slug,
+    storeSlug: existingStore?.slug,
     homepage: existing?.status === "active",
   });
   await deleteR2ImagesByUrls(

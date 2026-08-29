@@ -7,6 +7,7 @@ import { serverEnv } from "@/lib/config/env.server";
 const WEBP_CONTENT_TYPE = "image/webp";
 const DEFAULT_WEBP_QUALITY = 82;
 const MAX_IMAGE_DIMENSION = 2400;
+const MAX_INPUT_PIXELS = 36_000_000;
 const DEFAULT_ALLOWED_IMAGE_TYPES = ["image/*"];
 const RASTER_IMAGE_EXTENSIONS = new Set([
   "jpg",
@@ -121,7 +122,7 @@ async function convertImageToWebp(input: Buffer, fileName: string): Promise<Proc
     const sharp = (await import("sharp")).default;
     const converted = await sharp(input, {
       failOn: "none",
-      limitInputPixels: false,
+      limitInputPixels: MAX_INPUT_PIXELS,
     })
       .rotate()
       .resize({
@@ -142,11 +143,15 @@ async function convertImageToWebp(input: Buffer, fileName: string): Promise<Proc
       height: converted.info.height ?? null,
     };
   } catch (error) {
+    if (isPixelLimitError(error)) {
+      throw error;
+    }
+
     try {
       const sharp = (await import("sharp")).default;
       const normalized = await sharp(input, {
         failOn: "none",
-        limitInputPixels: false,
+        limitInputPixels: MAX_INPUT_PIXELS,
       })
         .rotate()
         .flatten({ background: "#ffffff" })
@@ -170,6 +175,10 @@ async function convertImageToWebp(input: Buffer, fileName: string): Promise<Proc
         height: converted.info.height ?? null,
       };
     } catch (fallbackError) {
+      if (isPixelLimitError(fallbackError)) {
+        throw fallbackError;
+      }
+
       console.error("Image processing failed", {
         primary: error instanceof Error ? error.message : String(error),
         fallback: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
@@ -255,6 +264,10 @@ function detectOriginalImage(input: Buffer, fileName: string) {
   return null;
 }
 
+function isPixelLimitError(error: unknown) {
+  return error instanceof Error && /pixel limit|input image exceeds/i.test(error.message);
+}
+
 function keyFromPublicUrl(url: string) {
   const baseUrl = serverEnv.r2PublicUrl.replace(/\/+$/, "");
   const prefix = `${baseUrl}/`;
@@ -295,6 +308,10 @@ export async function uploadImageToR2({
   try {
     processed = await convertImageToWebp(input, file.name);
   } catch (error) {
+    if (isPixelLimitError(error)) {
+      throw new Error("Şəkil ölçüsü çox böyükdür.");
+    }
+
     const originalImage = detectOriginalImage(input, file.name);
 
     if (!originalImage) {

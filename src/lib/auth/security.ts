@@ -13,7 +13,12 @@ type RateLimitBucket = {
 };
 
 type RateLimitRule = {
-  endpoint: "login" | "password_reset" | "guest_checkout";
+  endpoint:
+    | "login"
+    | "password_reset"
+    | "guest_checkout"
+    | "marketplace_search"
+    | "support_message";
   identifier: string;
   maxAttempts: number;
   windowSeconds: number;
@@ -249,7 +254,12 @@ export async function recordAuthRateLimitAttempt(
 }
 
 export async function resetAuthRateLimit(input: {
-  endpoint: "login" | "password_reset" | "guest_checkout";
+  endpoint:
+    | "login"
+    | "password_reset"
+    | "guest_checkout"
+    | "marketplace_search"
+    | "support_message";
   identifier: string;
   ip: string;
 }) {

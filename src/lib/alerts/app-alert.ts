@@ -45,15 +45,6 @@ function dispatchToast(input: {
   });
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function createAlert(input: {
   kind: AlertKind;
   title: string;
@@ -68,10 +59,8 @@ function createAlert(input: {
       "fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/55 px-4 py-6 backdrop-blur-md";
 
     const isConfirm = input.kind === "confirm";
-    const safeTitle = escapeHtml(input.title);
-    const safeText = input.text ? escapeHtml(input.text) : "";
-    const safeConfirmText = escapeHtml(input.confirmText ?? "Oldu");
-    const safeCancelText = escapeHtml(input.cancelText ?? "Ləğv et");
+    const confirmText = input.confirmText ?? "Oldu";
+    const cancelText = input.cancelText ?? "Ləğv et";
     const tone =
       input.kind === "success"
         ? {
@@ -97,34 +86,65 @@ function createAlert(input: {
                 symbol: "i",
               };
 
-    root.innerHTML = `
-      <section role="dialog" aria-modal="true" class="w-full max-w-[440px] overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-2xl shadow-slate-950/25">
-        <div class="h-1 bg-primary"></div>
-        <div class="p-5 sm:p-6">
-        <div class="flex items-start gap-4">
-          <div class="grid size-11 shrink-0 place-items-center rounded-xl border text-lg font-black ${tone.accent}">
-            ${tone.symbol}
-          </div>
-          <div class="min-w-0 flex-1">
-            <h2 class="break-words text-lg font-black tracking-normal sm:text-xl">${safeTitle}</h2>
-            ${
-              safeText
-                ? `<p class="mt-2 break-words text-sm leading-6 text-muted-foreground">${safeText}</p>`
-                : ""
-            }
-          </div>
-        </div>
-        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          ${
-            isConfirm
-              ? `<button type="button" data-alert-cancel class="inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">${safeCancelText}</button>`
-              : ""
-          }
-          <button type="button" data-alert-confirm class="inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tone.button}">${safeConfirmText}</button>
-        </div>
-        </div>
-      </section>
-    `;
+    const section = document.createElement("section");
+    section.setAttribute("role", "dialog");
+    section.setAttribute("aria-modal", "true");
+    section.className =
+      "w-full max-w-[440px] overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground shadow-2xl shadow-slate-950/25";
+
+    const bar = document.createElement("div");
+    bar.className = "h-1 bg-primary";
+
+    const body = document.createElement("div");
+    body.className = "p-5 sm:p-6";
+
+    const header = document.createElement("div");
+    header.className = "flex items-start gap-4";
+
+    const icon = document.createElement("div");
+    icon.className = `grid size-11 shrink-0 place-items-center rounded-xl border text-lg font-black ${tone.accent}`;
+    icon.textContent = tone.symbol;
+
+    const copy = document.createElement("div");
+    copy.className = "min-w-0 flex-1";
+
+    const title = document.createElement("h2");
+    title.className = "break-words text-lg font-black tracking-normal sm:text-xl";
+    title.textContent = input.title;
+    copy.appendChild(title);
+
+    if (input.text) {
+      const text = document.createElement("p");
+      text.className = "mt-2 break-words text-sm leading-6 text-muted-foreground";
+      text.textContent = input.text;
+      copy.appendChild(text);
+    }
+
+    header.append(icon, copy);
+
+    const actions = document.createElement("div");
+    actions.className = "mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end";
+
+    if (isConfirm) {
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.dataset.alertCancel = "";
+      cancelButton.className =
+        "inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+      cancelButton.textContent = cancelText;
+      actions.appendChild(cancelButton);
+    }
+
+    const confirmButton = document.createElement("button");
+    confirmButton.type = "button";
+    confirmButton.dataset.alertConfirm = "";
+    confirmButton.className = `inline-flex min-h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${tone.button}`;
+    confirmButton.textContent = confirmText;
+    actions.appendChild(confirmButton);
+
+    body.append(header, actions);
+    section.append(bar, body);
+    root.appendChild(section);
 
     let timeoutId: number | undefined;
     let didClose = false;

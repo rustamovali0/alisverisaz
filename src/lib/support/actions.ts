@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+  assertAuthRateLimit,
+  getClientIp,
+  recordAuthRateLimitAttempt,
+} from "@/lib/auth/security";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -12,6 +17,10 @@ type SupportActionResult =
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 export async function createSupportMessageAction(
@@ -28,6 +37,10 @@ export async function createSupportMessageAction(
     return { ok: false, message: "Mesaj ən azı 10 simvol olmalıdır." };
   }
 
+  if (subject.length > 120 || message.length > 3000) {
+    return { ok: false, message: "Mesaj çox uzundur." };
+  }
+
   const current = await getCurrentUserProfile();
   const fullName =
     current?.profile?.full_name?.trim() ||
@@ -40,6 +53,31 @@ export async function createSupportMessageAction(
     return {
       ok: false,
       message: "Cavab üçün email ünvanınızı yazın.",
+    };
+  }
+
+  if (!current && !isValidEmail(email)) {
+    return {
+      ok: false,
+      message: "Düzgün email daxil edin.",
+    };
+  }
+
+  const ip = await getClientIp();
+  const rateLimitRule = {
+    endpoint: "support_message" as const,
+    identifier: current?.user.id ?? email,
+    ip,
+    maxAttempts: 5,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+
+  if (!rateLimit.ok) {
+    return {
+      ok: false,
+      message: rateLimit.message,
     };
   }
 
@@ -68,6 +106,7 @@ export async function createSupportMessageAction(
     };
   }
 
+  await recordAuthRateLimitAttempt(rateLimitRule);
   revalidatePath("/radmin/messages");
 
   return { ok: true, message: "Dəstək mesajınız göndərildi." };

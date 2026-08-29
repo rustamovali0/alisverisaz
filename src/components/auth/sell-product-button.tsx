@@ -47,13 +47,14 @@ export function SellProductButton() {
     }
   }
 
-  if (
-    profile.status === "loading" ||
-    profile.role === "admin" ||
-    profile.role === "customer"
-  ) {
+  if (profile.status === "authenticated" && profile.role === "admin") {
     return null;
   }
+
+  const label =
+    profile.status === "authenticated" && profile.role === "seller"
+      ? "Məhsul sat"
+      : "Satıcı ol";
 
   return (
     <Button
@@ -61,11 +62,11 @@ export function SellProductButton() {
       variant="ghost"
       className="group bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
       onClick={handleClick}
-      disabled={isPending}
+      disabled={isPending || profile.status === "loading"}
     >
       <Plus className="mr-2 size-4" aria-hidden="true" />
       <span className="inline-block transition-transform duration-200 group-hover:scale-105">
-        {profile.role === "seller" ? "Məhsul sat" : "Satıcı ol"}
+        {label}
       </span>
     </Button>
   );

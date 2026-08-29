@@ -2,18 +2,32 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 
+function clampLimit(value: string | null) {
+  const limit = Number(value ?? "50");
+
+  if (!Number.isFinite(limit)) {
+    return 50;
+  }
+
+  return Math.min(Math.max(Math.floor(limit), 1), 50);
+}
+
+function cleanParam(value: string | null, maxLength = 120) {
+  return value ? value.trim().slice(0, maxLength) : "";
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const limitValue = Number(searchParams.get("limit") ?? "50");
+  const limit = clampLimit(searchParams.get("limit"));
 
   try {
     const page = await getSimilarMarketplaceProductPage(
       searchParams.get("locale") ?? "az",
       {
-        productId: searchParams.get("productId") ?? "",
-        categoryId: searchParams.get("categoryId") ?? "",
-        cursor: searchParams.get("cursor"),
-        limit: Number.isFinite(limitValue) ? limitValue : 50,
+        productId: cleanParam(searchParams.get("productId"), 80),
+        categoryId: cleanParam(searchParams.get("categoryId"), 80),
+        cursor: cleanParam(searchParams.get("cursor"), 200) || null,
+        limit,
       },
     );
 

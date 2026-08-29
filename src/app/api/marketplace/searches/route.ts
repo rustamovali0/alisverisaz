@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  assertAuthRateLimit,
+  getClientIp,
+  recordAuthRateLimitAttempt,
+} from "@/lib/auth/security";
+import {
   getPopularMarketplaceSearches,
   normalizeMarketplaceSearchTerm,
 } from "@/lib/search/data";
@@ -35,8 +40,24 @@ export async function POST(request: NextRequest) {
     return new NextResponse(null, { status: 204 });
   }
 
+  const ip = await getClientIp();
+  const rateLimitRule = {
+    endpoint: "marketplace_search" as const,
+    identifier: term,
+    ip,
+    maxAttempts: 60,
+    windowSeconds: 60,
+    blockSeconds: 2 * 60,
+  };
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+
+  if (!rateLimit.ok) {
+    return new NextResponse(null, { status: 204 });
+  }
+
   try {
     const supabase = createSupabaseAdminClient();
+    await recordAuthRateLimitAttempt(rateLimitRule);
     await (supabase as any).rpc("record_marketplace_search", {
       search_term: term,
     });
