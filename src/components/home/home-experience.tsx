@@ -116,6 +116,8 @@ function hexToHslTriplet(hex: string, fallback: string) {
 function createHomeThemeStyle(
   colors: HomeThemeColors,
 ): CSSProperties & Record<string, string> {
+  const buttonBackground = colors.buttonBackground || colors.primary;
+
   return {
     backgroundColor: "hsl(var(--background))",
     color: "hsl(var(--foreground))",
@@ -126,7 +128,7 @@ function createHomeThemeStyle(
     "--muted": hexToHslTriplet(colors.productsBackground, "210 40% 96%"),
     "--muted-foreground": hexToHslTriplet(colors.mutedText, "215 16% 47%"),
     "--border": hexToHslTriplet(colors.border, "214 32% 91%"),
-    "--primary": hexToHslTriplet(colors.primary, "187 92% 32%"),
+    "--primary": hexToHslTriplet(buttonBackground, "187 92% 32%"),
     "--primary-foreground": hexToHslTriplet(colors.buttonText, "0 0% 100%"),
     "--accent": hexToHslTriplet(colors.accent, "38 92% 50%"),
     "--home-hero-bg": colors.heroBackground,
@@ -137,9 +139,9 @@ function createHomeThemeStyle(
     "--home-button-bg": colors.buttonBackground,
     "--home-button-text": colors.buttonText,
     "--home-border": colors.border,
-    "--marketplace-primary": hexToHslTriplet(colors.primary, "187 92% 32%"),
-    "--marketplace-primary-hover": hexToHslTriplet(colors.buttonBackground, "187 92% 28%"),
-    "--marketplace-primary-soft": hexToHslTriplet(colors.primary, "187 92% 90%"),
+    "--marketplace-primary": hexToHslTriplet(buttonBackground, "187 92% 32%"),
+    "--marketplace-primary-hover": hexToHslTriplet(buttonBackground, "187 92% 28%"),
+    "--marketplace-primary-soft": hexToHslTriplet(buttonBackground, "187 92% 90%"),
     "--marketplace-navy": hexToHslTriplet(colors.text, "222 47% 11%"),
     "--marketplace-muted": hexToHslTriplet(colors.mutedText, "215 16% 47%"),
   };

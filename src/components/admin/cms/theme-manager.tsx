@@ -33,6 +33,7 @@ type HomeThemeColorKey = keyof HomeThemeColors;
 type PreviewMode = "desktop" | "mobile";
 type DesignSection =
   | "theme"
+  | "colors"
   | "navbar"
   | "homepage"
   | "product-cards"
@@ -44,6 +45,7 @@ type DesignSection =
 
 const sectionTabs: Array<{ key: DesignSection; label: string }> = [
   { key: "theme", label: "Ümumi tema" },
+  { key: "colors", label: "Rənglər" },
   { key: "navbar", label: "Navbar" },
   { key: "homepage", label: "Ana səhifə" },
   { key: "product-cards", label: "Məhsul kartları" },
@@ -72,8 +74,13 @@ const colorGroups: Array<{
       { key: "border", name: "borderColor", label: "Border" },
       { key: "primary", name: "primaryColor", label: "Primary" },
       { key: "accent", name: "accentColor", label: "Accent" },
-      { key: "buttonBackground", name: "buttonBackgroundColor", label: "Button background" },
-      { key: "buttonText", name: "buttonTextColor", label: "Button text" },
+    ],
+  },
+  {
+    title: "Düymə rəngləri",
+    fields: [
+      { key: "buttonBackground", name: "buttonBackgroundColor", label: "Düymə fonu" },
+      { key: "buttonText", name: "buttonTextColor", label: "Düymə yazısı" },
     ],
   },
   {
@@ -654,71 +661,81 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
             </div>
           </section>
 
-          {selectedTheme && selectedColors ? (
-            <section className="grid gap-4 rounded-xl border bg-card p-4 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-lg font-black">{selectedTheme.name}</h3>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {selectedTheme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
-                    <Badge tone={selectedTheme.status === "published" ? "published" : "draft"}>
-                      {selectedTheme.status === "published" ? "Published" : "Draft"}
-                    </Badge>
-                  </div>
-                </div>
-                <PreviewToggle value={previewMode} onChange={setPreviewMode} />
-              </div>
-
-              <ThemePreview colors={selectedColors} mode={previewMode} />
-
-              <form
-                key={selectedTheme.id}
-                id={colorFormId}
-                action={handleSaveColors}
-                className="grid gap-4"
-              >
-                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-                <details className="rounded-lg border bg-background">
-                  <summary className="cursor-pointer px-4 py-3 text-sm font-bold">
-                    Advanced rənglər
-                  </summary>
-                  <div className="grid gap-5 border-t p-4">
-                    {colorGroups.map((group) => (
-                      <div key={group.title} className="grid gap-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                          {group.title}
-                        </p>
-                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-                          {group.fields.map((field) => (
-                            <label
-                              key={field.key}
-                              className="grid gap-2 text-xs font-semibold text-muted-foreground"
-                            >
-                              {field.label}
-                              <div className="flex min-w-0 items-center gap-2">
-                                <input
-                                  name={field.name}
-                                  type="color"
-                                  defaultValue={selectedColors[field.key]}
-                                  disabled={isPending}
-                                  className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
-                                />
-                                <span className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
-                                  {selectedColors[field.key]}
-                                </span>
-                              </div>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              </form>
-            </section>
-          ) : null}
         </div>
       );
+    }
+
+    if (activeSection === "colors") {
+      return selectedTheme && selectedColors ? (
+        <section className="grid gap-4 rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-black">Rənglər</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Saytın əsas rənglərini və bütün əsas düymələrin rəngini buradan idarə edin.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <select
+                  value={selectedTheme.themeKey}
+                  onChange={(event) => setSelectedThemeKey(event.target.value)}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {themes.map((theme) => (
+                    <option key={theme.themeKey} value={theme.themeKey}>
+                      {theme.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedTheme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
+                <Badge tone={selectedTheme.status === "published" ? "published" : "draft"}>
+                  {selectedTheme.status === "published" ? "Published" : "Draft"}
+                </Badge>
+              </div>
+            </div>
+            <PreviewToggle value={previewMode} onChange={setPreviewMode} />
+          </div>
+
+          <ThemePreview colors={selectedColors} mode={previewMode} />
+
+          <form
+            key={selectedTheme.id}
+            id={colorFormId}
+            action={handleSaveColors}
+            className="grid gap-5"
+          >
+            <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
+            {colorGroups.map((group) => (
+              <div key={group.title} className="grid gap-3 rounded-lg border bg-background p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {group.title}
+                </p>
+                <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                  {group.fields.map((field) => (
+                    <label
+                      key={field.key}
+                      className="grid gap-2 text-xs font-semibold text-muted-foreground"
+                    >
+                      {field.label}
+                      <div className="flex min-w-0 items-center gap-2">
+                        <input
+                          name={field.name}
+                          type="color"
+                          defaultValue={selectedColors[field.key]}
+                          disabled={isPending}
+                          className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
+                        />
+                        <span className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
+                          {selectedColors[field.key]}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </form>
+        </section>
+      ) : null;
     }
 
     if (activeSection === "navbar") {
@@ -779,7 +796,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
       return (
         <PresetCardGrid
           fields={[
-            { key: "buttonPreset", title: "Buttons" },
+            { key: "buttonPreset", title: "Button formaları" },
             { key: "inputPreset", title: "Inputs" },
             { key: "cardPreset", title: "Cards" },
           ]}
@@ -840,7 +857,7 @@ export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
             </div>
           </div>
 
-          {activeSection === "theme" && selectedTheme ? (
+          {activeSection === "colors" && selectedTheme ? (
             <div className="grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <form action={handleResetColors} className="min-w-0">
                 <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />

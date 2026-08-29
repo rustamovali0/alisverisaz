@@ -14,7 +14,11 @@ import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getCurrentUserProfile } from "@/lib/auth/session";
-import { getSiteSettings } from "@/lib/cms/data";
+import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
+import {
+  defaultHomeThemeColors,
+  homeThemeColorPresets,
+} from "@/lib/cms/defaults";
 import { getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
 import { buildDesignCssVariables } from "@/lib/design/presets";
@@ -26,6 +30,8 @@ type LocaleLayoutProps = {
     locale: string;
   }>;
 };
+
+type HomeThemeColorMap = Record<keyof typeof defaultHomeThemeColors, string>;
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({
@@ -157,7 +163,7 @@ export default async function LocaleLayout({
   );
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const loadPublicNavigation = shouldLoadPublicNavigation(visiblePathname);
-  const [messages, siteSettings, navStores, navCategories, currentUser] = await Promise.all([
+  const [messages, siteSettings, navStores, navCategories, currentUser, activeTheme] = await Promise.all([
     getMessages({
       locale,
     }),
@@ -169,7 +175,25 @@ export default async function LocaleLayout({
       ? getCategoryOptions({ rootOnly: true })
       : Promise.resolve([]),
     loadPublicNavigation ? getCurrentUserProfile() : Promise.resolve(null),
+    getActiveHomeThemeSetting(),
   ]);
+  const activeThemeConfig =
+    activeTheme.config && typeof activeTheme.config === "object" ? activeTheme.config : {};
+  const activeThemeCustomColors =
+    activeThemeConfig.colors &&
+    typeof activeThemeConfig.colors === "object" &&
+    !Array.isArray(activeThemeConfig.colors)
+      ? (activeThemeConfig.colors as Partial<typeof defaultHomeThemeColors>)
+      : {};
+  const activeThemePresetColors =
+    (homeThemeColorPresets as unknown as Record<string, Partial<HomeThemeColorMap>>)[
+      activeTheme.themeKey
+    ] ?? {};
+  const activeThemeColors = {
+    ...defaultHomeThemeColors,
+    ...activeThemePresetColors,
+    ...activeThemeCustomColors,
+  };
   const isMaintenanceBlocked =
     siteSettings.maintenanceMode && !canBypassMaintenance(visiblePathname);
 
@@ -197,7 +221,7 @@ export default async function LocaleLayout({
         data-card-preset={siteSettings.design.cardPreset}
         data-spacing-preset={siteSettings.design.spacingPreset}
         data-typography-preset={siteSettings.design.typographyPreset}
-        style={buildDesignCssVariables(siteSettings.design)}
+        style={buildDesignCssVariables(siteSettings.design, activeThemeColors)}
       >
         <ScrollToTopButton />
         <ToastViewport />

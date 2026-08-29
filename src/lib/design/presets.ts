@@ -145,6 +145,12 @@ export type SiteDesignSettings = {
   [Key in DesignPresetKey]: (typeof designPresetOptions)[Key][number][0];
 };
 
+export type DesignColorOverrides = {
+  buttonBackground?: string;
+  buttonText?: string;
+  primary?: string;
+};
+
 export const defaultDesignSettings: SiteDesignSettings = {
   themePreset: "default-marketplace",
   navbarPreset: "marketplace",
@@ -337,8 +343,11 @@ function hexToHslTriplet(hex: string, fallback: string) {
 
 export function buildDesignCssVariables(
   settings: SiteDesignSettings,
+  colors: DesignColorOverrides = {},
 ): CSSProperties & Record<string, string> {
   const tokens = themeTokens[settings.themePreset] ?? themeTokens["default-marketplace"];
+  const primaryColor = colors.buttonBackground || colors.primary || tokens.primary;
+  const buttonTextColor = colors.buttonText;
   const isCompact = settings.spacingPreset === "compact";
   const isSpacious = settings.spacingPreset === "spacious";
   const buttonRadius =
@@ -363,8 +372,10 @@ export function buildDesignCssVariables(
     "--card-foreground": hexToHslTriplet(tokens.text, "218 31% 12%"),
     "--popover": hexToHslTriplet(tokens.surface, "0 0% 100%"),
     "--popover-foreground": hexToHslTriplet(tokens.text, "218 31% 12%"),
-    "--primary": hexToHslTriplet(tokens.primary, "186 85% 32%"),
-    "--primary-foreground": settings.themePreset === "dark-premium" ? "220 29% 8%" : "0 0% 100%",
+    "--primary": hexToHslTriplet(primaryColor, "186 85% 32%"),
+    "--primary-foreground": buttonTextColor
+      ? hexToHslTriplet(buttonTextColor, "0 0% 100%")
+      : settings.themePreset === "dark-premium" ? "220 29% 8%" : "0 0% 100%",
     "--secondary": hexToHslTriplet(tokens.secondary, "215 35% 94%"),
     "--secondary-foreground": settings.themePreset === "dark-premium" ? "210 32% 96%" : "216 28% 18%",
     "--muted": hexToHslTriplet(settings.themePreset === "dark-premium" ? "#1f2937" : "#f1f5f9", "214 30% 94%"),
@@ -372,15 +383,15 @@ export function buildDesignCssVariables(
     "--accent": hexToHslTriplet(tokens.accent, "38 94% 58%"),
     "--border": hexToHslTriplet(tokens.border, "214 24% 88%"),
     "--input": hexToHslTriplet(tokens.border, "214 24% 88%"),
-    "--ring": hexToHslTriplet(tokens.primary, "186 85% 32%"),
+    "--ring": hexToHslTriplet(primaryColor, "186 85% 32%"),
     "--radius": cardRadius,
-    "--marketplace-primary": hexToHslTriplet(tokens.primary, "186 85% 32%"),
-    "--marketplace-primary-hover": hexToHslTriplet(tokens.secondary, "186 85% 28%"),
-    "--marketplace-primary-soft": hexToHslTriplet(tokens.primary, "186 85% 94%"),
+    "--marketplace-primary": hexToHslTriplet(primaryColor, "186 85% 32%"),
+    "--marketplace-primary-hover": hexToHslTriplet(primaryColor, "186 85% 28%"),
+    "--marketplace-primary-soft": hexToHslTriplet(primaryColor, "186 85% 94%"),
     "--marketplace-navy": hexToHslTriplet(tokens.text, "233 43% 19%"),
     "--marketplace-muted": hexToHslTriplet(tokens.mutedText, "240 5% 58%"),
-    "--toast-success": hexToHslTriplet(tokens.primary, "186 85% 32%"),
-    "--toast-info": hexToHslTriplet(tokens.primary, "186 85% 32%"),
+    "--toast-success": hexToHslTriplet(primaryColor, "186 85% 32%"),
+    "--toast-info": hexToHslTriplet(primaryColor, "186 85% 32%"),
     "--toast-warning": hexToHslTriplet(tokens.accent, "38 94% 58%"),
     "--toast-error": "348 83% 58%",
     "--design-surface": tokens.surface,
