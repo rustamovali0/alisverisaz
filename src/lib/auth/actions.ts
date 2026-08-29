@@ -17,9 +17,11 @@ import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
 import { getSiteSettings } from "@/lib/cms/data";
+import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
 import { uploadImageToR2 } from "@/lib/storage/r2";
+import { sendPasswordResetEmail } from "@/lib/email/password-reset";
 import {
   notifyAdminLogin,
   notifyAdminLoginFailed,
@@ -46,6 +48,8 @@ const ALLOWED_AUTH_MEDIA_TYPES = ["image/*"];
 const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
 const GENERIC_RESET_RESPONSE =
   "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
+const PASSWORD_RESET_SEND_ERROR =
+  "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -91,6 +95,17 @@ function isValidEmail(value: string) {
 
 function normalizeIdentifier(value: string) {
   return value.trim().toLowerCase().slice(0, 320);
+}
+
+function isMissingAuthUserError(error: { message?: string; code?: string; status?: number }) {
+  const message = error.message ?? "";
+  const code = error.code ?? "";
+
+  return (
+    error.status === 404 ||
+    /user.*not.*found|not.*found|does not exist/i.test(message) ||
+    /user.*not.*found|not.*found/i.test(code)
+  );
 }
 
 function normalizeNextPath(value: string) {
@@ -941,26 +956,82 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   await recordAuthRateLimitAttempt(rateLimitRule);
 
-  const supabase = await createSupabaseServerClient();
   const redirectUrl = new URL("/auth/callback", await getRequestOrigin());
 
   redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: redirectUrl.toString(),
-  });
-
-  if (error) {
-    console.error("Password reset email failed", {
-      message: error.message,
-      status: error.status,
-      code: error.code,
+  if (serverEnv.hasSmtpConfig && serverEnv.hasSupabaseSecretKey) {
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: {
+        redirectTo: redirectUrl.toString(),
+      },
     });
 
-    return {
-      ok: false,
-      message: "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.",
-    };
+    if (error) {
+      if (isMissingAuthUserError(error)) {
+        return {
+          ok: true,
+          message: GENERIC_RESET_RESPONSE,
+          redirectTo: "/login",
+        };
+      }
+
+      console.error("Password reset link generation failed", {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+      });
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
+
+    const resetUrl = data.properties?.action_link;
+
+    if (!resetUrl) {
+      console.error("Password reset link generation returned no action link");
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
+
+    try {
+      await sendPasswordResetEmail({ to: email, resetUrl });
+    } catch (error) {
+      console.error("Password reset SMTP email failed", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
+  } else {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl.toString(),
+    });
+
+    if (error) {
+      console.error("Password reset email failed", {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+      });
+
+      return {
+        ok: false,
+        message: PASSWORD_RESET_SEND_ERROR,
+      };
+    }
   }
 
   return {

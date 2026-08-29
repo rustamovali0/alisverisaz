@@ -60,6 +60,33 @@ export const serverEnv = {
 
     return Boolean(process.env.TURNSTILE_SECRET_KEY?.trim());
   },
+  get smtpHost() {
+    return readOptionalServerEnv("SMTP_HOST").trim();
+  },
+  get smtpPort() {
+    const value = Number.parseInt(readOptionalServerEnv("SMTP_PORT"), 10);
+
+    return Number.isFinite(value) && value > 0 ? value : 587;
+  },
+  get smtpSecure() {
+    return readOptionalServerEnv("SMTP_SECURE").trim().toLowerCase() === "true";
+  },
+  get smtpUser() {
+    return readOptionalServerEnv("SMTP_USER").trim();
+  },
+  get smtpPassword() {
+    return readOptionalServerEnv("SMTP_PASSWORD");
+  },
+  get smtpFrom() {
+    return readOptionalServerEnv("SMTP_FROM").trim();
+  },
+  get hasSmtpConfig() {
+    return Boolean(
+      readOptionalServerEnv("SMTP_HOST").trim() &&
+        readOptionalServerEnv("SMTP_USER").trim() &&
+        readOptionalServerEnv("SMTP_PASSWORD"),
+    );
+  },
   get telegramBotToken() {
     return readOptionalServerEnv("TELEGRAM_BOT_TOKEN").trim();
   },
