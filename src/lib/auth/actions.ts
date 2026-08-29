@@ -22,6 +22,7 @@ import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
 import { uploadImageToR2 } from "@/lib/storage/r2";
 import { sendPasswordResetEmail } from "@/lib/email/password-reset";
+import { sendWelcomeRegistrationEmail } from "@/lib/email/welcome";
 import {
   notifyAdminLogin,
   notifyAdminLoginFailed,
@@ -471,6 +472,25 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       email,
       createdAt: data.user.created_at,
     });
+  }
+
+  if (serverEnv.hasSmtpConfig) {
+    try {
+      await sendWelcomeRegistrationEmail({
+        to: email,
+        fullName,
+        role,
+        loginUrl: new URL("/login", await getPublicRequestOrigin()).toString(),
+      });
+    } catch (error) {
+      console.error("Welcome registration email failed", {
+        message: error instanceof Error ? error.message : String(error),
+        email,
+        role,
+      });
+    }
+  } else {
+    console.warn("Welcome registration email skipped because SMTP is not configured");
   }
 
   return {

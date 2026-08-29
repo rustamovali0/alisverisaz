@@ -35,7 +35,12 @@ function dispatchToast(input: {
       window.sessionStorage.setItem(PENDING_TOASTS_KEY, JSON.stringify([detail]));
     } catch {
       // Toast persistence is best-effort; the immediate toast still works.
+      window.dispatchEvent(new CustomEvent("alisveris-toast", { detail }));
     }
+
+    return Promise.resolve({
+      isConfirmed: true,
+    });
   }
 
   window.dispatchEvent(new CustomEvent("alisveris-toast", { detail }));
