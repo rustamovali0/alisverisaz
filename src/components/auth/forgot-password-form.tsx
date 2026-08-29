@@ -14,6 +14,7 @@ import { requestPasswordResetAction } from "@/lib/auth/actions";
 export function ForgotPasswordForm() {
   const [identifier, setIdentifier] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -25,6 +26,7 @@ export function ForgotPasswordForm() {
 
     setIsSubmitting(true);
     setServerError(null);
+    setSuccessMessage(null);
 
     try {
       const formData = new FormData(event.currentTarget);
@@ -38,7 +40,15 @@ export function ForgotPasswordForm() {
         return;
       }
 
-      window.location.assign(result.redirectTo || "/login");
+      setSuccessMessage(result.message);
+      void appAlert.success("Bərpa linki göndərildi", result.message, {
+        dedupeKey: "password-reset-sent",
+        persistAcrossNavigation: true,
+      });
+
+      window.setTimeout(() => {
+        window.location.assign(result.redirectTo || "/login");
+      }, 1200);
     } catch {
       const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
       setServerError(message);
@@ -80,6 +90,14 @@ export function ForgotPasswordForm() {
     >
       <form onSubmit={handleSubmit} className="grid gap-4">
         <AuthErrorAlert message={serverError} />
+        {successMessage ? (
+          <div
+            className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200"
+            role="status"
+          >
+            {successMessage}
+          </div>
+        ) : null}
         <AuthField
           id="identifier"
           name="identifier"
