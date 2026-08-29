@@ -50,11 +50,6 @@ function writeCart(items: CartItem[]) {
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
-function deleteCart() {
-  localStorage.removeItem(CART_KEY);
-  window.dispatchEvent(new Event("alisveris-cart-updated"));
-}
-
 function formatMoney(value: number) {
   return new Intl.NumberFormat("az-AZ", {
     style: "currency",
@@ -269,24 +264,6 @@ export function CartCheckout({
     void appAlert.success("Səbət boşaldıldı", "Bütün məhsullar səbətdən silindi.");
   }
 
-  async function removeCart() {
-    const confirmed = await appAlert.confirm({
-      title: "Səbət silinsin?",
-      message: "Səbəti tam silmək istədiyinizə əminsiniz?",
-      confirmText: "Səbəti sil",
-      cancelText: "Ləğv et",
-      variant: "danger",
-    });
-
-    if (!confirmed.isConfirmed) {
-      return;
-    }
-
-    setItems([]);
-    deleteCart();
-    void appAlert.success("Səbət silindi", "Səbət məlumatları təmizləndi.");
-  }
-
   function handleSubmit(formData: FormData) {
     const requestId = checkoutRequestId || crypto.randomUUID();
 
@@ -350,24 +327,6 @@ export function CartCheckout({
             <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <Button asChild variant="outline" size="sm">
                 <Link href="/products">Bütün məhsullar</Link>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={visibleItems.length === 0}
-                onClick={() => void clearCart()}
-              >
-                Səbəti boşalt
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={visibleItems.length === 0}
-                onClick={() => void removeCart()}
-              >
-                Səbəti sil
               </Button>
             </div>
           </div>
@@ -501,6 +460,20 @@ export function CartCheckout({
               })
             )}
           </div>
+          {visibleItems.length > 0 ? (
+            <div className="flex justify-end border-t bg-white px-1 py-4 md:bg-transparent">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => void clearCart()}
+              >
+                <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                Səbəti boşalt
+              </Button>
+            </div>
+          ) : null}
         </section>
         ) : null}
 
