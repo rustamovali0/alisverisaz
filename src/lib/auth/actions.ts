@@ -997,6 +997,7 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
   return {
     ok: true,
     message: "Şifrə uğurla yeniləndi.",
+    redirectTo: "/login",
   };
 }
 

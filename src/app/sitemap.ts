@@ -183,12 +183,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   return [
-    ...staticPaths.map((path) => ({
-      url: absoluteUrl(path),
-      lastModified: now,
-      changeFrequency: (path === "/" || path === "/products" ? "daily" : "monthly") as const,
-      priority: path === "/" ? 1 : path === "/products" ? 0.9 : 0.6,
-    })),
+    ...staticPaths.map((path) => {
+      const changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] =
+        path === "/" || path === "/products" ? "daily" : "monthly";
+
+      return {
+        url: absoluteUrl(path),
+        lastModified: now,
+        changeFrequency,
+        priority: path === "/" ? 1 : path === "/products" ? 0.9 : 0.6,
+      };
+    }),
     ...storeUrls,
     ...productUrls,
     ...categoryUrls,
