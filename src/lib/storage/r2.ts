@@ -35,7 +35,6 @@ const EXTENSION_MIME_TYPES: Record<string, string> = {
   tiff: "image/tiff",
   bmp: "image/bmp",
 };
-const ORIGINAL_UPLOAD_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 const IMAGE_PROCESSING_ERROR =
   "Şəkil emalı alınmadı. Faylın real şəkil formatında olduğundan əmin olun.";
 
@@ -222,48 +221,6 @@ function looksLikeSvg(input: Buffer) {
   return head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg"));
 }
 
-function detectOriginalImage(input: Buffer, fileName: string) {
-  const extension = extensionOf(fileName);
-
-  if (!ORIGINAL_UPLOAD_EXTENSIONS.has(extension)) {
-    return null;
-  }
-
-  if (input.length >= 3 && input[0] === 0xff && input[1] === 0xd8 && input[2] === 0xff) {
-    return {
-      extension: extension === "jpg" ? "jpg" : "jpeg",
-      mimeType: "image/jpeg",
-    };
-  }
-
-  if (
-    input.length >= 8 &&
-    input[0] === 0x89 &&
-    input[1] === 0x50 &&
-    input[2] === 0x4e &&
-    input[3] === 0x47 &&
-    input[4] === 0x0d &&
-    input[5] === 0x0a &&
-    input[6] === 0x1a &&
-    input[7] === 0x0a
-  ) {
-    return { extension: "png", mimeType: "image/png" };
-  }
-
-  if (input.length >= 12 && input.subarray(0, 4).toString("ascii") === "RIFF" && input.subarray(8, 12).toString("ascii") === "WEBP") {
-    return { extension: "webp", mimeType: "image/webp" };
-  }
-
-  if (input.length >= 6) {
-    const signature = input.subarray(0, 6).toString("ascii");
-    if (signature === "GIF87a" || signature === "GIF89a") {
-      return { extension: "gif", mimeType: "image/gif" };
-    }
-  }
-
-  return null;
-}
-
 function isPixelLimitError(error: unknown) {
   return error instanceof Error && /pixel limit|input image exceeds/i.test(error.message);
 }
@@ -312,19 +269,11 @@ export async function uploadImageToR2({
       throw new Error("Şəkil ölçüsü çox böyükdür.");
     }
 
-    const originalImage = detectOriginalImage(input, file.name);
+    throw error instanceof Error ? error : new Error(IMAGE_PROCESSING_ERROR);
+  }
 
-    if (!originalImage) {
-      throw error;
-    }
-
-    processed = {
-      data: input,
-      fileName: fileNameWithExtension(file.name, originalImage.extension),
-      mimeType: originalImage.mimeType,
-      width: null,
-      height: null,
-    };
+  if (processed.mimeType !== WEBP_CONTENT_TYPE || !processed.fileName.endsWith(".webp")) {
+    throw new Error(IMAGE_PROCESSING_ERROR);
   }
 
   const key = `${sanitizeFolder(folder)}/${crypto.randomUUID()}-${processed.fileName}`;

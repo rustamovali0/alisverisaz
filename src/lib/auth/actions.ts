@@ -941,15 +941,26 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
   await recordAuthRateLimitAttempt(rateLimitRule);
 
-  if (process.env.AUTH_PASSWORD_RESET_EMAILS_ENABLED !== "false") {
-    const supabase = await createSupabaseServerClient();
-    const redirectUrl = new URL("/auth/callback", await getRequestOrigin());
+  const supabase = await createSupabaseServerClient();
+  const redirectUrl = new URL("/auth/callback", await getRequestOrigin());
 
-    redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
+  redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
 
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl.toString(),
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: redirectUrl.toString(),
+  });
+
+  if (error) {
+    console.error("Password reset email failed", {
+      message: error.message,
+      status: error.status,
+      code: error.code,
     });
+
+    return {
+      ok: false,
+      message: "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.",
+    };
   }
 
   return {
