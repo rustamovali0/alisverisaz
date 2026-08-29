@@ -56,6 +56,7 @@ function createAlert(input: {
   text?: string;
   confirmText?: string;
   cancelText?: string;
+  confirmDanger?: boolean;
   autoCloseMs?: number;
 }) {
   return new Promise<ConfirmResult>((resolve) => {
@@ -78,13 +79,19 @@ function createAlert(input: {
               accent: "border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-300",
               button: "bg-red-600 text-white hover:bg-red-700",
               symbol: "!",
-            }
-          : input.kind === "confirm"
-            ? {
-                accent: "border-amber-500/35 bg-amber-50 text-amber-700 dark:bg-amber-950/35 dark:text-amber-300",
-                button: "bg-primary text-primary-foreground hover:bg-primary/90",
-                symbol: "?",
-              }
+          }
+        : input.kind === "confirm"
+            ? input.confirmDanger
+              ? {
+                  accent: "border-red-500/30 bg-red-50 text-red-700 dark:bg-red-950/35 dark:text-red-300",
+                  button: "bg-red-600 text-white hover:bg-red-700",
+                  symbol: "!",
+                }
+              : {
+                  accent: "border-amber-500/35 bg-amber-50 text-amber-700 dark:bg-amber-950/35 dark:text-amber-300",
+                  button: "bg-primary text-primary-foreground hover:bg-primary/90",
+                  symbol: "?",
+                }
             : {
                 accent: "border-primary/25 bg-primary/10 text-primary",
                 button: "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -256,6 +263,7 @@ export const appAlert = {
         text: input.message,
         confirmText: input.confirmText ?? "Təsdiqlə",
         cancelText: input.cancelText ?? "Ləğv et",
+        confirmDanger: input.variant === "danger",
       });
     }
 

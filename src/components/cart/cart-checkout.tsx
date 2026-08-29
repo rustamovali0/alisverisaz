@@ -50,6 +50,11 @@ function writeCart(items: CartItem[]) {
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
+function deleteCart() {
+  localStorage.removeItem(CART_KEY);
+  window.dispatchEvent(new Event("alisveris-cart-updated"));
+}
+
 function formatMoney(value: number) {
   return new Intl.NumberFormat("az-AZ", {
     style: "currency",
@@ -222,6 +227,66 @@ export function CartCheckout({
     writeCart(nextItems);
   }
 
+  async function removeCartItem(itemKey: string, productName: string) {
+    const confirmed = await appAlert.confirm({
+      title: "Məhsul səbətdən silinsin?",
+      message: `"${productName}" məhsulunu səbətdən silmək istədiyinizə əminsiniz?`,
+      confirmText: "Sil",
+      cancelText: "Ləğv et",
+      variant: "danger",
+    });
+
+    if (!confirmed.isConfirmed) {
+      return;
+    }
+
+    updateItems(
+      items.filter(
+        (nextItem) =>
+          getProductVariantKey(
+            nextItem.productId,
+            nextItem.selectedOptions,
+          ) !== itemKey,
+      ),
+    );
+    void appAlert.success("Məhsul silindi", "Məhsul səbətdən silindi.");
+  }
+
+  async function clearCart() {
+    const confirmed = await appAlert.confirm({
+      title: "Səbət boşaldılsın?",
+      message: "Səbətdəki bütün məhsulları silmək istədiyinizə əminsiniz?",
+      confirmText: "Boşalt",
+      cancelText: "Ləğv et",
+      variant: "danger",
+    });
+
+    if (!confirmed.isConfirmed) {
+      return;
+    }
+
+    updateItems([]);
+    void appAlert.success("Səbət boşaldıldı", "Bütün məhsullar səbətdən silindi.");
+  }
+
+  async function removeCart() {
+    const confirmed = await appAlert.confirm({
+      title: "Səbət silinsin?",
+      message: "Səbəti tam silmək istədiyinizə əminsiniz?",
+      confirmText: "Səbəti sil",
+      cancelText: "Ləğv et",
+      variant: "danger",
+    });
+
+    if (!confirmed.isConfirmed) {
+      return;
+    }
+
+    setItems([]);
+    deleteCart();
+    void appAlert.success("Səbət silindi", "Səbət məlumatları təmizləndi.");
+  }
+
   function handleSubmit(formData: FormData) {
     const requestId = checkoutRequestId || crypto.randomUUID();
 
@@ -270,16 +335,41 @@ export function CartCheckout({
       >
         {!checkoutOnly ? (
         <section className="rounded-none border-0 bg-white p-0 text-card-foreground shadow-none md:rounded-md md:border md:bg-card md:p-4 md:shadow-sm">
-          <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center">
-            <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
-              <Link href={returnHref}>
-                <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
-                {common("back")}
-              </Link>
-            </Button>
-            <h1 className="text-center text-3xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
-              {common("cart")}
-            </h1>
+          <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+                <Link href={returnHref}>
+                  <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
+                  {common("back")}
+                </Link>
+              </Button>
+              <h1 className="text-center text-3xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
+                {common("cart")}
+              </h1>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/products">Bütün məhsullar</Link>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={visibleItems.length === 0}
+                onClick={() => void clearCart()}
+              >
+                Səbəti boşalt
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={visibleItems.length === 0}
+                onClick={() => void removeCart()}
+              >
+                Səbəti sil
+              </Button>
+            </div>
           </div>
           <div className="mt-2 divide-y bg-white md:mt-6 md:bg-transparent">
             {visibleItems.length === 0 ? (
@@ -401,17 +491,7 @@ export function CartCheckout({
                       variant="ghost"
                       size="icon"
                       className="ml-auto size-11 text-destructive hover:text-destructive sm:ml-0 sm:size-14"
-                      onClick={() => {
-                        updateItems(
-                          items.filter(
-                            (nextItem) =>
-                              getProductVariantKey(
-                                nextItem.productId,
-                                nextItem.selectedOptions,
-                              ) !== itemKey,
-                          ),
-                        );
-                      }}
+                      onClick={() => void removeCartItem(itemKey, product.name)}
                     >
                       <Trash2 className="size-5" aria-hidden="true" />
                     </Button>
