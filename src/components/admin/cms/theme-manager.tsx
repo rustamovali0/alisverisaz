@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 type ThemeManagerProps = {
   themes: ThemeSetting[];
   siteSettings: SiteSettings;
+  initialSection?: DesignSection;
 };
 
 type HomeThemeColors = Record<keyof typeof defaultHomeThemeColors, string>;
@@ -496,9 +497,13 @@ function PresetCardGrid({
   );
 }
 
-export function ThemeManager({ themes, siteSettings }: ThemeManagerProps) {
+export function ThemeManager({
+  themes,
+  siteSettings,
+  initialSection = "theme",
+}: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
-  const [activeSection, setActiveSection] = useState<DesignSection>("theme");
+  const [activeSection, setActiveSection] = useState<DesignSection>(initialSection);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
   const [design, setDesign] = useState<SiteDesignSettings>(siteSettings.design);
   const activeTheme = useMemo(

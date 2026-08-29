@@ -230,6 +230,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "palette",
     },
     {
+      title: "Rənglər",
+      href: "/radmin/colors",
+      icon: "palette",
+    },
+    {
       title: "Satıcı paneli idarəsi",
       href: "/radmin/store-panel-management",
       icon: "building",

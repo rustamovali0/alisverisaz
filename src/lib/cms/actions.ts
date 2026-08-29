@@ -376,6 +376,7 @@ export async function updateDesignSettingsAction(
 
   invalidatePublicSiteSettings();
   revalidateLocalizedPath("/radmin/themes");
+  revalidateLocalizedPath("/radmin/colors");
 
   return {
     ok: true,
@@ -687,6 +688,7 @@ export async function publishThemeAction(formData: FormData): Promise<CmsActionR
 
   invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/themes");
+  revalidateLocalizedPath("/radmin/colors");
 
   return {
     ok: true,
@@ -754,6 +756,7 @@ export async function updateThemeDraftAction(
 
   invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/themes");
+  revalidateLocalizedPath("/radmin/colors");
 
   return {
     ok: true,
