@@ -166,19 +166,6 @@ async function getPublicRequestOrigin() {
   return host ? `${forwardedProto}://${host}` : clientEnv.appUrl;
 }
 
-function rewriteSupabaseActionLinkRedirect(actionLink: string, redirectTo: string) {
-  try {
-    const url = new URL(actionLink);
-
-    url.searchParams.set("redirect_to", redirectTo);
-    url.searchParams.set("redirectTo", redirectTo);
-
-    return url.toString();
-  } catch {
-    return actionLink;
-  }
-}
-
 function normalizeNextPath(value: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) {
     return "";
@@ -1121,10 +1108,10 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
       };
     }
 
-    const rawResetUrl = data.properties?.action_link;
+    const tokenHash = data.properties?.hashed_token;
 
-    if (!rawResetUrl) {
-      console.error("Password reset link generation returned no action link");
+    if (!tokenHash) {
+      console.error("Password reset link generation returned no token hash");
 
       return {
         ok: false,
@@ -1132,13 +1119,13 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
       };
     }
 
-    const resetUrl = rewriteSupabaseActionLinkRedirect(
-      rawResetUrl,
-      redirectUrl.toString(),
-    );
+    const resetUrl = new URL("/auth/confirm", await getPublicRequestOrigin());
+    resetUrl.searchParams.set("token_hash", tokenHash);
+    resetUrl.searchParams.set("type", "recovery");
+    resetUrl.searchParams.set("next", "/reset-password?mode=recovery");
 
     try {
-      await sendPasswordResetEmail({ to: email, resetUrl });
+      await sendPasswordResetEmail({ to: email, resetUrl: resetUrl.toString() });
     } catch (error) {
       console.error("Password reset SMTP email failed", {
         message: error instanceof Error ? error.message : String(error),

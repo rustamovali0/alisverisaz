@@ -1,43 +1,50 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
-import { useState, useTransition } from "react";
+import { type FormEvent, useState } from "react";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { requestPasswordResetAction } from "@/lib/auth/actions";
 
 export function ForgotPasswordForm() {
-  const router = useRouter();
   const [identifier, setIdentifier] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(formData: FormData) {
-    startTransition(async () => {
-      try {
-        formData.set("identifier", identifier.trim().toLowerCase());
-        const result = await requestPasswordResetAction(formData);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-        if (!result.ok) {
-          setServerError(result.message);
-          void appAlert.error(result.message, "Link göndərilmədi");
-          return;
-        }
+    if (isSubmitting) {
+      return;
+    }
 
-        void appAlert.success("Email göndərildi", result.message);
-        router.replace(result.redirectTo);
-        router.refresh();
-      } catch {
-        const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
-        setServerError(message);
-        void appAlert.error(message, "Link göndərilmədi");
+    setIsSubmitting(true);
+    setServerError(null);
+
+    try {
+      const formData = new FormData(event.currentTarget);
+      formData.set("identifier", identifier.trim().toLowerCase());
+      const result = await requestPasswordResetAction(formData);
+
+      if (!result.ok) {
+        setServerError(result.message);
+        void appAlert.error(result.message, "Link göndərilmədi");
+        setIsSubmitting(false);
+        return;
       }
-    });
+
+      window.location.assign(result.redirectTo || "/login");
+    } catch {
+      const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
+      setServerError(message);
+      setIsSubmitting(false);
+      void appAlert.error(message, "Link göndərilmədi");
+    }
   }
 
   return (
@@ -71,7 +78,7 @@ export function ForgotPasswordForm() {
         </p>
       }
     >
-      <form action={handleSubmit} className="grid gap-4">
+      <form onSubmit={handleSubmit} className="grid gap-4">
         <AuthErrorAlert message={serverError} />
         <AuthField
           id="identifier"
@@ -87,11 +94,11 @@ export function ForgotPasswordForm() {
         />
         <Button
           type="submit"
-          disabled={isPending}
+          disabled={isSubmitting}
           className="h-12 w-full rounded-xl"
         >
           <Mail className="mr-2 size-4" aria-hidden="true" />
-          {isPending ? "Göndərilir" : "Bərpa linki göndər"}
+          {isSubmitting ? "Göndərilir" : "Bərpa linki göndər"}
         </Button>
       </form>
     </AuthCard>
