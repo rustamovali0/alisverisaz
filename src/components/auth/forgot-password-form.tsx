@@ -6,35 +6,24 @@ import { useState, useTransition } from "react";
 import { AuthCard } from "@/components/auth/auth-card";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { AuthField } from "@/components/auth/auth-field";
-import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { requestPasswordResetAction } from "@/lib/auth/actions";
 
-export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey?: string }) {
+export function ForgotPasswordForm() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
-  const [captchaToken, setCaptchaToken] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
-    if (!captchaToken) {
-      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
-      setServerError(message);
-      void appAlert.error(message, "Link göndərilmədi");
-      return;
-    }
-
     startTransition(async () => {
       try {
         formData.set("identifier", identifier.trim().toLowerCase());
-        formData.set("captchaToken", captchaToken);
         const result = await requestPasswordResetAction(formData);
 
         if (!result.ok) {
-          setCaptchaToken("");
           setServerError(result.message);
           void appAlert.error(result.message, "Link göndərilmədi");
           return;
@@ -45,7 +34,6 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
         router.refresh();
       } catch {
         const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
-        setCaptchaToken("");
         setServerError(message);
         void appAlert.error(message, "Link göndərilmədi");
       }
@@ -97,14 +85,9 @@ export function ForgotPasswordForm({ turnstileSiteKey = "" }: { turnstileSiteKey
           autoComplete="email"
           required
         />
-        <TurnstileField
-          token={captchaToken}
-          onTokenChange={setCaptchaToken}
-          siteKey={turnstileSiteKey}
-        />
         <Button
           type="submit"
-          disabled={isPending || !captchaToken}
+          disabled={isPending}
           className="h-12 w-full rounded-xl"
         >
           <Mail className="mr-2 size-4" aria-hidden="true" />

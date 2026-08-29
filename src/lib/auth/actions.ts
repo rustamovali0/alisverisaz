@@ -52,6 +52,8 @@ const PASSWORD_RESET_SEND_ERROR =
   "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
 const PASSWORD_RESET_CONFIG_ERROR =
   "Şifrə bərpası üçün email ayarları tamamlanmayıb.";
+const PASSWORD_RESET_INACTIVE_ACCOUNT =
+  "Sizin aktiv hesabınız yoxdur.";
 const PASSWORD_RESET_TIMEOUT_MS = 15_000;
 
 function readString(formData: FormData, key: string) {
@@ -111,6 +113,22 @@ function isMissingAuthUserError(error: { message?: string; code?: string; status
   );
 }
 
+function isLocalhostOrigin(value: string) {
+  try {
+    const hostname = new URL(value).hostname;
+
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function isLocalhostHost(value: string) {
+  const host = value.split(":")[0]?.toLowerCase() ?? "";
+
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
 async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -128,6 +146,36 @@ async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promi
     if (timeout) {
       clearTimeout(timeout);
     }
+  }
+}
+
+async function getPublicRequestOrigin() {
+  const headerList = await headers();
+  const forwardedHost = headerList.get("x-forwarded-host");
+  const forwardedProto = headerList.get("x-forwarded-proto") ?? "https";
+  const host = forwardedHost ?? headerList.get("host");
+
+  if (host && !isLocalhostHost(host)) {
+    return `${forwardedProto}://${host}`;
+  }
+
+  if (clientEnv.appUrl && !isLocalhostOrigin(clientEnv.appUrl)) {
+    return clientEnv.appUrl.replace(/\/+$/, "");
+  }
+
+  return host ? `${forwardedProto}://${host}` : clientEnv.appUrl;
+}
+
+function rewriteSupabaseActionLinkRedirect(actionLink: string, redirectTo: string) {
+  try {
+    const url = new URL(actionLink);
+
+    url.searchParams.set("redirect_to", redirectTo);
+    url.searchParams.set("redirectTo", redirectTo);
+
+    return url.toString();
+  } catch {
+    return actionLink;
   }
 }
 
@@ -933,38 +981,11 @@ export async function logoutAction(): Promise<AuthResult> {
 
 export async function requestPasswordResetAction(formData: FormData): Promise<AuthResult> {
   const identifier = normalizeIdentifier(readString(formData, "identifier"));
-  const ip = await getClientIp();
-  const rateLimitRule = {
-    endpoint: "password_reset" as const,
-    identifier,
-    ip,
-    maxAttempts: 5,
-    windowSeconds: 2 * 60,
-    blockSeconds: 2 * 60,
-  };
 
   if (!identifier) {
     return {
       ok: false,
       message: "Email daxil edin.",
-    };
-  }
-
-  const rateLimit = await assertAuthRateLimit(rateLimitRule);
-
-  if (!rateLimit.ok) {
-    return {
-      ok: false,
-      message: rateLimit.message,
-    };
-  }
-
-  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
-
-  if (!captcha.ok) {
-    return {
-      ok: false,
-      message: captcha.message,
     };
   }
 
@@ -977,14 +998,8 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     };
   }
 
-  await recordAuthRateLimitAttempt(rateLimitRule);
-
-  const redirectUrl = new URL("/auth/callback", await getRequestOrigin());
-
-  redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
-
-  if (serverEnv.hasSmtpConfig && !serverEnv.hasSupabaseSecretKey) {
-    console.error("Password reset SMTP is configured but Supabase service role key is missing");
+  if (!serverEnv.hasSupabaseSecretKey) {
+    console.error("Password reset account lookup requires Supabase service role key");
 
     return {
       ok: false,
@@ -992,9 +1007,74 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     };
   }
 
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: resetProfile, error: resetProfileError } = await (supabaseAdmin as any)
+    .from("profiles")
+    .select("id,email")
+    .ilike("email", email)
+    .limit(1)
+    .maybeSingle();
+
+  if (resetProfileError) {
+    console.error("Password reset profile lookup failed", {
+      message: resetProfileError.message,
+      code: resetProfileError.code,
+    });
+
+    return {
+      ok: false,
+      message: PASSWORD_RESET_SEND_ERROR,
+    };
+  }
+
+  if (!resetProfile?.id) {
+    return {
+      ok: false,
+      message: PASSWORD_RESET_INACTIVE_ACCOUNT,
+    };
+  }
+
+  let authUserResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.getUserById>>;
+
+  try {
+    authUserResult = await withAuthTimeout(
+      supabaseAdmin.auth.admin.getUserById(resetProfile.id),
+      "İstifadəçi hesabının yoxlanması",
+    );
+  } catch (error) {
+    console.error("Password reset auth user lookup timed out", {
+      message: error instanceof Error ? error.message : String(error),
+    });
+
+    return {
+      ok: false,
+      message: PASSWORD_RESET_SEND_ERROR,
+    };
+  }
+
+  const resetUser = authUserResult.data.user;
+  const bannedUntil =
+    typeof resetUser?.banned_until === "string" ? Date.parse(resetUser.banned_until) : null;
+  const isAccountActive =
+    !authUserResult.error &&
+    Boolean(resetUser?.id) &&
+    resetUser?.email?.toLowerCase() === email &&
+    !resetUser.deleted_at &&
+    !(bannedUntil && bannedUntil > Date.now());
+
+  if (!isAccountActive) {
+    return {
+      ok: false,
+      message: PASSWORD_RESET_INACTIVE_ACCOUNT,
+    };
+  }
+
+  const redirectUrl = new URL("/auth/callback", await getPublicRequestOrigin());
+
+  redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
+
   if (serverEnv.hasSmtpConfig) {
     console.info("Password reset email channel selected", { channel: "smtp" });
-    const supabaseAdmin = createSupabaseAdminClient();
     let generateResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.generateLink>>;
 
     try {
@@ -1024,9 +1104,8 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     if (error) {
       if (isMissingAuthUserError(error)) {
         return {
-          ok: true,
-          message: GENERIC_RESET_RESPONSE,
-          redirectTo: "/login",
+          ok: false,
+          message: PASSWORD_RESET_INACTIVE_ACCOUNT,
         };
       }
 
@@ -1042,9 +1121,9 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
       };
     }
 
-    const resetUrl = data.properties?.action_link;
+    const rawResetUrl = data.properties?.action_link;
 
-    if (!resetUrl) {
+    if (!rawResetUrl) {
       console.error("Password reset link generation returned no action link");
 
       return {
@@ -1052,6 +1131,11 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
         message: PASSWORD_RESET_SEND_ERROR,
       };
     }
+
+    const resetUrl = rewriteSupabaseActionLinkRedirect(
+      rawResetUrl,
+      redirectUrl.toString(),
+    );
 
     try {
       await sendPasswordResetEmail({ to: email, resetUrl });
