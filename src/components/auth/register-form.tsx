@@ -252,6 +252,7 @@ export function RegisterForm({
       formData.set("confirmPassword", confirmPassword);
       formData.set("terms", termsAccepted ? "on" : "");
       formData.set("role", role);
+      formData.set("next", next);
 
       let result;
 

@@ -15,6 +15,9 @@ type RadminDashboardShellProps = {
   userLabel: string;
   navItems: DashboardNavItem[];
   children: ReactNode;
+  siteName?: string;
+  logoUrl?: string | null;
+  darkLogoUrl?: string | null;
 };
 
 function normalizePath(href: string) {
@@ -157,6 +160,9 @@ export function RadminDashboardShell({
   userLabel,
   navItems,
   children,
+  siteName = "Alisveris.az",
+  logoUrl,
+  darkLogoUrl,
 }: RadminDashboardShellProps) {
   const pathname = usePathname();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -204,6 +210,7 @@ export function RadminDashboardShell({
   }, []);
 
   const sidebarWidth = isCollapsed ? "lg:pl-24" : "lg:pl-80";
+  const sidebarLogoUrl = darkLogoUrl || logoUrl;
 
   return (
     <div className="radmin-shell min-h-screen max-w-full overflow-x-hidden text-foreground">
@@ -224,12 +231,16 @@ export function RadminDashboardShell({
               href="/radmin"
               className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}
             >
-              <span className="grid size-12 place-items-center rounded-xl bg-[#f4b740] text-base font-black text-[#061323] shadow-lg shadow-amber-500/20">
-                a
+              <span className="grid size-12 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-base font-black text-[#061323] shadow-lg shadow-amber-500/20">
+                {sidebarLogoUrl ? (
+                  <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                ) : (
+                  "a"
+                )}
               </span>
               {!isCollapsed ? (
                 <div>
-                  <p className="text-base font-black leading-none">Alisveris.az</p>
+                  <p className="text-base font-black leading-none">{siteName}</p>
                   <p className="text-sm font-medium text-cyan-100/70">RAdmin</p>
                 </div>
               ) : null}
@@ -242,14 +253,14 @@ export function RadminDashboardShell({
                 "border border-white/10 bg-white/5 text-cyan-50 hover:bg-cyan-300/10 hover:text-white",
                 !isCollapsed && "gap-2 px-2",
                 isCollapsed &&
-                  "size-9 rounded-lg shadow-sm shadow-cyan-950/20",
+                  "size-12 rounded-xl shadow-sm shadow-cyan-950/20",
               )}
               onClick={() => setIsCollapsed((current) => !current)}
               aria-label={isCollapsed ? "Sidebari aç" : "Sidebari daralt"}
               title={isCollapsed ? "Sidebari böyüt" : "Sidebari kiçilt"}
             >
               {isCollapsed ? (
-                <PanelLeftOpen className="size-5" aria-hidden="true" />
+                <PanelLeftOpen className="size-7 stroke-[2.6]" aria-hidden="true" />
               ) : (
                 <>
                   <PanelLeftClose className="size-5" aria-hidden="true" />
@@ -318,7 +329,13 @@ export function RadminDashboardShell({
               </div>
             ) : null}
             <div className="mt-3">
-              <LogoutButton compact={isCollapsed} />
+              <LogoutButton
+                compact={isCollapsed}
+                className={cn(
+                  "border-white/10 bg-[#5eead4] text-[#061323] hover:bg-[#2dd4bf] hover:text-[#061323]",
+                  isCollapsed ? "size-12 rounded-xl p-0" : "w-full justify-center",
+                )}
+              />
             </div>
           </div>
         </div>
@@ -335,10 +352,14 @@ export function RadminDashboardShell({
           <div className="absolute inset-y-0 left-0 w-[min(88vw,20rem)] max-w-full bg-[linear-gradient(180deg,#061323_0%,#0b3048_52%,#072033_100%)] text-white shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
               <Link href="/radmin" className="flex items-center gap-3">
-                <span className="grid size-9 place-items-center rounded-xl bg-[#f4b740] text-sm font-black text-[#061323]">
-                  a
+                <span className="grid size-11 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-sm font-black text-[#061323]">
+                  {sidebarLogoUrl ? (
+                    <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                  ) : (
+                    "a"
+                  )}
                 </span>
-                <span className="font-black">Alisveris.az</span>
+                <span className="font-black">{siteName}</span>
               </Link>
               <Button
                 type="button"
@@ -392,7 +413,7 @@ export function RadminDashboardShell({
               onClick={() => setIsDrawerOpen(true)}
               aria-label="Sidebari aç"
             >
-              <Menu className="size-5" aria-hidden="true" />
+              <Menu className="size-7 stroke-[2.6]" aria-hidden="true" />
             </Button>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">

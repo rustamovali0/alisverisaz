@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateCategoryPublicData } from "@/lib/cache/public-cache";
 import {
@@ -182,6 +183,13 @@ export async function createCategoryAction(
   }
 
   revalidateCategorySurfaces(category?.id);
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_CATEGORY_CREATE",
+    entityType: "categories",
+    entityId: category?.id ?? null,
+    metadata: { name, slug, parent_id: parentId },
+  });
 
   return {
     ok: true,
@@ -257,6 +265,13 @@ export async function updateCategoryAction(
 
   await deleteR2MediaAssetsByUrls([existing?.image_url !== imageUrl ? existing?.image_url : ""]);
   revalidateCategorySurfaces(id);
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_CATEGORY_UPDATE",
+    entityType: "categories",
+    entityId: id,
+    metadata: { name, slug, parent_id: parentId },
+  });
 
   return {
     ok: true,
@@ -267,7 +282,7 @@ export async function updateCategoryAction(
 export async function deleteCategoryAction(
   formData: FormData,
 ): Promise<CategoryActionResult> {
-  await requireRole(["admin"], "/radmin/categories");
+  const current = await requireRole(["admin"], "/radmin/categories");
   const id = readString(formData, "categoryId");
 
   if (!id) {
@@ -294,6 +309,13 @@ export async function deleteCategoryAction(
 
   await deleteR2MediaAssetsByUrls([existing?.image_url]);
   revalidateCategorySurfaces(id);
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_CATEGORY_DELETE",
+    entityType: "categories",
+    entityId: id,
+    metadata: { category_id: id },
+  });
 
   return {
     ok: true,

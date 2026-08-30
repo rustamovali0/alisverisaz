@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { normalizeMarketplaceSearchTerm } from "@/lib/search/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -13,7 +14,7 @@ export type PopularSearchActionResult =
 export async function updatePopularSearchOverridesAction(
   formData: FormData,
 ): Promise<PopularSearchActionResult> {
-  await requireRole(["admin"], "/radmin/searches");
+  const current = await requireRole(["admin"], "/radmin/searches");
 
   const overrides = ["search1", "search2", "search3", "search4"]
     .map((key) => normalizeMarketplaceSearchTerm(formData.get(key)))
@@ -46,6 +47,14 @@ export async function updatePopularSearchOverridesAction(
   }
 
   revalidatePath("/radmin/searches");
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_POPULAR_SEARCHES_UPDATE",
+    entityType: "platform_settings",
+    entityId: null,
+    metadata: { overrides },
+  });
+
   return {
     ok: true,
     message: overrides.length

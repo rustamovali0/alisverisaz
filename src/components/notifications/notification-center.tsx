@@ -2,14 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Bell, CheckCircle2, Info, X } from "lucide-react";
+import { Bell, CheckCircle2, Info, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
+  deleteAllNotificationsAction,
   loadMyNotificationsAction,
   markAllNotificationsReadAction,
   type UserNotification,
 } from "@/lib/notifications/actions";
+import { appAlert } from "@/lib/alerts/app-alert";
 import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -154,6 +156,52 @@ export function NotificationCenter({
     });
   }
 
+  function markAllRead() {
+    if (unreadCount === 0) {
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await markAllNotificationsReadAction();
+      if (!result.ok) {
+        void appAlert.error(result.message, "Bildirişlər yenilənmədi");
+        return;
+      }
+
+      const readAt = new Date().toISOString();
+      setItems((current) => current.map((item) => ({ ...item, readAt: item.readAt ?? readAt })));
+      showToast({ title: "Bildirişlər oxundu", description: result.message, variant: "success" });
+    });
+  }
+
+  async function deleteAll() {
+    if (items.length === 0) {
+      return;
+    }
+
+    const confirmed = await appAlert.confirm({
+      title: "Bildirişlər silinsin?",
+      message: "Bütün bildirişlər hesabınızdan silinəcək.",
+      confirmText: "Sil",
+      variant: "danger",
+    });
+
+    if (!confirmed.isConfirmed) {
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await deleteAllNotificationsAction();
+      if (!result.ok) {
+        void appAlert.error(result.message, "Bildirişlər silinmədi");
+        return;
+      }
+
+      setItems([]);
+      showToast({ title: "Bildirişlər silindi", description: result.message, variant: "success" });
+    });
+  }
+
   const modal = open && typeof document !== "undefined"
     ? createPortal(
         <div
@@ -178,9 +226,19 @@ export function NotificationCenter({
                   {items.length > 0 ? `${items.length} bildiriş` : "Yeni bildiriş yoxdur"}
                 </p>
               </div>
-              <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 rounded-full border border-transparent hover:border-border" onClick={() => setOpen(false)} aria-label="Bağla">
-                <X className="size-7 stroke-[2.8]" aria-hidden="true" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" disabled={isPending || unreadCount === 0} onClick={markAllRead}>
+                  <CheckCircle2 className="mr-2 size-4" aria-hidden="true" />
+                  Oxunmuş et
+                </Button>
+                <Button type="button" variant="outline" size="sm" disabled={isPending || items.length === 0} onClick={deleteAll}>
+                  <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                  Sil
+                </Button>
+                <Button type="button" variant="ghost" size="icon" className="size-12 shrink-0 rounded-full border border-transparent hover:border-border" onClick={() => setOpen(false)} aria-label="Bağla">
+                  <X className="size-7 stroke-[2.8]" aria-hidden="true" />
+                </Button>
+              </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
               {isPending && items.length === 0 ? (

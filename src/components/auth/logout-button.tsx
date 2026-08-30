@@ -45,7 +45,7 @@ export function LogoutButton({ compact = false, className }: LogoutButtonProps) 
       className={cn(compact ? "size-10 rounded-xl" : undefined, className)}
       aria-label={compact ? "Çıxış" : undefined}
     >
-      <LogOut className={compact ? "size-4" : "mr-2 size-4"} aria-hidden="true" />
+      <LogOut className={compact ? "size-6 stroke-[2.5]" : "mr-2 size-4"} aria-hidden="true" />
       {compact ? null : isPending ? "Çıxılır" : "Çıxış"}
     </Button>
   );

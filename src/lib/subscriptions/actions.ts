@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { SubscriptionActionResult } from "@/lib/subscriptions/types";
@@ -72,7 +73,7 @@ export async function activateFreePlanAction(
 export async function createPlanAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  await requireRole(["admin"], "/radmin/subscriptions");
+  const current = await requireRole(["admin"], "/radmin/subscriptions");
 
   const name = readString(formData, "name");
   const rawSlug = readString(formData, "slug");
@@ -127,6 +128,13 @@ export async function createPlanAction(
   }
 
   revalidateSubscriptionPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_SUBSCRIPTION_PLAN_CREATE",
+    entityType: "subscription_plans",
+    entityId: null,
+    metadata: { name, slug, product_limit: productLimit },
+  });
 
   return {
     ok: true,
@@ -137,7 +145,7 @@ export async function createPlanAction(
 export async function updatePlanAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  await requireRole(["admin"], "/radmin/subscriptions");
+  const current = await requireRole(["admin"], "/radmin/subscriptions");
 
   const planId = readString(formData, "planId");
   const name = readString(formData, "name");
@@ -197,6 +205,13 @@ export async function updatePlanAction(
   }
 
   revalidateSubscriptionPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_SUBSCRIPTION_PLAN_UPDATE",
+    entityType: "subscription_plans",
+    entityId: planId,
+    metadata: { name, slug, product_limit: productLimit },
+  });
 
   return {
     ok: true,
@@ -308,6 +323,13 @@ export async function assignStorePlanAction(
   }
 
   revalidateSubscriptionPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_STORE_PLAN_ASSIGN",
+    entityType: "store_subscriptions",
+    entityId: storeId,
+    metadata: { store_id: storeId, plan_id: planId, status },
+  });
 
   return {
     ok: true,
@@ -318,7 +340,7 @@ export async function assignStorePlanAction(
 export async function updateStoreProductLimitAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  await requireRole(["admin"], "/radmin/listing-limits");
+  const current = await requireRole(["admin"], "/radmin/listing-limits");
 
   const storeId = readString(formData, "storeId");
   const productLimitOverride = readOptionalLimit(formData, "productLimitOverride");
@@ -368,6 +390,13 @@ export async function updateStoreProductLimitAction(
   }
 
   revalidateSubscriptionPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_STORE_PRODUCT_LIMIT_UPDATE",
+    entityType: "stores",
+    entityId: storeId,
+    metadata: { product_limit_override: productLimitOverride },
+  });
 
   return {
     ok: true,

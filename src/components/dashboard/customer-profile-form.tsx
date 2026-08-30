@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Save } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { updateCustomerProfileAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 
@@ -18,6 +19,7 @@ export function CustomerProfileForm({
   email,
   phone,
 }: CustomerProfileFormProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [phoneValue, setPhoneValue] = useState(phone.replace(/^\+994\s?/, ""));
 
@@ -31,6 +33,7 @@ export function CustomerProfileForm({
       }
 
       void appAlert.success("Profil yeniləndi", result.message);
+      router.refresh();
     });
   }
 

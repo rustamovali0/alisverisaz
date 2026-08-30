@@ -270,5 +270,10 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       href: "/radmin/audit-log",
       icon: "receipt",
     },
+    {
+      title: "İstifadəçi logları",
+      href: "/radmin/user-activity-log",
+      icon: "users",
+    },
   ],
 };

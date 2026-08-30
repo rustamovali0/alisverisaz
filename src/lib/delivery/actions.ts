@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DeliveryActionResult } from "@/lib/delivery/types";
 
@@ -60,7 +61,7 @@ function revalidateDeliveryPaths() {
 export async function updateDeliverySettingsAction(
   formData: FormData,
 ): Promise<DeliveryActionResult> {
-  await requireRole(["admin"], "/radmin/delivery");
+  const current = await requireRole(["admin"], "/radmin/delivery");
 
   const bakuPrice = readRequiredAmount(formData, "bakuPrice");
   const regionPrice = readRequiredAmount(formData, "regionPrice");
@@ -112,6 +113,17 @@ export async function updateDeliverySettingsAction(
   }
 
   revalidateDeliveryPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_DELIVERY_SETTINGS_UPDATE",
+    entityType: "delivery_settings",
+    entityId: null,
+    metadata: {
+      pickup_enabled: readCheckbox(formData, "pickupEnabled"),
+      courier_enabled: readCheckbox(formData, "courierEnabled"),
+      region_enabled: readCheckbox(formData, "regionEnabled"),
+    },
+  });
 
   return {
     ok: true,
@@ -122,7 +134,7 @@ export async function updateDeliverySettingsAction(
 export async function updateDeliveryStoreOverrideAction(
   formData: FormData,
 ): Promise<DeliveryActionResult> {
-  await requireRole(["admin"], "/radmin/delivery");
+  const current = await requireRole(["admin"], "/radmin/delivery");
 
   const storeId = readString(formData, "storeId");
 
@@ -163,6 +175,13 @@ export async function updateDeliveryStoreOverrideAction(
   }
 
   revalidateDeliveryPaths();
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_DELIVERY_STORE_OVERRIDE_UPDATE",
+    entityType: "delivery_store_overrides",
+    entityId: storeId,
+    metadata: { store_id: storeId },
+  });
 
   return {
     ok: true,

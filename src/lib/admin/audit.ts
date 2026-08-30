@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const SECRET_KEY_PATTERN =
@@ -19,6 +21,65 @@ function sanitizeMetadata(value: unknown): unknown {
   );
 }
 
+function getDeviceLabel(userAgent: string | null) {
+  const value = userAgent?.toLowerCase() ?? "";
+
+  if (!value) {
+    return "Naməlum cihaz";
+  }
+
+  const browser =
+    value.includes("edg/")
+      ? "Edge"
+      : value.includes("chrome/")
+        ? "Chrome"
+        : value.includes("safari/")
+          ? "Safari"
+          : value.includes("firefox/")
+            ? "Firefox"
+            : "Brauzer";
+  const platform =
+    value.includes("iphone")
+      ? "iPhone"
+      : value.includes("ipad")
+        ? "iPad"
+        : value.includes("android")
+          ? "Android"
+          : value.includes("mac os")
+            ? "macOS"
+            : value.includes("windows")
+              ? "Windows"
+              : "Cihaz";
+
+  return `${platform} · ${browser}`;
+}
+
+async function getRequestAuditMetadata() {
+  try {
+    const requestHeaders = await headers();
+    const userAgent = requestHeaders.get("user-agent");
+    const forwardedFor = requestHeaders.get("x-forwarded-for");
+    const ip =
+      requestHeaders.get("x-real-ip") ??
+      forwardedFor?.split(",")[0]?.trim() ??
+      null;
+
+    return {
+      ip_address: ip,
+      user_agent: userAgent,
+      device: getDeviceLabel(userAgent),
+      recorded_at: new Date().toISOString(),
+    };
+  } catch {
+    return {
+      ip_address: null,
+      user_agent: null,
+      device: "Server",
+      recorded_at: new Date().toISOString(),
+    };
+  }
+}
+
 export async function recordAdminAudit(input: {
   action: string;
   adminId?: string | null;
@@ -30,6 +91,7 @@ export async function recordAdminAudit(input: {
   metadata?: Record<string, unknown>;
 }) {
   try {
+    const requestMetadata = await getRequestAuditMetadata();
     const supabase = createSupabaseAdminClient();
     await (supabase as any).from("admin_audit_logs").insert({
       admin_id: input.adminId ?? null,
@@ -45,7 +107,10 @@ export async function recordAdminAudit(input: {
         input.telegramChatId === null || input.telegramChatId === undefined
           ? null
           : String(input.telegramChatId),
-      metadata: sanitizeMetadata(input.metadata ?? {}),
+      metadata: sanitizeMetadata({
+        ...requestMetadata,
+        ...(input.metadata ?? {}),
+      }),
     });
   } catch {
     // Audit logging must not break the primary request flow.

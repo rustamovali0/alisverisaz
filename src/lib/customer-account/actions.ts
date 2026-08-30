@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { trackActivityEvent } from "@/lib/activity/events";
 import { requireRole } from "@/lib/auth/session";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -79,6 +80,16 @@ export async function saveDefaultCustomerAddressAction(
   revalidatePath("/dashboard/addresses");
   revalidatePath("/cart");
   revalidatePath("/checkout");
+  await trackActivityEvent({
+    eventType: "address_saved",
+    actorId: userId,
+    metadata: {
+      title: "Ünvan saxlanıldı",
+      description: `${label} ünvanı əsas ünvan kimi saxlanıldı.`,
+      city,
+      region,
+    },
+  });
 
   return {
     ok: true,

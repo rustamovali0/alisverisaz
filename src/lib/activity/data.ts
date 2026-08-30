@@ -25,6 +25,37 @@ export type ActivityTimelineItem = {
   createdAt: string;
 };
 
+export type AdminUserActivityFilters = {
+  userId?: string;
+  role?: string;
+  device?: string;
+  query?: string;
+  from?: string;
+  to?: string;
+};
+
+export type AdminUserActivityUser = {
+  id: string;
+  label: string;
+  email: string | null;
+  role: string;
+  phone: string | null;
+  activityCount: number;
+};
+
+export type AdminUserActivityLogItem = {
+  id: string;
+  eventType: string;
+  title: string;
+  description: string;
+  userLabel: string;
+  userRole: string;
+  device: string;
+  deviceType: string;
+  ipAddress: string;
+  createdAt: string;
+};
+
 function readMetaText(
   metadata: Record<string, unknown> | null,
   key: string,
@@ -204,5 +235,153 @@ export async function getAdminActivityOverview() {
       messagesCreated: countByType("message_created"),
     },
     timeline,
+  };
+}
+
+function normalizeRole(value?: string) {
+  return value === "seller" || value === "customer" || value === "admin" ? value : "";
+}
+
+function normalizeDevice(value?: string) {
+  return value === "desktop" || value === "mobile" || value === "tablet" || value === "unknown" ? value : "";
+}
+
+function readMeta(metadata: Record<string, unknown> | null, key: string, fallback = "") {
+  const value = metadata?.[key];
+
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+export async function getAdminUserActivityLog(filters: AdminUserActivityFilters) {
+  const supabase = createSupabaseAdminClient();
+  const role = normalizeRole(filters.role);
+  const device = normalizeDevice(filters.device);
+  const query = filters.query?.trim() ?? "";
+
+  let profileQuery = (supabase as any)
+    .from("profiles")
+    .select("id,email,full_name,phone,role,created_at")
+    .order("created_at", { ascending: false })
+    .limit(80);
+
+  if (role) {
+    profileQuery = profileQuery.eq("role", role);
+  } else {
+    profileQuery = profileQuery.in("role", ["customer", "seller", "admin"]);
+  }
+
+  if (query) {
+    const safeQuery = query.replace(/[^a-zA-Z0-9@\s.+_-]/g, "").trim();
+    profileQuery = profileQuery.or(
+      `email.ilike.%${safeQuery}%,full_name.ilike.%${safeQuery}%,phone.ilike.%${safeQuery}%`,
+    );
+  }
+
+  const { data: profileRows } = await profileQuery;
+  const profiles = ((profileRows ?? []) as any[]).map((profile) => ({
+    id: profile.id as string,
+    label: (profile.full_name || profile.email || profile.id) as string,
+    email: (profile.email ?? null) as string | null,
+    phone: (profile.phone ?? null) as string | null,
+    role: (profile.role ?? "customer") as string,
+  }));
+  const profileIds = profiles.map((profile) => profile.id);
+  const selectedUserId =
+    filters.userId && profileIds.includes(filters.userId) ? filters.userId : undefined;
+  const actorIds = selectedUserId ? [selectedUserId] : profileIds;
+
+  if (actorIds.length === 0) {
+    return {
+      users: [],
+      logs: [],
+      selectedUser: null,
+      filters: {
+        role,
+        device,
+        query,
+        from: filters.from ?? "",
+        to: filters.to ?? "",
+      },
+    };
+  }
+
+  let activityQuery = (supabase as any)
+    .from("activity_events")
+    .select("id,event_type,actor_id,store_id,product_id,metadata,created_at")
+    .in("actor_id", actorIds)
+    .order("created_at", { ascending: false })
+    .limit(selectedUserId ? 300 : 120);
+
+  if (filters.from) {
+    activityQuery = activityQuery.gte("created_at", `${filters.from}T00:00:00.000Z`);
+  }
+
+  if (filters.to) {
+    activityQuery = activityQuery.lte("created_at", `${filters.to}T23:59:59.999Z`);
+  }
+
+  const { data: activityRows } = await activityQuery;
+  const rows = ((activityRows ?? []) as ActivityRow[]).map((row) => ({
+    ...row,
+    metadata: row.metadata ?? {},
+  }));
+  const rowsByActor = rows.reduce((map, row) => {
+    if (row.actor_id) {
+      map.set(row.actor_id, (map.get(row.actor_id) ?? 0) + 1);
+    }
+
+    return map;
+  }, new Map<string, number>());
+  const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+  const users = profiles
+    .map((profile) => ({
+      ...profile,
+      activityCount: rowsByActor.get(profile.id) ?? 0,
+    }))
+    .sort((left, right) => right.activityCount - left.activityCount);
+  const filteredRows = device
+    ? rows.filter((row) => readMeta(row.metadata, "device_type", "unknown") === device)
+    : rows;
+  const logs = filteredRows.map((row) => {
+    const profile = row.actor_id ? profileById.get(row.actor_id) : null;
+    const title = readMeta(row.metadata, "title", row.event_type);
+    const description =
+      readMeta(row.metadata, "description") ||
+      [
+        readMeta(row.metadata, "store_name"),
+        readMeta(row.metadata, "product_name"),
+        readMeta(row.metadata, "email"),
+      ]
+        .filter(Boolean)
+        .join(" · ") ||
+      "Fəaliyyət qeydə alındı";
+
+    return {
+      id: row.id,
+      eventType: row.event_type,
+      title,
+      description,
+      userLabel: profile?.label ?? "Naməlum istifadəçi",
+      userRole: profile?.role ?? "-",
+      device: readMeta(row.metadata, "device", "Naməlum"),
+      deviceType: readMeta(row.metadata, "device_type", "unknown"),
+      ipAddress: readMeta(row.metadata, "ip_address", "-"),
+      createdAt: row.created_at,
+    };
+  });
+
+  return {
+    users,
+    logs,
+    selectedUser: selectedUserId
+      ? users.find((user) => user.id === selectedUserId) ?? null
+      : null,
+    filters: {
+      role,
+      device,
+      query,
+      from: filters.from ?? "",
+      to: filters.to ?? "",
+    },
   };
 }

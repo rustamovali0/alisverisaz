@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { KeyRound, Trash2, UserCheck, UserX } from "lucide-react";
+import { KeyRound, Mail, Trash2, UserCheck, UserX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
@@ -10,6 +10,7 @@ import {
   activateUserAction,
   deactivateUserAction,
   deleteUserAction,
+  updateUserContactByAdminAction,
   updateUserPasswordByAdminAction,
   updateUserRoleAction,
 } from "@/lib/auth/actions";
@@ -49,6 +50,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [draftRoles, setDraftRoles] = useState<Record<string, AssignableRole>>({});
+  const [contactDrafts, setContactDrafts] = useState<Record<string, { email: string; phone: string }>>({});
   const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const initialRoles = useMemo(
@@ -72,6 +74,20 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   useEffect(() => {
     setDraftRoles(initialRoles);
   }, [initialRoles]);
+
+  useEffect(() => {
+    setContactDrafts(
+      Object.fromEntries(
+        users.map((user) => [
+          user.id,
+          {
+            email: user.email ?? "",
+            phone: user.phone ?? "",
+          },
+        ]),
+      ),
+    );
+  }, [users]);
 
   function runMutation(
     actionKey: string,
@@ -100,6 +116,16 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
       `role:${userId}`,
       () => updateUserRoleAction(formData),
       "Rol yeniləndi",
+    );
+  }
+
+  function handleContactSubmit(formData: FormData) {
+    const userId = String(formData.get("userId") ?? "");
+
+    runMutation(
+      `contact:${userId}`,
+      () => updateUserContactByAdminAction(formData),
+      "Əlaqə məlumatları yeniləndi",
     );
   }
 
@@ -203,7 +229,55 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                 </p>
               ) : null}
 
-              <div className="grid gap-3 lg:grid-cols-2">
+              <div className="grid gap-3 xl:grid-cols-3">
+                <form action={handleContactSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
+                  <input type="hidden" name="userId" value={user.id} />
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                    Email
+                    <input
+                      name="email"
+                      type="email"
+                      value={contactDrafts[user.id]?.email ?? ""}
+                      onChange={(event) =>
+                        setContactDrafts((current) => ({
+                          ...current,
+                          [user.id]: {
+                            email: event.target.value,
+                            phone: current[user.id]?.phone ?? "",
+                          },
+                        }))
+                      }
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                    Telefon
+                    <input
+                      name="phone"
+                      value={contactDrafts[user.id]?.phone ?? ""}
+                      onChange={(event) =>
+                        setContactDrafts((current) => ({
+                          ...current,
+                          [user.id]: {
+                            email: current[user.id]?.email ?? "",
+                            phone: event.target.value,
+                          },
+                        }))
+                      }
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder="+994 77 666 44 33"
+                    />
+                  </label>
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    disabled={isPending && pendingActionKey === `contact:${user.id}`}
+                  >
+                    <Mail className="mr-2 size-4" aria-hidden="true" />
+                    Əlaqəni saxla
+                  </Button>
+                </form>
+
                 <form action={handleRoleSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
                   <input type="hidden" name="userId" value={user.id} />
                   <label className="grid gap-1 text-xs font-medium text-muted-foreground">

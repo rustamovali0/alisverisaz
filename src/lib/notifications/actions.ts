@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type UserNotification = {
@@ -99,9 +100,64 @@ export async function markAllNotificationsReadAction() {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notifications");
+  revalidatePath("/store/dashboard");
+  revalidatePath("/store/dashboard/messages");
+  await trackActivityEvent({
+    eventType: "notifications_marked_read",
+    actorId: user.id,
+    metadata: {
+      title: "Bildirişlər oxundu",
+      description: "Bütün bildirişlər oxunmuş kimi işarələndi.",
+    },
+  });
 
   return {
     ok: true,
     message: "Bildirişlər oxundu kimi işarələndi.",
+  };
+}
+
+export async function deleteAllNotificationsAction() {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      ok: false,
+      message: "Sessiya tapılmadı.",
+    };
+  }
+
+  const { error } = await (supabase as any)
+    .from("notifications")
+    .delete()
+    .eq("user_id", user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: "Bildirişlər silinmədi.",
+    };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/notifications");
+  revalidatePath("/store/dashboard");
+  revalidatePath("/store/dashboard/messages");
+  await trackActivityEvent({
+    eventType: "notifications_deleted",
+    actorId: user.id,
+    metadata: {
+      title: "Bildirişlər silindi",
+      description: "Bütün bildirişlər silindi.",
+    },
+  });
+
+  return {
+    ok: true,
+    message: "Bildirişlər silindi.",
   };
 }

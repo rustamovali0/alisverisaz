@@ -271,6 +271,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const avatarFile = readFile(formData, "avatarFile");
   const bannerFile = readFile(formData, "bannerFile");
   const agreedToTerms = formData.get("terms") === "on";
+  const nextPath = normalizeNextPath(readString(formData, "next"));
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
   const [siteSettings, systemFlags] = await Promise.all([
@@ -493,13 +494,29 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     console.warn("Welcome registration email skipped because SMTP is not configured");
   }
 
+  if (role === "customer") {
+    const supabase = await createSupabaseServerClient();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      return {
+        ok: true,
+        message: "Qeydiyyat tamamlandı. Avtomatik giriş alınmadı, giriş səhifəsindən daxil olun.",
+        redirectTo: "/login",
+      };
+    }
+  }
+
   return {
     ok: true,
     message:
       role === "seller"
         ? "Qeydiyyatınız uğurla tamamlandı. Sizinlə əlaqə saxlanılacaq."
-        : "Qeydiyyat tamamlandı. İndi email təsdiqi olmadan giriş edə bilərsiniz.",
-    redirectTo: "/login",
+        : "Qeydiyyat tamamlandı. Hesabınıza avtomatik giriş edildi.",
+    redirectTo: role === "seller" ? "/login" : nextPath || "/",
   };
 }
 
@@ -1304,6 +1321,15 @@ export async function updateCustomerProfileAction(formData: FormData): Promise<A
 
   revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/profile", "page");
+  await trackActivityEvent({
+    eventType: "profile_updated",
+    actorId: current.user.id,
+    metadata: {
+      title: "Profil yeniləndi",
+      description: "Email, telefon və profil məlumatları dəyişdirildi.",
+      email,
+    },
+  });
 
   return {
     ok: true,
@@ -1435,6 +1461,84 @@ async function revokeProfileSessions(userId: string) {
     .from("profiles")
     .update({ session_revoked_at: new Date().toISOString() })
     .eq("id", userId);
+}
+
+export async function updateUserContactByAdminAction(
+  formData: FormData,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const userId = readString(formData, "userId");
+  const email = readString(formData, "email").toLowerCase();
+  const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
+
+  if (!userId) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  if (!email || !phone) {
+    return { ok: false, message: "Email və telefon mütləqdir." };
+  }
+
+  if (!isValidEmail(email)) {
+    return { ok: false, message: "Düzgün email daxil edin." };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingUser, error: getUserError } =
+    await supabaseAdmin.auth.admin.getUserById(userId);
+
+  if (getUserError || !existingUser.user) {
+    return { ok: false, message: "İstifadəçi tapılmadı." };
+  }
+
+  const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    email,
+    user_metadata: {
+      ...(existingUser.user.user_metadata ?? {}),
+      phone,
+    },
+  });
+
+  if (authError) {
+    return {
+      ok: false,
+      message:
+        authError.message.toLowerCase().includes("already")
+          ? "Bu email ilə hesab artıq mövcuddur."
+          : "Email və telefon yenilənmədi.",
+    };
+  }
+
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .update({
+      email,
+      phone,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
+
+  if (profileError) {
+    return { ok: false, message: profileError.message };
+  }
+
+  void recordAdminAudit({
+    action: "ADMIN_USER_CONTACT_UPDATE",
+    adminId: current.user.id,
+    entityType: "user",
+    entityId: userId,
+    metadata: {
+      email,
+      phone,
+    },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/store/dashboard", "layout");
+
+  return { ok: true, message: "Email və telefon yeniləndi." };
 }
 
 export async function deactivateUserAction(

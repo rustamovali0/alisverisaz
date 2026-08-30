@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { CustomerAddressForm } from "@/components/customer-account/customer-address-form";
+import { CustomerNotificationsManager } from "@/components/customer-account/customer-notifications-manager";
 import { AccountLanguageSettings } from "@/components/i18n/account-language-settings";
 import { Link } from "@/i18n/navigation";
 import type {
@@ -425,7 +426,7 @@ export async function CustomerNotificationsView({ notifications }: { notificatio
   return (
     <section className="rounded-lg border bg-card p-4 shadow-sm">
       <h1 className="mb-3 text-xl font-black">{t("notifications")}</h1>
-      <NotificationList notifications={notifications} emptyText={t("emptyNotifications")} />
+      <CustomerNotificationsManager notifications={notifications} emptyText={t("emptyNotifications")} />
     </section>
   );
 }

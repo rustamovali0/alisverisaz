@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import {
   invalidateHomepagePublicData,
   invalidateNavigationPublicData,
@@ -190,12 +191,11 @@ async function uploadCmsMediaFile(input: {
 
 async function audit(action: string, entityType: string, metadata: Record<string, unknown>) {
   const current = await requireRole(["admin"], "/radmin");
-  const supabaseAdmin = createSupabaseAdminClient();
 
-  await (supabaseAdmin as any).from("admin_audit_logs").insert({
-    admin_id: current.user.id,
+  await recordAdminAudit({
+    adminId: current.user.id,
     action,
-    entity_type: entityType,
+    entityType,
     metadata,
   });
 

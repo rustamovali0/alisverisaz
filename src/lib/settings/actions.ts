@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type SettingsActionResult =
@@ -18,7 +19,7 @@ export type SettingsActionResult =
 export async function updateDepositSettingsAction(
   formData: FormData,
 ): Promise<SettingsActionResult> {
-  await requireRole(["admin"], "/radmin/settings");
+  const current = await requireRole(["admin"], "/radmin/settings");
   const enabled = formData.get("enabled") === "on";
   const supabase = await createSupabaseServerClient();
   const { error } = await (supabase as any).from("platform_settings").upsert({
@@ -37,6 +38,13 @@ export async function updateDepositSettingsAction(
 
   revalidatePath("/radmin/settings");
   revalidatePath("/products");
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "ADMIN_DEPOSIT_SETTINGS_UPDATE",
+    entityType: "platform_settings",
+    entityId: null,
+    metadata: { enabled },
+  });
 
   return {
     ok: true,
