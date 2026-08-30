@@ -9,6 +9,7 @@ import {
   LogIn,
   LogOut,
   Package,
+  Plus,
   ShieldCheck,
   Store,
   UserPlus,
@@ -129,7 +130,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
 
   if (profile.status === "guest" || profile.role === "admin") {
     return (
-      <div className={cn("items-center gap-2", className)}>
+      <div className={cn("flex flex-nowrap items-center gap-2", className)}>
         <Button
           asChild
           variant="ghost"
@@ -151,6 +152,18 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
             <UserPlus className="mr-2 size-4" aria-hidden="true" />
             <span className="inline-block transition-transform duration-200 group-hover:scale-105">
               {auth("register")}
+            </span>
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="ghost"
+          className="group bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
+        >
+          <Link href={`${createNextHref(pathname, "/register")}&role=seller`}>
+            <Plus className="mr-2 size-4" aria-hidden="true" />
+            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+              Satıcı ol
             </span>
           </Link>
         </Button>

@@ -323,7 +323,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </Button>
             {!isStoreOwner ? (
               <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10 sm:p-3.5">
-                <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(11rem,0.9fr)_minmax(0,1.4fr)_auto] lg:items-center">
+                <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(11rem,0.85fr)_minmax(0,1fr)_minmax(11rem,0.65fr)] lg:items-center">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
                       {detail.store.logoUrl ? (
@@ -345,23 +345,23 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                       </h2>
                     </div>
                   </div>
-                  <div className="flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
-                      <Package className="size-3.5 text-primary" aria-hidden="true" />
-                      <span className="break-words">{detail.store.productCount} məhsul</span>
+                  <div className="grid min-w-0 gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg bg-background px-2.5">
+                      <Package className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="min-w-0 break-words">{detail.store.productCount} məhsul</span>
                     </span>
-                    <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
+                    <span className="inline-flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg bg-background px-2.5">
                       <Clock3 className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                      <span className="break-words">{formatLastActive(detail.store.updatedAt)}</span>
+                      <span className="min-w-0 break-words">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
                     {sellerAddress ? (
-                      <span className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-background px-2.5">
+                      <span className="inline-flex min-h-8 w-full min-w-0 items-start gap-2 rounded-lg bg-background px-2.5 py-2">
                         <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-                        <span className="break-words">{sellerAddress}</span>
+                        <span className="min-w-0 break-words leading-5">{sellerAddress}</span>
                       </span>
                     ) : null}
                   </div>
-                  <div className="grid w-full shrink-0 grid-cols-2 gap-2 lg:w-[18rem]">
+                  <div className="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
                     <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs hover:bg-primary/5">
                       <Link href={storeBaseHref}>Mağazaya keç</Link>
                     </Button>

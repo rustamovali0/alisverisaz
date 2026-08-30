@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
-import { SellProductButton } from "@/components/auth/sell-product-button";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
@@ -413,9 +412,6 @@ export function MarketplaceHeader({
             </Button>
             <div className="hidden min-w-[168px] lg:block">
               <HeaderAccountActions />
-            </div>
-            <div className="hidden md:block">
-              <SellProductButton />
             </div>
           </div>
         </div>
