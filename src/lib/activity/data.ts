@@ -32,6 +32,7 @@ export type AdminUserActivityFilters = {
   query?: string;
   from?: string;
   to?: string;
+  page?: string | number;
 };
 
 export type AdminUserActivityUser = {
@@ -55,6 +56,8 @@ export type AdminUserActivityLogItem = {
   ipAddress: string;
   createdAt: string;
 };
+
+const USER_ACTIVITY_PAGE_SIZE = 50;
 
 function readMetaText(
   metadata: Record<string, unknown> | null,
@@ -246,6 +249,12 @@ function normalizeDevice(value?: string) {
   return value === "desktop" || value === "mobile" || value === "tablet" || value === "unknown" ? value : "";
 }
 
+function normalizePage(value?: string | number) {
+  const page = typeof value === "number" ? value : Number(value ?? 1);
+
+  return Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+}
+
 function readMeta(metadata: Record<string, unknown> | null, key: string, fallback = "") {
   const value = metadata?.[key];
 
@@ -257,6 +266,10 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
   const role = normalizeRole(filters.role);
   const device = normalizeDevice(filters.device);
   const query = filters.query?.trim() ?? "";
+  const page = normalizePage(filters.page);
+  const pageSize = USER_ACTIVITY_PAGE_SIZE;
+  const rangeStart = (page - 1) * pageSize;
+  const rangeEnd = rangeStart + pageSize - 1;
 
   let profileQuery = (supabase as any)
     .from("profiles")
@@ -301,16 +314,24 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
         query,
         from: filters.from ?? "",
         to: filters.to ?? "",
+        page,
+      },
+      pagination: {
+        page,
+        pageSize,
+        total: 0,
+        totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
       },
     };
   }
 
   let activityQuery = (supabase as any)
     .from("activity_events")
-    .select("id,event_type,actor_id,store_id,product_id,metadata,created_at")
+    .select("id,event_type,actor_id,store_id,product_id,metadata,created_at", { count: "exact" })
     .in("actor_id", actorIds)
-    .order("created_at", { ascending: false })
-    .limit(selectedUserId ? 300 : 120);
+    .order("created_at", { ascending: false });
 
   if (filters.from) {
     activityQuery = activityQuery.gte("created_at", `${filters.from}T00:00:00.000Z`);
@@ -320,7 +341,11 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
     activityQuery = activityQuery.lte("created_at", `${filters.to}T23:59:59.999Z`);
   }
 
-  const { data: activityRows } = await activityQuery;
+  if (device) {
+    activityQuery = activityQuery.eq("metadata->>device_type", device);
+  }
+
+  const { data: activityRows, count: totalCount } = await activityQuery.range(rangeStart, rangeEnd);
   const rows = ((activityRows ?? []) as ActivityRow[]).map((row) => ({
     ...row,
     metadata: row.metadata ?? {},
@@ -339,10 +364,7 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
       activityCount: rowsByActor.get(profile.id) ?? 0,
     }))
     .sort((left, right) => right.activityCount - left.activityCount);
-  const filteredRows = device
-    ? rows.filter((row) => readMeta(row.metadata, "device_type", "unknown") === device)
-    : rows;
-  const logs = filteredRows.map((row) => {
+  const logs = rows.map((row) => {
     const profile = row.actor_id ? profileById.get(row.actor_id) : null;
     const title = readMeta(row.metadata, "title", row.event_type);
     const description =
@@ -369,6 +391,8 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
       createdAt: row.created_at,
     };
   });
+  const total = totalCount ?? logs.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return {
     users,
@@ -382,6 +406,15 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
       query,
       from: filters.from ?? "",
       to: filters.to ?? "",
+      page,
+    },
+    pagination: {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasPrevious: page > 1,
+      hasNext: page < totalPages,
     },
   };
 }
