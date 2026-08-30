@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { after } from "next/server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -95,6 +96,16 @@ async function getRequestMetadata() {
   }
 }
 
+function scheduleActivityWrite(work: () => Promise<void>) {
+  try {
+    after(() => {
+      void work();
+    });
+  } catch {
+    void work();
+  }
+}
+
 export async function trackActivityEvent(input: {
   eventType: ActivityEventType;
   actorId?: string | null;
@@ -104,8 +115,7 @@ export async function trackActivityEvent(input: {
 }) {
   try {
     const requestMetadata = await getRequestMetadata();
-    const supabase = createSupabaseAdminClient();
-    await (supabase as any).from("activity_events").insert({
+    const payload = {
       event_type: input.eventType,
       actor_id: input.actorId ?? null,
       store_id: input.storeId ?? null,
@@ -114,6 +124,11 @@ export async function trackActivityEvent(input: {
         ...requestMetadata,
         ...(input.metadata ?? {}),
       },
+    };
+
+    scheduleActivityWrite(async () => {
+      const supabase = createSupabaseAdminClient();
+      await (supabase as any).from("activity_events").insert(payload);
     });
   } catch {
     // Activity tracking must never block the customer-facing flow.

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { after } from "next/server";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { StoreJsonLd } from "@/components/seo/json-ld";
@@ -121,17 +120,15 @@ export default async function StorePage({ params, searchParams }: StorePageProps
 
   const storeLocations = await getLocationsForStores([store.id]);
 
-  after(() => {
-    void trackActivityEvent({
-      eventType: "store_view",
-      storeId: store.id,
-      metadata: {
-        title: "Mağaza açıldı",
-        description: store.name,
-        store_name: store.name,
-        store_slug: store.slug,
-      },
-    });
+  void trackActivityEvent({
+    eventType: "store_view",
+    storeId: store.id,
+    metadata: {
+      title: "Mağaza açıldı",
+      description: store.name,
+      store_name: store.name,
+      store_slug: store.slug,
+    },
   });
 
   return (

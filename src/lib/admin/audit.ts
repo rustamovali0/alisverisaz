@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { after } from "next/server";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -80,6 +81,16 @@ async function getRequestAuditMetadata() {
   }
 }
 
+function scheduleAuditWrite(work: () => Promise<void>) {
+  try {
+    after(() => {
+      void work();
+    });
+  } catch {
+    void work();
+  }
+}
+
 export async function recordAdminAudit(input: {
   action: string;
   adminId?: string | null;
@@ -92,8 +103,7 @@ export async function recordAdminAudit(input: {
 }) {
   try {
     const requestMetadata = await getRequestAuditMetadata();
-    const supabase = createSupabaseAdminClient();
-    await (supabase as any).from("admin_audit_logs").insert({
+    const payload = {
       admin_id: input.adminId ?? null,
       action: input.action,
       entity_type: input.entityType ?? "system",
@@ -111,6 +121,11 @@ export async function recordAdminAudit(input: {
         ...requestMetadata,
         ...(input.metadata ?? {}),
       }),
+    };
+
+    scheduleAuditWrite(async () => {
+      const supabase = createSupabaseAdminClient();
+      await (supabase as any).from("admin_audit_logs").insert(payload);
     });
   } catch {
     // Audit logging must not break the primary request flow.

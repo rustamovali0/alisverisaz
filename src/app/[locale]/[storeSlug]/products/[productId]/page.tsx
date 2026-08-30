@@ -2,7 +2,6 @@ import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Pencil, Star } fr
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { after } from "next/server";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
@@ -159,18 +158,16 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       })
     : null;
 
-  after(() => {
-    void trackActivityEvent({
-      eventType: "product_view",
-      storeId: detail.store.id,
-      productId: detail.product.id,
-      metadata: {
-        title: "Məhsul açıldı",
-        description: `${detail.product.name} · ${detail.store.name}`,
-        product_name: detail.product.name,
-        store_name: detail.store.name,
-      },
-    });
+  void trackActivityEvent({
+    eventType: "product_view",
+    storeId: detail.store.id,
+    productId: detail.product.id,
+    metadata: {
+      title: "Məhsul açıldı",
+      description: `${detail.product.name} · ${detail.store.name}`,
+      product_name: detail.product.name,
+      store_name: detail.store.name,
+    },
   });
 
   const reviewSummary = getReviewSummary(reviews);
