@@ -52,6 +52,7 @@ function readOptionalLimit(formData: FormData, key: string) {
 
 function revalidateSubscriptionPaths() {
   revalidatePath("/radmin/subscriptions");
+  revalidatePath("/radmin/listing-limits");
   revalidatePath("/admin/subscriptions");
   revalidatePath("/store/dashboard");
   revalidatePath("/store/dashboard/products");
@@ -317,7 +318,7 @@ export async function assignStorePlanAction(
 export async function updateStoreProductLimitAction(
   formData: FormData,
 ): Promise<SubscriptionActionResult> {
-  await requireRole(["admin"], "/radmin/subscriptions");
+  await requireRole(["admin"], "/radmin/listing-limits");
 
   const storeId = readString(formData, "storeId");
   const productLimitOverride = readOptionalLimit(formData, "productLimitOverride");

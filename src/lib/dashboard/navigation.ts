@@ -179,6 +179,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "receipt",
     },
     {
+      title: "Elan limitləri",
+      href: "/radmin/listing-limits",
+      icon: "package",
+    },
+    {
       title: "Ödənişlər",
       titleKey: "payments",
       href: "/radmin/payments",
