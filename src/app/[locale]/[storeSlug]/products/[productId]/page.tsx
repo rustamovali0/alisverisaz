@@ -209,7 +209,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : getStorePath(detail.store.slug);
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(10rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
@@ -381,7 +381,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </section>
 
         {relatedProducts ? (
-          <div className="mt-5 md:mt-6">
+          <div className="mt-6 scroll-mt-28 md:mt-6">
             <RelatedProductList
               initialProducts={relatedProducts.products}
               initialCursor={relatedProducts.nextCursor}

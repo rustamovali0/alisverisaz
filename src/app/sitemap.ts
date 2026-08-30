@@ -60,16 +60,18 @@ async function getProductUrls(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
     let { data, error } = await (supabase as any)
       .from("products")
-      .select("slug,created_at,updated_at,stores!inner(slug,updated_at)")
+      .select("slug,created_at,updated_at,stores!inner(slug,updated_at,status)")
       .eq("status", "active")
+      .eq("stores.status", "active")
       .not("slug", "is", null)
       .limit(5000);
 
     if (error) {
       const fallback = await (supabase as any)
         .from("products")
-        .select("slug,created_at,stores!inner(slug)")
+        .select("slug,created_at,stores!inner(slug,status)")
         .eq("status", "active")
+        .eq("stores.status", "active")
         .not("slug", "is", null)
         .limit(5000);
 

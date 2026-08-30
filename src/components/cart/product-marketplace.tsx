@@ -765,7 +765,7 @@ export function ProductGrid({
                     product={product}
                     disabled={isOutOfStock}
                     className={cn(
-                      "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[11px] font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:bg-muted disabled:text-muted-foreground min-[360px]:text-xs sm:text-sm sm:font-medium",
+                      "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[11px] font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))] hover:shadow-md disabled:bg-muted disabled:text-muted-foreground min-[360px]:text-xs sm:text-sm sm:font-medium",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}

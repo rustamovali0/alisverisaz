@@ -28,7 +28,9 @@ export const defaultHomeThemeColors = {
   primary: "#0891b2",
   accent: "#f59e0b",
   buttonBackground: "#0891b2",
+  buttonHoverBackground: "#0e7490",
   buttonText: "#ffffff",
+  buttonHoverText: "#ffffff",
   border: "#dbe3ea",
 } as const;
 

@@ -147,7 +147,9 @@ export type SiteDesignSettings = {
 
 export type DesignColorOverrides = {
   buttonBackground?: string;
+  buttonHoverBackground?: string;
   buttonText?: string;
+  buttonHoverText?: string;
   primary?: string;
 };
 
@@ -347,7 +349,9 @@ export function buildDesignCssVariables(
 ): CSSProperties & Record<string, string> {
   const tokens = themeTokens[settings.themePreset] ?? themeTokens["default-marketplace"];
   const primaryColor = colors.buttonBackground || colors.primary || tokens.primary;
+  const buttonHoverColor = colors.buttonHoverBackground || primaryColor;
   const buttonTextColor = colors.buttonText;
+  const buttonHoverTextColor = colors.buttonHoverText || buttonTextColor;
   const isCompact = settings.spacingPreset === "compact";
   const isSpacious = settings.spacingPreset === "spacious";
   const buttonRadius =
@@ -386,7 +390,10 @@ export function buildDesignCssVariables(
     "--ring": hexToHslTriplet(primaryColor, "186 85% 32%"),
     "--radius": cardRadius,
     "--marketplace-primary": hexToHslTriplet(primaryColor, "186 85% 32%"),
-    "--marketplace-primary-hover": hexToHslTriplet(primaryColor, "186 85% 28%"),
+    "--marketplace-primary-hover": hexToHslTriplet(buttonHoverColor, "186 85% 28%"),
+    "--marketplace-primary-hover-foreground": buttonHoverTextColor
+      ? hexToHslTriplet(buttonHoverTextColor, "0 0% 100%")
+      : settings.themePreset === "dark-premium" ? "220 29% 8%" : "0 0% 100%",
     "--marketplace-primary-soft": hexToHslTriplet(primaryColor, "186 85% 94%"),
     "--marketplace-navy": hexToHslTriplet(tokens.text, "233 43% 19%"),
     "--marketplace-muted": hexToHslTriplet(tokens.mutedText, "240 5% 58%"),

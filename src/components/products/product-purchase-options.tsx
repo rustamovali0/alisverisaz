@@ -182,7 +182,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="w-full border-primary/20 bg-background hover:bg-primary/5"
+          className="h-12 w-full border-0 bg-primary text-primary-foreground hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))]"
         />
       </div>
       {showWhatsappOrderButton ? (

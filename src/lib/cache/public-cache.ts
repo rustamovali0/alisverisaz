@@ -162,6 +162,7 @@ export function invalidateStorePublicData(input: {
   const storeSlug = safeSlug(input.storeSlug);
 
   revalidateTag(CACHE_TAGS.marketplaceStores, "max");
+  revalidateTag(CACHE_TAGS.products, "max");
 
   if (storeId) {
     revalidateTag(CACHE_TAGS.store(storeId), "max");

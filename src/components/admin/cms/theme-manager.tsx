@@ -1,7 +1,7 @@
 "use client";
 
 import { Monitor, RotateCcw, Save, Smartphone, UploadCloud } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { GlobalLoader } from "@/components/common/global-loader";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,9 @@ const colorGroups: Array<{
     title: "Düymə rəngləri",
     fields: [
       { key: "buttonBackground", name: "buttonBackgroundColor", label: "Düymə fonu" },
+      { key: "buttonHoverBackground", name: "buttonHoverBackgroundColor", label: "Düymə hover fonu" },
       { key: "buttonText", name: "buttonTextColor", label: "Düymə yazısı" },
+      { key: "buttonHoverText", name: "buttonHoverTextColor", label: "Düymə hover yazısı" },
     ],
   },
   {
@@ -93,6 +95,100 @@ const colorGroups: Array<{
       { key: "productsBackground", name: "productsBackgroundColor", label: "Products" },
       { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Məlumat bloku" },
     ],
+  },
+];
+
+const colorFields = colorGroups.flatMap((group) => group.fields);
+
+const backgroundColorChoices = [
+  { label: "Ağ", value: "#ffffff" },
+  { label: "Açıq mavi", value: "#ecfeff" },
+  { label: "Açıq yaşıl", value: "#eefbf7" },
+  { label: "Açıq boz", value: "#f8fafc" },
+  { label: "Krem", value: "#fffbeb" },
+  { label: "Tünd", value: "#111827" },
+] as const;
+
+const brandColorChoices = [
+  { label: "Teal", value: "#0891b2" },
+  { label: "Cyan", value: "#06b6d4" },
+  { label: "Yaşıl", value: "#0d9488" },
+  { label: "Göy", value: "#2563eb" },
+  { label: "Navy", value: "#155e75" },
+  { label: "Qara", value: "#111827" },
+  { label: "Qırmızı", value: "#e11d48" },
+  { label: "Narıncı", value: "#d97706" },
+] as const;
+
+const textColorChoices = [
+  { label: "Ağ", value: "#ffffff" },
+  { label: "Qara", value: "#0f172a" },
+  { label: "Boz", value: "#64748b" },
+  { label: "Tünd göy", value: "#071827" },
+] as const;
+
+const borderColorChoices = [
+  { label: "Açıq boz", value: "#dbe3ea" },
+  { label: "Açıq cyan", value: "#bdebf3" },
+  { label: "Açıq yaşıl", value: "#dde8e5" },
+  { label: "Tünd xətt", value: "#334155" },
+] as const;
+
+const colorControlGroups: Array<{
+  title: string;
+  description: string;
+  fields: HomeThemeColorKey[];
+  choices: ReadonlyArray<{ label: string; value: string }>;
+}> = [
+  {
+    title: "Bütün bölmələr",
+    description: "Səhifə, hero, kateqoriya, mağaza, məhsul və məlumat bloklarına eyni fon rəngi verir.",
+    fields: [
+      "pageBackground",
+      "heroBackground",
+      "categoriesBackground",
+      "storesBackground",
+      "productsBackground",
+      "benefitsBackground",
+      "cardBackground",
+    ],
+    choices: backgroundColorChoices,
+  },
+  {
+    title: "Bütün düymələr",
+    description: "Əsas rəngi və bütün əsas düymələrin fon rəngini birlikdə dəyişir.",
+    fields: ["primary", "buttonBackground"],
+    choices: brandColorChoices,
+  },
+  {
+    title: "Hover rəngi",
+    description: "Düymənin üzərinə gələndə istifadə olunan rəngi seçir.",
+    fields: ["buttonHoverBackground"],
+    choices: brandColorChoices,
+  },
+  {
+    title: "Düymə yazısı",
+    description: "Normal və hover vəziyyətində düymə yazısının rəngini seçir.",
+    fields: ["buttonText", "buttonHoverText"],
+    choices: textColorChoices,
+  },
+  {
+    title: "Mətnlər",
+    description: "Saytdakı əsas başlıq və mətn rənglərini idarə edir.",
+    fields: ["text"],
+    choices: textColorChoices,
+  },
+  {
+    title: "Kənar xətlər",
+    description: "Kart, input və bölmə kənarlıqlarına eyni rəngi verir.",
+    fields: ["border"],
+    choices: borderColorChoices,
+  },
+  {
+    title: "Vurğu rəngi",
+    description: "Badge, kiçik vurğu və dekorativ aktiv rəngləri idarə edir.",
+    fields: ["accent"],
+    choices: brandColorChoices,
   },
 ];
 
@@ -218,11 +314,9 @@ function colorsFromForm(formData: FormData, themeKey: string): HomeThemeColors {
   const defaults = getThemeDefaults(themeKey);
   const nextColors = { ...defaults };
 
-  for (const group of colorGroups) {
-    for (const field of group.fields) {
-      const value = String(formData.get(field.name) ?? defaults[field.key]);
-      nextColors[field.key] = value;
-    }
+  for (const field of colorFields) {
+    const value = String(formData.get(field.name) ?? defaults[field.key]);
+    nextColors[field.key] = value;
   }
 
   return nextColors;
@@ -342,6 +436,7 @@ function ThemePreview({
           <div className="mt-3 flex gap-2">
             <div className="h-8 flex-1 rounded-md border" style={{ borderColor: colors.border, backgroundColor: colors.cardBackground }} />
             <div className="h-8 w-20 rounded-md" style={{ backgroundColor: colors.buttonBackground }} />
+            <div className="h-8 w-20 rounded-md" style={{ backgroundColor: colors.buttonHoverBackground }} />
           </div>
         </div>
         <div className={cn("grid gap-2", mode === "desktop" ? "grid-cols-3" : "grid-cols-2")}>
@@ -511,10 +606,34 @@ export function ThemeManager({
     [themes],
   );
   const [selectedThemeKey, setSelectedThemeKey] = useState(activeTheme?.themeKey ?? "");
+  const [draftColorsByTheme, setDraftColorsByTheme] = useState<Record<string, HomeThemeColors>>({});
   const selectedTheme =
     themes.find((theme) => theme.themeKey === selectedThemeKey) ?? activeTheme;
-  const selectedColors = selectedTheme ? readThemeColors(selectedTheme) : null;
+  const selectedThemeColors = useMemo(
+    () => (selectedTheme ? readThemeColors(selectedTheme) : null),
+    [selectedTheme],
+  );
+  const selectedColors = selectedTheme
+    ? (draftColorsByTheme[selectedTheme.themeKey] ?? selectedThemeColors)
+    : null;
   const colorFormId = selectedTheme ? `theme-editor-${selectedTheme.id}` : undefined;
+
+  useEffect(() => {
+    if (!selectedTheme || !selectedThemeColors) {
+      return;
+    }
+
+    setDraftColorsByTheme((current) => {
+      if (current[selectedTheme.themeKey]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [selectedTheme.themeKey]: selectedThemeColors,
+      };
+    });
+  }, [selectedTheme, selectedThemeColors]);
 
   function handleDesignSubmit(formData: FormData) {
     startTransition(async () => {
@@ -574,7 +693,13 @@ export function ThemeManager({
       return;
     }
 
-    setThemeUpdatePayload(formData, theme, getThemeDefaults(theme.themeKey));
+    const defaultColors = getThemeDefaults(theme.themeKey);
+
+    setDraftColorsByTheme((current) => ({
+      ...current,
+      [theme.themeKey]: defaultColors,
+    }));
+    setThemeUpdatePayload(formData, theme, defaultColors);
 
     startTransition(async () => {
       const result = await updateThemeDraftAction(formData);
@@ -593,6 +718,27 @@ export function ThemeManager({
       ...current,
       [key]: value,
     }));
+  }
+
+  function updateColorSelection(fields: HomeThemeColorKey[], value: string) {
+    if (!selectedTheme) {
+      return;
+    }
+
+    setDraftColorsByTheme((current) => {
+      const nextColors = {
+        ...(current[selectedTheme.themeKey] ?? readThemeColors(selectedTheme)),
+      };
+
+      for (const field of fields) {
+        nextColors[field] = value;
+      }
+
+      return {
+        ...current,
+        [selectedTheme.themeKey]: nextColors,
+      };
+    });
   }
 
   function renderSection() {
@@ -709,35 +855,59 @@ export function ThemeManager({
             className="grid gap-5"
           >
             <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-            {colorGroups.map((group) => (
-              <div key={group.title} className="grid gap-3 rounded-lg border bg-background p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {group.title}
-                </p>
-                <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-                  {group.fields.map((field) => (
-                    <label
-                      key={field.key}
-                      className="grid gap-2 text-xs font-semibold text-muted-foreground"
-                    >
-                      {field.label}
-                      <div className="flex min-w-0 items-center gap-2">
-                        <input
-                          name={field.name}
-                          type="color"
-                          defaultValue={selectedColors[field.key]}
-                          disabled={isPending}
-                          className="size-10 shrink-0 cursor-pointer rounded-md border bg-background p-1 disabled:opacity-60"
-                        />
-                        <span className="min-w-0 flex-1 truncate rounded-md border bg-muted px-2 py-2 font-mono text-xs">
-                          {selectedColors[field.key]}
-                        </span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
+            {colorFields.map((field) => (
+              <input
+                key={field.key}
+                type="hidden"
+                name={field.name}
+                value={selectedColors[field.key]}
+              />
             ))}
+            <div className="grid gap-3">
+              {colorControlGroups.map((group) => (
+                <div key={group.title} className="grid gap-3 rounded-lg border bg-background p-4">
+                  <div>
+                    <p className="text-sm font-black">{group.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      {group.description}
+                    </p>
+                  </div>
+                  <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                    {group.choices.map((choice) => {
+                      const active = group.fields.every(
+                        (field) => selectedColors[field] === choice.value,
+                      );
+
+                      return (
+                        <button
+                          key={`${group.title}-${choice.value}`}
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => updateColorSelection(group.fields, choice.value)}
+                          className={cn(
+                            "flex min-h-12 items-center gap-3 rounded-lg border bg-card px-3 py-2 text-left text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+                            active
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "border-border hover:border-primary/50",
+                          )}
+                        >
+                          <span
+                            className="size-7 shrink-0 rounded-md border shadow-inner"
+                            style={{
+                              backgroundColor: choice.value,
+                              borderColor:
+                                choice.value === "#ffffff" ? "#dbe3ea" : choice.value,
+                            }}
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 flex-1 truncate">{choice.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </form>
         </section>
       ) : null;

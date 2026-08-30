@@ -117,6 +117,8 @@ function createHomeThemeStyle(
   colors: HomeThemeColors,
 ): CSSProperties & Record<string, string> {
   const buttonBackground = colors.buttonBackground || colors.primary;
+  const buttonHoverBackground = colors.buttonHoverBackground || buttonBackground;
+  const buttonHoverText = colors.buttonHoverText || colors.buttonText;
 
   return {
     backgroundColor: "hsl(var(--background))",
@@ -140,7 +142,8 @@ function createHomeThemeStyle(
     "--home-button-text": colors.buttonText,
     "--home-border": colors.border,
     "--marketplace-primary": hexToHslTriplet(buttonBackground, "187 92% 32%"),
-    "--marketplace-primary-hover": hexToHslTriplet(buttonBackground, "187 92% 28%"),
+    "--marketplace-primary-hover": hexToHslTriplet(buttonHoverBackground, "187 92% 28%"),
+    "--marketplace-primary-hover-foreground": hexToHslTriplet(buttonHoverText, "0 0% 100%"),
     "--marketplace-primary-soft": hexToHslTriplet(buttonBackground, "187 92% 90%"),
     "--marketplace-navy": hexToHslTriplet(colors.text, "222 47% 11%"),
     "--marketplace-muted": hexToHslTriplet(colors.mutedText, "215 16% 47%"),

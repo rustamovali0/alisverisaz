@@ -69,21 +69,22 @@ type ProductRow = {
   stores?: {
     name?: string | null;
     slug: string | null;
+    status?: string | null;
   } | null;
 };
 
 const PUBLIC_PRODUCT_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(name,slug)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE =
   "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
   "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 const PRODUCT_DETAIL_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 const PRODUCT_DETAIL_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
@@ -475,6 +476,7 @@ export async function getSimilarMarketplaceProductPage(
       .from("products")
       .select(selectColumns)
       .eq("status", "active")
+      .eq("stores.status", "active")
       .eq("category_id", categoryId)
       .neq("id", productId);
 
@@ -529,7 +531,8 @@ async function getMarketplaceProductPageUncached(
     let query = (supabase as any)
       .from("products")
       .select(selectColumns)
-      .eq("status", "active");
+      .eq("status", "active")
+      .eq("stores.status", "active");
 
     if (input.categoryId && isUuid(input.categoryId)) {
       query = query.eq("category_id", input.categoryId);
@@ -599,6 +602,7 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
     .from("products")
     .select(PUBLIC_PRODUCT_SELECT)
     .eq("status", "active")
+    .eq("stores.status", "active")
     .in("id", productIds);
 
   if (error && isMissingVariantSchemaError(error)) {
@@ -606,6 +610,7 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
       .from("products")
       .select(PUBLIC_PRODUCT_SELECT_LEGACY)
       .eq("status", "active")
+      .eq("stores.status", "active")
       .in("id", productIds);
 
     data = fallback.data;
@@ -939,7 +944,8 @@ async function getMarketplaceProductByIdUncached(input: {
     let query = (supabase as any)
       .from("products")
       .select(selectColumns)
-      .eq("status", "active");
+      .eq("status", "active")
+      .eq("stores.status", "active");
 
     if (storeId) {
       query = query.eq("store_id", storeId);
@@ -1049,18 +1055,20 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   let { data, error } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores(name,slug)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
     )
     .eq("status", "active")
+    .eq("stores.status", "active")
     .in("id", productIds);
 
   if (error && isMissingVariantSchemaError(error)) {
     const fallback = await (supabase as any)
       .from("products")
       .select(
-        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores(name,slug)",
+        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
       )
       .eq("status", "active")
+      .eq("stores.status", "active")
       .in("id", productIds);
 
     data = fallback.data;

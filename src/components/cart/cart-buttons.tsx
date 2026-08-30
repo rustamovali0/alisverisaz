@@ -272,7 +272,7 @@ export function AddToCartButton({
       onClick={handleAdd}
       disabled={isUnavailable}
       className={cn(
-        "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none !text-white hover:!text-white min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
+        "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none text-primary hover:text-primary min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
         className,
       )}
     >

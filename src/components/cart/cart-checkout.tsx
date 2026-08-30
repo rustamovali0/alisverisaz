@@ -605,7 +605,7 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] md:bg-primary md:hover:bg-primary/90"
+            className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))] md:bg-primary md:hover:bg-[hsl(var(--marketplace-primary-hover))]"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}

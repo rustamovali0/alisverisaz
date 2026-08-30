@@ -26,6 +26,7 @@
     --radius: 0.5rem;
     --marketplace-primary: 331 84% 55%;
     --marketplace-primary-hover: 331 75% 49%;
+    --marketplace-primary-hover-foreground: 0 0% 100%;
     --marketplace-primary-soft: 331 88% 96%;
     --marketplace-navy: 233 43% 19%;
     --marketplace-muted: 240 5% 58%;
@@ -55,6 +56,7 @@
     --ring: 178 70% 42%;
     --marketplace-primary: 331 84% 62%;
     --marketplace-primary-hover: 331 78% 56%;
+    --marketplace-primary-hover-foreground: 220 29% 8%;
     --marketplace-primary-soft: 331 44% 18%;
     --marketplace-navy: 210 32% 96%;
     --marketplace-muted: 215 18% 70%;

@@ -1,12 +1,16 @@
 "use client";
 
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, PauseCircle, PlayCircle } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { getStorefrontUrl } from "@/lib/config/domains";
-import { updateStoreManagementAction } from "@/lib/cms/actions";
+import {
+  updateStoreManagementAction,
+  updateStoreStatusAction,
+} from "@/lib/cms/actions";
 
 type StoreManagementFormProps = {
   store: {
@@ -29,6 +33,7 @@ export function StoreManagementForm({
   panelSettings,
 }: StoreManagementFormProps) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const publicUrl = getStorefrontUrl(store.slug);
 
   function handleSubmit(formData: FormData) {
@@ -44,9 +49,79 @@ export function StoreManagementForm({
     });
   }
 
+  function handleStatusChange(nextStatus: "active" | "suspended") {
+    startTransition(async () => {
+      const isSuspending = nextStatus === "suspended";
+      const confirmed = await appAlert.confirm({
+        title: isSuspending ? "Satıcı dondurulsun?" : "Satıcı aktiv edilsin?",
+        message: isSuspending
+          ? "Təsdiqləsəniz bu satıcının mağazası və məhsulları saytda, axtarışda və siyahılarda görünməyəcək."
+          : "Təsdiqləsəniz bu satıcının mağazası və aktiv məhsulları yenidən saytda görünəcək.",
+        confirmText: isSuspending ? "Dondur" : "Aktiv et",
+        cancelText: "Ləğv et",
+        variant: isSuspending ? "danger" : "default",
+      });
+
+      if (!confirmed.isConfirmed) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.set("storeId", store.id);
+      formData.set("status", nextStatus);
+      const result = await updateStoreStatusAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Status yenilənmədi");
+        return;
+      }
+
+      void appAlert.success(
+        isSuspending ? "Satıcı donduruldu" : "Satıcı aktiv edildi",
+        result.message,
+      );
+      router.refresh();
+    });
+  }
+
   return (
     <form action={handleSubmit} className="grid gap-4">
       <input type="hidden" name="storeId" value={store.id} />
+      <div className="rounded-lg border bg-background p-3">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+              Satıcı görünürlüğü
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Dondurulanda mağaza və məhsullar public hissədə və axtarışda gizlənir.
+            </p>
+          </div>
+          {store.status === "suspended" ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => handleStatusChange("active")}
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
+              <PlayCircle className="mr-2 size-4" aria-hidden="true" />
+              Aktiv et
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => handleStatusChange("suspended")}
+              disabled={isPending}
+              className="w-full sm:w-auto"
+            >
+              <PauseCircle className="mr-2 size-4" aria-hidden="true" />
+              Satıcını dondur
+            </Button>
+          )}
+        </div>
+      </div>
       <div className="rounded-lg border bg-background p-3">
         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -93,10 +168,10 @@ export function StoreManagementForm({
             defaultValue={store.status}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
+            <option value="draft">Draft</option>
             <option value="active">Aktiv</option>
-            <option value="pending">Gözləyir</option>
             <option value="suspended">Dayandırılıb</option>
-            <option value="archived">Arxiv</option>
+            <option value="closed">Bağlanıb</option>
           </select>
         </label>
       </div>

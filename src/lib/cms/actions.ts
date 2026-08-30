@@ -997,6 +997,77 @@ export async function updateStoreManagementAction(
   };
 }
 
+export async function updateStoreStatusAction(
+  formData: FormData,
+): Promise<CmsActionResult> {
+  const storeId = readString(formData, "storeId");
+  const status = readString(formData, "status");
+  await audit("update_store_status", "stores", {
+    storeId,
+    status,
+  });
+
+  if (!storeId) {
+    return {
+      ok: false,
+      message: "Mağaza ID tapılmadı.",
+    };
+  }
+
+  if (!["draft", "active", "suspended", "closed"].includes(status)) {
+    return {
+      ok: false,
+      message: "Status düzgün deyil.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingStore } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,slug")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (!existingStore) {
+    return {
+      ok: false,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  const { error } = await (supabaseAdmin as any)
+    .from("stores")
+    .update({
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", storeId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/radmin/stores");
+  revalidatePath(`/radmin/stores/${storeId}`);
+  invalidateStorePublicData({
+    storeId,
+    storeSlug: existingStore.slug,
+  });
+
+  return {
+    ok: true,
+    message:
+      status === "suspended"
+        ? "Satıcı donduruldu. Mağaza və məhsulları saytda görünməyəcək."
+        : status === "active"
+          ? "Satıcı aktiv edildi. Mağaza və məhsulları yenidən görünəcək."
+          : "Mağaza statusu yeniləndi.",
+  };
+}
+
 export async function createAnnouncementAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
