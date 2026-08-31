@@ -18,6 +18,46 @@ function formatMoney(amount: unknown, currency = "AZN") {
   return `${Number.isFinite(value) ? value.toFixed(2) : "0.00"} ${currency}`;
 }
 
+function formatDevice(userAgent?: string | null) {
+  if (!userAgent) {
+    return "-";
+  }
+
+  const os = /iPhone|iPad|iPod/i.test(userAgent)
+    ? "iOS"
+    : /Android/i.test(userAgent)
+      ? "Android"
+      : /Mac OS X|Macintosh/i.test(userAgent)
+        ? "macOS"
+        : /Windows/i.test(userAgent)
+          ? "Windows"
+          : /Linux/i.test(userAgent)
+            ? "Linux"
+            : "Bilinməyən cihaz";
+
+  const browserMatch =
+    userAgent.match(/Edg\/([\d.]+)/i) ??
+    userAgent.match(/OPR\/([\d.]+)/i) ??
+    userAgent.match(/Chrome\/([\d.]+)/i) ??
+    userAgent.match(/Firefox\/([\d.]+)/i) ??
+    userAgent.match(/Version\/([\d.]+).*Safari/i);
+
+  const browser = browserMatch
+    ? userAgent.includes("Edg/")
+      ? "Edge"
+      : userAgent.includes("OPR/")
+        ? "Opera"
+        : userAgent.includes("Firefox/")
+          ? "Firefox"
+          : userAgent.includes("Safari/") && !userAgent.includes("Chrome/")
+            ? "Safari"
+            : "Chrome"
+    : "Brauzer";
+  const majorVersion = browserMatch?.[1]?.split(".")[0];
+
+  return majorVersion ? `${os} • ${browser} ${majorVersion}` : `${os} • ${browser}`;
+}
+
 function readAddress(order: any) {
   const shippingAddress =
     order?.shipping_address && typeof order.shipping_address === "object"
@@ -194,12 +234,13 @@ export async function notifyAdminLogin(input: {
   await sendIfEnabled(
     "admin_notifications_enabled",
     [
-      "🔐 <b>Admin login uğurlu</b>",
+      "🔐 <b>Admin girişi uğurlu</b>",
+      "",
       `Admin: ${escapeHtml(input.name || input.login)}`,
       `Login: ${escapeHtml(input.login)}`,
       `Role: ${escapeHtml(input.role)}`,
       `IP: ${escapeHtml(input.ip)}`,
-      `User-agent: ${escapeHtml(input.userAgent || "-")}`,
+      `Cihaz: ${escapeHtml(formatDevice(input.userAgent))}`,
       `Tarix: ${escapeHtml(formatDate(input.createdAt))}`,
     ].join("\n"),
   );
@@ -216,10 +257,11 @@ export async function notifyAdminLoginFailed(input: {
     "admin_notifications_enabled",
     [
       "⚠️ <b>Admin login cəhdi uğursuz</b>",
+      "",
       `Login: ${escapeHtml(input.login || "-")}`,
       `Səbəb: ${escapeHtml(input.reason || "login_failed")}`,
       `IP: ${escapeHtml(input.ip)}`,
-      `User-agent: ${escapeHtml(input.userAgent || "-")}`,
+      `Cihaz: ${escapeHtml(formatDevice(input.userAgent))}`,
       `Tarix: ${escapeHtml(formatDate(input.createdAt))}`,
     ].join("\n"),
   );
