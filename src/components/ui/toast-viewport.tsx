@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Info, XCircle } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ const PENDING_TOASTS_KEY = "alisveris-pending-toasts";
 
 export function ToastViewport() {
   const [toasts, setToasts] = useState<AppToast[]>([]);
+  const pathname = usePathname();
 
   useEffect(() => {
     function addToast(detail: ToastEvent["detail"]) {
@@ -51,22 +53,29 @@ export function ToastViewport() {
       addToast((event as ToastEvent).detail);
     }
 
-    try {
-      const pending = window.sessionStorage.getItem(PENDING_TOASTS_KEY);
-
-      if (pending) {
-        window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
-        const parsed = JSON.parse(pending) as Array<ToastEvent["detail"]>;
-        parsed.forEach(addToast);
-      }
-    } catch {
-      window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
-    }
-
     window.addEventListener("alisveris-toast", handleToast);
 
     return () => window.removeEventListener("alisveris-toast", handleToast);
   }, []);
+
+  useEffect(() => {
+    try {
+      const pending = window.sessionStorage.getItem(PENDING_TOASTS_KEY);
+
+      if (!pending) {
+        return;
+      }
+
+      window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
+      const parsed = JSON.parse(pending) as Array<ToastEvent["detail"]>;
+
+      parsed.forEach((detail) => {
+        window.dispatchEvent(new CustomEvent("alisveris-toast", { detail }));
+      });
+    } catch {
+      window.sessionStorage.removeItem(PENDING_TOASTS_KEY);
+    }
+  }, [pathname]);
 
   if (toasts.length === 0) {
     return null;

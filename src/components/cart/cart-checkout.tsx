@@ -828,10 +828,7 @@ export function CartCheckout({
             {storeGroups.length > 0 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
                 <div>
-                  <h3 className="text-sm font-black">Promo kodlar</h3>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Promo kod yalnız aid olduğu mağazanın məhsullarına tətbiq olunur.
-                  </p>
+                  <h3 className="text-sm font-black">Promo kod</h3>
                 </div>
                 {storeGroups.map((group) => {
                   const promo = appliedPromos[group.storeId];

@@ -609,7 +609,9 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient({
+    authScope: mode === "admin" ? "admin" : "public",
+  });
   const email = identifier;
 
   if (!isValidEmail(email)) {

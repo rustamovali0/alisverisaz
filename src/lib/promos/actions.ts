@@ -16,6 +16,8 @@ type PromoActionResult =
 
 const PROMO_CODE_PATTERN = /^[A-Z0-9_-]{1,40}$/;
 const PROMO_NOTIFICATION_BATCH_SIZE = 100;
+const AZERBAIJAN_TIMEZONE_OFFSET = "+04:00";
+const DEFAULT_PROMO_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -44,7 +46,10 @@ function parseDateInput(value: string) {
     return null;
   }
 
-  const timestamp = Date.parse(value);
+  const normalizedValue = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)
+    ? `${value}:00${AZERBAIJAN_TIMEZONE_OFFSET}`
+    : value;
+  const timestamp = Date.parse(normalizedValue);
 
   return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 }
@@ -264,9 +269,13 @@ export async function saveSellerPromoCodeAction(
   const promoId = readString(formData, "promoId");
   const code = normalizePromoCode(readString(formData, "code"));
   const discountPercent = readPercent(readString(formData, "discountPercent"));
-  const startsAt = parseDateInput(readString(formData, "startsAt"));
+  const startsAtInput = readString(formData, "startsAt");
+  const parsedStartsAt = startsAtInput ? parseDateInput(startsAtInput) : null;
+  const startsAt = parsedStartsAt ?? new Date().toISOString();
   const endsAtInput = readString(formData, "endsAt");
-  const endsAt = endsAtInput ? parseDateInput(endsAtInput) : null;
+  const endsAt = endsAtInput
+    ? parseDateInput(endsAtInput)
+    : new Date(Date.parse(startsAt) + DEFAULT_PROMO_DURATION_MS).toISOString();
   const isActive = readBoolean(formData, "isActive");
   const actorRole = mode === "admin" ? "admin" : "seller";
 
@@ -282,7 +291,7 @@ export async function saveSellerPromoCodeAction(
     return { ok: false, message: "Endirim faizi 1–100 arasında olmalıdır." };
   }
 
-  if (!startsAt || (endsAtInput && !endsAt)) {
+  if (!startsAt || !endsAt) {
     return { ok: false, message: "Tarix formatı düzgün deyil." };
   }
 

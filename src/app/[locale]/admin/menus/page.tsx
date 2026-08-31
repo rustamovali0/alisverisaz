@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminMenusPage() {
   await requireRole(["admin"], "/radmin/menus");
-  const menus = await getNavigationMenus();
+  const menus = await getNavigationMenus({ ensureDefaults: true });
 
   return (
     <DashboardPanel

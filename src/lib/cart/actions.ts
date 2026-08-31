@@ -769,7 +769,7 @@ async function resolveCheckoutPromos(input: {
       };
     }
 
-    if (Number.isFinite(startsAt) && startsAt > now) {
+    if (Number.isFinite(startsAt) && startsAt - now > 60_000) {
       return {
         ok: false as const,
         message: "Promo kod hələ aktiv deyil.",

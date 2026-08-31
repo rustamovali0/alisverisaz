@@ -1,6 +1,7 @@
 import {
   CACHE_TAGS,
   CACHE_TTL,
+  invalidateNavigationPublicData,
   publicCache,
 } from "@/lib/cache/public-cache";
 import {
@@ -45,6 +46,12 @@ function readNullableLimit(value: unknown, fallback: number | null) {
 
   return fallback;
 }
+
+const REAL_HOMEPAGE_SECTION_KEYS = new Set([
+  "hero",
+  "categories",
+  "featured_products",
+]);
 
 function readObject(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -247,7 +254,11 @@ function fallbackHomepageSections() {
       show_desktop: section.showDesktop,
       theme_variant: section.themeVariant,
     }),
-  );
+  ).filter((section) => REAL_HOMEPAGE_SECTION_KEYS.has(section.key));
+}
+
+function filterRealHomepageSections(sections: HomepageSection[]) {
+  return sections.filter((section) => REAL_HOMEPAGE_SECTION_KEYS.has(section.key));
 }
 
 const getCachedHomepageSections = publicCache(
@@ -268,7 +279,9 @@ const getCachedHomepageSections = publicCache(
       return fallbackHomepageSections();
     }
 
-    const sections = ((data ?? []) as any[]).map(readHomepageSection);
+    const sections = filterRealHomepageSections(
+      ((data ?? []) as any[]).map(readHomepageSection),
+    );
 
     return sections.length ? sections : fallbackHomepageSections();
   },
@@ -305,7 +318,9 @@ export async function getHomepageSections(includeDrafts = false) {
     return fallbackHomepageSections();
   }
 
-  const sections = ((data ?? []) as any[]).map(readHomepageSection);
+  const sections = filterRealHomepageSections(
+    ((data ?? []) as any[]).map(readHomepageSection),
+  );
 
   return sections.length ? sections : fallbackHomepageSections();
 }
@@ -433,6 +448,54 @@ export async function getActiveHomeThemeSetting() {
   return active;
 }
 
+type NavigationSeedMenu = {
+  key: string;
+  title: string;
+  location: string;
+  items: Array<DashboardNavItem & {
+    requiredRole?: "seller" | "customer" | "admin" | null;
+  }>;
+};
+
+const defaultNavigationSeedMenus: NavigationSeedMenu[] = [
+  {
+    key: "main_header",
+    title: "Əsas header menyusu",
+    location: "header",
+    items: [
+      { title: "Məhsullar", href: "/products", icon: "box" },
+      { title: "Haqqında", href: "/about", icon: "sparkles" },
+    ],
+  },
+  {
+    key: "seller_sidebar",
+    title: "Satıcı sidebar",
+    location: "seller_sidebar",
+    items: dashboardNavigation.seller.map((item) => ({
+      ...item,
+      requiredRole: "seller",
+    })),
+  },
+  {
+    key: "customer_sidebar",
+    title: "İstifadəçi sidebar",
+    location: "customer_sidebar",
+    items: dashboardNavigation.customer.map((item) => ({
+      ...item,
+      requiredRole: "customer",
+    })),
+  },
+  {
+    key: "admin_extra",
+    title: "Admin menyusu",
+    location: "admin_extra",
+    items: dashboardNavigation.admin.map((item) => ({
+      ...item,
+      requiredRole: "admin",
+    })),
+  },
+];
+
 function readNavigationItem(row: any): ManagedNavigationItem {
   return {
     id: row.id,
@@ -453,8 +516,7 @@ function readNavigationItem(row: any): ManagedNavigationItem {
   };
 }
 
-const getCachedNavigationMenus = publicCache(
-  async () => {
+async function fetchNavigationMenus() {
     const supabase = createSupabaseAdminClient();
     const { data: menus } = await (supabase as any)
       .from("navigation_menus")
@@ -484,6 +546,59 @@ const getCachedNavigationMenus = publicCache(
           .map(readNavigationItem),
       }),
     );
+}
+
+async function ensureDefaultNavigationMenus() {
+  const supabase = createSupabaseAdminClient();
+  const { data: menus } = await (supabase as any)
+    .from("navigation_menus")
+    .upsert(
+      defaultNavigationSeedMenus.map((menu) => ({
+        key: menu.key,
+        title: menu.title,
+        location: menu.location,
+        is_active: true,
+        is_system: true,
+      })),
+      { onConflict: "key" },
+    )
+    .select("id,key");
+
+  const menuIdByKey = new Map(
+    ((menus ?? []) as Array<{ id: string; key: string }>).map((menu) => [
+      menu.key,
+      menu.id,
+    ]),
+  );
+  const items = defaultNavigationSeedMenus.flatMap((menu) => {
+    const menuId = menuIdByKey.get(menu.key);
+
+    if (!menuId) {
+      return [];
+    }
+
+    return menu.items.map((item, index) => ({
+      menu_id: menuId,
+      title: item.title,
+      href: item.href,
+      icon_name: item.icon,
+      sort_order: index + 1,
+      is_active: true,
+      is_system: true,
+      required_role: item.requiredRole ?? null,
+    }));
+  });
+
+  if (items.length > 0) {
+    await (supabase as any)
+      .from("navigation_items")
+      .upsert(items, { onConflict: "menu_id,href" });
+  }
+}
+
+const getCachedNavigationMenus = publicCache(
+  async () => {
+    return fetchNavigationMenus();
   },
   ["navigation-menus"],
   {
@@ -492,8 +607,17 @@ const getCachedNavigationMenus = publicCache(
   },
 );
 
-export async function getNavigationMenus() {
-  return getCachedNavigationMenus();
+export async function getNavigationMenus(options?: { ensureDefaults?: boolean }) {
+  const menus = await getCachedNavigationMenus();
+
+  if (!options?.ensureDefaults || menus.length > 0) {
+    return menus;
+  }
+
+  await ensureDefaultNavigationMenus();
+  invalidateNavigationPublicData();
+
+  return fetchNavigationMenus();
 }
 
 async function applyDashboardFeatureFilters(

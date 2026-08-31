@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil, Power, PowerOff, Trash2 } from "lucide-react";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -63,7 +63,6 @@ export function PromoCodesManager({
   const [editingPromo, setEditingPromo] = useState<EditingPromo>(null);
   const [isPending, startTransition] = useTransition();
   const defaultStoreId = stores[0]?.id ?? "";
-  const nowValue = useMemo(() => toDateTimeInput(new Date().toISOString()), []);
 
   function submit(formData: FormData) {
     formData.set("mode", mode);
@@ -185,9 +184,8 @@ export function PromoCodesManager({
           <input
             name="startsAt"
             type="datetime-local"
-            defaultValue={toDateTimeInput(editingPromo?.startsAt) || nowValue}
+            defaultValue={toDateTimeInput(editingPromo?.startsAt)}
             className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">

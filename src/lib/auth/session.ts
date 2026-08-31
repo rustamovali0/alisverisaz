@@ -5,6 +5,7 @@ import { getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import type { AuthRole } from "@/lib/auth/types";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { SupabaseAuthScope } from "@/lib/supabase/auth-scope";
 import type { Database } from "@/types/database";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
@@ -33,8 +34,10 @@ function getJwtIssuedAt(accessToken?: string | null) {
   }
 }
 
-export const getCurrentUserProfile = cache(async function getCurrentUserProfile() {
-  const supabase = await createSupabaseServerClient();
+export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
+  authScope: SupabaseAuthScope = "public",
+) {
+  const supabase = await createSupabaseServerClient({ authScope });
   const {
     data: { user },
     error: userError,
@@ -75,8 +78,8 @@ export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
   };
 });
 
-export async function requireUser(nextPath?: string) {
-  const current = await getCurrentUserProfile();
+export async function requireUser(nextPath?: string, authScope: SupabaseAuthScope = "public") {
+  const current = await getCurrentUserProfile(authScope);
 
   if (!current) {
     redirect(getLoginPath(nextPath));
@@ -86,7 +89,9 @@ export async function requireUser(nextPath?: string) {
 }
 
 export async function requireRole(allowedRoles: AuthRole[], nextPath?: string) {
-  const current = await requireUser(nextPath);
+  const authScope =
+    allowedRoles.length === 1 && allowedRoles[0] === "admin" ? "admin" : "public";
+  const current = await requireUser(nextPath, authScope);
 
   if (!allowedRoles.includes(current.role)) {
     if (current.role === "admin") {

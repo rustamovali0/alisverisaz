@@ -6,6 +6,7 @@ import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/re
 import type { AuthRole } from "@/lib/auth/types";
 import { clientEnv } from "@/lib/config/env.client";
 import { getSharedCookieDomain } from "@/lib/config/domains";
+import { getSupabaseCookieName, resolveAuthScopeFromPath } from "@/lib/supabase/auth-scope";
 import { routing } from "@/i18n/routing";
 import type { Database } from "@/types/database";
 
@@ -74,6 +75,13 @@ export async function updateSession(
     clientEnv.supabaseUrl,
     clientEnv.supabasePublishableKey,
     {
+      ...(getSupabaseCookieName(resolveAuthScopeFromPath(request.nextUrl.pathname))
+        ? {
+            cookieOptions: {
+              name: getSupabaseCookieName(resolveAuthScopeFromPath(request.nextUrl.pathname)),
+            },
+          }
+        : {}),
       cookies: {
         getAll() {
           return request.cookies.getAll();
