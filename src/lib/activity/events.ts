@@ -18,7 +18,14 @@ export type ActivityEventType =
   | "notifications_marked_read"
   | "notifications_deleted"
   | "analytics_deleted"
-  | "activity_cleared";
+  | "activity_cleared"
+  | "seller_order_method_changed"
+  | "whatsapp_order_intent"
+  | "promo_created"
+  | "promo_updated"
+  | "promo_deleted"
+  | "promo_enabled"
+  | "promo_disabled";
 
 function getDeviceType(userAgent: string | null) {
   const value = userAgent?.toLowerCase() ?? "";

@@ -1,6 +1,14 @@
 "use client";
 
-import { ArrowLeft, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ExternalLink,
+  Minus,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
@@ -8,8 +16,17 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { createCheckoutOrdersAction, getCartProductsAction } from "@/lib/cart/actions";
-import type { CartItem, CartProduct } from "@/lib/cart/types";
+import {
+  createCheckoutOrdersAction,
+  getCartProductsAction,
+  previewCheckoutPromosAction,
+} from "@/lib/cart/actions";
+import type {
+  CartItem,
+  CartProduct,
+  WhatsAppCheckoutGroup,
+} from "@/lib/cart/types";
+import type { CheckoutPromoPreview } from "@/lib/promos/types";
 import type {
   DeliverySettings,
   DeliveryStoreOverride,
@@ -36,6 +53,13 @@ type CartCheckoutProps = {
 };
 
 type DeliveryMethod = "pickup" | "courier" | "region";
+
+type CheckoutResultState = {
+  message: string;
+  orderIds: string[];
+  whatsappGroups: WhatsAppCheckoutGroup[];
+  isGuest?: boolean;
+};
 
 function readCart() {
   try {
@@ -78,7 +102,11 @@ export function CartCheckout({
     useState<DeliveryMethod>("courier");
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [checkoutResult, setCheckoutResult] = useState<CheckoutResultState | null>(null);
+  const [promoCodes, setPromoCodes] = useState<Record<string, string>>({});
+  const [appliedPromos, setAppliedPromos] = useState<Record<string, CheckoutPromoPreview>>({});
   const [isPending, startTransition] = useTransition();
+  const [isPromoPending, startPromoTransition] = useTransition();
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products],
@@ -101,6 +129,39 @@ export function CartCheckout({
 
     return sum + unit * entry.item.quantity;
   }, 0);
+  const storeGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        storeId: string;
+        storeName: string;
+        subtotal: number;
+      }
+    >();
+
+    for (const { item, product } of visibleItems) {
+      const unit = getProductVariantUnitPrice({
+        priceAmount: product.priceAmount,
+        discountAmount: product.discountAmount,
+        variants: product.variantCombinations,
+        selection: item.selectedOptions,
+      });
+      const current = groups.get(product.storeId) ?? {
+        storeId: product.storeId,
+        storeName: product.storeName ?? "Mağaza",
+        subtotal: 0,
+      };
+
+      current.subtotal += unit * item.quantity;
+      groups.set(product.storeId, current);
+    }
+
+    return Array.from(groups.values());
+  }, [visibleItems]);
+  const promoDiscountTotal = Object.values(appliedPromos).reduce(
+    (sum, promo) => sum + promo.discountAmount,
+    0,
+  );
   const deliverySummary = useMemo(() => {
     const storeSubtotals = new Map<string, number>();
     const overrides = new Map(
@@ -219,7 +280,115 @@ export function CartCheckout({
 
   function updateItems(nextItems: CartItem[]) {
     setItems(nextItems);
+    setAppliedPromos({});
     writeCart(nextItems);
+  }
+
+  function setPromoCode(storeId: string, code: string) {
+    setPromoCodes((current) => ({
+      ...current,
+      [storeId]: code,
+    }));
+    setAppliedPromos((current) => {
+      if (!current[storeId]) {
+        return current;
+      }
+
+      const next = { ...current };
+
+      delete next[storeId];
+      return next;
+    });
+  }
+
+  function applyPromo(storeId: string) {
+    const code = (promoCodes[storeId] ?? "").trim();
+
+    if (!code) {
+      void appAlert.error("Promo kod daxil edin.", "Promo tətbiq olunmadı");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.set("items", JSON.stringify(items));
+    formData.set("promoCodes", JSON.stringify({ [storeId]: code }));
+
+    startPromoTransition(async () => {
+      const result = await previewCheckoutPromosAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Promo tətbiq olunmadı");
+        return;
+      }
+
+      const promo = result.promos.find((item) => item.storeId === storeId);
+
+      if (!promo) {
+        void appAlert.error("Promo kod etibarsızdır.", "Promo tətbiq olunmadı");
+        return;
+      }
+
+      setAppliedPromos((current) => ({
+        ...current,
+        [storeId]: promo,
+      }));
+      void appAlert.success("Promo tətbiq edildi", `${promo.code} promo kodu aktivdir.`);
+    });
+  }
+
+  function removePromo(storeId: string) {
+    setPromoCodes((current) => ({
+      ...current,
+      [storeId]: "",
+    }));
+    setAppliedPromos((current) => {
+      const next = { ...current };
+
+      delete next[storeId];
+      return next;
+    });
+  }
+
+  function removeItemsByKeys(itemKeys: string[]) {
+    if (itemKeys.length === 0) {
+      return;
+    }
+
+    const keySet = new Set(itemKeys);
+    const nextItems = readCart().filter(
+      (item) => !keySet.has(getProductVariantKey(item.productId, item.selectedOptions)),
+    );
+
+    updateItems(nextItems);
+  }
+
+  function openWhatsAppGroup(group: WhatsAppCheckoutGroup) {
+    removeItemsByKeys(group.itemKeys);
+    setCheckoutResult((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        whatsappGroups: current.whatsappGroups.filter(
+          (nextGroup) => nextGroup.storeId !== group.storeId,
+        ),
+      };
+    });
+
+    const opened = window.open(group.whatsappUrl, "_blank", "noopener,noreferrer");
+
+    if (!opened) {
+      window.location.href = group.whatsappUrl;
+      return;
+    }
+
+    void appAlert.success(
+      "WhatsApp açıldı",
+      `${group.storeName} üçün sifariş mesajı hazırlandı.`,
+    );
   }
 
   async function removeCartItem(itemKey: string, productName: string) {
@@ -266,9 +435,13 @@ export function CartCheckout({
 
   function handleSubmit(formData: FormData) {
     const requestId = checkoutRequestId || crypto.randomUUID();
+    const submittedPromoCodes = Object.fromEntries(
+      Object.entries(appliedPromos).map(([storeId, promo]) => [storeId, promo.code]),
+    );
 
     formData.set("items", JSON.stringify(items));
     formData.set("checkoutRequestId", requestId);
+    formData.set("promoCodes", JSON.stringify(submittedPromoCodes));
 
     startTransition(async () => {
       const result = await createCheckoutOrdersAction(formData);
@@ -278,9 +451,25 @@ export function CartCheckout({
         return;
       }
 
-      updateItems([]);
+      const whatsappGroups = result.whatsappGroups ?? [];
+      const processedItemKeys = result.processedItemKeys ?? [];
+
       setCheckoutRequestId(crypto.randomUUID());
       void appAlert.success("Sifariş yaradıldı", result.message);
+
+      if (whatsappGroups.length > 0) {
+        removeItemsByKeys(processedItemKeys);
+        setCheckoutResult({
+          message: result.message,
+          orderIds: result.orderIds,
+          whatsappGroups,
+          isGuest: result.isGuest,
+        });
+        router.refresh();
+        return;
+      }
+
+      updateItems([]);
       router.replace(result.isGuest ? "/products" : "/dashboard");
       router.refresh();
     });
@@ -294,6 +483,131 @@ export function CartCheckout({
       >
         <div className="container grid min-h-[38dvh] place-items-center py-8">
           <span className="size-8 animate-spin rounded-full border-[3px] border-muted border-t-primary" aria-label="Səbət açılır" />
+        </div>
+      </main>
+    );
+  }
+
+  if (checkoutResult) {
+    const hasWhatsAppGroups = checkoutResult.whatsappGroups.length > 0;
+
+    return (
+      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:bg-background md:pb-0">
+        <div className="container flex justify-center py-6 md:py-10">
+          <section className="w-full max-w-3xl rounded-md border bg-card p-4 text-card-foreground shadow-sm md:p-6">
+            <div className="flex items-start gap-3">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+                <CheckCircle2 className="size-6" aria-hidden="true" />
+              </span>
+              <div>
+                <h1 className="text-2xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] md:text-2xl md:font-semibold md:text-foreground">
+                  Sifariş nəticəsi
+                </h1>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {checkoutResult.message}
+                </p>
+              </div>
+            </div>
+
+            {checkoutResult.orderIds.length > 0 ? (
+              <div className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+                Sayt üzərindən olan sifarişlər yaradıldı və satıcı panelinə göndərildi.
+              </div>
+            ) : null}
+
+            {hasWhatsAppGroups ? (
+              <div className="mt-5 grid gap-4">
+                {checkoutResult.whatsappGroups.map((group) => (
+                  <article
+                    key={group.storeId}
+                    className="rounded-md border bg-background p-4 shadow-sm"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">WhatsApp satıcı</p>
+                        <h2 className="text-xl font-semibold tracking-normal">
+                          {group.storeName}
+                        </h2>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="text-sm text-muted-foreground">Ümumi məbləğ</p>
+                        <p className="text-lg font-bold">{formatMoney(group.totalAmount)}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 divide-y rounded-md border">
+                      {group.products.map((product, index) => (
+                        <div
+                          key={`${group.storeId}-${product.name}-${index}`}
+                          className="grid gap-1 p-3 text-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="font-medium">{product.name}</span>
+                            <span className="shrink-0 font-semibold">
+                              {formatMoney(product.totalAmount)}
+                            </span>
+                          </div>
+                          <p className="text-muted-foreground">
+                            {product.quantity} ədəd × {formatMoney(product.unitPrice)}
+                          </p>
+                          {product.variantLabels.length > 0 ? (
+                            <p className="text-xs text-muted-foreground">
+                              {product.variantLabels.join(" · ")}
+                            </p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                    {group.promo ? (
+                      <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                        <div className="flex justify-between gap-3">
+                          <span>Ara cəm</span>
+                          <span>{formatMoney(group.subtotalAmount)}</span>
+                        </div>
+                        <div className="mt-1 flex justify-between gap-3">
+                          <span>
+                            Promo: {group.promo.code} (-{group.promo.discountPercent}%)
+                          </span>
+                          <span>-{formatMoney(group.promo.discountAmount)}</span>
+                        </div>
+                        <div className="mt-2 flex justify-between gap-3 border-t border-emerald-200 pt-2 font-bold">
+                          <span>Yeni cəm</span>
+                          <span>{formatMoney(group.totalAmount)}</span>
+                        </div>
+                      </div>
+                    ) : null}
+                    <Button
+                      type="button"
+                      className="mt-4 h-11 w-full bg-[hsl(var(--marketplace-primary))] font-semibold hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))]"
+                      onClick={() => openWhatsAppGroup(group)}
+                    >
+                      WhatsApp-da sifarişi tamamla
+                      <ExternalLink className="ml-2 size-4" aria-hidden="true" />
+                    </Button>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-md border bg-background p-5 text-center">
+                <h2 className="text-lg font-semibold tracking-normal">
+                  WhatsApp sifarişləri tamamlandı
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Səbətdə emal olunan məhsullar təmizləndi.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-5 grid gap-2 sm:flex sm:justify-end">
+              <Button asChild variant="outline">
+                <Link href="/products">Məhsullara qayıt</Link>
+              </Button>
+              {!checkoutResult.isGuest ? (
+                <Button asChild>
+                  <Link href="/dashboard">Hesabıma keç</Link>
+                </Button>
+              ) : null}
+            </div>
+          </section>
         </div>
       </main>
     );
@@ -509,7 +823,73 @@ export function CartCheckout({
           <h2 className="text-lg font-semibold tracking-normal">{cartUi("confirmOrder")}</h2>
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
+          <input type="hidden" name="promoCodes" value="" />
           <div className="mt-4 grid gap-4">
+            {storeGroups.length > 0 ? (
+              <section className="grid gap-3 rounded-md border bg-background p-3">
+                <div>
+                  <h3 className="text-sm font-black">Promo kodlar</h3>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Promo kod yalnız aid olduğu mağazanın məhsullarına tətbiq olunur.
+                  </p>
+                </div>
+                {storeGroups.map((group) => {
+                  const promo = appliedPromos[group.storeId];
+
+                  return (
+                    <div key={group.storeId} className="grid gap-2 rounded-md border p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold">{group.storeName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Ara cəm: {formatMoney(group.subtotal)}
+                          </p>
+                        </div>
+                        {promo ? (
+                          <button
+                            type="button"
+                            className="text-xs font-bold text-destructive"
+                            onClick={() => removePromo(group.storeId)}
+                          >
+                            Sil
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <input
+                          value={promoCodes[group.storeId] ?? ""}
+                          onChange={(event) =>
+                            setPromoCode(group.storeId, event.target.value)
+                          }
+                          placeholder="Promo kod"
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => applyPromo(group.storeId)}
+                          disabled={isPromoPending}
+                        >
+                          Tətbiq et
+                        </Button>
+                      </div>
+                      {promo ? (
+                        <div className="grid gap-1 rounded-md bg-emerald-50 p-3 text-xs text-emerald-800">
+                          <div className="flex justify-between gap-3">
+                            <span>Promo: {promo.code} (-{promo.discountPercent}%)</span>
+                            <span>-{formatMoney(promo.discountAmount)}</span>
+                          </div>
+                          <div className="flex justify-between gap-3 font-bold">
+                            <span>Yeni cəm</span>
+                            <span>{formatMoney(promo.totalAfterDiscount)}</span>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </section>
+            ) : null}
             {isAuthenticated ? (
               <>
                 <input type="hidden" name="fullName" value={defaultFullName} />
@@ -580,6 +960,12 @@ export function CartCheckout({
             <span className="text-sm text-muted-foreground">Məhsullar</span>
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
+          {promoDiscountTotal > 0 ? (
+            <div className="mt-2 flex items-center justify-between gap-3 text-sm text-emerald-700">
+              <span>Promo endirimi</span>
+              <span className="font-semibold">-{formatMoney(promoDiscountTotal)}</span>
+            </div>
+          ) : null}
           <div className="mt-2 flex items-center justify-between gap-3 text-sm">
             <span className="text-muted-foreground">
               {deliveryMethod === "pickup" ? "Mağazadan özün götür" : "Çatdırılma"}
@@ -600,7 +986,7 @@ export function CartCheckout({
           <div className="mt-3 flex items-center justify-between border-t pt-3">
             <span className="text-sm font-medium">Yekun</span>
             <span className="text-base font-bold">
-              {formatMoney(total + deliverySummary.amount)}
+              {formatMoney(total - promoDiscountTotal + deliverySummary.amount)}
             </span>
           </div>
           <Button

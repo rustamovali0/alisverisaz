@@ -7,6 +7,8 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { notifyProductSubmitted } from "@/lib/products/approval-actions";
+import { getProductApprovalSettings } from "@/lib/products/approval-settings";
 import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
 import {
   deleteR2ImageByUrl,
@@ -832,6 +834,23 @@ export async function createStoreProductAction(
     };
   }
 
+  const approvalSettings = await getProductApprovalSettings();
+  const requiresApproval = approvalSettings.requireApproval;
+  const productStatus: ProductStatus = requiresApproval ? "draft" : payload.status;
+  const productMetadata = {
+    variants: payload.variants,
+    variant_options: payload.variantOptions,
+    variant_combinations: payload.variantCombinations,
+    ...(requiresApproval
+      ? {
+          approval_status: "pending",
+          approval_requested_at: new Date().toISOString(),
+          requested_status: payload.status,
+        }
+      : {
+          approval_status: "none",
+        }),
+  };
   const supabase = await createSupabaseServerClient();
   const { data: product, error } = await (supabase as any)
     .from("products")
@@ -850,16 +869,12 @@ export async function createStoreProductAction(
       price_amount: payload.priceAmount,
       discount_amount: payload.discountAmount,
       stock_quantity: payload.stockQuantity,
-      status: payload.status,
+      status: productStatus,
       listing_type: "store",
       deposit_enabled: payload.depositEnabled,
       deposit_type: payload.depositType,
       deposit_value: payload.depositValue,
-      metadata: {
-        variants: payload.variants,
-        variant_options: payload.variantOptions,
-        variant_combinations: payload.variantCombinations,
-      },
+      metadata: productMetadata,
     })
     .select("id")
     .single();
@@ -899,19 +914,37 @@ export async function createStoreProductAction(
   }
 
   const storeSlug = stores.find((store) => store.id === storeId)?.slug ?? null;
+  const sellerName =
+    typeof current.profile?.full_name === "string" && current.profile.full_name.trim()
+      ? current.profile.full_name.trim()
+      : current.user.email ?? "Satıcı";
 
   revalidatePath("/store/dashboard/products");
+  revalidatePath("/store/dashboard/pending-products");
+  revalidatePath("/radmin/new-products");
   revalidateMarketplaceSurfaces({
     productId: product.id,
     storeId,
     categoryId: payload.categoryId,
     storeSlug,
-    homepage: payload.status === "active",
+    homepage: productStatus === "active",
   });
+
+  if (requiresApproval) {
+    await notifyProductSubmitted({
+      sellerId: current.user.id,
+      sellerName,
+      sellerEmail: current.user.email ?? null,
+      productId: product.id,
+      productName: payload.name,
+    });
+  }
 
   return {
     ok: true,
-    message: "Məhsul yaradıldı.",
+    message: requiresApproval
+      ? "Məhsul əlavə edildi, qəbul edildikdən sonra dərc olunacaq."
+      : "Məhsul yaradıldı.",
   };
 }
 
@@ -980,24 +1013,48 @@ export async function updateProductAction(
     };
   }
 
+  const approvalSettings =
+    current.role === "seller" && existing.listing_type === "store"
+      ? await getProductApprovalSettings()
+      : { requireApproval: false };
+  const requiresApproval =
+    current.role === "seller" &&
+    existing.listing_type === "store" &&
+    approvalSettings.requireApproval &&
+    payload.status === "active";
   const status =
     existing.listing_type === "personal" &&
     payload.status === "active" &&
     existing.metadata?.payment_status !== "paid"
       ? "draft"
+      : requiresApproval
+        ? "draft"
       : payload.status;
+  const baseMetadata =
+    existing.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
+      ? existing.metadata
+      : {};
   const metadata =
     existing.listing_type === "personal"
       ? {
-          ...(existing.metadata ?? {}),
+          ...baseMetadata,
           variants: payload.variants,
           variant_options: payload.variantOptions,
           variant_combinations: payload.variantCombinations,
         }
       : {
+          ...baseMetadata,
           variants: payload.variants,
           variant_options: payload.variantOptions,
           variant_combinations: payload.variantCombinations,
+          ...(requiresApproval
+            ? {
+                approval_status: "pending",
+                approval_requested_at: new Date().toISOString(),
+                requested_status: payload.status,
+                rejection_note: null,
+              }
+            : {}),
         };
   const { error } = await (supabase as any)
     .from("products")
@@ -1056,7 +1113,9 @@ export async function updateProductAction(
   }
 
   revalidatePath("/store/dashboard/products");
+  revalidatePath("/store/dashboard/pending-products");
   revalidatePath("/dashboard/listings");
+  revalidatePath("/radmin/new-products");
   revalidatePath("/radmin/products");
   revalidatePath("/radmin/stores");
   revalidateMarketplaceSurfaces({
@@ -1069,7 +1128,9 @@ export async function updateProductAction(
 
   return {
     ok: true,
-    message: "Məhsul yeniləndi.",
+    message: requiresApproval
+      ? "Məhsul yeniləndi, qəbul edildikdən sonra dərc olunacaq."
+      : "Məhsul yeniləndi.",
   };
 }
 

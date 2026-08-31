@@ -15,8 +15,19 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { getCartProducts } from "@/lib/cart/data";
 import { notifyOrderCreated } from "@/lib/telegram/notifications";
-import type { CartItem, CheckoutActionResult } from "@/lib/cart/types";
+import type {
+  CartItem,
+  CheckoutActionResult,
+  WhatsAppCheckoutGroup,
+} from "@/lib/cart/types";
+import type { CheckoutPromoPreview } from "@/lib/promos/types";
 import type { ProductOptionType } from "@/lib/products/types";
+import { getGlobalWhatsAppOrderTemplate } from "@/lib/whatsapp-orders/data";
+import {
+  normalizeOrderMethod,
+  renderWhatsAppOrderTemplate,
+  toWhatsAppPhone,
+} from "@/lib/whatsapp-orders/template";
 import {
   findMatchingProductVariant,
   formatProductVariantSelection,
@@ -390,12 +401,123 @@ async function applyOrderVariantSnapshots(input: {
   }
 }
 
+async function applyOrderPromoSnapshots(input: {
+  orderIds: string[];
+  promosByStore: Map<string, AppliedPromo>;
+}) {
+  if (input.orderIds.length === 0 || input.promosByStore.size === 0) {
+    return;
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: orders } = await (supabaseAdmin as any)
+    .from("orders")
+    .select("id,store_id,subtotal_amount,shipping_amount,delivery_amount,metadata")
+    .in("id", input.orderIds);
+
+  await Promise.all(
+    ((orders ?? []) as Array<{
+      id: string;
+      store_id: string;
+      subtotal_amount: string | number | null;
+      shipping_amount: string | number | null;
+      delivery_amount: string | number | null;
+      metadata?: Record<string, unknown> | null;
+    }>).map(async (order) => {
+      const promo = input.promosByStore.get(order.store_id);
+
+      if (!promo) {
+        return;
+      }
+
+      const subtotal = Number(order.subtotal_amount ?? promo.subtotal);
+      const deliveryAmount = Number(order.delivery_amount ?? order.shipping_amount ?? 0);
+      const totalAfterDiscount = Math.max(subtotal - promo.discountAmount, 0);
+
+      await (supabaseAdmin as any)
+        .from("orders")
+        .update({
+          discount_amount: promo.discountAmount,
+          total_amount: totalAfterDiscount + deliveryAmount,
+          metadata: {
+            ...(order.metadata ?? {}),
+            promo: {
+              promo_id: promo.promoId,
+              promo_code: promo.code,
+              promo_discount_percent: promo.discountPercent,
+              promo_discount_amount: promo.discountAmount,
+              subtotal_before_discount: subtotal,
+              total_after_discount: totalAfterDiscount,
+            },
+          },
+        })
+        .eq("id", order.id);
+    }),
+  );
+}
+
 export async function getCartProductsAction(productIds: string[], locale = "az") {
   const uniqueProductIds = Array.from(
     new Set(productIds.filter((productId) => UUID_PATTERN.test(productId))),
   ).slice(0, MAX_CHECKOUT_ITEMS);
 
   return getCartProducts(uniqueProductIds, locale);
+}
+
+export async function previewCheckoutPromosAction(formData: FormData): Promise<
+  | {
+      ok: true;
+      promos: CheckoutPromoPreview[];
+    }
+  | {
+      ok: false;
+      message: string;
+    }
+> {
+  const cart = parseCartItems(readString(formData, "items"));
+
+  if (cart.invalidItems || cart.items.length === 0) {
+    return {
+      ok: false,
+      message: "Səbət məlumatları yanlışdır.",
+    };
+  }
+
+  const validatedVariants = await validateCartVariantSelections(cart.items);
+
+  if (!validatedVariants.ok) {
+    return {
+      ok: false,
+      message: validatedVariants.message,
+    };
+  }
+
+  const groups = groupValidatedItemsByStore(validatedVariants.items);
+  const storeSettings = await getCheckoutStoreSettings(Array.from(groups.keys()));
+  const resolvedPromos = await resolveCheckoutPromos({
+    groups,
+    storeSettings,
+    promoCodes: parsePromoCodes(readString(formData, "promoCodes")),
+  });
+
+  if (!resolvedPromos.ok) {
+    return {
+      ok: false,
+      message: resolvedPromos.message,
+    };
+  }
+
+  return {
+    ok: true,
+    promos: Array.from(resolvedPromos.promos.values()).map((promo) => ({
+      storeId: promo.storeId,
+      code: promo.code,
+      discountPercent: promo.discountPercent,
+      subtotal: promo.subtotal,
+      discountAmount: promo.discountAmount,
+      totalAfterDiscount: promo.totalAfterDiscount,
+    })),
+  };
 }
 
 function getCheckoutErrorMessage(message?: string) {
@@ -473,6 +595,308 @@ async function containsOwnStoreProduct(input: {
   });
 }
 
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("az-AZ", {
+    style: "currency",
+    currency: "AZN",
+  }).format(value);
+}
+
+function deliveryMethodLabel(method: DeliveryMethod) {
+  if (method === "pickup") {
+    return "Mağazadan götürmə";
+  }
+
+  if (method === "region") {
+    return "Rayonlara çatdırılma";
+  }
+
+  return "Bakı daxili kuryer";
+}
+
+function readSettings(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function normalizePromoCode(value: string) {
+  return value.trim().toUpperCase();
+}
+
+function parsePromoCodes(value: string): Map<string, string> {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return new Map<string, string>();
+    }
+
+    const entries: Array<[string, string]> = Object.entries(
+      parsed as Record<string, unknown>,
+    )
+      .map(([storeId, code]): [string, string] => [
+        storeId,
+        typeof code === "string" ? normalizePromoCode(code) : "",
+      ])
+      .filter(([storeId, code]) => UUID_PATTERN.test(storeId) && code.length > 0);
+
+    return new Map<string, string>(
+      entries,
+    );
+  } catch {
+    return new Map<string, string>();
+  }
+}
+
+async function getCheckoutStoreSettings(
+  storeIds: string[],
+): Promise<Map<string, CheckoutStoreSetting>> {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,name,owner_id,settings")
+    .in("id", storeIds);
+
+  return new Map(
+    ((data ?? []) as Array<{
+      id: string;
+      name: string | null;
+      owner_id: string | null;
+      settings?: Record<string, unknown> | null;
+    }>).map((store) => {
+      const settings = readSettings(store.settings);
+      const whatsappPhone =
+        typeof settings.whatsappPhone === "string" ? settings.whatsappPhone : "";
+
+      return [
+        store.id,
+        {
+          id: store.id,
+          name: store.name || "Satıcı",
+          sellerId: store.owner_id as string | null,
+          orderMethod: normalizeOrderMethod(settings.orderMethod),
+          whatsappPhone: toWhatsAppPhone(whatsappPhone),
+        },
+      ];
+    }),
+  );
+}
+
+function groupValidatedItemsByStore(items: ValidatedCartVariantItem[]) {
+  const groups = new Map<string, ValidatedCartVariantItem[]>();
+
+  for (const item of items) {
+    const current = groups.get(item.product.storeId) ?? [];
+
+    current.push(item);
+    groups.set(item.product.storeId, current);
+  }
+
+  return groups;
+}
+
+function getGroupSubtotal(items: ValidatedCartVariantItem[]) {
+  return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+}
+
+type CheckoutStoreSetting = {
+  id: string;
+  name: string;
+  sellerId: string | null;
+  orderMethod: "system" | "whatsapp";
+  whatsappPhone: string;
+};
+
+type AppliedPromo = CheckoutPromoPreview & {
+  promoId: string;
+  sellerId: string;
+};
+
+async function resolveCheckoutPromos(input: {
+  groups: Map<string, ValidatedCartVariantItem[]>;
+  storeSettings: Map<string, CheckoutStoreSetting>;
+  promoCodes: Map<string, string>;
+}) {
+  const requested = Array.from(input.promoCodes.entries()).filter(([storeId]) =>
+    input.groups.has(storeId),
+  );
+  const result = new Map<string, AppliedPromo>();
+
+  if (requested.length === 0) {
+    return {
+      ok: true as const,
+      promos: result,
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+
+  for (const [storeId, code] of requested) {
+    const settings = input.storeSettings.get(storeId);
+
+    if (!settings?.sellerId) {
+      return {
+        ok: false as const,
+        message: "Promo kod etibarsızdır.",
+      };
+    }
+
+    const { data: promo } = await (supabaseAdmin as any)
+      .from("seller_promo_codes")
+      .select("id,seller_id,code,code_normalized,discount_percent,starts_at,ends_at,is_active")
+      .eq("seller_id", settings.sellerId)
+      .eq("code_normalized", code)
+      .is("deleted_at", null)
+      .maybeSingle();
+
+    if (!promo) {
+      return {
+        ok: false as const,
+        message: "Promo kod etibarsızdır.",
+      };
+    }
+
+    const now = Date.now();
+    const startsAt = Date.parse(promo.starts_at);
+    const endsAt = promo.ends_at ? Date.parse(promo.ends_at) : Number.NaN;
+    const discountPercent = Number(promo.discount_percent ?? 0);
+
+    if (!promo.is_active || discountPercent < 1 || discountPercent > 100) {
+      return {
+        ok: false as const,
+        message: "Promo kod etibarsızdır.",
+      };
+    }
+
+    if (Number.isFinite(startsAt) && startsAt > now) {
+      return {
+        ok: false as const,
+        message: "Promo kod hələ aktiv deyil.",
+      };
+    }
+
+    if (Number.isFinite(endsAt) && endsAt < now) {
+      return {
+        ok: false as const,
+        message: "Promo kodun istifadə müddəti bitib.",
+      };
+    }
+
+    const subtotal = getGroupSubtotal(input.groups.get(storeId) ?? []);
+    const discountAmount = Math.round(subtotal * discountPercent) / 100;
+
+    result.set(storeId, {
+      promoId: promo.id,
+      sellerId: promo.seller_id,
+      storeId,
+      code: promo.code,
+      discountPercent,
+      subtotal,
+      discountAmount,
+      totalAfterDiscount: Math.max(subtotal - discountAmount, 0),
+    });
+  }
+
+  return {
+    ok: true as const,
+    promos: result,
+  };
+}
+
+function buildWhatsAppCheckoutGroup(input: {
+  storeId: string;
+  sellerName: string;
+  whatsappPhone: string;
+  template: string;
+  items: ValidatedCartVariantItem[];
+  promo: AppliedPromo | null;
+  fullName: string;
+  phone: string;
+  address: string;
+  deliveryMethod: DeliveryMethod;
+}) {
+  const now = new Date();
+  const products = input.items.map((item) => {
+    const totalAmount = item.unitPrice * item.quantity;
+
+    return {
+      name: item.product.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalAmount,
+      variantLabels: item.variantLabels,
+    };
+  });
+  const totalAmount = products.reduce((sum, product) => sum + product.totalAmount, 0);
+  const productsText = products
+    .map((product, index) =>
+      [
+        `${index + 1}. ${product.name}`,
+        product.variantLabels.length > 0 ? `   ${product.variantLabels.join(" · ")}` : "",
+        `   ${product.quantity} ədəd × ${formatMoney(product.unitPrice)}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    )
+    .join("\n\n");
+  const firstProduct = products[0];
+  const promo = input.promo;
+  const finalTotal = promo?.totalAfterDiscount ?? totalAmount;
+  const message = renderWhatsAppOrderTemplate(input.template, {
+    order_number: `WA-${now.getTime()}`,
+    customer_name: input.fullName,
+    customer_phone: input.phone,
+    seller_name: input.sellerName,
+    store_name: input.sellerName,
+    product_name: firstProduct?.name ?? "",
+    products: productsText,
+    quantity: String(products.reduce((sum, product) => sum + product.quantity, 0)),
+    price: firstProduct ? formatMoney(firstProduct.unitPrice) : "",
+    total: formatMoney(finalTotal),
+    delivery_method: deliveryMethodLabel(input.deliveryMethod),
+    address: input.deliveryMethod === "pickup" ? "" : input.address,
+    date: new Intl.DateTimeFormat("az-AZ", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(now),
+    time: new Intl.DateTimeFormat("az-AZ", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(now),
+    promo_code: promo?.code ?? "",
+    discount_percent: promo ? String(promo.discountPercent) : "",
+    discount_amount: promo ? formatMoney(promo.discountAmount) : "",
+    subtotal: formatMoney(totalAmount),
+    total_after_discount: formatMoney(finalTotal),
+  }, {
+    promo: Boolean(promo),
+  });
+
+  return {
+    storeId: input.storeId,
+    sellerName: input.sellerName,
+    storeName: input.sellerName,
+    subtotalAmount: totalAmount,
+    discountAmount: promo?.discountAmount ?? 0,
+    totalAmount: finalTotal,
+    itemCount: products.reduce((sum, product) => sum + product.quantity, 0),
+    itemKeys: input.items.map(
+      (item) => item.variantKey ?? getProductVariantKey(item.productId, item.selectedOptions),
+    ),
+    whatsappUrl: `https://wa.me/${input.whatsappPhone}?text=${encodeURIComponent(message)}`,
+    promo: promo
+      ? {
+          code: promo.code,
+          discountPercent: promo.discountPercent,
+          discountAmount: promo.discountAmount,
+        }
+      : null,
+    products,
+  } satisfies WhatsAppCheckoutGroup;
+}
+
 export async function createCheckoutOrdersAction(
   formData: FormData,
 ): Promise<CheckoutActionResult> {
@@ -503,6 +927,9 @@ export async function createCheckoutOrdersAction(
     : null;
   const deliveryRegion = readString(formData, "deliveryRegion");
   const checkoutRequestId = readString(formData, "checkoutRequestId");
+  const checkoutFlow = readString(formData, "checkoutFlow");
+  const forceSystemOrder = checkoutFlow === "direct_whatsapp_button";
+  const promoCodes = parsePromoCodes(readString(formData, "promoCodes"));
   const cart = parseCartItems(readString(formData, "items"));
   const items = cart.items;
 
@@ -605,73 +1032,188 @@ export async function createCheckoutOrdersAction(
     });
   }
 
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data, error } = await (supabaseAdmin as any).rpc(
-    "create_atomic_checkout_orders",
-    {
-      p_items: items,
-      p_full_name: fullName,
-      p_phone: phone,
-      p_address: address,
-      p_notes: note || null,
-      p_request_id: checkoutRequestId || null,
-      p_delivery_method: deliveryMethod,
-      p_delivery_region: deliveryRegion || null,
-      p_user_id: current?.user.id ?? null,
-      p_checkout_identity_key: checkoutIdentityKey,
-    },
-  );
+  const groupedByStore = groupValidatedItemsByStore(validatedVariants.items);
+  const storeSettings = await getCheckoutStoreSettings(Array.from(groupedByStore.keys()));
+  const resolvedPromos = await resolveCheckoutPromos({
+    groups: groupedByStore,
+    storeSettings,
+    promoCodes,
+  });
 
-  if (error) {
+  if (!resolvedPromos.ok) {
     return {
       ok: false,
-      message: getCheckoutErrorMessage(error.message),
+      message: resolvedPromos.message,
     };
   }
 
-  const checkout = parseCheckoutResponse(data);
+  const whatsappTemplate = await getGlobalWhatsAppOrderTemplate();
+  const systemItems: ValidatedCartVariantItem[] = [];
+  const whatsappGroups: WhatsAppCheckoutGroup[] = [];
+
+  for (const [storeId, storeItems] of groupedByStore.entries()) {
+    const settings = storeSettings.get(storeId);
+
+    if (!settings) {
+      return {
+        ok: false,
+        message: "Satıcı məlumatı tapılmadı.",
+      };
+    }
+
+    if (!forceSystemOrder && settings.orderMethod === "whatsapp") {
+      if (!settings.whatsappPhone) {
+        return {
+          ok: false,
+          message:
+            "Satıcının WhatsApp nömrəsi düzgün təyin edilməyib. Zəhmət olmasa başqa sifariş üsulu seçin.",
+        };
+      }
+
+      whatsappGroups.push(
+        buildWhatsAppCheckoutGroup({
+          storeId,
+          sellerName: settings.name,
+          whatsappPhone: settings.whatsappPhone,
+          template: whatsappTemplate,
+          items: storeItems,
+          promo: resolvedPromos.promos.get(storeId) ?? null,
+          fullName,
+          phone,
+          address,
+          deliveryMethod,
+        }),
+      );
+      continue;
+    }
+
+    systemItems.push(...storeItems);
+  }
+
+  let checkout = {
+    orderIds: [] as string[],
+    orders: [] as Array<{
+      id?: unknown;
+      storeId?: unknown;
+      orderNumber?: unknown;
+      totalAmount?: unknown;
+      itemCount?: unknown;
+    }>,
+  };
+
+  if (systemItems.length > 0) {
+    const supabaseAdmin = createSupabaseAdminClient();
+    const systemCartItems = systemItems.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      selectedOptions: item.selectedOptions,
+      variantKey: item.variantKey,
+    }));
+    const { data, error } = await (supabaseAdmin as any).rpc(
+      "create_atomic_checkout_orders",
+      {
+        p_items: systemCartItems,
+        p_full_name: fullName,
+        p_phone: phone,
+        p_address: address,
+        p_notes: note || null,
+        p_request_id: checkoutRequestId || null,
+        p_delivery_method: deliveryMethod,
+        p_delivery_region: deliveryRegion || null,
+        p_user_id: current?.user.id ?? null,
+        p_checkout_identity_key: checkoutIdentityKey,
+      },
+    );
+
+    if (error) {
+      return {
+        ok: false,
+        message: getCheckoutErrorMessage(error.message),
+      };
+    }
+
+    checkout = parseCheckoutResponse(data);
+  }
 
   await applyOrderVariantSnapshots({
     orderIds: checkout.orderIds,
-    items: validatedVariants.items,
+    items: systemItems,
+  });
+  await applyOrderPromoSnapshots({
+    orderIds: checkout.orderIds,
+    promosByStore: resolvedPromos.promos,
   });
 
   await Promise.all(
-    checkout.orders.map((order) =>
-      trackActivityEvent({
-        eventType: "order_created",
-        actorId: current?.user.id ?? null,
-        storeId: typeof order.storeId === "string" ? order.storeId : null,
-        metadata: {
-          title: "Yeni sifariş",
-          description:
-            typeof order.orderNumber === "string" ? order.orderNumber : "Sifariş",
-          order_id: typeof order.id === "string" ? order.id : null,
-          order_number:
-            typeof order.orderNumber === "string" ? order.orderNumber : null,
-          total_amount:
-            typeof order.totalAmount === "number" ? order.totalAmount : null,
-          item_count: typeof order.itemCount === "number" ? order.itemCount : null,
-        },
-      }),
-    ),
+    [
+      ...checkout.orders.map((order) =>
+        trackActivityEvent({
+          eventType: "order_created",
+          actorId: current?.user.id ?? null,
+          storeId: typeof order.storeId === "string" ? order.storeId : null,
+          metadata: {
+            title: "Yeni sifariş",
+            description:
+              typeof order.orderNumber === "string" ? order.orderNumber : "Sifariş",
+            order_id: typeof order.id === "string" ? order.id : null,
+            order_number:
+              typeof order.orderNumber === "string" ? order.orderNumber : null,
+            total_amount:
+              typeof order.totalAmount === "number" ? order.totalAmount : null,
+            item_count: typeof order.itemCount === "number" ? order.itemCount : null,
+          },
+        }),
+      ),
+      ...whatsappGroups.map((group) =>
+        trackActivityEvent({
+          eventType: "whatsapp_order_intent",
+          actorId: current?.user.id ?? null,
+          storeId: group.storeId,
+          metadata: {
+            title: "WhatsApp sifariş niyyəti",
+            description: `${group.storeName} · ${formatMoney(group.totalAmount)}`,
+            total_amount: group.totalAmount,
+            item_count: group.itemCount,
+          },
+        }),
+      ),
+    ],
   );
-  void notifyOrderCreated(checkout.orderIds);
 
-  revalidatePath("/dashboard/orders");
-  revalidatePath("/dashboard");
-  revalidatePath("/store/dashboard/orders");
-  revalidatePath("/admin/orders");
-  revalidatePath("/radmin/orders");
+  if (checkout.orderIds.length > 0) {
+    void notifyOrderCreated(checkout.orderIds);
+  }
+
+  if (checkout.orderIds.length > 0) {
+    revalidatePath("/dashboard/orders");
+    revalidatePath("/dashboard");
+    revalidatePath("/store/dashboard/orders");
+    revalidatePath("/admin/orders");
+    revalidatePath("/radmin/orders");
+  }
+
   revalidatePath("/radmin/activity");
+
+  const processedItemKeys = systemItems.map((item) =>
+    item.variantKey ?? getProductVariantKey(item.productId, item.selectedOptions),
+  );
+  const hasSystemOrders = checkout.orderIds.length > 0;
+  const hasWhatsAppOrders = whatsappGroups.length > 0;
+  const message = hasSystemOrders
+    ? hasWhatsAppOrders
+      ? "Sayt sifarişləri yaradıldı. WhatsApp satıcıları üçün sifarişi ayrıca tamamlayın."
+      : isGuestCheckout
+        ? "Sifariş yaradıldı. Sizinlə tezliklə əlaqə saxlanılacaq."
+        : "Sifariş yaradıldı."
+    : "WhatsApp sifarişləri hazırlandı. Hər satıcı üçün sifarişi ayrıca tamamlayın.";
 
   return {
     ok: true,
-    message: isGuestCheckout
-      ? "Sifariş yaradıldı. Sizinlə tezliklə əlaqə saxlanılacaq."
-      : "Sifariş yaradıldı.",
+    message,
     orderIds: checkout.orderIds,
+    processedItemKeys,
     orders: checkout.orders,
+    whatsappGroups,
     isGuest: isGuestCheckout,
   };
 }

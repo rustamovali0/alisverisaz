@@ -1,3 +1,4 @@
+import { ClearLogsButton } from "@/components/admin/logs/clear-logs-button";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { StatGrid } from "@/components/dashboard/stat-card";
 import { requireRole } from "@/lib/auth/session";
@@ -80,6 +81,9 @@ export default async function AdminActivityPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <ClearLogsButton scope="activity" />
+      </div>
       <StatGrid items={overview.stats} />
       <div className="grid gap-6 xl:grid-cols-2">
         <DashboardPanel

@@ -1,5 +1,7 @@
 export type ProductStatus = "draft" | "active" | "archived";
 
+export type ProductApprovalStatus = "none" | "pending" | "approved" | "rejected";
+
 export type ProductVariantInput = {
   name: string;
   value: string;
@@ -59,6 +61,8 @@ export type ManagedProduct = {
   discountAmount: number;
   stockQuantity: number;
   status: ProductStatus;
+  approvalStatus: ProductApprovalStatus;
+  approvalNote: string | null;
   description: string | null;
   descriptionTranslations: Record<string, string>;
   seoTitleTranslations: Record<string, string>;

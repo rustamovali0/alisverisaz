@@ -11,6 +11,7 @@ import type {
   ProductOptionInput,
   ProductOptionType,
   ProductStatus,
+  ProductApprovalStatus,
   ProductVariantCombinationInput,
 } from "@/lib/products/types";
 import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
@@ -35,6 +36,9 @@ type ProductRow = {
   deposit_type: "fixed" | "percent";
   deposit_value: string | number;
   metadata: {
+    approval_status?: string;
+    approval_note?: string;
+    rejection_note?: string;
     payment_status?: string;
     variants?: Array<{
       name: string;
@@ -174,6 +178,8 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.stock_quantity,
     status: row.status,
+    approvalStatus: readProductApprovalStatus(row.metadata?.approval_status),
+    approvalNote: readProductApprovalNote(row.metadata),
     description: row.description,
     descriptionTranslations: row.description_translations ?? {},
     seoTitleTranslations: row.seo_title_translations ?? {},
@@ -210,6 +216,18 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
         ? variantCombinations
         : row.metadata?.variant_combinations ?? [],
   };
+}
+
+function readProductApprovalStatus(value: unknown): ProductApprovalStatus {
+  return value === "pending" || value === "approved" || value === "rejected"
+    ? value
+    : "none";
+}
+
+function readProductApprovalNote(metadata: ProductRow["metadata"]) {
+  const note = metadata?.rejection_note ?? metadata?.approval_note;
+
+  return typeof note === "string" && note.trim() ? note.trim() : null;
 }
 
 function sortPublicRootCategories(categories: CategoryOption[]) {
@@ -265,6 +283,7 @@ export async function getManagedProducts(filters: {
   ownerId?: string;
   listingType?: "store" | "personal";
   productId?: string;
+  approvalStatus?: ProductApprovalStatus;
 }) {
   const supabase = await createSupabaseServerClient();
 
@@ -295,6 +314,10 @@ export async function getManagedProducts(filters: {
 
     if (filters.productId) {
       query = query.eq("id", filters.productId);
+    }
+
+    if (filters.approvalStatus && filters.approvalStatus !== "none") {
+      query = query.eq("metadata->>approval_status", filters.approvalStatus);
     }
 
     return query;

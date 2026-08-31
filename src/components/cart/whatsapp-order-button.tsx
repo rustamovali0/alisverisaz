@@ -198,6 +198,7 @@ export function WhatsAppOrderButton({
     formData.set("deliveryRegion", "");
     formData.set("address", "");
     formData.set("note", note);
+    formData.set("checkoutFlow", "direct_whatsapp_button");
 
     startTransition(async () => {
       try {

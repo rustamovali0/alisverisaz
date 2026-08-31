@@ -59,6 +59,16 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
           <Link href="/store/dashboard/products">Məhsullara qayıt</Link>
         </Button>
       </div>
+      {product.approvalStatus === "pending" ? (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+          Məhsul yoxlanılır, təsdiqdən sonra dərc olunacaq.
+        </div>
+      ) : null}
+      {product.approvalStatus === "rejected" && product.approvalNote ? (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+          {product.approvalNote}
+        </div>
+      ) : null}
       <ProductForm
         mode="edit"
         categories={categories}

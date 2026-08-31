@@ -76,6 +76,26 @@ function DeleteProductButton({ productId }: { productId: string }) {
   );
 }
 
+function getStatusLabel(product: ManagedProduct) {
+  if (product.approvalStatus === "pending") {
+    return "Təsdiq gözləyir";
+  }
+
+  if (product.approvalStatus === "rejected") {
+    return "Rədd edildi";
+  }
+
+  if (product.status === "active") {
+    return "Aktiv";
+  }
+
+  if (product.status === "archived") {
+    return "Arxiv";
+  }
+
+  return "Qaralama";
+}
+
 export function ProductList({
   products,
   categories,
@@ -127,9 +147,19 @@ export function ProductList({
                     : ""}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Stok: {product.stockQuantity} · Status: {product.status}
+                  Stok: {product.stockQuantity} · Status: {getStatusLabel(product)}
                   {product.paymentStatus ? ` · Ödəniş: ${product.paymentStatus}` : ""}
                 </p>
+                {product.approvalStatus === "pending" ? (
+                  <p className="mt-2 inline-flex rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-black text-amber-700">
+                    Məhsul yoxlanılır, təsdiqdən sonra dərc olunacaq.
+                  </p>
+                ) : null}
+                {product.approvalStatus === "rejected" ? (
+                  <p className="mt-2 rounded-md bg-destructive/10 px-2.5 py-2 text-xs font-semibold text-destructive">
+                    {product.approvalNote ?? "Məhsul rədd edildi. Məlumatları yeniləyib yenidən göndərin."}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">

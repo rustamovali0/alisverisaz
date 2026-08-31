@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Filter, MonitorSmartphone, Search } from "lucide-react";
 
+import { ClearLogsButton } from "@/components/admin/logs/clear-logs-button";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { Link } from "@/i18n/navigation";
 import { getAdminUserActivityLog } from "@/lib/activity/data";
@@ -106,6 +107,9 @@ export default async function AdminUserActivityLogPage({
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <ClearLogsButton scope="activity" />
+      </div>
       <DashboardPanel
         title="İstifadəçi logları"
         description="Satıcı və istifadəçi fəaliyyətləri cihaz, tarix və rol filtrləri ilə göstərilir."

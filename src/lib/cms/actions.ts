@@ -11,6 +11,7 @@ import {
   invalidateStorePublicData,
 } from "@/lib/cache/public-cache";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
+import { normalizeOrderMethod } from "@/lib/whatsapp-orders/template";
 import {
   deleteR2MediaAssetsByUrls,
   recordImageMediaAsset,
@@ -931,6 +932,8 @@ export async function updateStoreManagementAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
   const storeId = readString(formData, "storeId");
+  const orderMethod = normalizeOrderMethod(readString(formData, "orderMethod"));
+  const whatsappPhone = normalizeAzerbaijanPhone(readString(formData, "whatsappPhone"));
   const current = await audit("update_store_management", "stores", {
     storeId,
   });
@@ -942,17 +945,40 @@ export async function updateStoreManagementAction(
     };
   }
 
+  if (orderMethod === "whatsapp" && !whatsappPhone) {
+    return {
+      ok: false,
+      message: "WhatsApp üzərindən sifariş qəbul etmək üçün WhatsApp nömrəsi əlavə edilməlidir.",
+    };
+  }
+
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: existingStore } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id,slug")
+    .select("id,slug,settings")
     .eq("id", storeId)
     .maybeSingle();
+  const parsedStoreSettings = parseJson(readString(formData, "storeSettings"), {});
+  const existingSettings =
+    existingStore?.settings &&
+    typeof existingStore.settings === "object" &&
+    !Array.isArray(existingStore.settings)
+      ? existingStore.settings
+      : {};
+  const storeSettings = {
+    ...existingSettings,
+    ...parsedStoreSettings,
+    orderMethod,
+    whatsappPhone,
+  };
+  const previousOrderMethod = normalizeOrderMethod(
+    (existingSettings as Record<string, unknown>).orderMethod,
+  );
   const { error: storeError } = await (supabaseAdmin as any)
     .from("stores")
     .update({
       status: readString(formData, "status") || "active",
-      settings: parseJson(readString(formData, "storeSettings"), {}),
+      settings: storeSettings,
     })
     .eq("id", storeId);
 
@@ -986,9 +1012,21 @@ export async function updateStoreManagementAction(
 
   revalidatePath("/radmin/stores");
   revalidatePath(`/radmin/stores/${storeId}`);
+  revalidatePath("/checkout");
+  revalidatePath("/cart");
   invalidateStorePublicData({
     storeId,
     storeSlug: existingStore?.slug,
+  });
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: "RADMIN_SELLER_ORDER_METHOD_CHANGED",
+    entityType: "stores",
+    entityId: storeId,
+    metadata: {
+      old_value: previousOrderMethod,
+      new_value: orderMethod,
+    },
   });
 
   return {

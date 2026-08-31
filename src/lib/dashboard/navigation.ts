@@ -86,6 +86,16 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "package",
     },
     {
+      title: "Təsdiq gözləyən məhsullar",
+      href: "/store/dashboard/pending-products",
+      icon: "package",
+    },
+    {
+      title: "Promo kodlar",
+      href: "/store/dashboard/promos",
+      icon: "receipt",
+    },
+    {
       title: "Satış nöqtələri",
       href: "/store/dashboard/locations",
       icon: "building",
@@ -157,6 +167,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "box",
     },
     {
+      title: "Yeni məhsullar",
+      href: "/radmin/new-products",
+      icon: "package",
+    },
+    {
       title: "Satış nöqtələri",
       href: "/radmin/locations",
       icon: "building",
@@ -171,6 +186,16 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       title: "Çatdırılma sistemi",
       href: "/radmin/delivery",
       icon: "shoppingCart",
+    },
+    {
+      title: "WhatsApp sifarişləri",
+      href: "/radmin/whatsapp-orders",
+      icon: "shoppingCart",
+    },
+    {
+      title: "Promo kodlar",
+      href: "/radmin/promos",
+      icon: "receipt",
     },
     {
       title: "Abunəliklər",

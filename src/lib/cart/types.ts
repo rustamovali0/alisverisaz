@@ -75,11 +75,36 @@ export type CartItem = {
   variantKey?: string;
 };
 
+export type WhatsAppCheckoutGroup = {
+  storeId: string;
+  sellerName: string;
+  storeName: string;
+  subtotalAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  itemCount: number;
+  itemKeys: string[];
+  whatsappUrl: string;
+  promo?: {
+    code: string;
+    discountPercent: number;
+    discountAmount: number;
+  } | null;
+  products: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+    variantLabels: string[];
+  }>;
+};
+
 export type CheckoutActionResult =
   | {
       ok: true;
       message: string;
       orderIds: string[];
+      processedItemKeys?: string[];
       orders?: Array<{
         id?: unknown;
         storeId?: unknown;
@@ -87,6 +112,7 @@ export type CheckoutActionResult =
         totalAmount?: unknown;
         itemCount?: unknown;
       }>;
+      whatsappGroups?: WhatsAppCheckoutGroup[];
       isGuest?: boolean;
     }
   | {

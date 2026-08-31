@@ -4,6 +4,7 @@ import { Copy, ExternalLink, PauseCircle, PlayCircle } from "lucide-react";
 import { useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { getStorefrontUrl } from "@/lib/config/domains";
@@ -11,6 +12,7 @@ import {
   updateStoreManagementAction,
   updateStoreStatusAction,
 } from "@/lib/cms/actions";
+import { normalizeOrderMethod } from "@/lib/whatsapp-orders/template";
 
 type StoreManagementFormProps = {
   store: {
@@ -28,6 +30,12 @@ type StoreManagementFormProps = {
   } | null;
 };
 
+function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  const value = settings?.[key];
+
+  return typeof value === "string" ? value : "";
+}
+
 export function StoreManagementForm({
   store,
   panelSettings,
@@ -35,6 +43,8 @@ export function StoreManagementForm({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const publicUrl = getStorefrontUrl(store.slug);
+  const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
+  const whatsappPhone = readSetting(store.settings, "whatsappPhone");
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -173,6 +183,40 @@ export function StoreManagementForm({
             <option value="suspended">Dayandırılıb</option>
             <option value="closed">Bağlanıb</option>
           </select>
+        </label>
+      </div>
+      <div className="rounded-lg border bg-background p-3">
+        <div>
+          <p className="text-sm font-black">Sifariş qəbul etmə üsulu</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            WhatsApp seçimi üçün satıcının WhatsApp nömrəsi olmalıdır.
+          </p>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm font-semibold">
+            <input
+              type="radio"
+              name="orderMethod"
+              value="system"
+              defaultChecked={orderMethod === "system"}
+              className="size-4"
+            />
+            Sayt üzərindən
+          </label>
+          <label className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm font-semibold">
+            <input
+              type="radio"
+              name="orderMethod"
+              value="whatsapp"
+              defaultChecked={orderMethod === "whatsapp"}
+              className="size-4"
+            />
+            WhatsApp üzərindən
+          </label>
+        </div>
+        <label className="mt-3 grid gap-2 text-sm font-medium">
+          WhatsApp nömrəsi
+          <PhoneInput name="whatsappPhone" defaultValue={whatsappPhone} />
         </label>
       </div>
       <label className="grid gap-2 text-sm font-medium">
