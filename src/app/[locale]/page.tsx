@@ -1,6 +1,6 @@
 import { HomeExperience } from "@/components/home/home-experience";
 import { getHomepageSections, getSiteSettings, getActiveHomeThemeSetting } from "@/lib/cms/data";
-import { getMarketplaceProductPage, getMarketplaceStores } from "@/lib/cart/data";
+import { getMarketplaceProductPage, getMarketplaceStoreCards } from "@/lib/cart/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -20,8 +20,8 @@ export default async function HomePage({ params }: HomePageProps) {
       getSiteSettings(),
       getHomepageSections(),
       getActiveHomeThemeSetting(),
-      getMarketplaceStores({ locale, limit: 120 }),
-      getMarketplaceProductPage(locale, { limit: 52 }),
+      getMarketplaceStoreCards({ limit: 16 }),
+      getMarketplaceProductPage(locale, { limit: 16 }),
       getCategoryOptions({ rootOnly: true }),
     ]);
 

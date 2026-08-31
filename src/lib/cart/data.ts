@@ -782,6 +782,73 @@ export async function getMarketplaceStores(input: {
   )();
 }
 
+export async function getMarketplaceStoreCards(input: {
+  limit?: number;
+} = {}): Promise<MarketplaceStore[]> {
+  const limit = Math.min(Math.max(Math.trunc(input.limit ?? 16), 1), MAX_PUBLIC_LIST_LIMIT);
+
+  return publicCache(
+    async () => {
+      const supabase = createSupabaseAdminClient();
+      const { data: stores, error: storesError } = await (supabase as any)
+        .from("stores")
+        .select("id,name,slug,description,logo_url,cover_url,updated_at,settings")
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (storesError) {
+        throw new Error(storesError.message);
+      }
+
+      const storeRows = (stores ?? []) as StoreRow[];
+      const storeIds = storeRows.map((store) => store.id);
+      const productCounts = new Map<string, number>();
+
+      if (storeIds.length > 0) {
+        const { data: productRows, error: productsError } = await (supabase as any)
+          .from("products")
+          .select("store_id")
+          .eq("status", "active")
+          .in("store_id", storeIds)
+          .limit(10000);
+
+        if (productsError) {
+          throw new Error(productsError.message);
+        }
+
+        for (const product of (productRows ?? []) as Array<{ store_id: string | null }>) {
+          if (product.store_id) {
+            productCounts.set(product.store_id, (productCounts.get(product.store_id) ?? 0) + 1);
+          }
+        }
+      }
+
+      return storeRows.map((store): MarketplaceStore => ({
+        id: store.id,
+        name: store.name,
+        slug: store.slug,
+        description: store.description,
+        address: readSetting(store.settings, "address"),
+        phone: readSetting(store.settings, "phone"),
+        socialInstagram: readSetting(store.settings, "socialInstagram"),
+        socialTiktok: readSetting(store.settings, "socialTiktok"),
+        logoUrl: store.logo_url,
+        coverUrl: store.cover_url,
+        updatedAt: store.updated_at ?? null,
+        productCount: productCounts.get(store.id) ?? 0,
+        sampleProducts: [],
+        categoryIds: [],
+      }));
+    },
+    ["marketplace-store-cards", String(limit)],
+    {
+      revalidate: CACHE_TTL.SHORT,
+      tags: [CACHE_TAGS.marketplaceStores, CACHE_TAGS.products, CACHE_TAGS.homepage],
+    },
+  )();
+}
+
 async function getMarketplaceStoreBySlugUncached(input: {
   slug: string;
   locale: string;
