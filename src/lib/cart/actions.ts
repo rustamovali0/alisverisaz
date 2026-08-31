@@ -464,6 +464,52 @@ export async function getCartProductsAction(productIds: string[], locale = "az")
   return getCartProducts(uniqueProductIds, locale);
 }
 
+export async function getAvailablePromoStoreIdsAction(storeIds: string[]) {
+  const uniqueStoreIds = Array.from(
+    new Set(storeIds.filter((storeId) => UUID_PATTERN.test(storeId))),
+  ).slice(0, MAX_CHECKOUT_ITEMS);
+
+  if (uniqueStoreIds.length === 0) {
+    return [];
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await (supabaseAdmin as any)
+    .from("seller_promo_codes")
+    .select("store_id,starts_at,ends_at,created_at")
+    .in("store_id", uniqueStoreIds)
+    .eq("is_active", true)
+    .is("deleted_at", null);
+  const now = Date.now();
+  const availableStoreIds = new Set<string>();
+
+  for (const promo of (data ?? []) as Array<{
+    store_id: string | null;
+    starts_at: string | null;
+    ends_at: string | null;
+    created_at: string | null;
+  }>) {
+    if (!promo.store_id) {
+      continue;
+    }
+
+    const startsAt = promo.starts_at ? Date.parse(promo.starts_at) : Number.NaN;
+    const createdAt = promo.created_at ? Date.parse(promo.created_at) : Number.NaN;
+    const endsAt = promo.ends_at ? Date.parse(promo.ends_at) : Number.NaN;
+    const hasStarted =
+      !Number.isFinite(startsAt) ||
+      startsAt - now <= 60_000 ||
+      isLikelyLegacyBakuPromoStartShift({ startsAt, createdAt, now });
+    const hasNotExpired = !Number.isFinite(endsAt) || endsAt >= now;
+
+    if (hasStarted && hasNotExpired) {
+      availableStoreIds.add(promo.store_id);
+    }
+  }
+
+  return Array.from(availableStoreIds);
+}
+
 export async function previewCheckoutPromosAction(formData: FormData): Promise<
   | {
       ok: true;

@@ -65,9 +65,9 @@ export function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
       title={theme === "dark" ? "Light mode" : "Dark mode"}
     >
       {theme === "dark" ? (
-        <Sun className={cn("size-5 md:size-7", iconClassName)} aria-hidden="true" />
+        <Sun className={cn("size-7 md:size-8", iconClassName)} aria-hidden="true" />
       ) : (
-        <Moon className={cn("size-5 md:size-7", iconClassName)} aria-hidden="true" />
+        <Moon className={cn("size-7 md:size-8", iconClassName)} aria-hidden="true" />
       )}
     </Button>
   );

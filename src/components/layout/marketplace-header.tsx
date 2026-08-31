@@ -121,13 +121,13 @@ export function MarketplaceHeader({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group size-12 rounded-xl border border-transparent bg-transparent text-slate-900 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-cyan-800 hover:shadow-none dark:border-transparent dark:text-slate-100 dark:hover:!border-transparent dark:hover:text-cyan-200";
+    "group size-12 rounded-xl border border-transparent bg-transparent text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-slate-950 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-white md:size-14";
   const commerceUtilityIconClass =
-    "h-6 w-6 min-h-6 min-w-6 stroke-[1.8] transition-transform duration-200 group-hover:scale-110";
+    "h-8 w-8 min-h-8 min-w-8 stroke-[2.35] transition-transform duration-200 group-hover:scale-110";
   const sellerCommerceIconClass =
-    "size-7 stroke-[1.8] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-8";
+    "size-8 stroke-[2.35] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-9";
   const mobileCommerceIconClass =
-    "size-8 stroke-[1.75] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-9";
+    "size-9 stroke-[2.35] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-10";
 
   function showLoginRequiredToast() {
     showToast({
@@ -285,7 +285,7 @@ export function MarketplaceHeader({
                   size="icon"
                   variant="ghost"
                   className={cn(
-                    "size-10 max-[374px]:hidden min-[400px]:size-12",
+                    "max-[374px]:hidden min-[400px]:size-14",
                     commerceUtilityButtonClass,
                   )}
                   aria-label={nav("favorites")}

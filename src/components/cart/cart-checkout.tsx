@@ -18,6 +18,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import {
   createCheckoutOrdersAction,
+  getAvailablePromoStoreIdsAction,
   getCartProductsAction,
   previewCheckoutPromosAction,
 } from "@/lib/cart/actions";
@@ -103,6 +104,7 @@ export function CartCheckout({
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResultState | null>(null);
+  const [promoEnabledStoreIds, setPromoEnabledStoreIds] = useState<string[]>([]);
   const [promoCodes, setPromoCodes] = useState<Record<string, string>>({});
   const [appliedPromos, setAppliedPromos] = useState<Record<string, CheckoutPromoPreview>>({});
   const [isPending, startTransition] = useTransition();
@@ -161,6 +163,18 @@ export function CartCheckout({
   const promoDiscountTotal = Object.values(appliedPromos).reduce(
     (sum, promo) => sum + promo.discountAmount,
     0,
+  );
+  const storeGroupKey = useMemo(
+    () => storeGroups.map((group) => group.storeId).sort().join("|"),
+    [storeGroups],
+  );
+  const promoEnabledStoreIdSet = useMemo(
+    () => new Set(promoEnabledStoreIds),
+    [promoEnabledStoreIds],
+  );
+  const promoEligibleGroups = useMemo(
+    () => storeGroups.filter((group) => promoEnabledStoreIdSet.has(group.storeId)),
+    [promoEnabledStoreIdSet, storeGroups],
   );
   const deliverySummary = useMemo(() => {
     const storeSubtotals = new Map<string, number>();
@@ -277,6 +291,49 @@ export function CartCheckout({
       isMounted = false;
     };
   }, [initialProducts.length, locale]);
+
+  useEffect(() => {
+    const storeIds = storeGroupKey ? storeGroupKey.split("|") : [];
+
+    if (storeIds.length === 0) {
+      setPromoEnabledStoreIds([]);
+      setPromoCodes({});
+      setAppliedPromos({});
+      return;
+    }
+
+    let isMounted = true;
+
+    getAvailablePromoStoreIdsAction(storeIds)
+      .then((availableStoreIds) => {
+        if (!isMounted) {
+          return;
+        }
+
+        const availableSet = new Set(availableStoreIds);
+
+        setPromoEnabledStoreIds(availableStoreIds);
+        setPromoCodes((current) =>
+          Object.fromEntries(
+            Object.entries(current).filter(([storeId]) => availableSet.has(storeId)),
+          ),
+        );
+        setAppliedPromos((current) =>
+          Object.fromEntries(
+            Object.entries(current).filter(([storeId]) => availableSet.has(storeId)),
+          ),
+        );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setPromoEnabledStoreIds([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [storeGroupKey]);
 
   function updateItems(nextItems: CartItem[]) {
     setItems(nextItems);
@@ -825,12 +882,12 @@ export function CartCheckout({
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <input type="hidden" name="promoCodes" value="" />
           <div className="mt-4 grid gap-4">
-            {storeGroups.length > 0 ? (
+            {promoEligibleGroups.length > 0 ? (
               <section className="grid gap-3 rounded-md border bg-background p-3">
                 <div>
                   <h3 className="text-sm font-black">Promo kod</h3>
                 </div>
-                {storeGroups.map((group) => {
+                {promoEligibleGroups.map((group) => {
                   const promo = appliedPromos[group.storeId];
 
                   return (
