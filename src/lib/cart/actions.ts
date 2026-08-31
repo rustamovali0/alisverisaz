@@ -713,6 +713,26 @@ type AppliedPromo = CheckoutPromoPreview & {
   sellerId: string;
 };
 
+function isLikelyLegacyBakuPromoStartShift(input: {
+  startsAt: number;
+  createdAt: number;
+  now: number;
+}) {
+  if (!Number.isFinite(input.createdAt)) {
+    return false;
+  }
+
+  const deltaFromCreate = input.startsAt - input.createdAt;
+  const deltaFromNow = input.startsAt - input.now;
+
+  return (
+    deltaFromCreate >= 3.75 * 60 * 60 * 1000 &&
+    deltaFromCreate <= 4.25 * 60 * 60 * 1000 &&
+    deltaFromNow > 0 &&
+    deltaFromNow <= 4.25 * 60 * 60 * 1000
+  );
+}
+
 async function resolveCheckoutPromos(input: {
   groups: Map<string, ValidatedCartVariantItem[]>;
   storeSettings: Map<string, CheckoutStoreSetting>;
@@ -744,7 +764,7 @@ async function resolveCheckoutPromos(input: {
 
     const { data: promo } = await (supabaseAdmin as any)
       .from("seller_promo_codes")
-      .select("id,seller_id,code,code_normalized,discount_percent,starts_at,ends_at,is_active")
+      .select("id,seller_id,code,code_normalized,discount_percent,starts_at,ends_at,is_active,created_at")
       .eq("seller_id", settings.sellerId)
       .eq("code_normalized", code)
       .is("deleted_at", null)
@@ -759,6 +779,7 @@ async function resolveCheckoutPromos(input: {
 
     const now = Date.now();
     const startsAt = Date.parse(promo.starts_at);
+    const createdAt = Date.parse(promo.created_at);
     const endsAt = promo.ends_at ? Date.parse(promo.ends_at) : Number.NaN;
     const discountPercent = Number(promo.discount_percent ?? 0);
 
@@ -769,7 +790,11 @@ async function resolveCheckoutPromos(input: {
       };
     }
 
-    if (Number.isFinite(startsAt) && startsAt - now > 60_000) {
+    if (
+      Number.isFinite(startsAt) &&
+      startsAt - now > 60_000 &&
+      !isLikelyLegacyBakuPromoStartShift({ startsAt, createdAt, now })
+    ) {
       return {
         ok: false as const,
         message: "Promo kod hələ aktiv deyil.",
