@@ -152,6 +152,7 @@ export const defaultSiteSettings: SiteSettings = {
   userRegistrationEnabled: true,
   storeRegistrationEnabled: true,
   depositEnabled: false,
+  orderEmailNotificationsEnabled: true,
   showWhatsappOrderButton: true,
   showSubscriptionInSellerPanel: false,
   subscriptionsDisabledForSellers: true,

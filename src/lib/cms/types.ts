@@ -54,6 +54,7 @@ export type SiteSettings = {
   userRegistrationEnabled: boolean;
   storeRegistrationEnabled: boolean;
   depositEnabled: boolean;
+  orderEmailNotificationsEnabled: boolean;
   showWhatsappOrderButton: boolean;
   showSubscriptionInSellerPanel: boolean;
   subscriptionsDisabledForSellers: boolean;

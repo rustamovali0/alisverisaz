@@ -629,6 +629,11 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
             "Product detail WhatsApp sifariş düyməsi",
             settings.showWhatsappOrderButton,
           ],
+          [
+            "orderEmailNotificationsEnabled",
+            "Sifariş email bildirişləri",
+            settings.orderEmailNotificationsEnabled,
+          ],
         ].map(([name, label, checked]) => (
           <label key={String(name)} className="flex items-center gap-2 text-sm font-medium">
             <input

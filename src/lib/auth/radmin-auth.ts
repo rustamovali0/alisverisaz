@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export async function requireRadmin() {
-  const current = await getCurrentUserProfile();
+  const current = await getCurrentUserProfile("admin");
 
   if (!current || current.role !== "admin") {
     redirect("/radmin/login");

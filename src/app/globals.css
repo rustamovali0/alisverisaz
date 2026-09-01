@@ -108,9 +108,9 @@
     --home-button-bg: hsl(var(--primary)) !important;
     --home-button-text: hsl(var(--primary-foreground)) !important;
     --home-border: hsl(var(--border)) !important;
-    --marketplace-primary: 331 84% 62% !important;
-    --marketplace-primary-hover: 331 78% 56% !important;
-    --marketplace-primary-soft: 331 44% 18% !important;
+    --marketplace-primary: 217 91% 60% !important;
+    --marketplace-primary-hover: 221 83% 53% !important;
+    --marketplace-primary-soft: 217 45% 18% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }
@@ -401,14 +401,17 @@
   }
 
   .marketplace-header {
-    background:
-      linear-gradient(180deg, hsl(var(--background) / 0.98), hsl(var(--background) / 0.92));
+    background: rgb(255 255 255 / 0.96);
   }
 
   [data-navbar-preset="premium"] .marketplace-header,
   [data-navbar-preset="marketplace"] .marketplace-header {
-    border-color: hsl(var(--border) / 0.72);
-    box-shadow: 0 8px 22px rgb(15 23 42 / 0.05);
+    border-color: rgb(226 232 240 / 0.9);
+    box-shadow: none;
+  }
+
+  .dark .marketplace-header {
+    background: rgb(2 6 23 / 0.94);
   }
 
   [data-navbar-preset="compact"] .marketplace-header .container,

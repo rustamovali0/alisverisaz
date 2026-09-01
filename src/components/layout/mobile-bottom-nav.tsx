@@ -34,38 +34,38 @@ const CART_KEY = "alisveris_cart";
 
 const navVariantClass: Record<MobileNavbarVariant, string> = {
   classic:
-    "inset-x-0 bottom-0 border-t border-border/80 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.12)] backdrop-blur-xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   floating:
-    "inset-x-3 bottom-3 rounded-2xl border border-border/80 bg-background/95 px-2 py-2 shadow-[0_14px_36px_rgba(15,23,42,0.2)] backdrop-blur-xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   pill:
-    "inset-x-4 bottom-3 rounded-full border border-border/80 bg-background/95 px-2 py-2 shadow-[0_12px_34px_rgba(15,23,42,0.18)] backdrop-blur-xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   compact:
-    "inset-x-0 bottom-0 border-t border-border/80 bg-background/95 px-1 pb-[max(env(safe-area-inset-bottom),0.35rem)] pt-1 shadow-[0_-6px_20px_rgba(15,23,42,0.1)] backdrop-blur-lg",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   outlined:
-    "inset-x-2 bottom-2 rounded-xl border-2 border-primary/25 bg-background/95 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   soft:
-    "inset-x-0 bottom-0 border-t border-primary/15 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)] backdrop-blur-lg",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   solid:
-    "inset-x-0 bottom-0 border-t border-primary/20 bg-background px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 shadow-[0_-8px_28px_rgba(15,23,42,0.1)]",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none dark:border-slate-800 dark:bg-slate-950",
   glass:
-    "inset-x-3 bottom-3 rounded-2xl border border-border/70 bg-background/92 px-2 py-2 shadow-[0_14px_38px_rgba(15,23,42,0.2)] backdrop-blur-2xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   minimal:
-    "inset-x-0 bottom-0 bg-background/95 px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-1.5 backdrop-blur-lg",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   rail:
-    "inset-x-2 bottom-2 rounded-lg border border-border/80 bg-background/95 px-1.5 py-1.5 shadow-[0_12px_30px_rgba(15,23,42,0.16)] backdrop-blur-xl",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
 };
 
 const itemVariantClass: Record<MobileNavbarVariant, string> = {
-  classic: "rounded-xl",
-  floating: "rounded-xl",
-  pill: "rounded-full",
-  compact: "rounded-lg min-h-[48px]",
+  classic: "rounded-lg",
+  floating: "rounded-lg",
+  pill: "rounded-lg",
+  compact: "rounded-lg",
   outlined: "rounded-lg",
-  soft: "rounded-xl",
-  solid: "rounded-xl",
-  glass: "rounded-xl",
+  soft: "rounded-lg",
+  solid: "rounded-lg",
+  glass: "rounded-lg",
   minimal: "rounded-lg",
-  rail: "rounded-md min-h-[48px]",
+  rail: "rounded-lg",
 };
 
 function readCartCount() {
@@ -107,13 +107,13 @@ function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "seller") {
     return (
       <LayoutDashboard
-        className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]"
+        className="mx-auto size-6 min-h-6 min-w-6 stroke-[2.4]"
         aria-hidden="true"
       />
     );
   }
 
-  return <UserRound className="mx-auto size-7 min-h-7 min-w-7 stroke-[2.4]" aria-hidden="true" />;
+  return <UserRound className="mx-auto size-6 min-h-6 min-w-6 stroke-[2.4]" aria-hidden="true" />;
 }
 
 export function MobileBottomNav({
@@ -404,21 +404,26 @@ export function MobileBottomNav({
               }}
               onClick={() => handleItemNavigation(item.href)}
               className={cn(
-                "relative grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[transform] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+                "relative grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
                 itemVariantClass[variant],
-                isActive && "bg-primary/10 text-primary",
+                isActive && "text-blue-600 dark:text-blue-300",
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
             >
-              <span className="relative grid place-items-center">
+              <span
+                className={cn(
+                  "relative grid size-8 place-items-center rounded-lg transition-colors",
+                  isActive && "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300",
+                )}
+              >
                 <Icon
-                  className="mx-auto size-7 min-h-7 min-w-7"
+                  className="mx-auto size-6 min-h-6 min-w-6"
                   strokeWidth={isActive ? 2.7 : 2.35}
                   aria-hidden="true"
                 />
                 {badge > 0 ? (
-                  <span className="absolute -right-1 -top-1.5 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                  <span className="absolute -right-1 -top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}
@@ -443,16 +448,23 @@ export function MobileBottomNav({
           }}
           disabled={isAuthLoading}
           className={cn(
-            "grid min-h-[54px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-foreground/70 transition-[transform] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent]",
+            "grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
-            activeHref === accountHref && "bg-primary/10 text-primary",
+            activeHref === accountHref && "text-blue-600 dark:text-blue-300",
           )}
           aria-current={activeHref === accountHref ? "page" : undefined}
           aria-disabled={isAuthLoading}
           aria-label={accountText}
         >
-          <AccountIcon role={role} />
+          <span
+            className={cn(
+              "grid size-8 place-items-center rounded-lg transition-colors",
+              activeHref === accountHref && "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300",
+            )}
+          >
+            <AccountIcon role={role} />
+          </span>
           <span className="max-w-full truncate leading-none">{accountText}</span>
         </button>
       </div>

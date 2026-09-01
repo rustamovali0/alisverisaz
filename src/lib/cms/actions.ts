@@ -280,6 +280,10 @@ export async function updateSiteSettingsAction(
     user_registration_enabled: readBoolean(formData, "userRegistrationEnabled"),
     store_registration_enabled: readBoolean(formData, "storeRegistrationEnabled"),
     deposit_enabled: false,
+    order_email_notifications_enabled: readBoolean(
+      formData,
+      "orderEmailNotificationsEnabled",
+    ),
     show_whatsapp_order_button: readBoolean(formData, "showWhatsappOrderButton"),
     show_subscription_in_seller_panel: readBoolean(
       formData,

@@ -2,6 +2,7 @@
 
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import {
   assertAuthRateLimit,
@@ -12,6 +13,11 @@ import { getCurrentUserProfile } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import {
+  sendCustomerOrderCreatedEmail,
+  sendSellerOrderCreatedEmail,
+  type OrderEmailItem,
+} from "@/lib/email/order";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { getCartProducts } from "@/lib/cart/data";
 import { notifyOrderCreated } from "@/lib/telegram/notifications";
@@ -454,6 +460,115 @@ async function applyOrderPromoSnapshots(input: {
         .eq("id", order.id);
     }),
   );
+}
+
+async function areOrderEmailNotificationsEnabled() {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data } = await (supabaseAdmin as any)
+    .from("platform_settings")
+    .select("value")
+    .eq("key", "site")
+    .maybeSingle();
+  const value = data?.value?.order_email_notifications_enabled;
+
+  return typeof value === "boolean" ? value : true;
+}
+
+async function sendOrderEmailNotifications(orderIds: string[]) {
+  if (orderIds.length === 0 || !(await areOrderEmailNotificationsEnabled())) {
+    return;
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: orders } = await (supabaseAdmin as any)
+    .from("orders")
+    .select(
+      "id,order_number,user_id,total_amount,currency,stores(id,name,owner_id),order_items(product_name,quantity,unit_price_amount,total_amount)",
+    )
+    .in("id", orderIds);
+
+  const typedOrders = (orders ?? []) as Array<{
+    id: string;
+    order_number: string | null;
+    user_id: string | null;
+    total_amount: string | number | null;
+    currency: string | null;
+    stores?: {
+      id: string;
+      name: string | null;
+      owner_id: string | null;
+    } | null;
+    order_items?: Array<{
+      product_name: string | null;
+      quantity: number | null;
+      unit_price_amount: string | number | null;
+      total_amount: string | number | null;
+    }>;
+  }>;
+  const profileIds = Array.from(
+    new Set(
+      typedOrders
+        .flatMap((order) => [order.user_id, order.stores?.owner_id])
+        .filter((id): id is string => Boolean(id)),
+    ),
+  );
+  const { data: profiles } =
+    profileIds.length > 0
+      ? await (supabaseAdmin as any)
+          .from("profiles")
+          .select("id,email,full_name")
+          .in("id", profileIds)
+      : { data: [] };
+  const profileMap = new Map(
+    ((profiles ?? []) as Array<{
+      id: string;
+      email: string | null;
+      full_name: string | null;
+    }>).map((profile) => [profile.id, profile]),
+  );
+  const tasks: Array<Promise<unknown>> = [];
+
+  for (const order of typedOrders) {
+    const buyer = order.user_id ? profileMap.get(order.user_id) : null;
+    const seller = order.stores?.owner_id
+      ? profileMap.get(order.stores.owner_id)
+      : null;
+    const currency = order.currency || "AZN";
+    const items: OrderEmailItem[] = (order.order_items ?? []).map((item) => ({
+      name: item.product_name || "Məhsul",
+      quantity: Number(item.quantity ?? 0),
+      unitPrice: Number(item.unit_price_amount ?? 0),
+      totalAmount: Number(item.total_amount ?? 0),
+    }));
+    const input = {
+      orderNumber: order.order_number || order.id,
+      storeName: order.stores?.name || "Mağaza",
+      customerName: buyer?.full_name || buyer?.email || "Müştəri",
+      totalAmount: Number(order.total_amount ?? 0),
+      currency,
+      items,
+    };
+
+    if (buyer?.email) {
+      tasks.push(sendCustomerOrderCreatedEmail({ ...input, to: buyer.email }));
+    }
+
+    if (seller?.email) {
+      tasks.push(sendSellerOrderCreatedEmail({ ...input, to: seller.email }));
+    }
+  }
+
+  await Promise.allSettled(tasks);
+}
+
+function scheduleOrderEmailNotifications(orderIds: string[]) {
+  if (orderIds.length === 0) {
+    return;
+  }
+
+  after(async () => {
+    await sendOrderEmailNotifications(orderIds);
+  });
 }
 
 export async function getCartProductsAction(productIds: string[], locale = "az") {
@@ -1253,6 +1368,7 @@ export async function createCheckoutOrdersAction(
 
   if (checkout.orderIds.length > 0) {
     void notifyOrderCreated(checkout.orderIds);
+    scheduleOrderEmailNotifications(checkout.orderIds);
   }
 
   if (checkout.orderIds.length > 0) {
