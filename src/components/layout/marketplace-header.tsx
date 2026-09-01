@@ -123,11 +123,11 @@ export function MarketplaceHeader({
   const commerceUtilityButtonClass =
     "group inline-flex size-10 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-11";
   const commerceUtilityIconClass =
-    "size-6 min-h-6 min-w-6 stroke-[2.3] transition-transform duration-200 md:group-hover:scale-105";
+    "size-6 min-h-6 min-w-6 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-6 stroke-[2.3] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-7";
+    "size-6 stroke-[2] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-7";
   const mobileCommerceIconClass =
-    "size-6 stroke-[2.3] transition-transform duration-200";
+    "size-6 stroke-[2] transition-transform duration-200";
 
   function showLoginRequiredToast() {
     showToast({
@@ -180,7 +180,8 @@ export function MarketplaceHeader({
 
   const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
-  const shouldShowDesktopSearch = !shouldSuppressSearch && hasSearchData;
+  const shouldShowDesktopSearch =
+    !shouldSuppressSearch && hasSearchData && (!isHomePage || !isHomeSearchVisible);
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
@@ -304,7 +305,7 @@ export function MarketplaceHeader({
               </>
             ) : null}
           </div>
-          <nav className="hidden min-w-0 items-center gap-1 lg:flex">
+          <nav className="hidden shrink-0 items-center gap-1 lg:flex">
             <Button
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
@@ -332,17 +333,6 @@ export function MarketplaceHeader({
             </Button>
             <Button
               asChild
-              variant="ghost"
-              className="group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
-            >
-              <Link href="/categories" prefetch>
-                <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
-                  Kateqoriyalar
-                </span>
-              </Link>
-            </Button>
-            <Button
-              asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
                 "group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
@@ -357,7 +347,7 @@ export function MarketplaceHeader({
             </Button>
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[360px] flex-[1.4_1_0] items-center gap-3 md:flex xl:max-w-[720px]">
+            <div className="ml-auto hidden min-w-[300px] max-w-[430px] flex-[1_1_300px] items-center gap-3 md:flex xl:max-w-[500px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}

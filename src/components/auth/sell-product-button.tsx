@@ -40,7 +40,7 @@ export function SellProductButton() {
       onClick={handleClick}
       disabled={isPending}
     >
-      <Plus className="mr-2 size-4" aria-hidden="true" />
+      <Plus className="mr-2 size-5 stroke-[2.2]" aria-hidden="true" />
       <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
         Satıcı ol
       </span>

@@ -287,7 +287,7 @@ export function HomeExperience({
       style={homeDesignStyle}
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-10 md:space-y-20">
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_62%,#ffffff_100%)] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-[linear-gradient(135deg,#0f172a_0%,#111827_54%,#020617_100%)] md:rounded-[20px]">
+        <section className="relative z-20 overflow-visible rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#eff6ff_0%,#f8fafc_62%,#ffffff_100%)] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-[linear-gradient(135deg,#0f172a_0%,#111827_54%,#020617_100%)] md:rounded-[20px]">
           <div className="grid gap-6 p-5 sm:p-6 md:p-8 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.02fr)_minmax(360px,0.98fr)] lg:items-center lg:gap-8 lg:p-10 xl:p-12">
             <div className="min-w-0">
               <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-200 dark:ring-blue-400/20">

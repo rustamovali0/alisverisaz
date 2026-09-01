@@ -340,6 +340,7 @@ export function MarketplaceSearch({
       className={cn(
         "relative flex w-full min-w-0 gap-2",
         "flex-row items-center",
+        isFocused && "z-[80]",
         className,
       )}
       onBlur={(event) => {
@@ -408,7 +409,7 @@ export function MarketplaceSearch({
         ) : null}
       </Button>
       {showPopularSearches || showSuggestions || showNoResults ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
             <div className="border-b px-3 py-3 last:border-b-0">
               <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
