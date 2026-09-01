@@ -3,10 +3,23 @@
 import type { CSSProperties } from "react";
 import {
   ArrowRight,
+  Baby,
+  BookOpen,
+  BriefcaseBusiness,
+  Car,
+  Dumbbell,
+  Hammer,
+  Home,
+  Leaf,
   Package,
+  PawPrint,
   ShieldCheck,
+  Shirt,
+  Smartphone,
+  Sparkles,
   Store,
   Truck,
+  Utensils,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -121,6 +134,60 @@ const trustItems = [
   },
 ];
 
+function getCategoryIcon(category: CategoryOption) {
+  const value = `${category.slug} ${category.name}`.toLocaleLowerCase("az-AZ");
+
+  if (value.includes("elektron")) {
+    return Smartphone;
+  }
+
+  if (value.includes("ev") || value.includes("bag") || value.includes("bağ")) {
+    return value.includes("heyvan") ? PawPrint : Home;
+  }
+
+  if (value.includes("moda") || value.includes("geyim")) {
+    return Shirt;
+  }
+
+  if (value.includes("gozell") || value.includes("gözəll") || value.includes("baxim") || value.includes("baxım")) {
+    return Sparkles;
+  }
+
+  if (value.includes("usaq") || value.includes("uşaq")) {
+    return Baby;
+  }
+
+  if (value.includes("idman") || value.includes("outdoor")) {
+    return Dumbbell;
+  }
+
+  if (value.includes("avto") || value.includes("masin") || value.includes("maşın")) {
+    return Car;
+  }
+
+  if (value.includes("tikinti") || value.includes("alet") || value.includes("alət")) {
+    return Hammer;
+  }
+
+  if (value.includes("kitab")) {
+    return BookOpen;
+  }
+
+  if (value.includes("qida") || value.includes("icki") || value.includes("içki")) {
+    return Utensils;
+  }
+
+  if (value.includes("ofis") || value.includes("defter") || value.includes("dəftər")) {
+    return BriefcaseBusiness;
+  }
+
+  if (value.includes("bag") || value.includes("bağ")) {
+    return Leaf;
+  }
+
+  return Package;
+}
+
 function SectionHeader({
   title,
   mobileTitle,
@@ -156,19 +223,21 @@ function SectionHeader({
 }
 
 function CategoryCard({ category }: { category: CategoryOption }) {
+  const CategoryIcon = getCategoryIcon(category);
+
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group flex min-h-[112px] min-w-0 flex-col justify-between rounded-[14px] border border-slate-200 bg-white p-4 text-slate-950 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 dark:hover:border-slate-700 sm:min-h-[145px] sm:p-5"
+      className="group flex min-h-[112px] min-w-0 flex-col justify-between rounded-[14px] border border-slate-200 bg-white p-4 text-slate-950 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[145px] sm:p-5 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
     >
-      <span className="grid size-10 place-items-center rounded-lg bg-slate-100 text-base font-semibold text-blue-600 transition group-hover:bg-blue-50 dark:bg-slate-800 dark:text-blue-300 dark:group-hover:bg-slate-800 sm:size-11">
-        {category.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
+      <span className="grid size-10 place-items-center rounded-lg bg-blue-50 text-blue-600 transition dark:bg-blue-400/10 dark:text-blue-300 sm:size-11">
+        <CategoryIcon className="size-5 stroke-[2.1] sm:size-6" aria-hidden="true" />
       </span>
       <span className="mt-4 flex min-w-0 items-end justify-between gap-3 sm:mt-5">
         <span className="min-w-0 break-words text-[15px] font-semibold leading-5 sm:line-clamp-2 sm:text-base">
           {category.name}
         </span>
-        <ArrowRight className="size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
+        <ArrowRight className="size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600" />
       </span>
     </Link>
   );
@@ -179,25 +248,27 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
   return (
-    <article className="group h-full min-w-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:270px] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700 md:rounded-2xl">
-      <Link href={getStorePath(store.slug)} className="block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-        <div className="relative aspect-[16/9] overflow-hidden bg-slate-100 dark:bg-slate-800 md:aspect-[16/7]">
-          {coverUrl ? (
-            <img
-              src={coverUrl}
-              alt={store.name}
-              className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.015]"
-              loading="lazy"
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f1f5f9,#e2e8f0)] dark:bg-[linear-gradient(135deg,#1e293b,#0f172a)]">
-              <span className="text-4xl font-semibold text-slate-400 dark:text-slate-600">
-                {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
-              </span>
-            </div>
-          )}
-          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-950/24 to-transparent" />
-          <div className="absolute -bottom-5 left-4 grid size-12 place-items-center overflow-hidden rounded-xl border border-white bg-white text-base font-semibold text-blue-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 md:-bottom-6 md:size-14 md:text-lg">
+    <article className="group h-full min-w-0 rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:rounded-2xl md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700">
+      <Link href={getStorePath(store.slug)} className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+        <div className="relative">
+          <div className="aspect-[16/9] overflow-hidden rounded-t-[14px] bg-slate-100 dark:bg-slate-800 md:aspect-[16/7] md:rounded-t-2xl">
+            {coverUrl ? (
+              <img
+                src={coverUrl}
+                alt={store.name}
+                className="h-full w-full object-cover transition duration-200 md:group-hover:scale-[1.015]"
+                loading="lazy"
+              />
+            ) : (
+              <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f1f5f9,#e2e8f0)] dark:bg-[linear-gradient(135deg,#1e293b,#0f172a)]">
+                <span className="text-4xl font-semibold text-slate-400 dark:text-slate-600">
+                  {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
+                </span>
+              </div>
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-950/24 to-transparent" />
+          </div>
+          <div className="absolute -bottom-7 left-4 z-10 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-md shadow-slate-950/10 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
             {store.logoUrl ? (
               <img
                 src={store.logoUrl}
@@ -210,7 +281,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
             )}
           </div>
         </div>
-        <div className="flex min-h-[104px] flex-col justify-between px-4 pb-4 pt-8 md:min-h-[118px] md:pt-9">
+        <div className="flex min-h-[112px] flex-col justify-between px-4 pb-4 pt-10 md:min-h-[126px] md:pt-12">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:text-base">
@@ -220,7 +291,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
                 {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
-            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600 sm:size-5 md:block" />
+            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition sm:size-5 md:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-600" />
           </div>
         </div>
       </Link>

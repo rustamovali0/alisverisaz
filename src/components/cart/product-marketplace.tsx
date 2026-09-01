@@ -745,7 +745,7 @@ export function ProductGrid({
                   <Button
                     asChild
                     className={cn(
-                      "h-10 w-full rounded-lg px-2 text-[13px] font-black uppercase shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:text-sm sm:font-medium sm:normal-case",
+                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium md:hover:-translate-y-0.5",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25",
                     )}
@@ -759,7 +759,7 @@ export function ProductGrid({
                     product={product}
                     disabled={isOutOfStock}
                     className={cn(
-                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium",
+                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium md:hover:-translate-y-0.5",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}
@@ -987,7 +987,7 @@ export function ProductInfiniteGrid({
         forceMobileTwoColumns={forceMobileTwoColumns}
       />
       {hasMore ? (
-        <div className="mt-6 flex justify-center">
+        <div className="mb-10 mt-7 flex justify-center md:mb-0">
           <Button
             type="button"
             variant="outline"
