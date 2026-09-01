@@ -33,48 +33,83 @@ export default async function StoresPage({ params }: StoresPageProps) {
   ]);
 
   return (
-    <main className="min-h-screen bg-muted/20 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <section className="container py-6 md:py-10">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="grid size-11 place-items-center rounded-lg border bg-card text-primary shadow-sm">
+    <main className="min-h-screen bg-slate-50 pb-[calc(90px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+      <section className="container max-w-[1280px] py-8 md:py-12">
+        <div className="mb-6 flex min-w-0 items-end justify-between gap-4 md:mb-8">
+          <div className="min-w-0">
+            <p className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-300">
+              Mağazalar
+            </p>
+            <h1 className="text-2xl font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[28px]">
+              {home("allStores")}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400 md:text-base">
+              Platformadakı mağazaları kəşf et.
+            </p>
+          </div>
+          <span className="hidden size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 sm:grid">
             <Store className="size-5" aria-hidden="true" />
           </span>
-          <h1 className="text-2xl font-black tracking-normal md:text-3xl">
-            {home("allStores")}
-          </h1>
         </div>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-          {stores.map((store) => (
-            <Link
-              key={store.id}
-              href={getStorePath(store.slug)}
-              className="group min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm transition hover:border-primary/40 hover:shadow-md"
-            >
-              <div className="grid aspect-[16/9] place-items-center border-b bg-muted/50 p-4">
-                {store.logoUrl ? (
-                  <img
-                    src={store.logoUrl}
-                    alt={store.name}
-                    className="h-full w-full object-contain"
-                    loading="lazy"
-                  />
-                ) : (
-                  <span className="grid size-12 place-items-center rounded-lg border bg-background text-lg font-black text-primary">
-                    {store.name.slice(0, 1).toUpperCase()}
+        <div className="grid min-w-0 grid-cols-1 gap-4 min-[520px]:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
+          {stores.map((store) => {
+            const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
+
+            return (
+              <Link
+                key={store.id}
+                href={getStorePath(store.slug)}
+                className="group min-w-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 dark:hover:border-slate-700"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={store.name}
+                      className="h-full w-full object-cover object-center transition duration-200 group-hover:scale-[1.015]"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#e2e8f0)] dark:bg-[linear-gradient(135deg,#1e293b,#0f172a)]">
+                      <span className="grid size-14 place-items-center rounded-xl border border-slate-200 bg-white text-lg font-semibold text-blue-600 dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300">
+                        {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/28 to-transparent" />
+                  <span className="absolute -bottom-5 left-4 grid size-12 place-items-center overflow-hidden rounded-xl border border-white bg-white text-base font-semibold text-blue-600 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300">
+                    {store.logoUrl ? (
+                      <img
+                        src={store.logoUrl}
+                        alt={store.name}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      store.name.slice(0, 1).toLocaleUpperCase("az-AZ")
+                    )}
                   </span>
-                )}
-              </div>
-              <div className="flex min-w-0 items-start justify-between gap-2 p-3">
-                <div className="min-w-0">
-                  <h2 className="truncate text-sm font-black sm:text-base">{store.name}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {marketplace("productCount", { count: store.productCount })}
-                  </p>
                 </div>
-                <ArrowRight className="mt-0.5 size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
-              </div>
-            </Link>
-          ))}
+                <div className="min-w-0 px-4 pb-4 pt-8">
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h2 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 sm:text-base">
+                        {store.name}
+                      </h2>
+                      <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                        {marketplace("productCount", { count: store.productCount })}
+                      </p>
+                    </div>
+                    <ArrowRight className="mt-1 size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-blue-600" />
+                  </div>
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 transition group-hover:text-blue-700 dark:text-blue-300 dark:group-hover:text-blue-200">
+                    Mağazaya bax
+                    <ArrowRight className="size-4" aria-hidden="true" />
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
       <SiteFooter

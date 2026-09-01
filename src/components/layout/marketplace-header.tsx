@@ -121,11 +121,11 @@ export function MarketplaceHeader({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group size-11 rounded-lg border border-transparent bg-transparent text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-12";
+    "group size-11 rounded-lg border border-transparent bg-transparent text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-[52px]";
   const commerceUtilityIconClass =
-    "h-8 w-8 min-h-8 min-w-8 stroke-[2.35] transition-transform duration-200 group-hover:scale-110";
+    "h-9 w-9 min-h-9 min-w-9 stroke-[2.35] transition-transform duration-200 group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-8 stroke-[2.35] transition-transform duration-200 group-hover:scale-110 min-[400px]:size-9";
+    "size-9 stroke-[2.35] transition-transform duration-200 group-hover:scale-105 min-[400px]:size-10";
   const mobileCommerceIconClass =
     "size-6 stroke-[2.35] transition-transform duration-200 group-hover:scale-105";
 

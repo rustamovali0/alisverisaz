@@ -76,11 +76,11 @@ export function RelatedProductList({
   }
 
   return (
-    <section className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <section className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-5">
+      <div className="mb-4 flex items-center justify-between gap-3 md:mb-5">
         <div>
-          <h2 className="text-xl font-black tracking-normal">{t("similarProducts")}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t("sameCategoryProducts")}</p>
+          <h2 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-50 md:text-2xl">{t("similarProducts")}</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("sameCategoryProducts")}</p>
         </div>
       </div>
       <ProductGrid products={products} labels={{ stock: t("stock") }} layout="related" />

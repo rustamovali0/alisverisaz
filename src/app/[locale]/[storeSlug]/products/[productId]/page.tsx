@@ -206,34 +206,34 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : getStorePath(detail.store.slug);
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(10rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-0 py-4 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-4 sm:py-8 md:pb-8 lg:py-10">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
         url={`${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`}
       />
       <ViewTracker productId={detail.product.id} />
-      <div className="mx-auto w-full max-w-[1220px] px-4 py-5 sm:px-6 md:py-7 lg:px-7">
-        <nav className="mb-5 min-w-0 text-sm text-muted-foreground">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-3 sm:px-6 md:py-6 lg:px-8">
+        <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
             <ProductBackButton />
             <div className="flex min-w-0 items-center overflow-hidden">
-              <Link href="/products" className="hover:text-primary">
+              <Link href="/products" className="hover:text-blue-600 dark:hover:text-blue-300">
                 Mağazalar
               </Link>
               <span className="mx-2">·</span>
-              <Link href={storeBaseHref} className="min-w-0 truncate hover:text-primary">
+              <Link href={storeBaseHref} className="min-w-0 truncate hover:text-blue-600 dark:hover:text-blue-300">
                 {detail.store.name}
               </Link>
               <span className="mx-2">·</span>
-              <span className="min-w-0 truncate font-medium text-foreground">
+              <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
                 {detail.product.name}
               </span>
             </div>
           </div>
         </nav>
 
-        <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <section className="grid min-w-0 gap-5 md:gap-6 lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start">
           <ProductDetailGallery
             images={detail.product.images}
             fallbackImageUrl={detail.product.imageUrl}
@@ -241,10 +241,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             productName={detail.product.name}
             viewerRole={viewerRole}
           />
-          <div className="min-w-0 rounded-lg border bg-card p-4 shadow-sm md:p-5">
-            <p className="truncate text-sm text-muted-foreground">{detail.store.name}</p>
+          <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">{detail.store.name}</p>
             <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
-              <h1 className="min-w-0 break-words text-2xl font-black tracking-normal md:text-3xl">
+              <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[34px]">
                 {detail.product.name}
               </h1>
               {!isStoreOwner ? (
@@ -255,7 +255,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 />
               ) : null}
             </div>
-            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
+            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
               {reviewSummary.count ? (
                 <>
                   <div className="flex">
@@ -269,32 +269,32 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                         }
                         aria-hidden="true"
                       />
-                    ))}
+                  ))}
                   </div>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
                     {reviewSummary.average} / 5 ({reviewSummary.count} rəy)
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-muted-foreground">Hələ rəy yoxdur</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">Hələ rəy yoxdur</span>
               )}
             </div>
-            <p className="mt-5 break-words text-3xl font-black">
+            <p className="mt-6 break-words text-[32px] font-semibold leading-none text-slate-950 dark:text-slate-50 md:text-[36px]">
               {formatAznDiscountedPrice(
                 detail.product.priceAmount,
                 detail.product.discountAmount,
               )}
             </p>
-            <p className={canBuy ? "mt-2 text-sm text-muted-foreground" : "mt-2 text-sm font-semibold text-destructive"}>
+            <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p>
             {detail.product.description ? (
-              <p className="mt-5 break-words leading-7 text-muted-foreground">
+              <p className="mt-5 break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                 {detail.product.description}
               </p>
             ) : null}
             {isStoreOwner ? (
-              <Button asChild className="mt-5 h-11 w-full">
+              <Button asChild className="mt-6 h-[52px] w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                 <Link href={`/store/dashboard/products?edit=${detail.product.id}#edit-product-${detail.product.id}`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
@@ -312,17 +312,17 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 disabled={!canBuy}
               />
             )}
-            <Button asChild variant="outline" className="mt-3 h-11 w-full border-primary/20 bg-background text-foreground hover:bg-primary/5">
+            <Button asChild variant="outline" className="mt-3 h-[52px] w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200">
               <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                 <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                 Sual & Cavablar
               </Link>
             </Button>
             {!isStoreOwner ? (
-              <div className="mt-5 min-w-0 overflow-hidden rounded-xl border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10 sm:p-3.5">
-                <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(11rem,0.85fr)_minmax(0,1fr)_minmax(11rem,0.65fr)] lg:items-center">
+              <div className="mt-5 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+                <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-primary/15 bg-background">
+                    <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                       {detail.store.logoUrl ? (
                         <img
                           src={detail.store.logoUrl}
@@ -330,40 +330,40 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <span className="text-base font-black text-muted-foreground">
-                          {detail.store.name.slice(0, 1)}
+                        <span className="text-base font-semibold text-slate-500 dark:text-slate-400">
+                          {detail.store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                         </span>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground">Satıcı</p>
-                      <h2 className="truncate text-base font-black leading-5 tracking-normal">
+                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Satıcı</p>
+                      <h2 className="line-clamp-2 break-words text-base font-semibold leading-5 tracking-normal text-slate-950 dark:text-slate-50">
                         {detail.store.name}
                       </h2>
                     </div>
                   </div>
-                  <div className="grid min-w-0 gap-1.5 text-xs text-muted-foreground">
-                    <span className="inline-flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg bg-background px-2.5">
-                      <Package className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                  <div className="grid min-w-0 gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                      <Package className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                       <span className="min-w-0 break-words">{detail.store.productCount} məhsul</span>
                     </span>
-                    <span className="inline-flex min-h-8 w-full min-w-0 items-center gap-2 rounded-lg bg-background px-2.5">
-                      <Clock3 className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                    <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                      <Clock3 className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                       <span className="min-w-0 break-words">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
                     {sellerAddress ? (
-                      <span className="inline-flex min-h-8 w-full min-w-0 items-start gap-2 rounded-lg bg-background px-2.5 py-2">
-                        <MapPin className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
+                      <span className="inline-flex min-h-9 w-full min-w-0 items-start gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                        <MapPin className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                         <span className="min-w-0 break-words leading-5">{sellerAddress}</span>
                       </span>
                     ) : null}
                   </div>
-                  <div className="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                    <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs hover:bg-primary/5">
+                  <div className="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:col-span-2">
+                    <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10">
                       <Link href={storeBaseHref}>Mağazaya keç</Link>
                     </Button>
                     {sellerMapUrl ? (
-                      <Button asChild variant="outline" className="h-9 border-primary/20 bg-background px-3 text-xs text-primary hover:bg-primary/5">
+                      <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-blue-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10">
                         <a href={sellerMapUrl} target="_blank" rel="noreferrer">
                           Xəritəni göstər
                           <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
@@ -378,7 +378,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </section>
 
         {relatedProducts ? (
-          <div className="mt-6 scroll-mt-28 md:mt-6">
+          <div className="mt-8 scroll-mt-28 md:mt-10">
             <RelatedProductList
               initialProducts={relatedProducts.products}
               initialCursor={relatedProducts.nextCursor}
@@ -390,11 +390,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         ) : null}
 
-        <section className="mt-5 min-w-0 md:mt-6">
-          <div className="min-w-0 rounded-lg border bg-card p-3 shadow-sm md:p-5">
+        <section className="mt-8 min-w-0 md:mt-10">
+          <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <h2 className="text-xl font-black tracking-normal">Məhsul dəyərləndirməsi</h2>
+              <h2 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-50">Məhsul dəyərləndirməsi</h2>
             </div>
             {canWriteReview ? (
               <ProductReviewForm

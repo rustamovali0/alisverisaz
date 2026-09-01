@@ -28,7 +28,7 @@ export function ProductBackButton() {
       type="button"
       variant="outline"
       onClick={() => router.back()}
-      className="hidden md:inline-flex"
+      className="inline-flex h-10 rounded-lg border-slate-200 bg-white px-3 text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
     >
       <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
       Geri
@@ -152,45 +152,45 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className="min-w-0 overflow-hidden rounded-lg border bg-card shadow-sm">
+      <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-[16/11] w-full bg-muted text-left md:aspect-[4/3] md:max-h-[420px] lg:max-h-[460px]"
+          className="group relative block aspect-square w-full bg-slate-50 text-left dark:bg-slate-950/45"
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
             <img
               src={activeImage.url}
               alt={productName}
-              className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.04] motion-reduce:transition-none"
+              className="h-full w-full object-contain p-4 transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none sm:p-6"
             />
           ) : (
-            <div className="grid h-full place-items-center bg-muted/70 text-muted-foreground">
-              <span className="grid size-20 place-items-center rounded-full border border-primary/15 bg-background/85 text-primary shadow-sm">
+            <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-blue-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300">
                 <ShoppingCart className="size-10 stroke-[2.4]" aria-hidden="true" />
               </span>
             </div>
           )}
         </button>
         {hasMultipleImages ? (
-          <div className="flex gap-2 overflow-x-auto border-t bg-background p-2.5 sm:grid sm:grid-cols-5 sm:p-3">
+          <div className="flex gap-2 overflow-x-auto border-t border-slate-200 bg-white p-2.5 [scrollbar-width:thin] dark:border-slate-800 dark:bg-slate-900 sm:grid sm:grid-cols-5 sm:p-3">
             {galleryImages.map((image, index) => (
               <button
                 key={`${image.url}-${index}`}
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 className={cn(
-                  "size-14 shrink-0 overflow-hidden rounded-md border bg-muted sm:size-auto sm:aspect-square",
-                  index === activeIndex ? "border-primary ring-2 ring-primary/20" : "",
+                  "size-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:aspect-square sm:size-auto dark:border-slate-800 dark:bg-slate-950/45",
+                  index === activeIndex ? "border-blue-600 ring-2 ring-blue-500/20" : "",
                 )}
                 aria-label={`${index + 1}. şəkil`}
               >
                 <img
                   src={image.url}
                   alt={`${productName} ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain p-1"
                 />
               </button>
             ))}
@@ -216,7 +216,7 @@ export function ProductDetailGallery({
               <img
                 src={activeImage.url}
                 alt={productName}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain"
               />
             </div>
             <div className="min-w-0 flex-1">

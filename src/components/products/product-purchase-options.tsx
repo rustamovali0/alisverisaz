@@ -102,20 +102,20 @@ export function ProductPurchaseOptions({
   const isUnavailable = disabled || stockLimit <= 0;
 
   return (
-    <div className="mt-5 grid min-w-0 gap-4">
+    <div className="mt-6 grid min-w-0 gap-4">
       {visibleOptions.length > 0 ? (
-        <div className="grid gap-2.5 rounded-lg border border-primary/15 bg-primary/[0.035] p-3 shadow-sm dark:bg-primary/10">
+        <div className="grid gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45">
           <div className="flex min-w-0 items-center justify-between gap-3">
-            <p className="text-[13px] font-black">Seçimlər</p>
-            <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+            <p className="text-[13px] font-semibold text-slate-950 dark:text-slate-50">Seçimlər</p>
+            <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">
               Məhsul variantı
             </span>
           </div>
           {visibleOptions.map((option) => (
             <div key={option.type} className="grid gap-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                {option.name}
-              </p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
+                  {option.name}
+                </p>
               <div className="flex flex-wrap gap-1.5">
                 {option.values.map((value) => {
                   const isSelected = normalizedSelection[option.type] === value.value;
@@ -138,10 +138,10 @@ export function ProductPurchaseOptions({
                         }))
                       }
                       className={cn(
-                        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold shadow-sm transition",
+                        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold shadow-sm transition",
                         isSelected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-primary/15 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5",
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10",
                         !isAvailable && "cursor-not-allowed opacity-40",
                       )}
                     >
@@ -167,14 +167,14 @@ export function ProductPurchaseOptions({
         </div>
       ) : null}
 
-      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 min-[380px]:grid-cols-2">
         <BuyNowButton
           product={product}
           viewerRole={viewerRole}
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-12 w-full rounded-xl shadow-sm"
+          className="h-[52px] w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700"
         />
         <AddToCartButton
           product={product}
@@ -182,7 +182,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-12 w-full border-0 bg-primary text-primary-foreground hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))]"
+          className="h-[52px] w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
         />
       </div>
       {showWhatsappOrderButton ? (
@@ -196,7 +196,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-12 w-full"
+          className="h-[52px] w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300"
         />
       ) : null}
     </div>

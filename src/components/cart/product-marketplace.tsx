@@ -558,8 +558,6 @@ export function ProductGrid({
   const t = useTranslations("marketplace");
   const router = useRouter();
   const isLiquidGlass = productCardVariant === "liquid-glass";
-  const centerRelatedCards = layout === "related" && products.length <= 3;
-
   if (products.length === 0) {
     return (
       <EmptyState
@@ -576,10 +574,7 @@ export function ProductGrid({
     <div
       className={cn(
         layout === "related"
-          ? cn(
-              "grid min-w-0 grid-cols-2 gap-3 md:flex md:overflow-x-auto md:pb-3 md:pr-3 md:[scrollbar-color:hsl(var(--border))_transparent] md:[scrollbar-width:thin]",
-              centerRelatedCards && "md:justify-center",
-            )
+          ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
           : forceMobileTwoColumns
             ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
             : "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
@@ -629,7 +624,6 @@ export function ProductGrid({
           }}
           className={cn(
             "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
-            layout === "related" && "md:w-60 md:shrink-0",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
           )}
