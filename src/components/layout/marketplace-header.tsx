@@ -121,13 +121,13 @@ export function MarketplaceHeader({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group inline-flex size-11 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-12";
+    "group inline-flex size-10 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-11";
   const commerceUtilityIconClass =
-    "size-8 min-h-8 min-w-8 stroke-[2.35] transition-transform duration-200 md:group-hover:scale-105";
+    "size-6 min-h-6 min-w-6 stroke-[2.3] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-8 stroke-[2.35] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-9";
+    "size-6 stroke-[2.3] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-7";
   const mobileCommerceIconClass =
-    "size-7 stroke-[2.35] transition-transform duration-200";
+    "size-6 stroke-[2.3] transition-transform duration-200";
 
   function showLoginRequiredToast() {
     showToast({
