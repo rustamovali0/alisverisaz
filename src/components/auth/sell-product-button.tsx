@@ -41,7 +41,7 @@ export function SellProductButton() {
       disabled={isPending}
     >
       <Plus className="mr-2 size-4" aria-hidden="true" />
-      <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+      <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
         Satıcı ol
       </span>
     </Button>

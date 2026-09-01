@@ -38,7 +38,7 @@ export function ResetPasswordForm() {
 
   return (
     <AuthCard
-      className="mx-auto max-w-[520px]"
+      className="mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/login">
@@ -54,7 +54,7 @@ export function ResetPasswordForm() {
         </div>
       }
       title="Şifrəni yenilə"
-      description="Yeni şifrənizi yazın və hesabınızı yenidən aktiv edin."
+      description={undefined}
       footer={
         <p>
           Problem davam edirsə{" "}
@@ -87,7 +87,7 @@ export function ResetPasswordForm() {
           minLength={8}
           required
         />
-        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-xl">
+        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700">
           {isPending ? "Yenilənir" : "Şifrəni yenilə"}
         </Button>
       </form>

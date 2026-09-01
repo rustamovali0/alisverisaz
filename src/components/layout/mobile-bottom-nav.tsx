@@ -11,7 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
@@ -130,10 +130,7 @@ export function MobileBottomNav({
   const pathname = usePathname();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  const lastNavigationRef = useRef<{ href: string; at: number } | null>(null);
   const isAuthLoading = !isResolved && !initialRole;
   const actualRole =
     !isResolved && initialRole
@@ -249,15 +246,6 @@ export function MobileBottomNav({
         return;
       }
 
-      const now = Date.now();
-      const lastNavigation = lastNavigationRef.current;
-
-      if (lastNavigation?.href === href && now - lastNavigation.at < 600) {
-        return;
-      }
-
-      lastNavigationRef.current = { href, at: now };
-      setPendingHref(href);
       router.push(href, { scroll: true });
       scrollPageToTop();
     },
@@ -291,15 +279,11 @@ export function MobileBottomNav({
     [pathname],
   );
 
-  useEffect(() => {
-    setPendingHref(null);
-  }, [pathname]);
-
   const isAccountRoute =
     (role === "seller" && pathname === "/store/dashboard") ||
     (role !== "seller" && pathname.startsWith("/dashboard"));
   const currentItemHref = items.find((item) => isNavItemActive(item.href))?.href ?? null;
-  const activeHref = pendingHref ?? currentItemHref ?? (isAccountRoute ? accountHref : null);
+  const activeHref = currentItemHref ?? (isAccountRoute ? accountHref : null);
 
   useEffect(() => {
     function syncCartCount() {
@@ -315,44 +299,6 @@ export function MobileBottomNav({
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.visualViewport) {
-      return;
-    }
-
-    const viewport = window.visualViewport;
-    const initialHeight = viewport.height;
-
-    function syncKeyboardState() {
-      const activeElement = document.activeElement;
-      const isTextInput =
-        activeElement instanceof HTMLInputElement ||
-        activeElement instanceof HTMLTextAreaElement ||
-        activeElement instanceof HTMLSelectElement ||
-        activeElement?.getAttribute("contenteditable") === "true";
-      const viewportShrink = initialHeight - viewport.height;
-
-      setIsKeyboardOpen(Boolean(isTextInput && viewportShrink > 90));
-    }
-
-    syncKeyboardState();
-    viewport.addEventListener("resize", syncKeyboardState);
-    viewport.addEventListener("scroll", syncKeyboardState);
-    window.addEventListener("focusin", syncKeyboardState);
-    window.addEventListener("focusout", syncKeyboardState);
-
-    return () => {
-      viewport.removeEventListener("resize", syncKeyboardState);
-      viewport.removeEventListener("scroll", syncKeyboardState);
-      window.removeEventListener("focusin", syncKeyboardState);
-      window.removeEventListener("focusout", syncKeyboardState);
-    };
-  }, []);
-
-  if (isKeyboardOpen) {
-    return null;
-  }
 
   if (isAuthLoading) {
     return (
@@ -397,11 +343,6 @@ export function MobileBottomNav({
             <button
               key={item.href}
               type="button"
-              onPointerDown={(event) => {
-                if (event.pointerType === "touch" && !(item.href === "/favorites" && !role)) {
-                  setPendingHref(item.href);
-                }
-              }}
               onClick={() => handleItemNavigation(item.href)}
               className={cn(
                 "relative grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
@@ -434,13 +375,6 @@ export function MobileBottomNav({
         })}
         <button
           type="button"
-          onPointerDown={(event) => {
-            if (event.pointerType === "touch") {
-              if (accountHref) {
-                setPendingHref(accountHref);
-              }
-            }
-          }}
           onClick={() => {
             if (accountHref) {
               navigate(accountHref);

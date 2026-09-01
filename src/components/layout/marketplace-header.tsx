@@ -121,13 +121,13 @@ export function MarketplaceHeader({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group size-11 rounded-lg border border-transparent bg-transparent text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-[52px]";
+    "group inline-flex size-11 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-12";
   const commerceUtilityIconClass =
-    "h-9 w-9 min-h-9 min-w-9 stroke-[2.35] transition-transform duration-200 group-hover:scale-105";
+    "size-8 min-h-8 min-w-8 stroke-[2.35] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-9 stroke-[2.35] transition-transform duration-200 group-hover:scale-105 min-[400px]:size-10";
+    "size-8 stroke-[2.35] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-9";
   const mobileCommerceIconClass =
-    "size-6 stroke-[2.35] transition-transform duration-200 group-hover:scale-105";
+    "size-7 stroke-[2.35] transition-transform duration-200";
 
   function showLoginRequiredToast() {
     showToast({
@@ -178,9 +178,9 @@ export function MarketplaceHeader({
     };
   }, []);
 
+  const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
-  const shouldShowDesktopSearch =
-    !shouldSuppressSearch && (!isHomePage || !isHomeSearchVisible);
+  const shouldShowDesktopSearch = !shouldSuppressSearch && hasSearchData;
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
@@ -192,7 +192,6 @@ export function MarketplaceHeader({
       !pathname.startsWith("/seller") &&
       !pathname.startsWith("/admin") &&
       !pathname.startsWith("/radmin"));
-  const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldGateMobileSearch = isProductDetailPage;
   const shouldShowMobileSearchToggle =
     showMobileSearch &&
@@ -239,7 +238,7 @@ export function MarketplaceHeader({
                 a
               </span>
             )}
-            <span className="min-w-0 origin-left truncate text-[23px] font-bold tracking-normal text-slate-950 transition-transform duration-200 group-hover:scale-105 dark:text-slate-100 md:text-xl md:font-black">
+            <span className="min-w-0 origin-left truncate text-[23px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 md:text-xl md:font-black md:group-hover:scale-105">
               {displaySiteName}
             </span>
           </Link>
@@ -296,7 +295,7 @@ export function MarketplaceHeader({
                   <Link href="/cart" prefetch className="relative grid place-items-center">
                     <ShoppingCart className={mobileCommerceIconClass} aria-hidden="true" />
                     {cartCount > 0 ? (
-                      <span className="absolute right-0 top-0 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                      <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                         {cartCount > 99 ? "99+" : cartCount}
                       </span>
                     ) : null}
@@ -315,7 +314,7 @@ export function MarketplaceHeader({
               )}
             >
               <Link href={productsHref} prefetch>
-                <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+                <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
                   {nav("products")}
                 </span>
               </Link>
@@ -326,7 +325,7 @@ export function MarketplaceHeader({
               className="group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
             >
               <Link href="/stores" prefetch>
-                <span className="inline-block transition-transform duration-200 group-hover:translate-y-[-1px]">
+                <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
                   Mağazalar
                 </span>
               </Link>
@@ -337,7 +336,7 @@ export function MarketplaceHeader({
               className="group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
             >
               <Link href="/categories" prefetch>
-                <span className="inline-block transition-transform duration-200 group-hover:translate-y-[-1px]">
+                <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
                   Kateqoriyalar
                 </span>
               </Link>
@@ -351,7 +350,7 @@ export function MarketplaceHeader({
               )}
             >
               <Link href="/about" prefetch>
-                <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+                <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
                   {nav("about")}
                 </span>
               </Link>
@@ -415,7 +414,7 @@ export function MarketplaceHeader({
               <Link href="/cart" prefetch className="relative grid place-items-center">
                 <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
                 {cartCount > 0 ? (
-                  <span className="absolute right-0 top-0 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                  <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 ) : null}

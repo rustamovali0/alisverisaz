@@ -455,8 +455,8 @@ function MarketplaceFilterBar({
 }
 
 const CATEGORY_ICON_STYLES = [
-  "bg-cyan-50 text-cyan-700 ring-cyan-100 dark:bg-cyan-950/30 dark:text-cyan-200 dark:ring-cyan-900/40",
-  "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-200 dark:ring-emerald-900/40",
+  "bg-blue-50 text-blue-700 ring-blue-100 dark:bg-blue-950/30 dark:text-blue-200 dark:ring-blue-900/40",
+  "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700",
   "bg-rose-50 text-rose-700 ring-rose-100 dark:bg-rose-950/30 dark:text-rose-200 dark:ring-rose-900/40",
   "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-950/30 dark:text-amber-200 dark:ring-amber-900/40",
   "bg-indigo-50 text-indigo-700 ring-indigo-100 dark:bg-indigo-950/30 dark:text-indigo-200 dark:ring-indigo-900/40",
@@ -506,7 +506,7 @@ function MobileCategoryCatalog({
 
   return (
     <section className="md:hidden">
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-2 gap-3">
         {categories.map((category, index) => {
           const Icon = getCategoryIcon(category);
           const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
@@ -516,13 +516,13 @@ function MobileCategoryCatalog({
               key={category.id}
               type="button"
               onClick={() => onSelect(category)}
-              className="group flex min-h-[132px] min-w-0 touch-manipulation flex-col items-center justify-between rounded-xl bg-white p-3 text-center shadow-sm ring-1 ring-slate-200/70 transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:bg-card dark:ring-border"
+              className="group flex min-h-[112px] min-w-0 touch-manipulation flex-col items-center justify-between rounded-[14px] border border-slate-200 bg-white p-3.5 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:border-slate-800 dark:bg-card"
             >
-              <span className={cn("grid size-16 place-items-center rounded-2xl ring-1", iconStyle)}>
-                <Icon className="size-8 stroke-[2.2]" aria-hidden="true" />
+              <span className={cn("grid size-12 place-items-center rounded-xl ring-1", iconStyle)}>
+                <Icon className="size-6 stroke-[2.2]" aria-hidden="true" />
               </span>
                 <span className="grid min-w-0 gap-0.5">
-                  <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-5 text-slate-600 dark:text-muted-foreground">
+                  <span className="line-clamp-2 min-w-0 text-[14px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
                     {category.name}
                   </span>
                 </span>
@@ -623,9 +623,9 @@ export function ProductGrid({
             }
           }}
           className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:hover:shadow-md",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
             isLiquidGlass &&
-              "liquid-glass-product-card border-white/70 bg-white/60 hover:border-cyan-200/80 dark:border-white/10 dark:bg-white/10",
+              "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
           )}
         >
           <Link
@@ -638,7 +638,7 @@ export function ProductGrid({
             <div
               data-product-card-image
               className={cn(
-                "relative aspect-[4/3] overflow-hidden bg-background",
+                "relative aspect-[4/3] overflow-hidden bg-slate-50 dark:bg-slate-900",
                 isLiquidGlass && "liquid-glass-product-image-shell",
               )}
             >
@@ -666,7 +666,7 @@ export function ProductGrid({
                   </span>
                 ) : null}
                 {isNewProduct ? (
-                  <span className="rounded-full bg-emerald-500 px-2 py-1 text-[11px] font-black text-white">
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
                     {t("newLabel")}
                   </span>
                 ) : null}
@@ -689,8 +689,8 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-foreground group-hover:text-primary sm:min-h-10 sm:text-sm sm:leading-5",
-                isLiquidGlass && "font-black group-hover:text-cyan-700 dark:group-hover:text-cyan-200",
+                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-blue-700 md:dark:group-hover:text-blue-300",
+                isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
               )}
             >
               {product.name}
@@ -702,7 +702,7 @@ export function ProductGrid({
               <span className="ml-1 text-xs text-muted-foreground">(0)</span>
             </div>
             <div className="mt-1.5 min-w-0 sm:mt-2">
-              <p className="truncate text-base font-black text-foreground sm:text-lg">
+              <p className="truncate text-base font-bold text-slate-950 dark:text-slate-100 sm:text-lg">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
               {hasDiscount ? (
@@ -715,8 +715,8 @@ export function ProductGrid({
               className={cn(
                 "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
                 isOutOfStock
-                  ? "bg-rose-500/10 text-rose-600"
-                  : "bg-emerald-500/10 text-emerald-600",
+                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
+                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
               )}
             >
               <span className="truncate">
@@ -759,7 +759,7 @@ export function ProductGrid({
                     product={product}
                     disabled={isOutOfStock}
                     className={cn(
-                      "h-10 w-full rounded-lg border-0 bg-primary px-2 text-[11px] font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))] hover:shadow-md disabled:bg-muted disabled:text-muted-foreground min-[360px]:text-xs sm:text-sm sm:font-medium",
+                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}
@@ -1272,25 +1272,30 @@ export function ProductMarketplace({
   );
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
-      <div className="container mx-auto max-w-[1480px] py-5 md:py-8">
-        <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-lg border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
+      <div className="container mx-auto max-w-[1280px] py-5 md:py-10">
+        <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
           <div className="min-w-0">
-            <h1 className="text-2xl font-black tracking-normal">{t("allProducts")}</h1>
+            <h1 className="text-2xl font-semibold tracking-normal text-slate-950 dark:text-slate-100">{t("allProducts")}</h1>
           </div>
         </header>
 
         <div className="min-w-0">
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm">
-              <h1 className="text-xl font-black tracking-normal sm:text-2xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
+              <h1 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
                 {activeCategoryId ? activeCategory?.name ?? t("categoryProducts") : t("allProducts")}
               </h1>
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant={isFiltersOpen ? "default" : "outline"}
-                  className="h-10 gap-2 px-3 text-sm"
+                  className={cn(
+                    "h-10 gap-2 rounded-[10px] px-3 text-sm shadow-none",
+                    isFiltersOpen
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950",
+                  )}
                   aria-expanded={isFiltersOpen}
                   aria-controls="marketplace-filters"
                   onClick={() => setIsFiltersOpen((current) => !current)}
@@ -1302,7 +1307,7 @@ export function ProductMarketplace({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="h-10 px-3 text-sm text-primary"
+                  className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
                   disabled={!hasActiveProductFilters}
                   onClick={resetFilters}
                 >
@@ -1545,16 +1550,16 @@ export function Storefront({
   );
 
   const productsSection = (
-    <section id="products" className="mt-4 min-w-0 rounded-lg bg-card p-4 shadow-sm md:mt-6 md:p-8">
+    <section id="products" className="mt-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="break-words text-xl font-black tracking-normal sm:text-2xl">
+        <h2 className="break-words text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
           {t("storeProducts")}
         </h2>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
-            className="h-10 gap-2 rounded-full px-3 text-sm"
+            className="h-10 gap-2 rounded-[10px] px-3 text-sm"
             aria-expanded={isFiltersOpen}
             aria-controls="storefront-filters"
             onClick={() => setIsFiltersOpen((current) => !current)}
@@ -1566,7 +1571,7 @@ export function Storefront({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 rounded-full px-3 text-sm text-primary"
+            className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
@@ -1617,12 +1622,12 @@ export function Storefront({
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black sm:text-2xl">{home("categories")}</h2>
+            <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-100 sm:text-2xl">{home("categories")}</h2>
           </div>
           <Button
             type="button"
             variant="outline"
-            className="h-9 rounded-full px-4 text-xs font-bold sm:text-sm"
+            className="h-9 rounded-[10px] border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 sm:text-sm"
             onClick={() => selectCategory()}
           >
             {home("allCategories")}
@@ -1643,9 +1648,9 @@ export function Storefront({
                 key={category.id}
                 type="button"
                 className={cn(
-                  "flex h-11 w-full min-w-0 items-center justify-between gap-3 rounded-full border bg-card px-4 text-sm font-bold text-foreground shadow-sm transition hover:border-primary/40 hover:shadow-md",
+                  "flex h-11 w-full min-w-0 items-center justify-between gap-3 rounded-[12px] border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-card dark:text-slate-100",
                   !hasProducts && "text-muted-foreground opacity-70",
-                  isSelected && "border-cyan-300 bg-cyan-50 text-cyan-800",
+                  isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
                 onClick={() => selectCategory(category)}
               >
@@ -1665,13 +1670,13 @@ export function Storefront({
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-black sm:text-2xl">{home("recentlyListed")}</h2>
+          <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
-            className="h-10 gap-2 rounded-full px-3 text-sm"
+            className="h-10 gap-2 rounded-[10px] px-3 text-sm"
             aria-expanded={isFiltersOpen}
             aria-controls="storefront-modern-filters"
             onClick={() => setIsFiltersOpen((current) => !current)}
@@ -1683,7 +1688,7 @@ export function Storefront({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 rounded-full px-3 text-sm text-primary"
+            className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
@@ -1770,13 +1775,13 @@ export function Storefront({
   }
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#e9f6f2] px-0 py-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:py-8 md:pb-8 lg:py-10">
-      <div className="mx-auto w-full max-w-[1220px] overflow-hidden bg-background shadow-xl shadow-teal-950/10 sm:rounded-lg">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-0 py-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background sm:px-4 sm:py-8 md:pb-8 lg:py-10">
+      <div className="mx-auto w-full max-w-[1280px] overflow-hidden bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:bg-background sm:rounded-2xl">
         <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
           {isStoreOwner ? (
             <StoreBrandingQuickEdit store={store} />
           ) : (
-            <div className="relative overflow-hidden rounded-lg bg-[linear-gradient(135deg,#0f766e,#0f172a)]">
+            <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1e293b,#020617)]">
               <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
                 <div className="absolute inset-0 overflow-hidden">
                   <img
@@ -1802,9 +1807,9 @@ export function Storefront({
                     defaultValue={searchQuery}
                     storeSlug={store.slug}
                     searchBaseHref={storeHomeHref}
-                    className="mt-7 max-w-3xl rounded-full bg-white p-1.5 shadow-2xl shadow-black/25"
-                    inputClassName="h-12 rounded-full border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
-                    buttonClassName="!size-11 !min-w-11 rounded-full bg-cyan-400 p-0 text-white hover:bg-cyan-500"
+                    className="mt-7 max-w-3xl rounded-[14px] bg-white p-1.5 shadow-[0_12px_35px_rgba(15,23,42,0.18)]"
+                    inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
+                    buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white hover:bg-blue-700"
                     buttonSize="lg"
                     stackOnMobile
                     compactActions
@@ -1815,7 +1820,7 @@ export function Storefront({
                         <button
                           key={category.id}
                           type="button"
-                          className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-white hover:text-primary"
+                          className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:text-blue-700"
                           onClick={() => selectCategory(category)}
                         >
                           {category.name}

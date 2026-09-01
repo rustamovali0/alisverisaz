@@ -300,7 +300,7 @@ export function RegisterForm({
 
   return (
     <AuthCard
-      className="mx-auto max-w-[560px]"
+      className="mx-auto max-w-[560px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
@@ -318,19 +318,9 @@ export function RegisterForm({
         </Button>
       }
       title="Qeydiyyat"
-      description={
-        canRegister
-          ? "Müştəri hesabı sifarişlər üçün, satıcı hesabı mağaza paneli üçün yaradılır."
-          : "Qeydiyyat hazırda bağlıdır."
-      }
+      description={canRegister ? undefined : "Qeydiyyat hazırda bağlıdır."}
       footer={
         <div className="space-y-3">
-          <p>
-            Artıq hesabınız var?{" "}
-            <Link className="font-medium text-primary hover:underline" href="/login">
-              Giriş
-            </Link>
-          </p>
           <Link className="font-medium text-primary hover:underline" href="/">
             Ana səhifəyə qayıt
           </Link>
@@ -404,7 +394,7 @@ export function RegisterForm({
               setPassword(value);
               setFieldErrors((current) => ({ ...current, password: undefined }));
             }}
-            hint="Minimum 8 simvol, böyük hərf, kiçik hərf, rəqəm və simvol tövsiyə olunur."
+            hint={undefined}
             error={fieldErrors.password}
             minLength={8}
             required
@@ -483,9 +473,6 @@ export function RegisterForm({
             <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
               <div>
                 <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  Logo və banneri URL ilə yox, şəkil faylı kimi əlavə edin.
-                </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
                 <SellerImageDropzone
@@ -525,7 +512,7 @@ export function RegisterForm({
           {fieldErrors.terms ? (
             <p className="text-xs font-medium text-destructive">{fieldErrors.terms}</p>
           ) : null}
-          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-xl">
+          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700">
             {isPending ? "Yaradılır" : "Hesab yarat"}
           </Button>
         </form>

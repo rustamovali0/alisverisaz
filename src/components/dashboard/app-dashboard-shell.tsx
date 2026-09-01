@@ -64,7 +64,6 @@ export function AppDashboardShell({
   const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const [hash, setHash] = useState("");
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
 
   useEffect(() => {
     function syncHash() {
@@ -78,10 +77,6 @@ export function AppDashboardShell({
   }, [pathname]);
 
   const activeHref = useMemo(() => getActiveNavHref(navItems, pathname, hash), [hash, navItems, pathname]);
-
-  useEffect(() => {
-    setPendingHref(null);
-  }, [hash, pathname]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -124,10 +119,7 @@ export function AppDashboardShell({
     });
   }
 
-  function handleDashboardLinkClick(href?: string) {
-    if (href) {
-      setPendingHref(href);
-    }
+  function handleDashboardLinkClick() {
     setIsOpen(false);
     resetDashboardScroll();
   }
@@ -173,7 +165,7 @@ export function AppDashboardShell({
     let previousGroup: string | null = null;
 
     return navItems.map((item) => {
-      const active = (pendingHref ?? activeHref) === item.href;
+      const active = activeHref === item.href;
       const group = adminGroupTitle(item.href);
       const showGroup = Boolean(group && group !== previousGroup);
       previousGroup = group;
@@ -188,7 +180,7 @@ export function AppDashboardShell({
           <Link
             href={item.href}
             prefetch
-            onClick={() => handleDashboardLinkClick(item.href)}
+            onClick={handleDashboardLinkClick}
             title={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
             aria-label={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
             className={cn(
@@ -216,14 +208,14 @@ export function AppDashboardShell({
     return (
       <nav className="grid grid-cols-2 gap-2 px-3 pt-3 lg:hidden">
         {navItems.map((item) => {
-          const active = (pendingHref ?? activeHref) === item.href;
+          const active = activeHref === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
               prefetch
-              onClick={() => handleDashboardLinkClick(item.href)}
+              onClick={handleDashboardLinkClick}
               className={cn(
                 "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-bold shadow-sm transition",
                 active

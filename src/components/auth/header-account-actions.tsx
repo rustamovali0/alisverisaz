@@ -138,7 +138,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         >
           <Link href={createNextHref(pathname, "/login")}>
             <LogIn className="mr-2 size-4" aria-hidden="true" />
-            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+            <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
               {auth("login")}
             </span>
           </Link>
@@ -150,7 +150,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         >
           <Link href={createNextHref(pathname, "/register")}>
             <UserPlus className="mr-2 size-4" aria-hidden="true" />
-            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+            <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
               {auth("register")}
             </span>
           </Link>
@@ -162,7 +162,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
         >
           <Link href={`${createNextHref(pathname, "/register")}&role=seller`}>
             <Plus className="mr-2 size-4" aria-hidden="true" />
-            <span className="inline-block transition-transform duration-200 group-hover:scale-105">
+            <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
               Satıcı ol
             </span>
           </Link>

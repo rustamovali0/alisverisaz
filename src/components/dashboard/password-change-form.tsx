@@ -29,16 +29,13 @@ export function PasswordChangeForm() {
   }
 
   return (
-    <div className="mt-5 rounded-lg border bg-background p-4">
+    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
       <div className="mb-4 flex min-w-0 items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+        <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
           <KeyRound className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-base font-black">Şifrəni dəyişdir</h2>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Email linki olmadan cari hesab sessiyası ilə yenilənir.
-          </p>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-slate-100">Şifrəni dəyişdir</h2>
         </div>
       </div>
       <form
@@ -67,7 +64,7 @@ export function PasswordChangeForm() {
         />
         <Button
           type="submit"
-          className="h-10 rounded-xl px-4"
+          className="h-10 rounded-[10px] bg-blue-600 px-4 font-semibold text-white shadow-none hover:bg-blue-700"
           disabled={isPending}
         >
           <Save className="mr-2 size-4" aria-hidden="true" />

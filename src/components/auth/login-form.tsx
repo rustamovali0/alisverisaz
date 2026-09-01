@@ -45,10 +45,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   const isAdminMode = mode === "admin";
 
   const visualLabel = useMemo(
-    () =>
-      mode === "admin"
-        ? "Admin panelinə giriş"
-        : "Hesabınıza daxil olmaq üçün məlumatlarınızı daxil edin.",
+    () => (mode === "admin" ? "Admin panelinə giriş" : ""),
     [mode],
   );
 
@@ -110,7 +107,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
 
       void appAlert.success("Xoş gəldiniz", "Giriş uğurla tamamlandı.", {
         dedupeKey: "login-success",
-        persistAcrossNavigation: true,
       });
       clearClientAuthProfileCache();
       router.replace(result.redirectTo);
@@ -148,7 +144,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   return (
     <AuthCard
       className={cn(
-        "mx-auto max-w-[520px]",
+        "mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         isAdminMode &&
           "border-emerald-500/25 bg-black/72 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
       )}
@@ -179,12 +175,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       footer={
         mode === "public" ? (
           <div className="space-y-3">
-            <p>
-              Hesabınız yoxdur?{" "}
-              <Link className="font-medium text-primary hover:underline" href="/register">
-                Qeydiyyat
-              </Link>
-            </p>
             <Link className="font-medium text-primary hover:underline" href="/">
               Ana səhifəyə qayıt
             </Link>
@@ -207,7 +197,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             setIdentifier(event.target.value.toLowerCase());
             setFieldErrors((current) => ({ ...current, identifier: undefined }));
           }}
-          hint={isAdminMode ? undefined : "Hesabınıza bağlı email ünvanını daxil edin."}
+          hint={undefined}
           error={fieldErrors.identifier}
           className={isAdminMode ? "gap-1 text-[13px]" : undefined}
           inputClassName={isAdminMode ? "h-10 rounded-lg px-3" : undefined}
@@ -228,7 +218,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           inputClassName={isAdminMode ? "h-10 rounded-lg px-3 pr-10" : undefined}
           toggleClassName={
             isAdminMode
-              ? "right-1.5 size-8 border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 shadow-none hover:bg-emerald-400/15 hover:text-emerald-100 [&_svg]:size-5"
+              ? "right-1.5 size-8 text-emerald-200 hover:text-emerald-100 [&_svg]:size-5"
               : undefined
           }
           required
@@ -260,7 +250,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           type="submit"
           disabled={isPending || (!isAdminMode && !captchaToken)}
           className={cn(
-            "h-11 w-full rounded-xl",
+            "h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700",
             isAdminMode &&
               "h-10 rounded-lg bg-emerald-400 font-black text-slate-950 shadow-lg shadow-emerald-500/15 hover:bg-emerald-300",
           )}

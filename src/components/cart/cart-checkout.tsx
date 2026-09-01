@@ -549,15 +549,15 @@ export function CartCheckout({
     const hasWhatsAppGroups = checkoutResult.whatsappGroups.length > 0;
 
     return (
-      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:bg-background md:pb-0">
+      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
         <div className="container flex justify-center py-6 md:py-10">
-          <section className="w-full max-w-3xl rounded-md border bg-card p-4 text-card-foreground shadow-sm md:p-6">
+          <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:p-6">
             <div className="flex items-start gap-3">
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700">
                 <CheckCircle2 className="size-6" aria-hidden="true" />
               </span>
               <div>
-                <h1 className="text-2xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] md:text-2xl md:font-semibold md:text-foreground">
+                <h1 className="text-2xl font-semibold tracking-normal text-slate-950 dark:text-slate-100">
                   Sifariş nəticəsi
                 </h1>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -577,7 +577,7 @@ export function CartCheckout({
                 {checkoutResult.whatsappGroups.map((group) => (
                   <article
                     key={group.storeId}
-                    className="rounded-md border bg-background p-4 shadow-sm"
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -634,7 +634,7 @@ export function CartCheckout({
                     ) : null}
                     <Button
                       type="button"
-                      className="mt-4 h-11 w-full bg-[hsl(var(--marketplace-primary))] font-semibold hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))]"
+                      className="mt-4 h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white"
                       onClick={() => openWhatsAppGroup(group)}
                     >
                       WhatsApp-da sifarişi tamamla
@@ -671,37 +671,37 @@ export function CartCheckout({
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] md:bg-background md:pb-0">
+      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
       <div
         className={
           checkoutOnly
             ? "container flex justify-center py-8"
             : isEmptyCart
               ? "container py-6 md:py-8"
-              : "container grid gap-5 py-5 md:gap-6 md:py-8 lg:grid-cols-[1fr_420px]"
+            : "container mx-auto grid max-w-[1280px] gap-5 py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
         }
       >
         {!checkoutOnly ? (
-        <section className="rounded-none border-0 bg-white p-0 text-card-foreground shadow-none md:rounded-md md:border md:bg-card md:p-4 md:shadow-sm">
+        <section className="rounded-none border-0 bg-transparent p-0 text-slate-950 shadow-none dark:text-slate-100 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-5 md:shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:md:border-slate-800 dark:md:bg-card">
           <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
+              <Button asChild variant="outline" size="sm" className="hidden rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:inline-flex">
                 <Link href={returnHref}>
                   <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
                   {common("back")}
                 </Link>
               </Button>
-              <h1 className="text-center text-3xl font-black tracking-normal text-[hsl(var(--marketplace-navy))] sm:text-left md:text-2xl md:font-semibold md:text-foreground">
+              <h1 className="text-center text-3xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
                 {common("cart")}
               </h1>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
                 <Link href="/products">Bütün məhsullar</Link>
               </Button>
             </div>
           </div>
-          <div className="mt-2 divide-y bg-white md:mt-6 md:bg-transparent">
+          <div className="mt-2 grid gap-3 bg-transparent md:mt-6">
             {visibleItems.length === 0 ? (
               <div className="grid place-items-center gap-3 py-12 text-center text-sm text-muted-foreground">
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
@@ -732,22 +732,22 @@ export function CartCheckout({
                 return (
                   <div
                   key={itemKey}
-                  className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 py-5 sm:flex sm:flex-row sm:items-center"
+                  className="grid grid-cols-[92px_minmax(0,1fr)] gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex sm:flex-row sm:items-center sm:p-4"
                 >
-                  <div className="size-24 overflow-hidden rounded-md bg-white sm:size-20 sm:border sm:bg-muted">
+                  <div className="size-[92px] overflow-hidden rounded-[12px] border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 sm:size-20">
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
-                        className="h-full w-full object-contain sm:object-cover"
+                        className="h-full w-full object-contain"
                       />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-lg font-semibold leading-6 text-[hsl(var(--marketplace-navy))] sm:truncate sm:text-sm sm:font-medium sm:text-foreground">
+                    <h2 className="line-clamp-2 text-base font-semibold leading-6 text-slate-950 dark:text-slate-100 sm:truncate">
                       {product.name}
                     </h2>
-                    <p className="mt-2 text-lg font-black text-[hsl(var(--marketplace-primary))] sm:mt-1 sm:text-sm sm:font-normal sm:text-muted-foreground">
+                    <p className="mt-2 text-base font-semibold text-blue-700 dark:text-blue-300 sm:mt-1">
                       {formatMoney(unitPrice)}
                     </p>
                     {selectedVariantLabel.length > 0 ? (
@@ -768,7 +768,7 @@ export function CartCheckout({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-11 rounded-none sm:size-14 sm:rounded-md"
+                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -794,7 +794,7 @@ export function CartCheckout({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-11 rounded-none sm:size-14 sm:rounded-md"
+                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -820,7 +820,7 @@ export function CartCheckout({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="ml-auto size-11 text-destructive hover:text-destructive sm:ml-0 sm:size-14"
+                      className="ml-auto size-10 rounded-[10px] text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 sm:ml-0 sm:size-11"
                       onClick={() => void removeCartItem(itemKey, product.name)}
                     >
                       <Trash2 className="size-5" aria-hidden="true" />
@@ -832,12 +832,12 @@ export function CartCheckout({
             )}
           </div>
           {visibleItems.length > 0 ? (
-            <div className="flex justify-end border-t bg-white px-1 py-4 md:bg-transparent">
+            <div className="flex justify-end bg-transparent px-1 py-4">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="rounded-[10px] border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:bg-transparent dark:hover:bg-rose-950/30"
                 onClick={() => void clearCart()}
               >
                 <Trash2 className="mr-2 size-4" aria-hidden="true" />
@@ -849,7 +849,7 @@ export function CartCheckout({
         ) : null}
 
         {checkoutOnly && isEmptyCart ? (
-          <section className="w-full max-w-xl rounded-md border bg-card p-6 text-center text-card-foreground shadow-sm">
+          <section className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100">
             <h1 className="text-xl font-semibold tracking-normal">{cartUi("empty")}</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {cartUi("addProductFirst")}
@@ -865,8 +865,8 @@ export function CartCheckout({
           action={handleSubmit}
           className={
             checkoutOnly
-              ? "h-fit w-full max-w-xl rounded-md border bg-card p-4 text-card-foreground shadow-sm"
-              : "h-fit rounded-md border bg-white p-4 text-card-foreground shadow-sm md:bg-card"
+              ? "h-fit w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100"
+              : "h-fit rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:p-5"
           }
         >
           {checkoutOnly ? (
@@ -877,13 +877,13 @@ export function CartCheckout({
               </Link>
             </Button>
           ) : null}
-          <h2 className="text-lg font-semibold tracking-normal">{cartUi("confirmOrder")}</h2>
+          <h2 className="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100">{cartUi("confirmOrder")}</h2>
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <input type="hidden" name="promoCodes" value="" />
           <div className="mt-4 grid gap-4">
             {promoEligibleGroups.length > 0 ? (
-              <section className="grid gap-3 rounded-md border bg-background p-3">
+              <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
                 <div>
                   <h3 className="text-sm font-black">Promo kod</h3>
                 </div>
@@ -891,7 +891,7 @@ export function CartCheckout({
                   const promo = appliedPromos[group.storeId];
 
                   return (
-                    <div key={group.storeId} className="grid gap-2 rounded-md border p-3">
+                    <div key={group.storeId} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-card">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold">{group.storeName}</p>
@@ -902,7 +902,7 @@ export function CartCheckout({
                         {promo ? (
                           <button
                             type="button"
-                            className="text-xs font-bold text-destructive"
+                            className="rounded-md px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30"
                             onClick={() => removePromo(group.storeId)}
                           >
                             Sil
@@ -916,11 +916,12 @@ export function CartCheckout({
                             setPromoCode(group.storeId, event.target.value)
                           }
                           placeholder="Promo kod"
-                          className="h-10 rounded-md border border-input bg-background px-3 text-sm uppercase outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="h-10 rounded-[10px] border border-slate-200 bg-white px-3 text-sm uppercase outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950"
                         />
                         <Button
                           type="button"
                           variant="outline"
+                          className="rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                           onClick={() => applyPromo(group.storeId)}
                           disabled={isPromoPending}
                         >
@@ -1045,7 +1046,7 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 h-12 w-full bg-[hsl(var(--marketplace-primary))] text-base font-black hover:bg-[hsl(var(--marketplace-primary-hover))] hover:text-[hsl(var(--marketplace-primary-hover-foreground))] md:bg-primary md:hover:bg-[hsl(var(--marketplace-primary-hover))]"
+            className="mt-4 h-12 w-full rounded-[10px] bg-blue-600 text-base font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}

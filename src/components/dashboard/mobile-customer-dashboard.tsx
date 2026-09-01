@@ -14,7 +14,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 type MobileCustomerDashboardProps = {
   userLabel: string;
@@ -68,7 +68,6 @@ export function MobileCustomerDashboard({
 }: MobileCustomerDashboardProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
   const visibleItems = useMemo(
     () => [
       ...accountItems,
@@ -76,10 +75,6 @@ export function MobileCustomerDashboard({
     ],
     [role],
   );
-
-  useEffect(() => {
-    setPendingHref(null);
-  }, [pathname]);
 
   useEffect(() => {
     visibleItems.forEach((item) => router.prefetch(item.href));
@@ -106,20 +101,14 @@ export function MobileCustomerDashboard({
       <div id="mobile-account-sections" className="grid grid-cols-2 gap-2">
         {visibleItems.map((item) => {
           const Icon = item.icon;
-          const isActive = (pendingHref ?? (isActiveAccountItem(pathname, item.href) ? item.href : null)) === item.href;
+          const isActive = isActiveAccountItem(pathname, item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
               prefetch
-              onPointerDown={(event) => {
-                if (event.pointerType === "touch") {
-                  setPendingHref(item.href);
-                }
-              }}
               onClick={() => {
-                setPendingHref(item.href);
                 resetDashboardScroll();
               }}
               aria-current={isActive ? "page" : undefined}

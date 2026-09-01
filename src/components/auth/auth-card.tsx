@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type AuthCardProps = {
   title: string;
-  description: string;
+  description?: string;
   children: ReactNode;
   footer: ReactNode;
   topStart?: ReactNode;
@@ -38,7 +38,9 @@ export function AuthCard({
         <h1 className="text-[1.45rem] font-semibold leading-tight tracking-normal sm:text-[1.7rem]">
           {title}
         </h1>
-        <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+        {description ? (
+          <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+        ) : null}
       </div>
       {children}
       <div className="mt-3 text-center text-sm text-muted-foreground">

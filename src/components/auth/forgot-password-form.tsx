@@ -57,7 +57,6 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
       setSuccessMessage(result.message);
       void appAlert.success("Bərpa linki göndərildi", result.message, {
         dedupeKey: "password-reset-sent",
-        persistAcrossNavigation: true,
       });
 
       window.setTimeout(() => {
@@ -73,7 +72,7 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
 
   return (
     <AuthCard
-      className="mx-auto max-w-[520px]"
+      className="mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/login">
@@ -91,7 +90,7 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
         </Button>
       }
       title="Şifrəni unutdum"
-      description="Hesabınıza bağlı email ünvanını yazın, bərpa linki göndərək."
+      description={undefined}
       footer={
         <p>
           Yenə də giriş edə bilirsinizsə{" "}
@@ -120,14 +119,14 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value.toLowerCase())}
           inputMode="email"
-          hint="Hesabınıza bağlı email ünvanını daxil edin."
+          hint={undefined}
           autoComplete="email"
           required
         />
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full rounded-xl"
+          className="h-12 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700"
         >
           <Mail className="mr-2 size-4" aria-hidden="true" />
           {isSubmitting ? "Göndərilir" : "Bərpa linki göndər"}

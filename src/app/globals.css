@@ -10,7 +10,7 @@
     --card-foreground: 218 31% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 218 31% 12%;
-    --primary: 186 85% 32%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 215 35% 94%;
     --secondary-foreground: 216 28% 18%;
@@ -22,12 +22,12 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214 24% 88%;
     --input: 214 24% 88%;
-    --ring: 186 85% 32%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
-    --marketplace-primary: 331 84% 55%;
-    --marketplace-primary-hover: 331 75% 49%;
+    --marketplace-primary: 217 91% 60%;
+    --marketplace-primary-hover: 221 83% 53%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 331 88% 96%;
+    --marketplace-primary-soft: 214 100% 97%;
     --marketplace-navy: 233 43% 19%;
     --marketplace-muted: 240 5% 58%;
     --marketplace-success: 151 66% 45%;
@@ -41,8 +41,8 @@
     --card-foreground: 210 32% 96%;
     --popover: 220 25% 11%;
     --popover-foreground: 210 32% 96%;
-    --primary: 178 70% 42%;
-    --primary-foreground: 220 29% 8%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 219 21% 18%;
     --secondary-foreground: 210 40% 98%;
     --muted: 219 21% 17%;
@@ -53,11 +53,11 @@
     --destructive-foreground: 210 40% 98%;
     --border: 218 17% 22%;
     --input: 218 17% 22%;
-    --ring: 178 70% 42%;
-    --marketplace-primary: 331 84% 62%;
-    --marketplace-primary-hover: 331 78% 56%;
-    --marketplace-primary-hover-foreground: 220 29% 8%;
-    --marketplace-primary-soft: 331 44% 18%;
+    --ring: 217 91% 60%;
+    --marketplace-primary: 217 91% 60%;
+    --marketplace-primary-hover: 221 83% 53%;
+    --marketplace-primary-hover-foreground: 0 0% 100%;
+    --marketplace-primary-soft: 217 45% 18%;
     --marketplace-navy: 210 32% 96%;
     --marketplace-muted: 215 18% 70%;
     --marketplace-success: 151 60% 52%;
@@ -589,6 +589,7 @@
     a:hover,
     button:hover,
     [role="button"]:hover,
+    .product-card:hover,
     .premium-card:hover,
     .liquid-glass-product-card:hover {
       transform: none !important;

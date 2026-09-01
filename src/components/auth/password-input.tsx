@@ -55,14 +55,14 @@ export function PasswordInput({
           placeholder={placeholder}
           required={required}
           className={cn(
-            "h-10 w-full rounded-xl border border-input bg-background px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
+            "h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-500",
             inputClassName,
           )}
         />
         <button
           type="button"
           className={cn(
-            "absolute right-2 top-1/2 z-10 inline-grid size-9 shrink-0 -translate-y-1/2 place-items-center rounded-lg border border-input bg-background text-foreground shadow-sm transition-colors hover:border-primary/40 hover:bg-background hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 dark:border-white/15 dark:bg-slate-950 dark:text-slate-100 dark:hover:border-cyan-300/50 dark:hover:text-cyan-200",
+            "absolute right-2 top-1/2 z-10 inline-grid size-9 shrink-0 -translate-y-1/2 place-items-center rounded-md border-0 bg-transparent text-slate-500 shadow-none transition-colors hover:bg-transparent hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:text-blue-300",
             toggleClassName,
           )}
           onClick={() => setIsVisible((current) => !current)}

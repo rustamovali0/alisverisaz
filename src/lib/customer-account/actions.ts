@@ -44,6 +44,12 @@ export async function saveDefaultCustomerAddressAction(
 
   const supabaseAdmin = createSupabaseAdminClient();
   const userId = current.user.id;
+  const { data: previousDefault } = await (supabaseAdmin as any)
+    .from("customer_addresses")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_default", true)
+    .maybeSingle();
   const payload = {
     label,
     city: city || null,
@@ -53,10 +59,17 @@ export async function saveDefaultCustomerAddressAction(
     is_default: true,
   };
 
-  await (supabaseAdmin as any)
+  const { error: clearError } = await (supabaseAdmin as any)
     .from("customer_addresses")
     .update({ is_default: false })
     .eq("user_id", userId);
+
+  if (clearError) {
+    return {
+      ok: false,
+      message: "Ünvan saxlanılmadı. Bir az sonra yenidən cəhd edin.",
+    };
+  }
 
   const query = addressId
     ? (supabaseAdmin as any)
@@ -64,13 +77,25 @@ export async function saveDefaultCustomerAddressAction(
         .update(payload)
         .eq("id", addressId)
         .eq("user_id", userId)
+        .select("id")
+        .maybeSingle()
     : (supabaseAdmin as any)
         .from("customer_addresses")
-        .insert({ ...payload, user_id: userId });
+        .insert({ ...payload, user_id: userId })
+        .select("id")
+        .maybeSingle();
 
-  const { error } = await query;
+  const { data: savedAddress, error } = await query;
 
-  if (error) {
+  if (error || !savedAddress) {
+    if (previousDefault?.id) {
+      await (supabaseAdmin as any)
+        .from("customer_addresses")
+        .update({ is_default: true })
+        .eq("id", previousDefault.id)
+        .eq("user_id", userId);
+    }
+
     return {
       ok: false,
       message: "Ünvan saxlanılmadı. Bir az sonra yenidən cəhd edin.",
