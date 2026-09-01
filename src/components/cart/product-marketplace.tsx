@@ -167,16 +167,16 @@ function CustomStorefrontHeader({
     { href: storeHomeHref, label: "Ana səhifə" },
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: "Məhsullar" },
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: "Kateqoriyalar" },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-info`, label: "Əlaqə" },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
   ];
   const iconButtonClass =
     "grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex min-h-[68px] w-full max-w-[1280px] min-w-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <Link href={storeHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-3">
-          <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900" />
+      <div className="mx-auto flex min-h-16 w-full max-w-[1280px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-3 sm:px-6 lg:px-8">
+        <Link href={storeHomeHref} prefetch className="flex min-w-0 shrink items-center gap-2.5 sm:gap-3">
+          <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
           <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
             {store.name}
           </span>
@@ -257,7 +257,7 @@ function CustomStoreFooter({
           <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
             Kateqoriyalar
           </Link>
-          <Link href={`${baseHref}#store-info`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link href={`${baseHref}#contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
             Əlaqə
           </Link>
         </nav>
@@ -680,6 +680,7 @@ export function ProductGrid({
   layout = "grid",
   isStoreOwner = false,
   forceMobileTwoColumns = false,
+  compactMobileCards = false,
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -690,6 +691,7 @@ export function ProductGrid({
   layout?: "grid" | "related";
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
+  compactMobileCards?: boolean;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -760,6 +762,7 @@ export function ProductGrid({
           }}
           className={cn(
             "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
+            compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
           )}
@@ -865,7 +868,7 @@ export function ProductGrid({
               <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
               {t("deliveryWithStore")}
             </p>
-            <div className="relative z-10 mt-auto grid gap-2 pt-3">
+            <div className={cn("relative z-10 mt-auto grid gap-2", compactMobileCards ? "pt-2.5 sm:pt-3" : "pt-3")}>
               <div
                 onClick={(event) => event.stopPropagation()}
                 onKeyDown={(event) => event.stopPropagation()}
@@ -882,6 +885,7 @@ export function ProductGrid({
                     asChild
                     className={cn(
                       "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
                     )}
@@ -897,6 +901,7 @@ export function ProductGrid({
                     disabled={isOutOfStock}
                     className={cn(
                       "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}
@@ -1096,6 +1101,7 @@ export function ProductInfiniteGrid({
   labels,
   isStoreOwner = false,
   forceMobileTwoColumns = false,
+  compactMobileCards = false,
 }: {
   products: CartProduct[];
   hasMore: boolean;
@@ -1108,6 +1114,7 @@ export function ProductInfiniteGrid({
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
+  compactMobileCards?: boolean;
 }) {
   const t = useTranslations("marketplace");
 
@@ -1122,6 +1129,7 @@ export function ProductInfiniteGrid({
         labels={labels}
         isStoreOwner={isStoreOwner}
         forceMobileTwoColumns={forceMobileTwoColumns}
+        compactMobileCards={compactMobileCards}
       />
       {hasMore ? (
         <div className="mb-10 mt-7 flex justify-center md:mb-0">
@@ -1157,6 +1165,7 @@ export function InfiniteProductGrid({
   labels,
   isStoreOwner = false,
   forceMobileTwoColumns = false,
+  compactMobileCards = false,
 }: {
   initialProducts: CartProduct[];
   initialCursor?: string | null;
@@ -1173,6 +1182,7 @@ export function InfiniteProductGrid({
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
+  compactMobileCards?: boolean;
 }) {
   const infinite = useInfiniteProducts({
     initialProducts,
@@ -1198,6 +1208,7 @@ export function InfiniteProductGrid({
       labels={labels}
       isStoreOwner={isStoreOwner}
       forceMobileTwoColumns={forceMobileTwoColumns}
+      compactMobileCards={compactMobileCards}
     />
   );
 }
@@ -1491,6 +1502,7 @@ export function Storefront({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [showAllMobileCategories, setShowAllMobileCategories] = useState(false);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
     initialCursor: store.productNextCursor,
@@ -1575,10 +1587,12 @@ export function Storefront({
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
   }, [selectedCategoryId]);
+  const isMarketplaceStoreHref = storeHomeHref.startsWith("/store/");
   const storeProductCategoryIds = useMemo(
     () => new Set(store.categoryIds),
     [store.categoryIds],
   );
+  const isCustomStorefront = !legacyLayout && !isMarketplaceStoreHref;
   const legacyCategories = useMemo(
     () => categories.filter((category) => storeProductCategoryIds.has(category.id)),
     [categories, storeProductCategoryIds],
@@ -1603,6 +1617,7 @@ export function Storefront({
   const heroCategories = sortedStoreCategories.slice(0, 5);
   const heroTitle = getStoreHeroTitle(store);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
+  const customHeroCategories = heroCategories.slice(0, 4);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1648,6 +1663,13 @@ export function Storefront({
     setInStockOnly(false);
     selectCategory();
     selectSort("newest");
+  }
+
+  function scrollToSection(sectionId: string) {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   const filterBar = (
@@ -1755,18 +1777,28 @@ export function Storefront({
       <section
         id="store-categories"
         data-home-categories
-        className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6"
+        className={cn(
+          "min-w-0 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
+          isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
+        )}
       >
-        <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+        <div className={cn("flex min-w-0 items-center justify-between gap-3", isCustomStorefront ? "mb-3.5 sm:mb-5" : "mb-5")}>
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+            <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
               {legacyLayout ? home("categories") : "Seçilmiş kateqoriyalar"}
             </h2>
           </div>
           <button
             type="button"
-            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200"
-            onClick={() => selectCategory()}
+            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200 sm:text-sm"
+            onClick={() => {
+              if (isCustomStorefront && !showAllMobileCategories) {
+                setShowAllMobileCategories(true);
+                return;
+              }
+
+              selectCategory();
+            }}
           >
             Hamısına bax
             <ArrowRight className="size-4" aria-hidden="true" />
@@ -1784,17 +1816,21 @@ export function Storefront({
                 key={category.id}
                 type="button"
                 className={cn(
-                  "group flex min-h-[104px] min-w-0 flex-col items-start justify-between gap-3 rounded-[14px] border border-slate-200 bg-white p-4 text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
+                  "group min-w-0 rounded-[14px] border border-slate-200 bg-white text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
+                  isCustomStorefront
+                    ? "flex min-h-[84px] items-center gap-2.5 p-3 sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
+                    : "flex min-h-[104px] flex-col items-start justify-between gap-3 p-4",
+                  isCustomStorefront && !showAllMobileCategories && index >= 6 && "max-sm:hidden",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
                 onClick={() => selectCategory(category)}
               >
-                <span className={cn("grid size-11 place-items-center rounded-xl ring-1", iconStyle)}>
-                  <Icon className="size-5 stroke-[2.1]" aria-hidden="true" />
+                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-9 sm:size-11" : "size-11", iconStyle)}>
+                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-[18px] sm:size-5" : "size-5")} aria-hidden="true" />
                 </span>
-                <span className="flex w-full min-w-0 items-end justify-between gap-2">
-                  <span className="line-clamp-2 min-w-0 break-words text-sm font-semibold leading-5 text-slate-950 dark:text-slate-100">
+                <span className={cn("flex min-w-0 gap-2", isCustomStorefront ? "flex-1 items-center justify-between sm:w-full sm:items-end" : "w-full items-end justify-between")}>
+                  <span className="line-clamp-2 min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:text-sm">
                     {category.name}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600 dark:md:group-hover:text-blue-300" />
@@ -1809,18 +1845,22 @@ export function Storefront({
   const modernProductsSection = (
       <section
         id="products"
-        className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6"
+        className={cn(
+          "min-w-0 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
+          isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
+        )}
       >
-      <div className="mb-5 grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between">
+      <div className={cn("grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between", isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5")}>
         <div className="min-w-0">
-          <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
+          <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
         </div>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-end">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
             className={cn(
-              "h-11 gap-2 rounded-[10px] px-3 text-sm shadow-none",
+              "gap-2 rounded-[10px] px-3 text-sm shadow-none",
+              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
               isFiltersOpen
                 ? "bg-blue-600 text-white md:hover:bg-blue-700"
                 : "border-slate-200 bg-white text-slate-700 md:hover:bg-slate-50 md:hover:text-slate-950",
@@ -1836,7 +1876,10 @@ export function Storefront({
           <Button
             type="button"
             variant="ghost"
-            className="h-11 rounded-[10px] px-3 text-sm text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100"
+            className={cn(
+              "rounded-[10px] px-3 text-sm text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100",
+              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
+            )}
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
@@ -1862,11 +1905,12 @@ export function Storefront({
         labels={{ stock: labels.stock }}
         isStoreOwner={isStoreOwner}
         forceMobileTwoColumns
+        compactMobileCards={isCustomStorefront}
       />
     </section>
   );
 
-  if (legacyLayout) {
+  if (!isCustomStorefront) {
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
         <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 md:gap-10">
@@ -1956,16 +2000,16 @@ export function Storefront({
         storeHomeHref={storeHomeHref}
         searchQuery={searchQuery}
       />
-      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 px-4 py-5 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
+      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
         {isStoreOwner ? (
           <StoreBrandingQuickEdit store={store} />
         ) : (
-          <section className="grid min-w-0 gap-6 rounded-[20px] border border-slate-200 bg-slate-50 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
+          <section className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:gap-6 sm:rounded-[20px] sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
             <div className="min-w-0">
-              <div className="mb-5 flex min-w-0 items-center gap-3">
-                <StoreLogo store={store} className="size-[72px] shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:size-20" />
+              <div className="mb-4 flex min-w-0 items-center gap-3 sm:mb-5">
+                <StoreLogo store={store} className="size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:size-20" />
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
                     Online mağaza
                   </p>
                   <h1 className="mt-1 line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
@@ -1973,16 +2017,25 @@ export function Storefront({
                   </h1>
                 </div>
               </div>
-              <p className="max-w-2xl break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+              <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
                 {store.description || heroSubtitle}
               </p>
-              <div className="mt-6 flex min-w-0 flex-wrap items-center gap-3">
-                <Button asChild className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700">
-                  <Link href="#products">Məhsullara bax</Link>
+              <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
+                <Button
+                  type="button"
+                  className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700"
+                  onClick={() => scrollToSection("products")}
+                >
+                  Məhsullara bax
                 </Button>
                 {locations.length > 0 ? (
-                  <Button asChild variant="outline" className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-                    <Link href="#store-info">Əlaqə</Link>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    onClick={() => scrollToSection("contact")}
+                  >
+                    Əlaqə
                   </Button>
                 ) : null}
               </div>
@@ -1991,20 +2044,20 @@ export function Storefront({
                 defaultValue={searchQuery}
                 storeSlug={store.slug}
                 searchBaseHref={storeHomeHref}
-                className="mt-6 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950"
-                inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100"
+                className="mt-4 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950 sm:mt-6 sm:p-1.5"
+                inputClassName="h-11 rounded-[12px] border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
                 buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
                 buttonSize="lg"
                 stackOnMobile
                 compactActions
               />
-              {heroCategories.length > 0 ? (
-                <div className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible">
-                  {heroCategories.map((category) => (
+              {customHeroCategories.length > 0 ? (
+                <div className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-4 sm:flex-wrap sm:overflow-visible">
+                  {customHeroCategories.map((category) => (
                     <button
                       key={category.id}
                       type="button"
-                      className="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                      className="flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 sm:h-auto sm:px-3.5 sm:py-2 sm:text-xs"
                       onClick={() => selectCategory(category)}
                     >
                       {category.name}
@@ -2013,7 +2066,7 @@ export function Storefront({
                 </div>
               ) : null}
             </div>
-            <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <div className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:block">
               <div className="aspect-[4/3] w-full">
                 <StoreHeroCover store={store} />
               </div>
@@ -2030,7 +2083,7 @@ export function Storefront({
         {modernCategoriesSection}
         {modernProductsSection}
         {!isStoreOwner ? (
-          <div id="store-info">
+          <div id="contact" className="scroll-mt-24">
             <PublicStoreLocationSection
               locations={locations}
               socialLinks={{

@@ -156,6 +156,7 @@ function createLocalizedRewrite(
   pathname: string,
   locale: string,
   shouldSetLocaleCookie: boolean,
+  currentPathHeader = pathname,
 ) {
   const url = request.nextUrl.clone();
 
@@ -174,7 +175,7 @@ function createLocalizedRewrite(
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("X-NEXT-INTL-LOCALE", locale);
-  requestHeaders.set("x-current-path", pathname);
+  requestHeaders.set("x-current-path", currentPathHeader);
 
   const response = NextResponse.rewrite(url, {
     request: {
@@ -266,6 +267,7 @@ export async function proxy(request: NextRequest) {
     effectivePathname,
     safeLocale,
     shouldSetLocaleCookie,
+    visiblePathname,
   );
 
   if (!needsSessionCheck(effectivePathname)) {
