@@ -18,7 +18,7 @@ import { getCategoryOptions } from "@/lib/products/data";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-type StorePageProps = {
+export type StorePageProps = {
   params: Promise<{
     locale: string;
     storeSlug: string;
@@ -27,6 +27,10 @@ type StorePageProps = {
     category?: string;
     q?: string;
   }>;
+};
+
+type StorePageRenderOptions = {
+  forceMarketplaceRoute?: boolean;
 };
 
 export async function generateMetadata({
@@ -74,7 +78,10 @@ export async function generateMetadata({
   };
 }
 
-export default async function StorePage({ params, searchParams }: StorePageProps) {
+export async function renderStorePage(
+  { params, searchParams }: StorePageProps,
+  options: StorePageRenderOptions = {},
+) {
   const { locale, storeSlug } = await params;
   const search = await searchParams;
   setRequestLocale(locale);
@@ -110,8 +117,11 @@ export default async function StorePage({ params, searchParams }: StorePageProps
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const currentPath = requestHeaders.get("x-current-path") ?? "";
   const isLegacyStoreRoute =
+    options.forceMarketplaceRoute ||
     currentPath === `/store/${store.slug}` ||
-    currentPath.startsWith(`/store/${store.slug}/`);
+    currentPath.startsWith(`/store/${store.slug}/`) ||
+    currentPath === `/${locale}/store/${store.slug}` ||
+    currentPath.startsWith(`/${locale}/store/${store.slug}/`);
   const storeBaseHref = storeSubdomainSlug === store.slug
     ? "/"
     : isLegacyStoreRoute
@@ -168,4 +178,8 @@ export default async function StorePage({ params, searchParams }: StorePageProps
       />
     </>
   );
+}
+
+export default async function StorePage(props: StorePageProps) {
+  return renderStorePage(props);
 }

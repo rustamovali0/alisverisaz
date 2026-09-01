@@ -205,15 +205,15 @@ function CustomStorefrontHeader({
           />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
-          <ThemeToggle className={iconButtonClass} iconClassName="size-5 stroke-[1.9]" />
+          <ThemeToggle className={iconButtonClass} iconClassName="size-6 stroke-[2]" />
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
             <Link href="/favorites" prefetch>
-              <Heart className="size-5 stroke-[1.9]" aria-hidden="true" />
+              <Heart className="size-6 stroke-[2]" aria-hidden="true" />
             </Link>
           </Button>
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
-              <ShoppingCart className="size-5 stroke-[1.9]" aria-hidden="true" />
+              <ShoppingCart className="size-6 stroke-[2]" aria-hidden="true" />
             </Link>
           </Button>
         </div>
