@@ -17,6 +17,7 @@ import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-but
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -41,6 +42,7 @@ import {
   Check,
   ChevronDown,
   Dumbbell,
+  Heart,
   Home as HomeIcon,
   Laptop,
   PackageSearch,
@@ -127,6 +129,140 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
     >
       {store.name.slice(0, 1).toUpperCase()}
     </span>
+  );
+}
+
+function StoreHeroCover({ store }: { store: MarketplaceStore }) {
+  const [hasError, setHasError] = useState(false);
+  const coverUrl = store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL;
+
+  if (hasError) {
+    return (
+      <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#eff6ff,#f8fafc)] dark:bg-[linear-gradient(135deg,#111827,#020617)]">
+        <Store className="size-12 text-blue-300 dark:text-blue-500/60" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={coverUrl}
+      alt={store.name}
+      className="h-full w-full object-cover"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+function CustomStorefrontHeader({
+  store,
+  storeHomeHref,
+  searchQuery,
+}: {
+  store: MarketplaceStore;
+  storeHomeHref: string;
+  searchQuery?: string;
+}) {
+  const navItems = [
+    { href: storeHomeHref, label: "Ana səhifə" },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: "Məhsullar" },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: "Kateqoriyalar" },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-info`, label: "Əlaqə" },
+  ];
+  const iconButtonClass =
+    "grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
+
+  return (
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+      <div className="mx-auto flex min-h-[68px] w-full max-w-[1280px] min-w-0 items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <Link href={storeHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-3">
+          <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900" />
+          <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+            {store.name}
+          </span>
+        </Link>
+        <nav className="ml-4 hidden min-w-0 items-center gap-1 lg:flex">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <div className="ml-auto hidden min-w-[280px] max-w-[360px] flex-1 xl:block">
+          <MarketplaceSearch
+            stores={[store]}
+            defaultValue={searchQuery}
+            storeSlug={store.slug}
+            searchBaseHref={storeHomeHref}
+            className="rounded-xl border border-slate-200 bg-white p-1 shadow-none dark:border-slate-800 dark:bg-slate-950"
+            inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 text-sm text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
+            buttonClassName="h-10 rounded-lg bg-blue-600 px-4 text-white md:hover:bg-blue-700"
+          />
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
+          <ThemeToggle className={iconButtonClass} iconClassName="size-5 stroke-[1.9]" />
+          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
+            <Link href="/favorites" prefetch>
+              <Heart className="size-5 stroke-[1.9]" aria-hidden="true" />
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
+            <Link href="/cart" prefetch>
+              <ShoppingCart className="size-5 stroke-[1.9]" aria-hidden="true" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function CustomStoreFooter({
+  store,
+  storeHomeHref,
+}: {
+  store: MarketplaceStore;
+  storeHomeHref: string;
+}) {
+  const baseHref = storeHomeHref === "/" ? "" : storeHomeHref;
+
+  return (
+    <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
+            <StoreLogo store={store} className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" />
+            <h2 className="truncate text-2xl font-semibold text-slate-950 dark:text-slate-100">
+              {store.name}
+            </h2>
+          </div>
+          {store.description ? (
+            <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {store.description}
+            </p>
+          ) : null}
+        </div>
+        <nav className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm font-medium text-slate-600 dark:text-slate-300 sm:flex sm:items-center">
+          <Link href={storeHomeHref} prefetch className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            Ana səhifə
+          </Link>
+          <Link href={`${baseHref}#products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            Məhsullar
+          </Link>
+          <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            Kateqoriyalar
+          </Link>
+          <Link href={`${baseHref}#store-info`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            Əlaqə
+          </Link>
+        </nav>
+      </div>
+    </footer>
   );
 }
 
@@ -745,12 +881,13 @@ export function ProductGrid({
                   <Button
                     asChild
                     className={cn(
-                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium md:hover:-translate-y-0.5",
+                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
                       isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25",
+                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
                     )}
                   >
-                    <Link href={detailHref} prefetch={false} scroll>
+                    <Link href={detailHref} prefetch={false} scroll className="inline-flex items-center justify-center">
+                      <PackageSearch className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
                       {t("viewDetails")}
                     </Link>
                   </Button>
@@ -759,9 +896,9 @@ export function ProductGrid({
                     product={product}
                     disabled={isOutOfStock}
                     className={cn(
-                      "h-10 w-full rounded-[10px] border-0 bg-blue-600 px-2 text-[11px] font-semibold text-white shadow-none transition duration-200 hover:bg-blue-700 hover:text-white hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-xs sm:text-sm sm:font-medium md:hover:-translate-y-0.5",
+                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
                       isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 hover:shadow-lg hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}
                   />
                 )}
@@ -1466,7 +1603,6 @@ export function Storefront({
   const heroCategories = sortedStoreCategories.slice(0, 5);
   const heroTitle = getStoreHeroTitle(store);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
-  const categoryColumnCount = Math.max(Math.ceil(sortedStoreCategories.length / 2), 1);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -1617,45 +1753,52 @@ export function Storefront({
   const modernCategoriesSection =
     sortedStoreCategories.length > 0 ? (
       <section
+        id="store-categories"
         data-home-categories
-        className="px-4 py-5 sm:px-6 lg:px-7"
+        className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6"
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-100 sm:text-2xl">{home("categories")}</h2>
+        <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+              {legacyLayout ? home("categories") : "Seçilmiş kateqoriyalar"}
+            </h2>
           </div>
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="h-9 rounded-[10px] border-slate-200 px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 sm:text-sm"
+            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200"
             onClick={() => selectCategory()}
           >
-            {home("allCategories")}
-          </Button>
+            Hamısına bax
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </button>
         </div>
-        <div
-          className="grid max-w-full grid-flow-col grid-rows-2 gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          style={{
-            gridTemplateColumns: `repeat(${categoryColumnCount}, minmax(10rem, 1fr))`,
-          }}
-        >
-          {sortedStoreCategories.map((category) => {
+        <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+          {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
+            const Icon = getCategoryIcon(category);
+            const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
 
             return (
               <button
                 key={category.id}
                 type="button"
                 className={cn(
-                  "flex h-11 w-full min-w-0 items-center justify-between gap-3 rounded-[12px] border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-slate-300 hover:shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-card dark:text-slate-100",
+                  "group flex min-h-[104px] min-w-0 flex-col items-start justify-between gap-3 rounded-[14px] border border-slate-200 bg-white p-4 text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
                 onClick={() => selectCategory(category)}
               >
-                <span className="min-w-0 truncate">{category.name}</span>
-                <ArrowRight className="size-4 text-muted-foreground" />
+                <span className={cn("grid size-11 place-items-center rounded-xl ring-1", iconStyle)}>
+                  <Icon className="size-5 stroke-[2.1]" aria-hidden="true" />
+                </span>
+                <span className="flex w-full min-w-0 items-end justify-between gap-2">
+                  <span className="line-clamp-2 min-w-0 break-words text-sm font-semibold leading-5 text-slate-950 dark:text-slate-100">
+                    {category.name}
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600 dark:md:group-hover:text-blue-300" />
+                </span>
               </button>
             );
           })}
@@ -1664,19 +1807,24 @@ export function Storefront({
     ) : null;
 
   const modernProductsSection = (
-    <section
-      id="products"
-      className="px-4 py-5 sm:px-6 lg:px-7"
-    >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
+      <section
+        id="products"
+        className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6"
+      >
+      <div className="mb-5 grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
         </div>
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-end">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
-            className="h-10 gap-2 rounded-[10px] px-3 text-sm"
+            className={cn(
+              "h-11 gap-2 rounded-[10px] px-3 text-sm shadow-none",
+              isFiltersOpen
+                ? "bg-blue-600 text-white md:hover:bg-blue-700"
+                : "border-slate-200 bg-white text-slate-700 md:hover:bg-slate-50 md:hover:text-slate-950",
+            )}
             aria-expanded={isFiltersOpen}
             aria-controls="storefront-modern-filters"
             onClick={() => setIsFiltersOpen((current) => !current)}
@@ -1688,13 +1836,13 @@ export function Storefront({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+            className="h-11 rounded-[10px] px-3 text-sm text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100"
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
             {t("clearFilters")}
           </Button>
-          <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+          <div className="col-span-2 min-w-0 sm:col-auto sm:min-w-[10rem]">{sortControl}</div>
         </div>
       </div>
       {isFiltersOpen ? (
@@ -1720,107 +1868,56 @@ export function Storefront({
 
   if (legacyLayout) {
     return (
-      <main className="min-h-screen w-full max-w-full overflow-x-clip bg-muted/40 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
-        <div className="container max-w-full py-4 md:py-6">
-          <nav className="mb-4 flex min-w-0 items-center overflow-hidden text-sm text-muted-foreground">
-            <Link href="/products" className="hover:text-primary">
-              {t("stores")}
-            </Link>
-            <span className="mx-2">·</span>
-            <span className="min-w-0 truncate font-medium text-foreground">{store.name}</span>
-          </nav>
-
+      <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
+        <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 md:gap-10">
           {isStoreOwner ? (
             <StoreBrandingQuickEdit store={store} />
           ) : (
-            <section className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm">
-              <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
-                <div className="absolute inset-0 overflow-hidden">
-                  <img
-                    src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
-                    alt={store.name}
-                    className="h-full w-full object-cover"
-                  />
+            <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
+              <div className="relative overflow-hidden rounded-2xl bg-slate-950">
+                <div className="relative h-[210px] sm:h-[280px] lg:h-[340px]">
+                  <StoreHeroCover store={store} />
+                  <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
+                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
                 </div>
-                <div className="absolute inset-0 bg-black/35" aria-hidden="true" />
-                <div className="absolute inset-x-0 bottom-0 z-10 flex min-w-0 items-end gap-3 p-4 sm:gap-5 sm:p-7 md:p-9">
-                  <StoreLogo store={store} className="size-16 shrink-0 border-2 border-background shadow-sm sm:size-24" />
-                  <div className="min-w-0 pb-0.5 text-white">
-                    <h1 className="line-clamp-2 break-words text-2xl font-black leading-tight tracking-normal sm:text-3xl md:text-4xl">
-                      {store.name}
-                    </h1>
-                    <p className="mt-1 text-sm font-medium text-white/85 sm:text-base">
-                      {t("productCount", { count: store.productCount })}
-                    </p>
+                <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6 lg:p-8">
+                  <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
+                    <div className="flex min-w-0 items-end gap-3 sm:gap-5">
+                      <StoreLogo store={store} className="size-20 shrink-0 rounded-2xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 lg:size-28" />
+                      <div className="min-w-0 pb-1 text-white">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                          Alışveriş mağazası
+                        </p>
+                        <h1 className="line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal sm:text-4xl lg:text-[44px]">
+                          {store.name}
+                        </h1>
+                        <p className="mt-2 break-words text-sm font-medium text-white/80 sm:text-base">
+                          {heroSubtitle}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <MarketplaceSearch
+                        stores={[store]}
+                        defaultValue={searchQuery}
+                        storeSlug={store.slug}
+                        searchBaseHref={storeHomeHref}
+                        className="rounded-[14px] bg-white p-1.5 shadow-[0_12px_35px_rgba(2,6,23,0.22)]"
+                        inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
+                        buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+                        buttonSize="lg"
+                        stackOnMobile
+                        compactActions
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {!isStoreOwner ? (
-            <PublicStoreLocationSection
-              locations={locations}
-              socialLinks={{
-                instagram: store.socialInstagram ?? undefined,
-                tiktok: store.socialTiktok ?? undefined,
-              }}
-            />
-          ) : null}
-          {productsSection}
-        </div>
-        <SiteFooter {...footer} />
-      </main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-0 py-3 pb-[calc(7.5rem+env(safe-area-inset-bottom))] dark:bg-background sm:px-4 sm:py-8 md:pb-8 lg:py-10">
-      <div className="mx-auto w-full max-w-[1280px] overflow-hidden bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:bg-background sm:rounded-2xl">
-        <section className="px-4 pb-4 pt-5 sm:px-6 sm:pb-6 lg:px-7 lg:pt-7">
-          {isStoreOwner ? (
-            <StoreBrandingQuickEdit store={store} />
-          ) : (
-            <div className="relative overflow-hidden rounded-2xl bg-[linear-gradient(135deg,#1e293b,#020617)]">
-              <div className="relative min-h-44 bg-primary/10 sm:min-h-56 lg:min-h-72">
-                <div className="absolute inset-0 overflow-hidden">
-                  <img
-                    src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL}
-                    alt={store.name}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="absolute inset-0 bg-slate-950/52" aria-hidden="true" />
-                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.7),rgba(15,23,42,0.42),rgba(2,6,23,0.62))]" aria-hidden="true" />
-                <div className="relative z-10 mx-auto flex min-h-[330px] max-w-4xl flex-col items-center justify-center px-4 py-10 text-center text-white sm:min-h-[360px] sm:px-8 lg:min-h-[390px]">
-                  <StoreLogo store={store} className="size-20 border-2 border-white/85 bg-white shadow-xl shadow-black/20 sm:size-24" />
-                  <div className="mt-5 min-w-0">
-                    <h1 className="max-w-4xl break-words text-[clamp(2rem,6vw,3.25rem)] font-black leading-tight tracking-normal drop-shadow-[0_3px_18px_rgba(0,0,0,0.45)]">
-                      {heroTitle}
-                    </h1>
-                    <p className="mt-4 text-sm font-bold text-white/85">
-                      {heroSubtitle}
-                    </p>
-                  </div>
-                  <MarketplaceSearch
-                    stores={[store]}
-                    defaultValue={searchQuery}
-                    storeSlug={store.slug}
-                    searchBaseHref={storeHomeHref}
-                    className="mt-7 max-w-3xl rounded-[14px] bg-white p-1.5 shadow-[0_12px_35px_rgba(15,23,42,0.18)]"
-                    inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
-                    buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white hover:bg-blue-700"
-                    buttonSize="lg"
-                    stackOnMobile
-                    compactActions
-                  />
                   {heroCategories.length > 0 ? (
-                    <div className="mt-4 flex max-w-full flex-wrap justify-center gap-2">
+                    <div className="mt-5 flex max-w-full flex-wrap gap-2">
                       {heroCategories.map((category) => (
                         <button
                           key={category.id}
                           type="button"
-                          className="max-w-full rounded-full bg-white/90 px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-white hover:text-blue-700"
+                          className="max-w-full rounded-full border border-white/20 bg-white/90 px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm transition md:hover:bg-white md:hover:text-blue-700"
                           onClick={() => selectCategory(category)}
                         >
                           {category.name}
@@ -1830,11 +1927,110 @@ export function Storefront({
                   ) : null}
                 </div>
               </div>
-            </div>
+            </section>
           )}
-        </section>
-        <div className="pb-6">
+
           {!isStoreOwner ? (
+            <div id="store-info">
+              <PublicStoreLocationSection
+                locations={locations}
+                socialLinks={{
+                  instagram: store.socialInstagram ?? undefined,
+                  tiktok: store.socialTiktok ?? undefined,
+                }}
+              />
+            </div>
+          ) : null}
+          {modernCategoriesSection}
+          {modernProductsSection}
+        </div>
+        <SiteFooter {...footer} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(88px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+      <CustomStorefrontHeader
+        store={store}
+        storeHomeHref={storeHomeHref}
+        searchQuery={searchQuery}
+      />
+      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 px-4 py-5 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
+        {isStoreOwner ? (
+          <StoreBrandingQuickEdit store={store} />
+        ) : (
+          <section className="grid min-w-0 gap-6 rounded-[20px] border border-slate-200 bg-slate-50 p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
+            <div className="min-w-0">
+              <div className="mb-5 flex min-w-0 items-center gap-3">
+                <StoreLogo store={store} className="size-[72px] shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:size-20" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
+                    Online mağaza
+                  </p>
+                  <h1 className="mt-1 line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
+                    {store.name}
+                  </h1>
+                </div>
+              </div>
+              <p className="max-w-2xl break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+                {store.description || heroSubtitle}
+              </p>
+              <div className="mt-6 flex min-w-0 flex-wrap items-center gap-3">
+                <Button asChild className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700">
+                  <Link href="#products">Məhsullara bax</Link>
+                </Button>
+                {locations.length > 0 ? (
+                  <Button asChild variant="outline" className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
+                    <Link href="#store-info">Əlaqə</Link>
+                  </Button>
+                ) : null}
+              </div>
+              <MarketplaceSearch
+                stores={[store]}
+                defaultValue={searchQuery}
+                storeSlug={store.slug}
+                searchBaseHref={storeHomeHref}
+                className="mt-6 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1.5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950"
+                inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100"
+                buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+                buttonSize="lg"
+                stackOnMobile
+                compactActions
+              />
+              {heroCategories.length > 0 ? (
+                <div className="mt-4 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible">
+                  {heroCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className="shrink-0 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+                      onClick={() => selectCategory(category)}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div className="relative min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+              <div className="aspect-[4/3] w-full">
+                <StoreHeroCover store={store} />
+              </div>
+              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-slate-950/82 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur">
+                <p className="text-xs font-medium text-white/60">Mağaza</p>
+                <p className="mt-1 line-clamp-2 break-words text-lg font-semibold">
+                  {heroSubtitle}
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {modernCategoriesSection}
+        {modernProductsSection}
+        {!isStoreOwner ? (
+          <div id="store-info">
             <PublicStoreLocationSection
               locations={locations}
               socialLinks={{
@@ -1842,12 +2038,10 @@ export function Storefront({
                 tiktok: store.socialTiktok ?? undefined,
               }}
             />
-          ) : null}
-          {modernCategoriesSection}
-          {modernProductsSection}
-        </div>
+          </div>
+        ) : null}
       </div>
-      <SiteFooter {...footer} />
+      <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
     </main>
   );
 }

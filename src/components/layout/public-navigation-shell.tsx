@@ -31,6 +31,24 @@ const hiddenPaths = new Set([
   "/logout",
 ]);
 
+const reservedPublicSegments = new Set([
+  "",
+  "about",
+  "admin",
+  "cart",
+  "checkout",
+  "dashboard",
+  "favorites",
+  "login",
+  "logout",
+  "products",
+  "register",
+  "radmin",
+  "seller",
+  "store",
+  "stores",
+]);
+
 function shouldShowPublicNavigation(pathname: string) {
   if (hiddenPaths.has(pathname)) {
     return false;
@@ -59,18 +77,27 @@ export function PublicNavigationShell({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const showNavigation = shouldShowPublicNavigation(pathname);
-  const pathStoreSlug = stores.find(
+  const firstPathSegment = pathname.split("/").filter(Boolean)[0] ?? "";
+  const matchedStoreSlug = stores.find(
     (store) =>
       pathname === `/${store.slug}` ||
       pathname.startsWith(`/${store.slug}/`) ||
       pathname === `/store/${store.slug}` ||
       pathname.startsWith(`/store/${store.slug}/`),
   )?.slug;
+  const pathStoreSlug = matchedStoreSlug ?? (
+    firstPathSegment && !reservedPublicSegments.has(firstPathSegment)
+      ? firstPathSegment
+      : undefined
+  );
   const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
   const isLegacyStorePath = Boolean(
     pathStoreSlug &&
       (pathname === `/store/${pathStoreSlug}` ||
         pathname.startsWith(`/store/${pathStoreSlug}/`)),
+  );
+  const isStandaloneStoreHome = Boolean(
+    pathStoreSlug && !isLegacyStorePath && pathname === `/${pathStoreSlug}`,
   );
   const storeHomeHref = storeSubdomainSlug
     ? "/"
@@ -84,7 +111,7 @@ export function PublicNavigationShell({
 
   return (
     <>
-      {showNavigation ? (
+      {showNavigation && !isStandaloneStoreHome ? (
         <MarketplaceHeader
           siteName={siteName}
           logoUrl={logoUrl}
