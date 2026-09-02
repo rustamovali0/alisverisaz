@@ -29,6 +29,8 @@ import { cn } from "@/lib/utils";
 
 type HeaderAccountActionsProps = {
   className?: string;
+  showSellerCta?: boolean;
+  customerOnlyRegister?: boolean;
 };
 
 function getPanelPath(role: AuthRole) {
@@ -55,9 +57,17 @@ function getPanelPath(role: AuthRole) {
   };
 }
 
-function createNextHref(pathname: string, target: "/login" | "/register") {
+function createNextHref(
+  pathname: string,
+  target: "/login" | "/register",
+  options: { customerOnlyRegister?: boolean } = {},
+) {
   const nextPath = pathname === "/login" || pathname === "/register" ? "/" : pathname;
   const params = new URLSearchParams({ next: nextPath });
+
+  if (target === "/register" && options.customerOnlyRegister) {
+    params.set("customerOnly", "1");
+  }
 
   return `${target}?${params.toString()}`;
 }
@@ -66,7 +76,11 @@ export function clearHeaderAccountCache() {
   clearClientAuthProfileCache();
 }
 
-export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
+export function HeaderAccountActions({
+  className,
+  showSellerCta = true,
+  customerOnlyRegister = false,
+}: HeaderAccountActionsProps) {
   const auth = useTranslations("auth");
   const nav = useTranslations("nav");
   const roles = useTranslations("roles");
@@ -137,7 +151,7 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
           className="group bg-transparent text-slate-900 shadow-none hover:!bg-transparent hover:text-slate-900 dark:text-slate-100 dark:hover:text-slate-100"
         >
           <Link href={createNextHref(pathname, "/login")}>
-            <LogIn className="mr-2 size-5 stroke-[2.2]" aria-hidden="true" />
+            <LogIn className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
             <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
               {auth("login")}
             </span>
@@ -148,25 +162,27 @@ export function HeaderAccountActions({ className }: HeaderAccountActionsProps) {
           variant="ghost"
           className="group rounded-full border border-cyan-200 bg-cyan-50/90 px-4 text-slate-900 shadow-sm shadow-cyan-950/[0.04] hover:!bg-cyan-50 hover:text-slate-900 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-slate-100 dark:hover:!bg-cyan-400/10 dark:hover:text-slate-100"
         >
-          <Link href={createNextHref(pathname, "/register")}>
-            <UserPlus className="mr-2 size-5 stroke-[2.2]" aria-hidden="true" />
+          <Link href={createNextHref(pathname, "/register", { customerOnlyRegister })}>
+            <UserPlus className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
             <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
               {auth("register")}
             </span>
           </Link>
         </Button>
-        <Button
-          asChild
-          variant="ghost"
-          className="group rounded-full border border-primary/30 bg-primary/10 px-4 text-slate-950 shadow-sm shadow-cyan-950/[0.04] hover:!bg-primary/15 hover:text-slate-950 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:text-white"
-        >
-          <Link href={`${createNextHref(pathname, "/register")}&role=seller`}>
-            <Plus className="mr-2 size-5 stroke-[2.2]" aria-hidden="true" />
-            <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
-              Satıcı ol
-            </span>
-          </Link>
-        </Button>
+        {showSellerCta ? (
+          <Button
+            asChild
+            variant="ghost"
+            className="group rounded-full border border-primary/30 bg-primary/10 px-4 text-slate-950 shadow-sm shadow-cyan-950/[0.04] hover:!bg-primary/15 hover:text-slate-950 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:text-white"
+          >
+            <Link href={`${createNextHref(pathname, "/register")}&role=seller`}>
+              <Plus className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
+              <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
+                Satıcı ol
+              </span>
+            </Link>
+          </Button>
+        ) : null}
       </div>
     );
   }

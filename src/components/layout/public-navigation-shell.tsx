@@ -36,6 +36,7 @@ const reservedPublicSegments = new Set([
   "about",
   "admin",
   "cart",
+  "categories",
   "checkout",
   "dashboard",
   "favorites",

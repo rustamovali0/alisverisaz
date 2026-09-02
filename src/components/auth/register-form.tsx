@@ -173,8 +173,11 @@ export function RegisterForm({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
+  const customerOnly = searchParams.get("customerOnly") === "1";
   const [role, setRole] = useState(
-    searchParams.get("role") === "seller" && storeRegistrationEnabled
+    customerOnly
+      ? "customer"
+      : searchParams.get("role") === "seller" && storeRegistrationEnabled
       ? "seller"
       : userRegistrationEnabled
         ? "customer"
@@ -189,7 +192,9 @@ export function RegisterForm({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const canRegister = userRegistrationEnabled || storeRegistrationEnabled;
+  const canRegister = customerOnly
+    ? userRegistrationEnabled
+    : userRegistrationEnabled || storeRegistrationEnabled;
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
   const next = searchParams.get("next") ?? "";
 
@@ -251,7 +256,7 @@ export function RegisterForm({
       formData.set("password", password);
       formData.set("confirmPassword", confirmPassword);
       formData.set("terms", termsAccepted ? "on" : "");
-      formData.set("role", role);
+      formData.set("role", customerOnly ? "customer" : role);
       formData.set("next", next);
 
       let result;
@@ -434,42 +439,44 @@ export function RegisterForm({
             minLength={8}
             required
           />
-          <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium">Hesab tipi</legend>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {userRegistrationEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => setRole("customer")}
-                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
-                    role === "customer"
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-foreground hover:border-primary/50"
-                  }`}
-                  aria-pressed={role === "customer"}
-                >
-                  <UserRound className="size-4" aria-hidden="true" />
-                  İstifadəçi / Müştəri
-                </button>
-              ) : null}
-              {storeRegistrationEnabled ? (
-                <button
-                  type="button"
-                  onClick={() => setRole("seller")}
-                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
-                    role === "seller"
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input bg-background text-foreground hover:border-primary/50"
-                  }`}
-                  aria-pressed={role === "seller"}
-                >
-                  <Store className="size-4" aria-hidden="true" />
-                  Mağaza sahibi
-                </button>
-              ) : null}
-            </div>
-          </fieldset>
-          {role === "seller" ? (
+          {!customerOnly ? (
+            <fieldset className="grid gap-2">
+              <legend className="text-sm font-medium">Hesab tipi</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {userRegistrationEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => setRole("customer")}
+                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                      role === "customer"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-foreground hover:border-primary/50"
+                    }`}
+                    aria-pressed={role === "customer"}
+                  >
+                    <UserRound className="size-4" aria-hidden="true" />
+                    İstifadəçi / Müştəri
+                  </button>
+                ) : null}
+                {storeRegistrationEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => setRole("seller")}
+                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                      role === "seller"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-foreground hover:border-primary/50"
+                    }`}
+                    aria-pressed={role === "seller"}
+                  >
+                    <Store className="size-4" aria-hidden="true" />
+                    Mağaza sahibi
+                  </button>
+                ) : null}
+              </div>
+            </fieldset>
+          ) : null}
+          {!customerOnly && role === "seller" ? (
             <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
               <div>
                 <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>

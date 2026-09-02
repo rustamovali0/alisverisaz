@@ -20,6 +20,7 @@ type MarketplaceSearchProps = {
   stackOnMobile?: boolean;
   storeSlug?: string;
   searchBaseHref?: string;
+  resultsAnchorId?: string;
   compactActions?: boolean;
   placeholder?: string;
 };
@@ -61,6 +62,7 @@ export function MarketplaceSearch({
   stackOnMobile = false,
   storeSlug,
   searchBaseHref,
+  resultsAnchorId,
   compactActions = false,
   placeholder,
 }: MarketplaceSearchProps) {
@@ -282,9 +284,24 @@ export function MarketplaceSearch({
     }).catch(() => undefined);
   }
 
+  function buildSearchHref(baseHref: string, searchQuery: string) {
+    const [baseWithoutHash, existingHash = ""] = baseHref.split("#");
+    const hash = resultsAnchorId || existingHash;
+
+    if (!searchQuery) {
+      return hash ? `${baseWithoutHash}#${hash}` : baseWithoutHash;
+    }
+
+    const separator = baseWithoutHash.includes("?") ? "&" : "?";
+    const encodedQuery = encodeURIComponent(searchQuery);
+
+    return `${baseWithoutHash}${separator}q=${encodedQuery}${hash ? `#${hash}` : ""}`;
+  }
+
   function submitSearch(value: string) {
     const searchQuery = value.trim();
     const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
+    const nextHref = buildSearchHref(baseHref, searchQuery);
 
     setQuery(searchQuery);
     syncSearchQuery(searchQuery);
@@ -293,16 +310,22 @@ export function MarketplaceSearch({
     setIsSearching(false);
     inputRef.current?.blur();
 
-    if (!searchQuery) {
-      router.push(baseHref, { scroll: true });
-      return;
+    if (searchQuery) {
+      recordSearch(searchQuery);
     }
 
-    recordSearch(searchQuery);
-    const encodedQuery = encodeURIComponent(searchQuery);
-    router.push(`${baseHref}?q=${encodedQuery}`, {
+    router.push(nextHref, {
       scroll: true,
     });
+
+    if (resultsAnchorId && typeof window !== "undefined") {
+      window.setTimeout(() => {
+        document.getElementById(resultsAnchorId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 80);
+    }
   }
 
   function submitCurrentSearch() {
@@ -421,7 +444,7 @@ export function MarketplaceSearch({
                   <button
                     key={term}
                     type="button"
-                    className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm font-medium transition hover:bg-primary hover:text-primary-foreground"
+                    className="rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-sm font-medium transition md:hover:bg-primary md:hover:text-primary-foreground"
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => submitSearch(term)}
                   >
@@ -476,7 +499,7 @@ function SearchSuggestionGroup({
         <button
           key={suggestion.key}
           type="button"
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition md:hover:bg-muted"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onSelect(suggestion)}
         >

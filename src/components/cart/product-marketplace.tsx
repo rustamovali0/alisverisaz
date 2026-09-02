@@ -11,6 +11,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { AddToCartButton } from "@/components/cart/cart-buttons";
+import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { GlobalLoader } from "@/components/common/global-loader";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
@@ -163,6 +164,7 @@ function CustomStorefrontHeader({
   storeHomeHref: string;
   searchQuery?: string;
 }) {
+  const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const navItems = [
     { href: storeHomeHref, label: "Ana səhifə" },
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: "Məhsullar" },
@@ -171,6 +173,17 @@ function CustomStorefrontHeader({
   ];
   const iconButtonClass =
     "grid size-11 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
+
+  useEffect(() => {
+    function updateHeaderSearchVisibility() {
+      setShowHeaderSearch(window.scrollY > 160);
+    }
+
+    updateHeaderSearchVisibility();
+    window.addEventListener("scroll", updateHeaderSearchVisibility, { passive: true });
+
+    return () => window.removeEventListener("scroll", updateHeaderSearchVisibility);
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
@@ -193,16 +206,27 @@ function CustomStorefrontHeader({
             </Link>
           ))}
         </nav>
-        <div className="ml-auto hidden min-w-[280px] max-w-[360px] flex-1 xl:block">
+        <div
+          className={cn(
+            "ml-auto hidden flex-1 transition-[max-width,opacity] duration-200 xl:block",
+            showHeaderSearch
+              ? "min-w-[280px] max-w-[360px] opacity-100"
+              : "pointer-events-none max-w-0 flex-none overflow-hidden opacity-0",
+          )}
+        >
           <MarketplaceSearch
             stores={[store]}
             defaultValue={searchQuery}
             storeSlug={store.slug}
             searchBaseHref={storeHomeHref}
+            resultsAnchorId="products"
             className="rounded-xl border border-slate-200 bg-white p-1 shadow-none dark:border-slate-800 dark:bg-slate-950"
             inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 text-sm text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
             buttonClassName="h-10 rounded-lg bg-blue-600 px-4 text-white md:hover:bg-blue-700"
           />
+        </div>
+        <div className="hidden shrink-0 lg:block">
+          <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
           <ThemeToggle className={iconButtonClass} iconClassName="size-6 stroke-[2]" />
@@ -2044,6 +2068,7 @@ export function Storefront({
                 defaultValue={searchQuery}
                 storeSlug={store.slug}
                 searchBaseHref={storeHomeHref}
+                resultsAnchorId="products"
                 className="mt-4 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950 sm:mt-6 sm:p-1.5"
                 inputClassName="h-11 rounded-[12px] border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
                 buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
