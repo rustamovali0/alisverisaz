@@ -172,7 +172,7 @@ function CustomStorefrontHeader({
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
   ];
   const iconButtonClass =
-    "grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
+    "grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
 
   useEffect(() => {
     function updateHeaderSearchVisibility() {
@@ -187,8 +187,12 @@ function CustomStorefrontHeader({
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
-      <div className="mx-auto flex min-h-16 w-full max-w-[1440px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-2.5 sm:px-6 lg:px-8">
-        <Link href={storeHomeHref} prefetch className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3 lg:max-w-[260px] xl:max-w-[300px]">
+      <div className="mx-auto flex min-h-16 w-full max-w-[1680px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-2.5 sm:px-6 lg:px-8 2xl:px-10">
+        <Link
+          href={storeHomeHref}
+          prefetch
+          className="flex min-w-0 flex-[0_1_260px] items-center gap-2.5 sm:gap-3 xl:flex-[0_1_280px] 2xl:flex-[0_1_320px]"
+        >
           <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
           <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
             {store.name}
@@ -196,8 +200,8 @@ function CustomStorefrontHeader({
         </Link>
         <nav
           className={cn(
-            "ml-3 hidden shrink-0 items-center gap-1",
-            showHeaderSearch ? "2xl:flex" : "lg:flex",
+            "ml-2 hidden shrink-0 items-center gap-0.5",
+            showHeaderSearch ? "xl:flex" : "lg:flex",
           )}
         >
           {navItems.map((item) => (
@@ -205,7 +209,7 @@ function CustomStorefrontHeader({
               key={item.href}
               href={item.href}
               prefetch
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white"
+              className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
             >
               {item.label}
             </Link>
@@ -213,9 +217,9 @@ function CustomStorefrontHeader({
         </nav>
         <div
           className={cn(
-            "ml-auto hidden flex-[1_1_260px] transition-[max-width,opacity] duration-200 xl:block",
+            "ml-auto hidden flex-[1_1_240px] transition-[max-width,opacity] duration-200 xl:block",
             showHeaderSearch
-              ? "min-w-[220px] max-w-[320px] opacity-100"
+              ? "min-w-[210px] max-w-[300px] opacity-100 2xl:max-w-[340px]"
               : "pointer-events-none max-w-0 flex-none overflow-hidden opacity-0",
           )}
         >
@@ -234,15 +238,15 @@ function CustomStorefrontHeader({
           <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
-          <ThemeToggle className={iconButtonClass} iconClassName="size-7 stroke-[2]" />
+          <ThemeToggle className={iconButtonClass} iconClassName="!size-7 stroke-[2.1]" />
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
             <Link href="/favorites" prefetch>
-              <Heart className="size-7 stroke-[2]" aria-hidden="true" />
+              <Heart className="!size-7 stroke-[2.1]" aria-hidden="true" />
             </Link>
           </Button>
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
-              <ShoppingCart className="size-7 stroke-[2]" aria-hidden="true" />
+              <ShoppingCart className="!size-7 stroke-[2.1]" aria-hidden="true" />
             </Link>
           </Button>
         </div>
