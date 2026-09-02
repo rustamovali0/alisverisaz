@@ -94,9 +94,12 @@ export function MarketplaceHeader({
   const displaySiteName = formatBrandName(siteName);
   const pathname = usePathname();
   const { profile, isResolved } = useClientAuthProfileState();
+  const isMarketplaceStoreLanding =
+    /^\/store\/[^/]+\/?$/.test(pathname) && !pathname.startsWith("/store/dashboard");
   const isHomePage =
     pathname === storeHomeHref ||
     (Boolean(storeSubdomainSlug) && pathname === `/${storeSubdomainSlug}`);
+  const hasInlinePrimarySearch = isHomePage || isMarketplaceStoreLanding;
   const resolvedRole =
     !isResolved && initialRole
       ? initialRole
@@ -117,17 +120,17 @@ export function MarketplaceHeader({
     pathname.startsWith("/register");
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
-  const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(isHomePage);
+  const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(hasInlinePrimarySearch);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group inline-flex size-10 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 md:size-11";
+    "group inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300";
   const commerceUtilityIconClass =
-    "size-6 min-h-6 min-w-6 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
+    "size-7 min-h-7 min-w-7 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-6 stroke-[2] transition-transform duration-200 md:group-hover:scale-105 min-[400px]:size-7";
+    "size-7 min-h-7 min-w-7 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
   const mobileCommerceIconClass =
-    "size-6 stroke-[2] transition-transform duration-200";
+    "size-7 stroke-[2] transition-transform duration-200";
 
   function showLoginRequiredToast() {
     showToast({
@@ -138,15 +141,22 @@ export function MarketplaceHeader({
   }
 
   useEffect(() => {
-    if (!isHomePage) {
+    if (!hasInlinePrimarySearch) {
       setIsHomeSearchVisible(false);
       return;
     }
 
     let observer: IntersectionObserver | null = null;
+    let removeScrollFallback: (() => void) | null = null;
     const frame = window.requestAnimationFrame(() => {
-      const sentinel = document.querySelector("[data-home-search-sentinel]");
+      const sentinel = document.querySelector(
+        "[data-home-search-sentinel], [data-store-search-sentinel]",
+      );
       if (!sentinel) {
+        const updateFallback = () => setIsHomeSearchVisible(window.scrollY < 180);
+        updateFallback();
+        window.addEventListener("scroll", updateFallback, { passive: true });
+        removeScrollFallback = () => window.removeEventListener("scroll", updateFallback);
         return;
       }
 
@@ -160,8 +170,9 @@ export function MarketplaceHeader({
     return () => {
       window.cancelAnimationFrame(frame);
       observer?.disconnect();
+      removeScrollFallback?.();
     };
-  }, [isHomePage]);
+  }, [hasInlinePrimarySearch, pathname]);
 
   useEffect(() => {
     function syncCartCount() {
@@ -179,9 +190,9 @@ export function MarketplaceHeader({
   }, []);
 
   const hasSearchData = stores.length > 0 || categories.length > 0;
-  const shouldShowCompactMobileSearch = !isHomePage || !isHomeSearchVisible;
+  const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
-    !shouldSuppressSearch && hasSearchData && (!isHomePage || !isHomeSearchVisible);
+    !shouldSuppressSearch && hasSearchData && (!hasInlinePrimarySearch || !isHomeSearchVisible);
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
@@ -217,7 +228,7 @@ export function MarketplaceHeader({
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
         }
       >
-        <div className="container flex min-h-16 w-full max-w-[1280px] min-w-0 flex-wrap items-center gap-2 py-2 sm:min-h-[68px] sm:gap-3 xl:flex-nowrap">
+        <div className="container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-wrap items-center gap-2 py-2 sm:min-h-[68px] sm:gap-2 xl:flex-nowrap">
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
               <span className="grid size-9 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
@@ -305,12 +316,12 @@ export function MarketplaceHeader({
               </>
             ) : null}
           </div>
-          <nav className="hidden shrink-0 items-center gap-1 lg:flex">
+          <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             <Button
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
                 isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -323,7 +334,7 @@ export function MarketplaceHeader({
             <Button
               asChild
               variant="ghost"
-              className="group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
+              className="group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
             >
               <Link href="/stores" prefetch>
                 <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
@@ -335,7 +346,7 @@ export function MarketplaceHeader({
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-3 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
                 isAboutActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -347,7 +358,7 @@ export function MarketplaceHeader({
             </Button>
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[300px] max-w-[430px] flex-[1_1_300px] items-center gap-3 md:flex xl:max-w-[500px]">
+            <div className="ml-auto hidden min-w-[200px] max-w-[300px] flex-[1_1_220px] items-center gap-2 md:flex 2xl:max-w-[380px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}
@@ -358,7 +369,7 @@ export function MarketplaceHeader({
               />
             </div>
           ) : null}
-          <div className="ml-auto hidden items-center gap-1 md:flex">
+          <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
             <LanguageSwitcher className="hidden lg:flex" />
             <ThemeToggle
               className={cn(
@@ -410,8 +421,8 @@ export function MarketplaceHeader({
                 ) : null}
               </Link>
             </Button>
-            <div className="hidden min-w-[168px] lg:block">
-              <HeaderAccountActions />
+            <div className="hidden min-w-0 shrink-0 lg:block">
+              <HeaderAccountActions className="shrink-0" />
             </div>
           </div>
         </div>
