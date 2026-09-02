@@ -194,7 +194,12 @@ function CustomStorefrontHeader({
             {store.name}
           </span>
         </Link>
-        <nav className="ml-3 hidden shrink-0 items-center gap-1 2xl:flex">
+        <nav
+          className={cn(
+            "ml-3 hidden shrink-0 items-center gap-1",
+            showHeaderSearch ? "2xl:flex" : "lg:flex",
+          )}
+        >
           {navItems.map((item) => (
             <Link
               key={item.href}
