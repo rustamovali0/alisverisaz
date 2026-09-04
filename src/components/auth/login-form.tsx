@@ -74,12 +74,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       return;
     }
 
-    if (!isAdminMode && !captchaToken) {
-      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
-      showToast({ title: "Giriş alınmadı", description: message, variant: "error" });
-      return;
-    }
-
     formData.set("identifier", identifier.trim().toLowerCase());
     formData.set("password", password);
     formData.set("rememberMe", rememberMe ? "on" : "");
@@ -116,12 +110,6 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
 
   function handleGoogleSubmit(formData: FormData) {
     if (isGooglePending) {
-      return;
-    }
-
-    if (!captchaToken) {
-      const message = "Təhlükəsizlik yoxlamasını tamamlayın.";
-      showToast({ title: "Google girişi alınmadı", description: message, variant: "error" });
       return;
     }
 
@@ -248,7 +236,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         )}
         <Button
           type="submit"
-          disabled={isPending || (!isAdminMode && !captchaToken)}
+          disabled={isPending}
           className={cn(
             "h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700",
             isAdminMode &&
@@ -270,7 +258,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
               type="submit"
               variant="outline"
               className="h-11 w-full rounded-xl"
-              disabled={isGooglePending || !captchaToken}
+              disabled={isGooglePending}
             >
               <Chrome className="mr-2 size-4" aria-hidden="true" />
               {isGooglePending ? "Google açılır" : "Google ilə davam et"}
