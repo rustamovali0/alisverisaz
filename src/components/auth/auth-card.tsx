@@ -24,7 +24,7 @@ export function AuthCard({
   return (
     <section
       className={cn(
-        "w-full rounded-xl border border-border/80 bg-card p-3.5 shadow-xl shadow-slate-900/10 sm:p-4",
+        "w-full rounded-xl border border-border/80 bg-card p-3.5 text-card-foreground shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 sm:p-4",
         className,
       )}
     >

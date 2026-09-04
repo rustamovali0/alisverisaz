@@ -44,6 +44,7 @@ export type ManagedOrder = {
   customerPhone: string;
   address: string;
   note: string | null;
+  isWhatsAppOrder: boolean;
   createdAt: string;
   items: Array<{
     id: string;

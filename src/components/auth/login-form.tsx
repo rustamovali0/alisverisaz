@@ -144,12 +144,12 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   return (
     <AuthCard
       className={cn(
-        "mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
         isAdminMode &&
           "border-emerald-500/25 bg-black/72 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
       )}
       topStart={
-        <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
+        <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
           <Link href="/">
             <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
             Ana səhifə
@@ -158,11 +158,11 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       }
       topEnd={
         mode === "admin" ? (
-          <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
+          <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
             <Link href="/login">Sayt girişi</Link>
           </Button>
         ) : (
-          <Button asChild variant="outline" size="sm" className="h-10 px-2 text-sm">
+          <Button asChild variant="outline" size="sm" className="h-10 px-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
             <Link href="/register">
               Qeydiyyat
               <ArrowRight className="ml-2 size-4" aria-hidden="true" />

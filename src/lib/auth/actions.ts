@@ -1470,6 +1470,7 @@ export async function updateUserContactByAdminAction(
 ): Promise<AdminUserMutationResult> {
   const current = await requireRole(["admin"], "/radmin/users");
   const userId = readString(formData, "userId");
+  const fullName = readString(formData, "fullName");
   const email = readString(formData, "email").toLowerCase();
   const phone = normalizeAzerbaijanPhone(readString(formData, "phone"));
 
@@ -1477,8 +1478,8 @@ export async function updateUserContactByAdminAction(
     return { ok: false, message: "İstifadəçi tapılmadı." };
   }
 
-  if (!email || !phone) {
-    return { ok: false, message: "Email və telefon mütləqdir." };
+  if (!fullName || !email || !phone) {
+    return { ok: false, message: "Ad soyad, email və telefon mütləqdir." };
   }
 
   if (!isValidEmail(email)) {
@@ -1497,6 +1498,7 @@ export async function updateUserContactByAdminAction(
     email,
     user_metadata: {
       ...(existingUser.user.user_metadata ?? {}),
+      full_name: fullName,
       phone,
     },
   });
@@ -1507,13 +1509,14 @@ export async function updateUserContactByAdminAction(
       message:
         authError.message.toLowerCase().includes("already")
           ? "Bu email ilə hesab artıq mövcuddur."
-          : "Email və telefon yenilənmədi.",
+          : "İstifadəçi məlumatları yenilənmədi.",
     };
   }
 
   const { error: profileError } = await supabaseAdmin
     .from("profiles")
     .update({
+      full_name: fullName,
       email,
       phone,
       updated_at: new Date().toISOString(),
@@ -1530,6 +1533,7 @@ export async function updateUserContactByAdminAction(
     entityType: "user",
     entityId: userId,
     metadata: {
+      fullName,
       email,
       phone,
     },
@@ -1540,7 +1544,7 @@ export async function updateUserContactByAdminAction(
   revalidatePath("/dashboard", "layout");
   revalidatePath("/store/dashboard", "layout");
 
-  return { ok: true, message: "Email və telefon yeniləndi." };
+  return { ok: true, message: "Ad, email və telefon yeniləndi." };
 }
 
 export async function deactivateUserAction(

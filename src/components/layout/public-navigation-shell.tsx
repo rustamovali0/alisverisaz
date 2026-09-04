@@ -38,16 +38,23 @@ const reservedPublicSegments = new Set([
   "cart",
   "categories",
   "checkout",
+  "contact",
   "dashboard",
+  "faq",
   "favorites",
+  "guide",
+  "help",
   "login",
   "logout",
+  "privacy",
   "products",
   "register",
   "radmin",
+  "rules",
   "seller",
   "store",
   "stores",
+  "terms",
 ]);
 
 function shouldShowPublicNavigation(pathname: string) {

@@ -22,6 +22,7 @@ type OrderRow = {
       }
     | null;
   notes: string | null;
+  metadata?: Record<string, unknown> | null;
   created_at: string;
   stores?: {
     name: string;
@@ -85,6 +86,8 @@ function toManagedOrder(
   row: OrderRow,
   productMap: Map<string, ProductLookupRow>,
 ): ManagedOrder {
+  const metadata = row.metadata ?? {};
+
   return {
     id: row.id,
     orderNumber: row.order_number,
@@ -102,6 +105,10 @@ function toManagedOrder(
     customerPhone: row.shipping_address?.phone ?? "-",
     address: row.shipping_address?.address ?? "-",
     note: row.notes,
+    isWhatsAppOrder:
+      metadata.whatsapp_order === true ||
+      metadata.order_channel === "whatsapp" ||
+      metadata.source === "direct_whatsapp_button",
     createdAt: row.created_at,
     items: (row.order_items ?? []).map((item) => ({
       id: item.id,
@@ -140,7 +147,7 @@ async function getOrders(filters: {
   let query = (supabaseAdmin as any)
     .from("orders")
     .select(
-      "id,order_number,status,payment_status,subtotal_amount,shipping_amount,delivery_amount,delivery_method,delivery_estimate,total_amount,currency,shipping_address,notes,created_at,stores(name,slug),order_items(id,product_id,product_name,product_sku,quantity,unit_price_amount,total_amount,metadata)",
+      "id,order_number,status,payment_status,subtotal_amount,shipping_amount,delivery_amount,delivery_method,delivery_estimate,total_amount,currency,shipping_address,notes,metadata,created_at,stores(name,slug),order_items(id,product_id,product_name,product_sku,quantity,unit_price_amount,total_amount,metadata)",
     )
     .order("created_at", {
       ascending: false,

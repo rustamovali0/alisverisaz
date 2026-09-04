@@ -15,6 +15,7 @@ import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { EmptyState } from "@/components/common/empty-state";
 import { GlobalLoader } from "@/components/common/global-loader";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
@@ -22,6 +23,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
+import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type {
   CartProduct,
   MarketplaceProductPage,
@@ -164,6 +166,8 @@ function CustomStorefrontHeader({
   storeHomeHref: string;
   searchQuery?: string;
 }) {
+  const { profile } = useClientAuthProfileState();
+  const isAuthenticated = profile.status === "authenticated";
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const navItems = [
     { href: storeHomeHref, label: "Ana səhifə" },
@@ -238,21 +242,38 @@ function CustomStorefrontHeader({
           <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
-          <ThemeToggle className={iconButtonClass} iconClassName="!size-7 stroke-[2.1]" />
-          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
-            <Link href="/favorites" prefetch>
-              <Heart className="!size-7 stroke-[2.1]" aria-hidden="true" />
-            </Link>
-          </Button>
+          {isAuthenticated ? (
+            <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
+              <Link href="/favorites" prefetch>
+                <Heart className="!size-7 stroke-[2.1]" aria-hidden="true" />
+              </Link>
+            </Button>
+          ) : null}
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
               <ShoppingCart className="!size-7 stroke-[2.1]" aria-hidden="true" />
             </Link>
           </Button>
+          <ThemeToggle className={iconButtonClass} iconClassName="!size-7 stroke-[2.1]" />
         </div>
       </div>
     </header>
   );
+}
+
+function getDisplayStoreDescription(store: MarketplaceStore) {
+  const description = store.description?.trim();
+
+  if (!description) {
+    return null;
+  }
+
+  const normalizedDescription = description
+    .toLocaleLowerCase("az-AZ")
+    .replace(/\s+/g, " ");
+  const hiddenDefaultDescriptions = new Set(["satıcı mağazası", "satici magazasi"]);
+
+  return hiddenDefaultDescriptions.has(normalizedDescription) ? null : description;
 }
 
 function CustomStoreFooter({
@@ -263,6 +284,7 @@ function CustomStoreFooter({
   storeHomeHref: string;
 }) {
   const baseHref = storeHomeHref === "/" ? "" : storeHomeHref;
+  const description = getDisplayStoreDescription(store);
 
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -274,9 +296,9 @@ function CustomStoreFooter({
               {store.name}
             </h2>
           </div>
-          {store.description ? (
+          {description ? (
             <p className="mt-3 max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
-              {store.description}
+              {description}
             </p>
           ) : null}
         </div>
@@ -297,14 +319,6 @@ function CustomStoreFooter({
       </div>
     </footer>
   );
-}
-
-function getStoreHeroTitle(store: MarketplaceStore) {
-  if (store.heroTitle?.trim()) {
-    return store.heroTitle.trim();
-  }
-
-  return `${store.name.trim()} mağazası`;
 }
 
 function getStoreHeroSubtitle(store: MarketplaceStore, primaryCategoryName?: string) {
@@ -461,7 +475,7 @@ function MarketplaceDropdown({
       <button
         type="button"
         className={cn(
-          "flex w-full items-center justify-between gap-3 rounded-lg border border-input bg-background text-left font-semibold text-foreground transition hover:border-primary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-left font-semibold text-slate-900 transition md:hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
           compact ? "h-9 px-2.5 text-xs" : "h-10 px-3 text-sm",
         )}
         aria-label={label}
@@ -477,7 +491,7 @@ function MarketplaceDropdown({
           role="listbox"
           aria-label={label}
           className={cn(
-            "absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border bg-popover p-1.5 shadow-xl",
+            "absolute left-0 top-[calc(100%+0.35rem)] z-30 max-h-72 w-full min-w-[14rem] overflow-y-auto rounded-lg border border-slate-200 bg-white p-1.5 shadow-xl dark:border-slate-800 dark:bg-slate-950",
             compact && "min-w-[12rem]",
           )}
         >
@@ -490,9 +504,9 @@ function MarketplaceDropdown({
                 role="option"
                 aria-selected={selected}
                 className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-md text-left transition hover:bg-primary/10",
+                  "flex w-full items-center justify-between gap-2 rounded-md text-left text-slate-800 transition md:hover:bg-blue-50 dark:text-slate-100 dark:md:hover:bg-blue-950/30",
                   compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm",
-                  selected && "bg-primary/10 font-semibold text-primary",
+                  selected && "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
                 )}
                 onClick={() => {
                   onChange(option.value);
@@ -549,8 +563,8 @@ function MarketplaceFilterBar({
   const isWide = layout === "wide";
 
   return (
-    <section className={cn("relative z-20 rounded-lg border bg-card shadow-sm", isWide ? "p-3 md:p-4" : "p-2.5")}>
-      <h2 className={cn("text-xs font-bold text-foreground", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
+    <section className={cn("relative z-20 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card", isWide ? "p-3 md:p-4" : "p-2.5")}>
+      <h2 className={cn("text-xs font-bold text-slate-950 dark:text-slate-100", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
       <div className={cn(isWide ? "grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))_minmax(11rem,0.8fr)] md:items-center" : "space-y-2")}>
         <MarketplaceDropdown
           label={t("categoryFilter")}
@@ -594,7 +608,7 @@ function MarketplaceFilterBar({
             onChange={(event) => onMinPrice(event.target.value)}
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30", !isWide && "sm:w-24")}
+            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
           />
           <input
             type="number"
@@ -604,11 +618,11 @@ function MarketplaceFilterBar({
             onChange={(event) => onMaxPrice(event.target.value)}
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-input bg-background px-2.5 text-xs outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/30", !isWide && "sm:w-24")}
+            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
           />
         </div>
 
-        <label className="flex min-h-9 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-semibold text-foreground">
+        <label className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           <input
             type="checkbox"
             checked={inStockOnly}
@@ -1455,12 +1469,6 @@ export function ProductMarketplace({
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
       <div className="container mx-auto max-w-[1280px] py-5 md:py-10">
-        <header className="mb-6 hidden min-w-0 flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex-row sm:items-center sm:justify-between md:flex md:p-5">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-normal text-slate-950 dark:text-slate-100">{t("allProducts")}</h1>
-          </div>
-        </header>
-
         <div className="min-w-0">
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
@@ -1498,7 +1506,7 @@ export function ProductMarketplace({
               </div>
             </div>
             {isFiltersOpen ? (
-              <div id="marketplace-filters" className="relative z-20 mx-auto w-full max-w-sm">
+              <div id="marketplace-filters" className="relative z-20 w-full">
                 {filterBar}
               </div>
             ) : null}
@@ -1648,9 +1656,9 @@ export function Storefront({
     storeProductCategoryIds.has(category.id),
   );
   const heroCategories = sortedStoreCategories.slice(0, 5);
-  const heroTitle = getStoreHeroTitle(store);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
   const customHeroCategories = heroCategories.slice(0, 4);
+  const customHeroDescription = getDisplayStoreDescription(store);
 
   function selectCategory(category?: CategoryOption) {
     setActiveCategoryId(category?.id);
@@ -2050,9 +2058,11 @@ export function Storefront({
                   </h1>
                 </div>
               </div>
-              <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
-                {store.description || heroSubtitle}
-              </p>
+              {customHeroDescription ? (
+                <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
+                  {customHeroDescription}
+                </p>
+              ) : null}
               <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
                 <Button
                   type="button"
@@ -2104,9 +2114,10 @@ export function Storefront({
               <div className="aspect-[4/3] w-full">
                 <StoreHeroCover store={store} />
               </div>
-              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-slate-950/82 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur">
-                <p className="text-xs font-medium text-white/60">Mağaza</p>
-                <p className="mt-1 line-clamp-2 break-words text-lg font-semibold">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
+              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/25 bg-slate-950/90 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
+                <p className="text-xs font-medium text-slate-300">Mağaza</p>
+                <p className="mt-1 line-clamp-2 break-words text-lg font-semibold text-white">
                   {heroSubtitle}
                 </p>
               </div>
@@ -2129,6 +2140,7 @@ export function Storefront({
         ) : null}
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
+      <MobileBottomNav storeHomeHref={storeHomeHref} />
     </main>
   );
 }

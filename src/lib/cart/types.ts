@@ -119,3 +119,15 @@ export type CheckoutActionResult =
       ok: false;
       message: string;
     };
+
+export type WhatsAppOrderIntentActionResult =
+  | {
+      ok: true;
+      message: string;
+      orderId: string;
+      orderNumber: string;
+    }
+  | {
+      ok: false;
+      message: string;
+    };

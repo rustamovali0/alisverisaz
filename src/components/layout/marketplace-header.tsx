@@ -17,7 +17,6 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type { AuthRole } from "@/lib/auth/types";
-import { showToast } from "@/lib/toast";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
@@ -131,14 +130,6 @@ export function MarketplaceHeader({
     "size-7 min-h-7 min-w-7 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
   const mobileCommerceIconClass =
     "size-7 stroke-[2] transition-transform duration-200";
-
-  function showLoginRequiredToast() {
-    showToast({
-      title: "Giriş tələb olunur",
-      description: "Zəhmət olmasa əvvəlcə giriş edin.",
-      variant: "info",
-    });
-  }
 
   useEffect(() => {
     if (!hasInlinePrimarySearch) {
@@ -272,17 +263,12 @@ export function MarketplaceHeader({
                 />
               </Button>
             ) : null}
-            <ThemeToggle
-              className={commerceUtilityButtonClass}
-              iconClassName={mobileCommerceIconClass}
-            />
-            <NotificationCenter
-              requireAuth={isGuest}
-              buttonClassName={commerceUtilityButtonClass}
-              iconClassName={mobileCommerceIconClass}
-            />
-            {isSeller && !isHomePage ? (
+            {!isGuest ? (
               <>
+                <NotificationCenter
+                  buttonClassName={commerceUtilityButtonClass}
+                  iconClassName={mobileCommerceIconClass}
+                />
                 <Button
                   asChild
                   size="icon"
@@ -297,6 +283,10 @@ export function MarketplaceHeader({
                     <Heart className={mobileCommerceIconClass} aria-hidden="true" />
                   </Link>
                 </Button>
+              </>
+            ) : null}
+            {isSeller && !isHomePage ? (
+              <>
                 <Button
                   asChild
                   size="icon"
@@ -315,6 +305,10 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
+            <ThemeToggle
+              className={commerceUtilityButtonClass}
+              iconClassName={mobileCommerceIconClass}
+            />
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             <Button
@@ -371,38 +365,29 @@ export function MarketplaceHeader({
           ) : null}
           <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
             <LanguageSwitcher className="hidden lg:flex" />
-            <ThemeToggle
-              className={cn(
-                commerceUtilityButtonClass,
-              )}
-              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
-            />
-            <NotificationCenter
-              requireAuth={isGuest}
-              buttonClassName={cn(
-                commerceUtilityButtonClass,
-              )}
-              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              type={isGuest ? "button" : undefined}
-              asChild={!isGuest}
-              onClick={isGuest ? showLoginRequiredToast : undefined}
-              className={cn(
-                commerceUtilityButtonClass,
-              )}
-              aria-label={nav("favorites")}
-            >
-              {isGuest ? (
-                <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
-              ) : (
-                <Link href="/favorites" prefetch className="grid place-items-center">
-                  <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
-                </Link>
-              )}
-            </Button>
+            {!isGuest ? (
+              <>
+                <NotificationCenter
+                  buttonClassName={cn(
+                    commerceUtilityButtonClass,
+                  )}
+                  iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    commerceUtilityButtonClass,
+                  )}
+                  aria-label={nav("favorites")}
+                >
+                  <Link href="/favorites" prefetch className="grid place-items-center">
+                    <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
+                  </Link>
+                </Button>
+              </>
+            ) : null}
             <Button
               asChild
               size="icon"
@@ -424,6 +409,12 @@ export function MarketplaceHeader({
             <div className="hidden min-w-0 shrink-0 lg:block">
               <HeaderAccountActions className="shrink-0" />
             </div>
+            <ThemeToggle
+              className={cn(
+                commerceUtilityButtonClass,
+              )}
+              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
+            />
           </div>
         </div>
       </header>

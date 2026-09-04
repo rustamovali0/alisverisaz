@@ -22,6 +22,7 @@ import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const CART_KEY = "alisveris_cart";
+const BUY_NOW_KEY = "alisveris_buy_now";
 
 function readCart(): CartItem[] {
   if (typeof window === "undefined") {
@@ -42,6 +43,14 @@ function writeCart(items: CartItem[]) {
 
   localStorage.setItem(CART_KEY, JSON.stringify(items));
   window.dispatchEvent(new Event("alisveris-cart-updated"));
+}
+
+function writeBuyNow(items: CartItem[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(items));
 }
 
 function getCartQuantity(productId: string, selectedOptions?: Record<string, string>) {
@@ -302,7 +311,7 @@ export function BuyNowButton({
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
-  const checkoutPath = "/checkout";
+  const checkoutPath = "/checkout?mode=buy-now";
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
     product.variantCombinations ?? [],
@@ -333,7 +342,7 @@ export function BuyNowButton({
       return;
     }
 
-    writeCart([
+    writeBuyNow([
       {
         productId: product.id,
         quantity: 1,

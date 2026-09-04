@@ -40,6 +40,7 @@ import {
 } from "@/lib/products/variant-utils";
 
 const CART_KEY = "alisveris_cart";
+const BUY_NOW_KEY = "alisveris_buy_now";
 
 type CartCheckoutProps = {
   products?: CartProduct[];
@@ -68,6 +69,22 @@ function readCart() {
   } catch {
     return [];
   }
+}
+
+function readBuyNowCart() {
+  try {
+    return JSON.parse(sessionStorage.getItem(BUY_NOW_KEY) ?? "[]") as CartItem[];
+  } catch {
+    return [];
+  }
+}
+
+function writeBuyNowCart(items: CartItem[]) {
+  sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(items));
+}
+
+function isBuyNowCheckout() {
+  return new URLSearchParams(window.location.search).get("mode") === "buy-now";
 }
 
 function writeCart(items: CartItem[]) {
@@ -102,6 +119,7 @@ export function CartCheckout({
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("courier");
   const [hasLoadedCart, setHasLoadedCart] = useState(false);
+  const [usesBuyNowCart, setUsesBuyNowCart] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResultState | null>(null);
   const [promoEnabledStoreIds, setPromoEnabledStoreIds] = useState<string[]>([]);
@@ -254,9 +272,11 @@ export function CartCheckout({
 
   useEffect(() => {
     let isMounted = true;
-    const cartItems = readCart();
+    const nextUsesBuyNowCart = checkoutOnly && isBuyNowCheckout();
+    const cartItems = nextUsesBuyNowCart ? readBuyNowCart() : readCart();
     const productIds = cartItems.map((item) => item.productId);
 
+    setUsesBuyNowCart(nextUsesBuyNowCart);
     setItems(cartItems);
     setHasLoadedCart(true);
 
@@ -277,7 +297,11 @@ export function CartCheckout({
 
           if (nextItems.length !== cartItems.length) {
             setItems(nextItems);
-            writeCart(nextItems);
+            if (nextUsesBuyNowCart) {
+              writeBuyNowCart(nextItems);
+            } else {
+              writeCart(nextItems);
+            }
           }
         }
       })
@@ -290,7 +314,7 @@ export function CartCheckout({
     return () => {
       isMounted = false;
     };
-  }, [initialProducts.length, locale]);
+  }, [checkoutOnly, initialProducts.length, locale]);
 
   useEffect(() => {
     const storeIds = storeGroupKey ? storeGroupKey.split("|") : [];
@@ -338,7 +362,11 @@ export function CartCheckout({
   function updateItems(nextItems: CartItem[]) {
     setItems(nextItems);
     setAppliedPromos({});
-    writeCart(nextItems);
+    if (usesBuyNowCart) {
+      writeBuyNowCart(nextItems);
+    } else {
+      writeCart(nextItems);
+    }
   }
 
   function setPromoCode(storeId: string, code: string) {
@@ -413,7 +441,8 @@ export function CartCheckout({
     }
 
     const keySet = new Set(itemKeys);
-    const nextItems = readCart().filter(
+    const sourceItems = usesBuyNowCart ? readBuyNowCart() : readCart();
+    const nextItems = sourceItems.filter(
       (item) => !keySet.has(getProductVariantKey(item.productId, item.selectedOptions)),
     );
 
@@ -527,7 +556,7 @@ export function CartCheckout({
       }
 
       updateItems([]);
-      router.replace(result.isGuest ? "/products" : "/dashboard");
+      router.replace(result.isGuest ? (usesBuyNowCart ? "/" : "/products") : "/dashboard");
       router.refresh();
     });
   }
@@ -820,10 +849,10 @@ export function CartCheckout({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="ml-auto size-10 rounded-[10px] text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 sm:ml-0 sm:size-11"
+                      className="ml-auto size-12 rounded-[10px] text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 sm:ml-0 sm:size-11"
                       onClick={() => void removeCartItem(itemKey, product.name)}
                     >
-                      <Trash2 className="size-5" aria-hidden="true" />
+                      <Trash2 className="size-6 sm:size-5" aria-hidden="true" />
                     </Button>
                   </div>
                   </div>
@@ -840,7 +869,7 @@ export function CartCheckout({
                 className="rounded-[10px] border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:bg-transparent dark:hover:bg-rose-950/30"
                 onClick={() => void clearCart()}
               >
-                <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                <Trash2 className="mr-2 size-5" aria-hidden="true" />
                 Səbəti boşalt
               </Button>
             </div>

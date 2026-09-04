@@ -50,7 +50,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [draftRoles, setDraftRoles] = useState<Record<string, AssignableRole>>({});
-  const [contactDrafts, setContactDrafts] = useState<Record<string, { email: string; phone: string }>>({});
+  const [contactDrafts, setContactDrafts] = useState<Record<string, { fullName: string; email: string; phone: string }>>({});
   const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const initialRoles = useMemo(
@@ -81,6 +81,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         users.map((user) => [
           user.id,
           {
+            fullName: user.full_name ?? "",
             email: user.email ?? "",
             phone: user.phone ?? "",
           },
@@ -233,6 +234,25 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                 <form action={handleContactSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
                   <input type="hidden" name="userId" value={user.id} />
                   <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                    Ad soyad
+                    <input
+                      name="fullName"
+                      value={contactDrafts[user.id]?.fullName ?? ""}
+                      onChange={(event) =>
+                        setContactDrafts((current) => ({
+                          ...current,
+                          [user.id]: {
+                            fullName: event.target.value,
+                            email: current[user.id]?.email ?? "",
+                            phone: current[user.id]?.phone ?? "",
+                          },
+                        }))
+                      }
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder="Ad Soyad"
+                    />
+                  </label>
+                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
                     Email
                     <input
                       name="email"
@@ -242,6 +262,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                         setContactDrafts((current) => ({
                           ...current,
                           [user.id]: {
+                            fullName: current[user.id]?.fullName ?? "",
                             email: event.target.value,
                             phone: current[user.id]?.phone ?? "",
                           },
@@ -259,6 +280,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                         setContactDrafts((current) => ({
                           ...current,
                           [user.id]: {
+                            fullName: current[user.id]?.fullName ?? "",
                             email: current[user.id]?.email ?? "",
                             phone: event.target.value,
                           },
@@ -274,7 +296,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
                     disabled={isPending && pendingActionKey === `contact:${user.id}`}
                   >
                     <Mail className="mr-2 size-4" aria-hidden="true" />
-                    Əlaqəni saxla
+                    Məlumatları saxla
                   </Button>
                 </form>
 

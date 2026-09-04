@@ -226,6 +226,11 @@ export function OrderList({
               {order.note ? (
                 <p className="mt-1 text-sm text-muted-foreground">Qeyd: {order.note}</p>
               ) : null}
+              {order.isWhatsAppOrder ? (
+                <span className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  WhatsApp sifarişi
+                </span>
+              ) : null}
             </div>
             <div className="space-y-2 text-sm lg:text-right">
               <p className="font-medium">

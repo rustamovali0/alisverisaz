@@ -41,7 +41,7 @@ export function PasswordInput({
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <label className={cn("grid gap-1.5 text-sm font-medium", className)} htmlFor={id}>
+    <label className={cn("grid gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-100", className)} htmlFor={id}>
       <span>{label}</span>
       <div className="relative">
         <input
@@ -55,7 +55,7 @@ export function PasswordInput({
           placeholder={placeholder}
           required={required}
           className={cn(
-            "h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3.5 pr-11 text-sm outline-none transition-colors placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:placeholder:text-slate-500",
+            "h-10 w-full rounded-[10px] border border-slate-200 bg-white px-3.5 pr-11 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500",
             inputClassName,
           )}
         />

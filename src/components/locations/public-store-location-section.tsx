@@ -1,5 +1,8 @@
+"use client";
+
 import {
   Bus,
+  ChevronDown,
   Clock,
   ExternalLink,
   Instagram,
@@ -9,6 +12,7 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
+import { useState } from "react";
 
 import { TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
@@ -63,6 +67,12 @@ export function PublicStoreLocationSection({
 }: PublicStoreLocationSectionProps) {
   const activeLocations = locations.filter((location) => location.isActive);
   const hasSingleLocation = activeLocations.length === 1;
+  const hasExpandableLocations = activeLocations.length > 2;
+  const [showAllLocations, setShowAllLocations] = useState(false);
+  const visibleLocations =
+    hasExpandableLocations && !showAllLocations
+      ? activeLocations.slice(0, 2)
+      : activeLocations;
   const socials = [
     {
       key: "instagram" as const,
@@ -118,13 +128,16 @@ export function PublicStoreLocationSection({
       </div>
 
       {activeLocations.length > 0 ? (
-        <div
-          className={cn(
-            "grid min-w-0 gap-3 sm:gap-4",
-            hasSingleLocation ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
-          )}
-        >
-            {activeLocations.map((location) => (
+        <>
+          <div
+            className={cn(
+              "grid min-w-0 gap-3 sm:gap-4",
+              hasSingleLocation
+                ? "grid-cols-1"
+                : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
+            )}
+          >
+            {visibleLocations.map((location) => (
               <article
                 key={location.id}
                 className={cn(
@@ -223,7 +236,25 @@ export function PublicStoreLocationSection({
               </div>
               </article>
             ))}
-        </div>
+          </div>
+          {hasExpandableLocations ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-4 h-11 w-full rounded-[10px] border-slate-300 bg-white text-sm font-semibold text-slate-900 shadow-none md:w-auto md:px-4 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-background dark:text-slate-100"
+              onClick={() => setShowAllLocations((current) => !current)}
+              aria-expanded={showAllLocations}
+            >
+              {showAllLocations
+                ? "Filialları yığ"
+                : `Bütün filialları göstər (${activeLocations.length})`}
+              <ChevronDown
+                className={cn("ml-2 size-4 transition-transform", showAllLocations && "rotate-180")}
+                aria-hidden="true"
+              />
+            </Button>
+          ) : null}
+        </>
       ) : null}
     </section>
   );

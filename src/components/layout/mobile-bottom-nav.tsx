@@ -153,6 +153,7 @@ export function MobileBottomNav({
         : role
           ? nav("account")
           : auth("login");
+  const isAuthenticated = Boolean(role);
   const isStorefrontHome = Boolean(
     storeSubdomainSlug
       ? pathname === "/"
@@ -225,9 +226,13 @@ export function MobileBottomNav({
       : [
           storefrontItem,
           { href: "/products", label: nav("products"), icon: Package },
-          { href: "/favorites", label: nav("favorites"), icon: Heart },
+          ...(isAuthenticated
+            ? [{ href: "/favorites", label: nav("favorites"), icon: Heart }]
+            : []),
           { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
         ];
+  const totalNavItems = items.length + 1;
+  const navGridClass = totalNavItems >= 5 ? "grid-cols-5" : "grid-cols-4";
 
   const isCurrentRoute = useCallback(
     (href: string) => {
@@ -311,8 +316,8 @@ export function MobileBottomNav({
         aria-label={nav("mobileNavigation")}
         aria-busy="true"
       >
-        <div className="grid w-full grid-cols-5 gap-1">
-          {Array.from({ length: 5 }, (_, index) => (
+        <div className={cn("grid w-full gap-1", navGridClass)}>
+          {Array.from({ length: totalNavItems }, (_, index) => (
             <span
               key={index}
               className="mx-auto h-11 w-full max-w-12 animate-pulse rounded-xl bg-muted/70"
@@ -333,7 +338,7 @@ export function MobileBottomNav({
       )}
       aria-label={nav("mobileNavigation")}
     >
-      <div className="grid w-full min-w-0 grid-cols-5 items-center text-center text-foreground">
+      <div className={cn("grid w-full min-w-0 items-center text-center text-foreground", navGridClass)}>
         {items.map((item) => {
           const Icon = item.icon;
           const badge = "badge" in item && typeof item.badge === "number" ? item.badge : 0;

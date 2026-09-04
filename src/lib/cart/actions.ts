@@ -1,6 +1,6 @@
 "use server";
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
@@ -25,6 +25,7 @@ import type {
   CartItem,
   CheckoutActionResult,
   WhatsAppCheckoutGroup,
+  WhatsAppOrderIntentActionResult,
 } from "@/lib/cart/types";
 import type { CheckoutPromoPreview } from "@/lib/promos/types";
 import type { ProductOptionType } from "@/lib/products/types";
@@ -1081,6 +1082,253 @@ function buildWhatsAppCheckoutGroup(input: {
       : null,
     products,
   } satisfies WhatsAppCheckoutGroup;
+}
+
+function createWhatsAppOrderNumber() {
+  return `WA-${Date.now()}-${randomUUID().slice(0, 6).toUpperCase()}`;
+}
+
+export async function createWhatsAppOrderIntentAction(
+  formData: FormData,
+): Promise<WhatsAppOrderIntentActionResult> {
+  const current = await getCurrentUserProfile();
+
+  if (current && current.role !== "customer" && current.role !== "seller") {
+    return {
+      ok: false,
+      message: "Sifariş üçün istifadəçi hesabı lazımdır.",
+    };
+  }
+
+  const checkoutRequestId = readString(formData, "checkoutRequestId");
+  const note = readString(formData, "note");
+  const cart = parseCartItems(readString(formData, "items"));
+
+  if (cart.invalidItems || (checkoutRequestId && !UUID_PATTERN.test(checkoutRequestId))) {
+    return {
+      ok: false,
+      message: "WhatsApp sifariş məlumatları yanlışdır.",
+    };
+  }
+
+  if (cart.items.length === 0) {
+    return {
+      ok: false,
+      message: cart.tooManyItems
+        ? "Bir sifarişdə maksimum 50 məhsul ola bilər."
+        : "Məhsul seçilməyib.",
+    };
+  }
+
+  const validatedVariants = await validateCartVariantSelections(cart.items);
+
+  if (!validatedVariants.ok) {
+    return {
+      ok: false,
+      message: validatedVariants.message,
+    };
+  }
+
+  const outOfStock = validatedVariants.items.some((item) => {
+    const stockLimit = item.selectedVariant?.stockQuantity ?? item.product.stockQuantity;
+
+    return stockLimit < item.quantity;
+  });
+
+  if (outOfStock) {
+    return {
+      ok: false,
+      message: "Stok kifayət deyil.",
+    };
+  }
+
+  if (
+    current?.role === "seller" &&
+    (await containsOwnStoreProduct({
+      userId: current.user.id,
+      productIds: Array.from(new Set(cart.items.map((item) => item.productId))),
+    }))
+  ) {
+    return {
+      ok: false,
+      message: "Öz mağazanızdan məhsul almaq mümkün deyil.",
+    };
+  }
+
+  const groupedByStore = groupValidatedItemsByStore(validatedVariants.items);
+
+  if (groupedByStore.size !== 1) {
+    return {
+      ok: false,
+      message: "WhatsApp sifarişi bir mağaza məhsulu üçün yaradılır.",
+    };
+  }
+
+  const [storeId, storeItems] = Array.from(groupedByStore.entries())[0] ?? [];
+
+  if (!storeId || !storeItems?.length) {
+    return {
+      ok: false,
+      message: "Satıcı məlumatı tapılmadı.",
+    };
+  }
+
+  const storeSettings = await getCheckoutStoreSettings([storeId]);
+  const settings = storeSettings.get(storeId);
+
+  if (!settings) {
+    return {
+      ok: false,
+      message: "Satıcı məlumatı tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+
+  if (checkoutRequestId) {
+    const { data: existingOrder } = await (supabaseAdmin as any)
+      .from("orders")
+      .select("id,order_number")
+      .eq("store_id", storeId)
+      .eq("metadata->>checkout_request_id", checkoutRequestId)
+      .eq("metadata->>order_channel", "whatsapp")
+      .maybeSingle();
+
+    if (existingOrder?.id && existingOrder?.order_number) {
+      return {
+        ok: true,
+        message: "WhatsApp sifarişi artıq qeyd olunub.",
+        orderId: existingOrder.id,
+        orderNumber: existingOrder.order_number,
+      };
+    }
+  }
+
+  const submittedFullName = readString(formData, "fullName");
+  const submittedPhoneRaw = readString(formData, "phone");
+  const submittedPhone = normalizeAzerbaijanPhone(submittedPhoneRaw);
+  const profileFullName =
+    current?.profile?.full_name?.trim() || current?.user.email?.trim() || "";
+  const profilePhone = normalizeAzerbaijanPhone(current?.profile?.phone ?? "");
+  const fullName =
+    (current ? profileFullName || submittedFullName : submittedFullName) ||
+    "WhatsApp müştərisi";
+  const phone =
+    (current ? profilePhone || submittedPhone : submittedPhone) ||
+    submittedPhoneRaw ||
+    "-";
+  const subtotal = getGroupSubtotal(storeItems);
+  const itemCount = storeItems.reduce((sum, item) => sum + item.quantity, 0);
+  const orderNumber = createWhatsAppOrderNumber();
+
+  const { data: order, error: orderError } = await (supabaseAdmin as any)
+    .from("orders")
+    .insert({
+      store_id: storeId,
+      user_id: current?.user.id ?? null,
+      order_number: orderNumber,
+      status: "pending",
+      payment_status: "pending",
+      subtotal_amount: subtotal,
+      shipping_amount: 0,
+      discount_amount: 0,
+      tax_amount: 0,
+      total_amount: subtotal,
+      currency: "AZN",
+      shipping_address: {
+        full_name: fullName.slice(0, 120),
+        phone,
+        address: "WhatsApp sifarişi",
+        delivery_method: "whatsapp",
+      },
+      delivery_method: "pickup",
+      delivery_amount: 0,
+      delivery_region: null,
+      delivery_address: null,
+      delivery_estimate: null,
+      notes: note || "WhatsApp sifarişi",
+      metadata: {
+        checkout_request_id: checkoutRequestId || null,
+        source: "direct_whatsapp_button",
+        order_channel: "whatsapp",
+        whatsapp_order: true,
+        stock_decremented: false,
+        stock_reserved: false,
+        item_count: itemCount,
+      },
+    })
+    .select("id,order_number")
+    .single();
+
+  if (orderError || !order?.id) {
+    return {
+      ok: false,
+      message: "WhatsApp sifarişi qeyd olunmadı.",
+    };
+  }
+
+  const { error: itemsError } = await (supabaseAdmin as any).from("order_items").insert(
+    storeItems.map((item) => {
+      const lineTotal = item.unitPrice * item.quantity;
+
+      return {
+        order_id: order.id,
+        product_id: item.productId,
+        product_name: item.product.name,
+        product_sku: item.selectedVariant?.sku ?? null,
+        quantity: item.quantity,
+        unit_price_amount: item.unitPrice,
+        total_amount: lineTotal,
+        metadata: {
+          variant_key: item.variantKey,
+          selected_options: item.selectedOptions,
+          variant_snapshot: item.variantSnapshot,
+          source: "whatsapp",
+          stock_decremented: false,
+        },
+      };
+    }),
+  );
+
+  if (itemsError) {
+    await (supabaseAdmin as any).from("orders").delete().eq("id", order.id);
+
+    return {
+      ok: false,
+      message: "WhatsApp sifarişi məhsulları qeyd olunmadı.",
+    };
+  }
+
+  await trackActivityEvent({
+    eventType: "whatsapp_order_intent",
+    actorId: current?.user.id ?? null,
+    storeId,
+    metadata: {
+      title: "WhatsApp sifarişi",
+      description: `${settings.name} · ${formatMoney(subtotal)}`,
+      order_id: order.id,
+      order_number: order.order_number,
+      total_amount: subtotal,
+      item_count: itemCount,
+      stock_decremented: false,
+    },
+  });
+
+  void notifyOrderCreated([order.id]);
+  revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/store/dashboard/orders");
+  revalidatePath("/seller/orders");
+  revalidatePath("/admin/orders");
+  revalidatePath("/radmin/orders");
+  revalidatePath("/radmin/activity");
+
+  return {
+    ok: true,
+    message: "WhatsApp sifarişi satıcı panelinə göndərildi.",
+    orderId: order.id,
+    orderNumber: order.order_number,
+  };
 }
 
 export async function createCheckoutOrdersAction(

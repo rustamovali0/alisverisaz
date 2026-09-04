@@ -20,12 +20,12 @@ export function AuthField({
   ...props
 }: AuthFieldProps) {
   return (
-    <label className={cn("grid gap-1.5 text-sm font-medium", className)} htmlFor={id}>
+    <label className={cn("grid gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-100", className)} htmlFor={id}>
       <span>{label}</span>
       <input
         id={id}
         className={cn(
-          "h-10 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30",
+          "h-10 rounded-xl border border-input bg-background px-3.5 text-sm text-slate-950 outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500",
           inputClassName,
         )}
         {...props}
@@ -52,11 +52,11 @@ export function AuthSelect({
   ...props
 }: AuthSelectProps) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium" htmlFor={id}>
+    <label className="grid gap-1.5 text-sm font-medium text-slate-900 dark:text-slate-100" htmlFor={id}>
       <span>{label}</span>
       <select
         id={id}
-        className="h-10 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30"
+        className="h-10 rounded-xl border border-input bg-background px-3.5 text-sm text-slate-950 outline-none transition-colors focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
         {...props}
       >
         {children}

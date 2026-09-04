@@ -6,7 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { WhatsAppIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { createCheckoutOrdersAction } from "@/lib/cart/actions";
+import { createWhatsAppOrderIntentAction } from "@/lib/cart/actions";
 import type { CartProduct } from "@/lib/cart/types";
 import type { AuthRole } from "@/lib/auth/types";
 import {
@@ -58,16 +58,6 @@ function formatMoney(value: number) {
     style: "currency",
     currency: "AZN",
   }).format(value);
-}
-
-function getOrderNumber(result: Awaited<ReturnType<typeof createCheckoutOrdersAction>>) {
-  if (!result.ok) {
-    return "";
-  }
-
-  const order = result.orders?.[0];
-
-  return typeof order?.orderNumber === "string" ? order.orderNumber : "";
 }
 
 export function WhatsAppOrderButton({
@@ -124,6 +114,27 @@ export function WhatsAppOrderButton({
     return lines.join("\n");
   }
 
+  function getWhatsAppUrl(orderNumber = "") {
+    const message = buildMessage(orderNumber);
+
+    return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+  }
+
+  function openWhatsApp(orderNumber = "", popup?: Window | null) {
+    const url = getWhatsAppUrl(orderNumber);
+
+    if (popup) {
+      popup.location.href = url;
+      return;
+    }
+
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+
+    if (!opened) {
+      window.location.href = url;
+    }
+  }
+
   function handleClick() {
     if (isSubmittingRef.current) {
       return;
@@ -155,21 +166,8 @@ export function WhatsAppOrderButton({
       return;
     }
 
-    if (!viewerRole && (!buyerName.trim() || !buyerPhone.trim())) {
-      void appAlert.error(
-        "WhatsApp sifarişi üçün əvvəlcə İndi al ilə əlaqə məlumatlarınızı yazın.",
-        "Əlaqə məlumatları lazımdır",
-      );
-      return;
-    }
-
     isSubmittingRef.current = true;
-
     const popup = window.open("about:blank", "_blank");
-
-    if (popup) {
-      popup.opener = null;
-    }
     const requestId = checkoutRequestId || crypto.randomUUID();
     const note = [
       "WhatsApp sifarişi",
@@ -202,31 +200,20 @@ export function WhatsAppOrderButton({
 
     startTransition(async () => {
       try {
-        const result = await createCheckoutOrdersAction(formData);
+        const result = await createWhatsAppOrderIntentAction(formData);
 
         if (!result.ok) {
-          popup?.close();
           isSubmittingRef.current = false;
-          void appAlert.error(result.message, "WhatsApp sifarişi alınmadı");
+          openWhatsApp("", popup);
           return;
         }
 
-        const message = buildMessage(getOrderNumber(result));
-        const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
-
         setCheckoutRequestId(crypto.randomUUID());
         isSubmittingRef.current = false;
-        void appAlert.success("Sifariş yaradıldı", "Satıcıya WhatsApp mesajı açılır.");
-
-        if (popup) {
-          popup.location.href = url;
-        } else {
-          window.location.href = url;
-        }
+        openWhatsApp(result.orderNumber, popup);
       } catch {
-        popup?.close();
         isSubmittingRef.current = false;
-        void appAlert.error("Sifariş hazırda yaradıla bilmədi.", "WhatsApp sifarişi alınmadı");
+        openWhatsApp("", popup);
       }
     });
   }
