@@ -254,19 +254,26 @@ export function CustomStorefrontHeader({
   store,
   storeHomeHref,
   searchQuery,
+  onNavigateSection,
 }: {
   store: MarketplaceStore;
   storeHomeHref: string;
   searchQuery?: string;
+  onNavigateSection?: (sectionId: string) => void;
 }) {
+  const storefront = useTranslations("storefront");
   const { profile } = useClientAuthProfileState();
   const isAuthenticated = profile.status === "authenticated";
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
+  const aboutContent = getStoreAboutContent(store);
   const navItems = [
-    { href: storeHomeHref, label: "Ana səhifə" },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: "Məhsullar" },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: "Kateqoriyalar" },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
+    { href: storeHomeHref, label: storefront("home") },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: storefront("products") },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: storefront("categories") },
+    ...(aboutContent
+      ? [{ href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`, label: storefront("about") }]
+      : []),
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: storefront("contact") },
   ];
   const socialLinks = [
     {
@@ -338,6 +345,7 @@ export function CustomStorefrontHeader({
 
                 event.preventDefault();
                 if (sectionId) {
+                  onNavigateSection?.(sectionId);
                   scheduleScrollToPageSection(sectionId, true);
                 } else {
                   scrollToPageTop(item.href);
@@ -376,13 +384,13 @@ export function CustomStorefrontHeader({
             </div>
           ) : null}
           {isAuthenticated ? (
-            <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
+            <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("favorites")}>
               <Link href="/favorites" prefetch>
                 <Heart className={storefrontIconClass} aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
-          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
+          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("cart")}>
             <Link href="/cart" prefetch>
               <ShoppingCart className={storefrontIconClass} aria-hidden="true" />
             </Link>
@@ -428,6 +436,10 @@ function getDisplayStoreDescription(store: MarketplaceStore) {
   return hiddenDefaultDescriptions.has(normalizedDescription) ? null : description;
 }
 
+function getStoreAboutContent(store: MarketplaceStore) {
+  return store.aboutContent?.trim() || null;
+}
+
 export function CustomStoreFooter({
   store,
   storeHomeHref,
@@ -435,8 +447,10 @@ export function CustomStoreFooter({
   store: MarketplaceStore;
   storeHomeHref: string;
 }) {
+  const storefront = useTranslations("storefront");
   const baseHref = storeHomeHref === "/" ? "" : storeHomeHref;
   const description = getDisplayStoreDescription(store);
+  const aboutContent = getStoreAboutContent(store);
 
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -456,16 +470,21 @@ export function CustomStoreFooter({
         </div>
         <nav className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm font-medium text-slate-600 dark:text-slate-300 sm:flex sm:items-center">
           <Link href={storeHomeHref} prefetch className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
-            Ana səhifə
+            {storefront("home")}
           </Link>
           <Link href={`${baseHref}#products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
-            Məhsullar
+            {storefront("products")}
           </Link>
           <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
-            Kateqoriyalar
+            {storefront("categories")}
           </Link>
+          {aboutContent ? (
+            <Link href={`${baseHref}#about`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+              {storefront("about")}
+            </Link>
+          ) : null}
           <Link href={`${baseHref}#contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
-            Əlaqə
+            {storefront("contact")}
           </Link>
         </nav>
       </div>
@@ -1705,6 +1724,7 @@ export function Storefront({
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const home = useTranslations("home");
+  const storefront = useTranslations("storefront");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const [activeSort, setActiveSort] = useState<MarketplaceProductSort>("newest");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -1829,8 +1849,9 @@ export function Storefront({
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
   const customHeroCategories = heroCategories.slice(0, 4);
   const customHeroDescription = getDisplayStoreDescription(store);
+  const aboutContent = getStoreAboutContent(store);
 
-  function selectCategory(category?: CategoryOption) {
+  function selectCategory(category?: CategoryOption, options?: { scrollToProducts?: boolean }) {
     setActiveCategoryId(category?.id);
 
     if (typeof window === "undefined") {
@@ -1846,7 +1867,9 @@ export function Storefront({
     }
 
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-    scheduleScrollToPageSection("products");
+    if (options?.scrollToProducts ?? true) {
+      scheduleScrollToPageSection("products");
+    }
   }
 
   function selectSort(nextSort: MarketplaceProductSort) {
@@ -1994,15 +2017,15 @@ export function Storefront({
         <div className={cn("flex min-w-0 items-center justify-between gap-3", isCustomStorefront ? "mb-3.5 sm:mb-5" : "mb-5")}>
           <div className="min-w-0">
             <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
-              {legacyLayout ? home("categories") : "Seçilmiş kateqoriyalar"}
+              {legacyLayout ? home("categories") : storefront("featuredCategories")}
             </h2>
           </div>
           <button
             type="button"
             className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200 sm:text-sm"
             onClick={() => {
-              if (isCustomStorefront && !showAllMobileCategories) {
-                setShowAllMobileCategories(true);
+              if (isCustomStorefront) {
+                setShowAllMobileCategories((current) => !current);
                 scheduleScrollToPageSection("store-categories");
                 return;
               }
@@ -2010,7 +2033,7 @@ export function Storefront({
               selectCategory();
             }}
           >
-            Hamısına bax
+            {showAllMobileCategories ? storefront("showLess") : storefront("viewAll")}
             <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
@@ -2030,11 +2053,11 @@ export function Storefront({
                   isCustomStorefront
                     ? "flex min-h-[84px] items-center gap-2.5 p-3 sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
                     : "flex min-h-[104px] flex-col items-start justify-between gap-3 p-4",
-                  isCustomStorefront && !showAllMobileCategories && index >= 6 && "max-sm:hidden",
+                  isCustomStorefront && !showAllMobileCategories && index >= 6 && "hidden",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
-                onClick={() => selectCategory(category)}
+                onClick={() => selectCategory(category, { scrollToProducts: !isCustomStorefront })}
               >
                 <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-11 sm:size-12" : "size-11", iconStyle)}>
                   <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-6 sm:size-6" : "size-5")} aria-hidden="true" />
@@ -2120,6 +2143,28 @@ export function Storefront({
     </section>
   );
 
+  const aboutSection = aboutContent ? (
+    <section
+      id="about"
+      className={cn(
+        "min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
+        isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
+      )}
+    >
+      <div className="mb-3 flex min-w-0 items-center gap-3 sm:mb-4">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-950/30 dark:text-blue-200 dark:ring-blue-900/40">
+          <Store className="size-5" aria-hidden="true" />
+        </span>
+        <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+          {storefront("aboutStore")}
+        </h2>
+      </div>
+      <div className="whitespace-pre-line break-words text-sm leading-7 text-slate-600 dark:text-slate-300 sm:text-base">
+        {aboutContent}
+      </div>
+    </section>
+  ) : null;
+
   if (!isCustomStorefront) {
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
@@ -2140,7 +2185,7 @@ export function Storefront({
                       <StoreLogo store={store} className="size-20 shrink-0 rounded-2xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 lg:size-28" />
                       <div className="min-w-0 pb-1 text-white">
                         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
-                          Alışveriş mağazası
+                          {storefront("marketplaceStore")}
                         </p>
                         <h1 className="line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal sm:text-4xl lg:text-[44px]">
                           {store.name}
@@ -2163,6 +2208,19 @@ export function Storefront({
                         stackOnMobile
                         compactActions
                       />
+                      {aboutContent ? (
+                        <div className="mt-3 flex justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 rounded-full border-white/35 bg-white/95 px-4 text-sm font-semibold text-slate-950 shadow-sm md:hover:bg-white md:hover:text-blue-700"
+                            onClick={() => scrollToSection("about")}
+                          >
+                            {storefront("learnAboutStore")}
+                            <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                   {heroCategories.length > 0 ? (
@@ -2196,6 +2254,7 @@ export function Storefront({
             </div>
           ) : null}
           {modernCategoriesSection}
+          {aboutSection}
           {modernProductsSection}
         </div>
         <SiteFooter {...footer} />
@@ -2209,6 +2268,11 @@ export function Storefront({
         store={store}
         storeHomeHref={storeHomeHref}
         searchQuery={searchQuery}
+        onNavigateSection={(sectionId) => {
+          if (sectionId === "store-categories") {
+            setShowAllMobileCategories(true);
+          }
+        }}
       />
       <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
         {isStoreOwner ? (
@@ -2220,7 +2284,7 @@ export function Storefront({
                 <StoreLogo store={store} className="size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:size-20" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
-                    Online mağaza
+                    {storefront("onlineStore")}
                   </p>
                   <h1 className="mt-1 line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
                     {store.name}
@@ -2238,7 +2302,7 @@ export function Storefront({
                   className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700"
                   onClick={() => scrollToSection("products")}
                 >
-                  Məhsullara bax
+                  {storefront("browseProducts")}
                 </Button>
                 {locations.length > 0 ? (
                   <Button
@@ -2247,7 +2311,17 @@ export function Storefront({
                     className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     onClick={() => scrollToSection("contact")}
                   >
-                    Əlaqə
+                    {storefront("contact")}
+                  </Button>
+                ) : null}
+                {aboutContent ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    onClick={() => scrollToSection("about")}
+                  >
+                    {storefront("learnAboutStore")}
                   </Button>
                 ) : null}
               </div>
@@ -2285,16 +2359,29 @@ export function Storefront({
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
               <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
-                <p className="text-xs font-semibold text-slate-200">Mağaza</p>
-                <p className="mt-1 line-clamp-2 break-words text-lg font-bold text-white drop-shadow-sm">
-                  {heroSubtitle}
-                </p>
+                <p className="text-xs font-semibold text-slate-200">{storefront("store")}</p>
+                <div className="mt-1 flex min-w-0 items-end justify-between gap-3">
+                  <p className="line-clamp-2 min-w-0 break-words text-lg font-bold text-white drop-shadow-sm">
+                    {heroSubtitle}
+                  </p>
+                  {aboutContent ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-9 shrink-0 rounded-full border-white/25 bg-white/95 px-3 text-xs font-semibold text-slate-950 shadow-none md:hover:bg-white md:hover:text-blue-700"
+                      onClick={() => scrollToSection("about")}
+                    >
+                      {storefront("learnAboutStore")}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </section>
         )}
 
         {modernCategoriesSection}
+        {aboutSection}
         {modernProductsSection}
         {!isStoreOwner ? (
           <div id="contact" className="scroll-mt-28">

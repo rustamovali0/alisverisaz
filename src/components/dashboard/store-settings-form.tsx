@@ -118,6 +118,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const publicUrl = getStorefrontUrl(store.slug);
   const heroTitle = readSetting(store.settings, "heroTitle");
   const heroSubtitle = readSetting(store.settings, "heroSubtitle");
+  const aboutContent = readSetting(store.settings, "aboutContent");
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
   const whatsappPhone = readSetting(store.settings, "whatsappPhone");
 
@@ -255,6 +256,18 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             placeholder="390 məhsul • Elektronika və daha çox"
             className="premium-input h-11"
           />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Haqqında məlumatı
+          <textarea
+            name="aboutContent"
+            defaultValue={aboutContent}
+            placeholder="Mağazanız, məhsullarınız və xidmətiniz haqqında qısa məlumat yazın."
+            className="premium-input min-h-36 resize-y py-3 leading-6"
+          />
+          <span className="text-xs text-muted-foreground">
+            Bu mətn /{store.slug} və {store.slug}.alisveris.az mağaza səhifəsində “Haqqında” bölməsində görünəcək.
+          </span>
         </label>
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <MediaPicker

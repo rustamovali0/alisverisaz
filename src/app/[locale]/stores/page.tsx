@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowRight, Store } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { ScrollToTopOnMount } from "@/components/common/scroll-to-top-on-mount";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getMarketplaceStores } from "@/lib/cart/data";
@@ -34,17 +35,18 @@ export default async function StoresPage({ params }: StoresPageProps) {
 
   return (
     <main className="min-h-screen bg-slate-50 pb-[calc(90px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+      <ScrollToTopOnMount />
       <section className="container max-w-[1280px] py-8 md:py-12">
         <div className="mb-6 flex min-w-0 items-end justify-between gap-4 md:mb-8">
           <div className="min-w-0">
             <p className="mb-2 text-sm font-semibold text-blue-600 dark:text-blue-300">
-              Mağazalar
+              {marketplace("stores")}
             </p>
             <h1 className="text-2xl font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[28px]">
               {home("allStores")}
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400 md:text-base">
-              Platformadakı mağazaları kəşf et.
+              {home("storesDescription")}
             </p>
           </div>
           <span className="hidden size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-blue-600 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 sm:grid">
@@ -105,7 +107,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     <ArrowRight className="mt-1 size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600" />
                   </div>
                   <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 transition md:group-hover:text-blue-700 dark:text-blue-300 md:dark:group-hover:text-blue-200">
-                    Mağazaya bax
+                    {home("viewStore")}
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </span>
                 </div>

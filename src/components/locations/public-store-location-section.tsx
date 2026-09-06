@@ -12,6 +12,7 @@ import {
   Phone,
   Truck,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { TikTokIcon } from "@/components/icons/social-icons";
@@ -63,9 +64,11 @@ function getMapUrl(location: StoreLocation) {
 
 function LocationMapButton({
   location,
+  label,
   className,
 }: {
   location: StoreLocation;
+  label: string;
   className?: string;
 }) {
   return (
@@ -79,7 +82,7 @@ function LocationMapButton({
       )}
     >
       <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
-        Xəritəni göstər
+        {label}
         <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
       </a>
     </Button>
@@ -90,6 +93,7 @@ export function PublicStoreLocationSection({
   locations,
   socialLinks,
 }: PublicStoreLocationSectionProps) {
+  const storefront = useTranslations("storefront");
   const activeLocations = locations.filter((location) => location.isActive);
   const hasSingleLocation = activeLocations.length === 1;
   const hasExpandableLocations = activeLocations.length > 2;
@@ -126,7 +130,7 @@ export function PublicStoreLocationSection({
           </span>
           <div className="min-w-0">
             <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
-              Mağaza məlumatları
+              {storefront("storeInfo")}
             </h2>
           </div>
         </div>
@@ -188,7 +192,7 @@ export function PublicStoreLocationSection({
                     ) : null}
                   </div>
                 </div>
-                <LocationMapButton location={location} className="hidden sm:inline-flex" />
+                <LocationMapButton location={location} label={storefront("showMap")} className="hidden sm:inline-flex" />
               </div>
 
               <div className={cn("mt-4 flex max-w-full flex-wrap items-center gap-2", hasSingleLocation && "md:mt-0 md:justify-end")}>
@@ -223,14 +227,14 @@ export function PublicStoreLocationSection({
                 {location.deliveryAvailable ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
                     <Truck className="size-3.5" aria-hidden="true" />
-                    Çatdırılma var
+                    {storefront("deliveryAvailable")}
                   </span>
                 ) : null}
 
                 {location.pickupAvailable ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <PackageCheck className="size-3.5" aria-hidden="true" />
-                    Özün götürmə
+                    {storefront("pickupAvailable")}
                   </span>
                 ) : null}
 
@@ -243,7 +247,7 @@ export function PublicStoreLocationSection({
                     <span className="min-w-0 break-words">{location.phone}</span>
                   </a>
                 ) : null}
-                <LocationMapButton location={location} className="h-9 sm:hidden" />
+                <LocationMapButton location={location} label={storefront("showMap")} className="h-9 sm:hidden" />
               </div>
               </article>
             ))}
@@ -257,8 +261,8 @@ export function PublicStoreLocationSection({
               aria-expanded={showAllLocations}
             >
               {showAllLocations
-                ? "Filialları yığ"
-                : `Bütün filialları göstər (${activeLocations.length})`}
+                ? storefront("collapseBranches")
+                : storefront("showAllBranches", { count: activeLocations.length })}
               <ChevronDown
                 className={cn("ml-2 size-4 transition-transform", showAllLocations && "rotate-180")}
                 aria-hidden="true"

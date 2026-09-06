@@ -127,17 +127,19 @@ function useLocaleSelection({
       onLocaleChange?.(nextLocale);
       onSelect?.();
       writeClientLocaleCookie(nextLocale);
-      router.refresh();
+      if (typeof document !== "undefined") {
+        document.documentElement.lang = nextLocale;
+      }
 
-      startTransition(async () => {
-        try {
-          const persistedLocale = await setUserLocale(nextLocale);
+      startTransition(() => {
+        router.refresh();
 
-          setSelectedLocale(persistedLocale);
-          onLocaleChange?.(persistedLocale);
-        } finally {
-          setPendingLocale(null);
-        }
+        void setUserLocale(nextLocale)
+          .then((persistedLocale) => {
+            setSelectedLocale(persistedLocale);
+            onLocaleChange?.(persistedLocale);
+          })
+          .finally(() => setPendingLocale(null));
       });
     },
     [onLocaleChange, onSelect, router],

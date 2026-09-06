@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ArrowRight, Tags } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { getCategoryIcon } from "@/components/categories/category-icons";
+import { ScrollToTopOnMount } from "@/components/common/scroll-to-top-on-mount";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getSiteSettings } from "@/lib/cms/data";
@@ -32,6 +34,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
 
   return (
     <main className="min-h-screen bg-muted/20 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
+      <ScrollToTopOnMount />
       <section className="container py-6 md:py-10">
         <div className="mb-5 flex items-center gap-3">
           <span className="grid size-11 place-items-center rounded-lg border bg-card text-primary shadow-sm">
@@ -42,18 +45,26 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
           </h1>
         </div>
         <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/products?category=${category.slug}`}
-              className="group flex min-h-24 items-center justify-between rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:border-primary/40 hover:shadow-md"
-            >
-              <span className="min-w-0 break-words text-base font-bold">
-                {category.name}
-              </span>
-              <ArrowRight className="ml-3 size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
-            </Link>
-          ))}
+          {categories.map((category) => {
+            const CategoryIcon = getCategoryIcon(category);
+
+            return (
+              <Link
+                key={category.id}
+                href={`/products?category=${category.slug}`}
+                scroll
+                className="group flex min-h-24 items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
+                  <CategoryIcon className="size-5 stroke-[2.1]" aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1 break-words text-base font-bold">
+                  {category.name}
+                </span>
+                <ArrowRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+              </Link>
+            );
+          })}
         </div>
       </section>
       <SiteFooter

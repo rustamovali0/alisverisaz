@@ -421,7 +421,7 @@ export function MarketplaceSearch({
             className="absolute right-2 top-1/2 z-10 grid size-8 -translate-y-1/2 place-items-center rounded-full text-slate-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-slate-300 md:hover:bg-slate-100 md:hover:text-slate-900 md:dark:hover:bg-slate-800 md:dark:hover:text-white"
             onPointerDown={(event) => event.preventDefault()}
             onClick={clearSearch}
-            aria-label="Axtarışı təmizlə"
+            aria-label={marketplace("clearSearch")}
           >
             <X className="size-4 stroke-[2.2]" aria-hidden="true" />
           </button>

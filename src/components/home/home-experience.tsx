@@ -3,26 +3,14 @@
 import type { CSSProperties } from "react";
 import {
   ArrowRight,
-  Baby,
-  BookOpen,
-  BriefcaseBusiness,
-  Car,
-  Dumbbell,
-  Hammer,
-  Home,
-  Leaf,
   Package,
-  PawPrint,
   ShieldCheck,
-  Shirt,
-  Smartphone,
-  Sparkles,
   Store,
   Truck,
-  Utensils,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { getCategoryIcon } from "@/components/categories/category-icons";
 import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
@@ -92,6 +80,16 @@ function normalizeHeroTitle(value: string) {
   return value.trim() === LEGACY_HERO_TITLE ? DEFAULT_HERO_TITLE : value;
 }
 
+function isDefaultHeroTitle(value: string) {
+  const normalized = value.trim().toLocaleLowerCase("az-AZ");
+
+  return (
+    normalized === LEGACY_HERO_TITLE.toLocaleLowerCase("az-AZ") ||
+    normalized === DEFAULT_HERO_TITLE.toLocaleLowerCase("az-AZ") ||
+    normalized === "alisveris.az"
+  );
+}
+
 const homeDesignStyle: CSSProperties & Record<string, string> = {
   "--background": "210 40% 98%",
   "--foreground": "222 47% 11%",
@@ -135,60 +133,6 @@ const trustItems = [
   },
 ];
 
-function getCategoryIcon(category: CategoryOption) {
-  const value = `${category.slug} ${category.name}`.toLocaleLowerCase("az-AZ");
-
-  if (value.includes("elektron")) {
-    return Smartphone;
-  }
-
-  if (value.includes("ev") || value.includes("bag") || value.includes("bağ")) {
-    return value.includes("heyvan") ? PawPrint : Home;
-  }
-
-  if (value.includes("moda") || value.includes("geyim")) {
-    return Shirt;
-  }
-
-  if (value.includes("gozell") || value.includes("gözəll") || value.includes("baxim") || value.includes("baxım")) {
-    return Sparkles;
-  }
-
-  if (value.includes("usaq") || value.includes("uşaq")) {
-    return Baby;
-  }
-
-  if (value.includes("idman") || value.includes("outdoor")) {
-    return Dumbbell;
-  }
-
-  if (value.includes("avto") || value.includes("masin") || value.includes("maşın")) {
-    return Car;
-  }
-
-  if (value.includes("tikinti") || value.includes("alet") || value.includes("alət")) {
-    return Hammer;
-  }
-
-  if (value.includes("kitab")) {
-    return BookOpen;
-  }
-
-  if (value.includes("qida") || value.includes("icki") || value.includes("içki")) {
-    return Utensils;
-  }
-
-  if (value.includes("ofis") || value.includes("defter") || value.includes("dəftər")) {
-    return BriefcaseBusiness;
-  }
-
-  if (value.includes("bag") || value.includes("bağ")) {
-    return Leaf;
-  }
-
-  return Package;
-}
-
 function SectionHeader({
   title,
   mobileTitle,
@@ -214,6 +158,7 @@ function SectionHeader({
       </h2>
       <Link
         href={href}
+        scroll
         className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-blue-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-300 dark:hover:text-blue-200"
       >
         {action}
@@ -317,6 +262,7 @@ export function HomeExperience({
   productsLabel,
 }: HomeExperienceProps) {
   const home = useTranslations("home");
+  const marketplace = useTranslations("marketplace");
   const hero = sectionByKey(sections, "hero");
   const categorySection = sectionByKey(sections, "categories");
   const featuredSection = sectionByKey(sections, "featured_products");
@@ -353,15 +299,15 @@ export function HomeExperience({
         label: category.name,
         href: `/products?category=${category.slug}`,
       }));
-  const heroEyebrow = "Alış-verişin yeni ünvanı";
+  const heroEyebrow = home("heroEyebrow");
   const heroTitle = normalizeHeroTitle(hero?.title || title);
-  const shouldUseDefaultHeroCopy = heroTitle === DEFAULT_HERO_TITLE;
+  const shouldUseDefaultHeroCopy = isDefaultHeroTitle(heroTitle);
   const displayHeroTitle = shouldUseDefaultHeroCopy
-    ? "Axtardığın hər şey,\nbir ünvanda."
+    ? home("defaultHeroTitle")
     : heroTitle;
   const displayHeroDescription =
     shouldUseDefaultHeroCopy
-      ? "Minlərlə məhsul və etibarlı mağazalar arasında asanlıqla axtar, müqayisə et və alış-veriş et."
+      ? home("defaultHeroDescription")
       : hero?.description || description;
 
   return (
@@ -396,12 +342,12 @@ export function HomeExperience({
                 buttonSize="lg"
                 stackOnMobile
                 compactActions
-                placeholder="Məhsul, brend və ya mağaza axtar..."
+                placeholder={home("heroSearchPlaceholder")}
               />
               {popularSearchPills.length > 0 ? (
                 <div className="-mx-5 mt-5 flex max-w-[calc(100%+2.5rem)] items-center gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:max-w-full md:flex-wrap md:gap-2.5 md:overflow-visible md:px-0">
                   <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">
-                    Populyar axtarışlar:
+                    {marketplace("popularSearches")}:
                   </span>
                   {popularSearchPills.map((item) => (
                     <Link
@@ -443,7 +389,7 @@ export function HomeExperience({
               <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/70 to-transparent" />
               <div className="absolute bottom-5 left-5 right-5 rounded-xl border border-white/14 bg-white/12 p-4 text-white backdrop-blur-md">
                 <p className="text-sm font-medium text-white/75">Marketplace</p>
-                <p className="mt-1 text-lg font-semibold">Mağaza və məhsulları bir yerdə kəşf et</p>
+                <p className="mt-1 text-lg font-semibold">{home("marketplaceImageCaption")}</p>
               </div>
             </div>
           </div>
@@ -474,10 +420,10 @@ export function HomeExperience({
         {activeCategories.length > 0 ? (
           <section data-home-categories>
             <SectionHeader
-              title="Kateqoriyaları kəşf et"
-              mobileTitle="Kateqoriyalar"
+              title={home("exploreCategories")}
+              mobileTitle={home("categories")}
               href="/categories"
-              action="Hamısına bax"
+              action={home("viewAll")}
             />
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
               {activeCategories.map((category) => (
@@ -492,7 +438,7 @@ export function HomeExperience({
             <SectionHeader
               title={featuredSection?.title || home("featuredStores")}
               href="/stores"
-              action="Hamısına bax"
+              action={home("viewAll")}
             />
             <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-6 sm:px-6 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
               {featuredStores.map((store, index) => (
@@ -524,7 +470,7 @@ export function HomeExperience({
               locale={locale}
               sort="newest"
               productCardVariant={productCardVariant}
-              labels={{ stock: "Stok" }}
+              labels={{ stock: marketplace("stock") }}
             />
           </section>
         ) : null}
