@@ -155,6 +155,7 @@ export async function renderStorePage(
         storeBaseHref={storeBaseHref}
         productCardVariant={activeTheme.productCardVariant}
         legacyLayout={isLegacyStoreRoute}
+        storeSubdomainSlug={storeSubdomainSlug}
         isStoreOwner={isStoreOwner}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,

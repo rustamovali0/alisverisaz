@@ -104,8 +104,16 @@ export function PublicNavigationShell({
       (pathname === `/store/${pathStoreSlug}` ||
         pathname.startsWith(`/store/${pathStoreSlug}/`)),
   );
-  const isStandaloneStoreHome = Boolean(
-    pathStoreSlug && !isLegacyStorePath && pathname === `/${pathStoreSlug}`,
+  const isStoreSubdomainStorefrontPath = Boolean(
+    storeSubdomainSlug &&
+      (pathname === "/" ||
+        pathname === "/products" ||
+        pathname.startsWith("/products/") ||
+        pathname === `/${storeSubdomainSlug}` ||
+        pathname.startsWith(`/${storeSubdomainSlug}/products/`)),
+  );
+  const isCustomStorefrontPath = Boolean(
+    isStoreSubdomainStorefrontPath || (pathStoreSlug && !isLegacyStorePath),
   );
   const storeHomeHref = storeSubdomainSlug
     ? "/"
@@ -114,12 +122,12 @@ export function PublicNavigationShell({
         ? `/store/${pathStoreSlug}`
         : `/${pathStoreSlug}`
       : "/";
-  const productsHref = pathStoreSlug ? `${storeHomeHref}#products` : "/products";
+  const productsHref = searchStoreSlug ? `${storeHomeHref === "/" ? "/" : storeHomeHref}#products` : "/products";
   const brandHomeHref = isLegacyStorePath ? "/" : storeHomeHref;
 
   return (
     <>
-      {showNavigation && !isStandaloneStoreHome ? (
+      {showNavigation && !isCustomStorefrontPath ? (
         <MarketplaceHeader
           siteName={siteName}
           logoUrl={logoUrl}

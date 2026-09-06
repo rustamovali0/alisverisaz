@@ -99,6 +99,7 @@ type StorefrontProps = {
   labels: MarketplaceLabels;
   isStoreOwner?: boolean;
   legacyLayout?: boolean;
+  storeSubdomainSlug?: string | null;
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
@@ -157,7 +158,7 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
   );
 }
 
-function CustomStorefrontHeader({
+export function CustomStorefrontHeader({
   store,
   storeHomeHref,
   searchQuery,
@@ -276,7 +277,7 @@ function getDisplayStoreDescription(store: MarketplaceStore) {
   return hiddenDefaultDescriptions.has(normalizedDescription) ? null : description;
 }
 
-function CustomStoreFooter({
+export function CustomStoreFooter({
   store,
   storeHomeHref,
 }: {
@@ -1532,6 +1533,7 @@ export function Storefront({
   labels,
   isStoreOwner = false,
   legacyLayout = false,
+  storeSubdomainSlug,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const home = useTranslations("home");
@@ -2140,7 +2142,7 @@ export function Storefront({
         ) : null}
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-      <MobileBottomNav storeHomeHref={storeHomeHref} />
+      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} />
     </main>
   );
 }

@@ -103,6 +103,26 @@ function scrollPageToTop() {
   });
 }
 
+function scrollToHash(hash: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const targetId = hash.replace(/^#/, "");
+
+  if (!targetId) {
+    scrollPageToTop();
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    document.getElementById(targetId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}
+
 function AccountIcon({ role }: { role: AuthRole | null }) {
   if (role === "seller") {
     return (
@@ -156,11 +176,15 @@ export function MobileBottomNav({
   const isAuthenticated = Boolean(role);
   const isStorefrontHome = Boolean(
     storeSubdomainSlug
-      ? pathname === "/"
+      ? pathname === "/" || pathname === `/${storeSubdomainSlug}`
       : storeHomeHref !== "/" &&
           !storeHomeHref.startsWith("/store/") &&
           pathname === storeHomeHref,
   );
+  const storefrontProductsHref =
+    storeSubdomainSlug || (storeHomeHref !== "/" && !storeHomeHref.startsWith("/store/"))
+      ? `${storeHomeHref === "/" ? "/" : storeHomeHref}#products`
+      : "/products";
   const storefrontItem = {
     href: isStorefrontHome ? storeHomeHref : "/",
     label: isStorefrontHome ? nav("storefront") : nav("home"),
@@ -225,7 +249,7 @@ export function MobileBottomNav({
         ]
       : [
           storefrontItem,
-          { href: "/products", label: nav("products"), icon: Package },
+          { href: storefrontProductsHref, label: nav("products"), icon: Package },
           ...(isAuthenticated
             ? [{ href: "/favorites", label: nav("favorites"), icon: Heart }]
             : []),
@@ -247,12 +271,21 @@ export function MobileBottomNav({
 
   const navigate = useCallback(
     (href: string) => {
+      const [, hash] = href.split("#");
+
       if (isCurrentRoute(href)) {
+        if (hash) {
+          scrollToHash(hash);
+        }
         return;
       }
 
       router.push(href, { scroll: true });
-      scrollPageToTop();
+      if (hash) {
+        window.setTimeout(() => scrollToHash(hash), 80);
+      } else {
+        scrollPageToTop();
+      }
     },
     [isCurrentRoute, router],
   );

@@ -4,7 +4,12 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
+import {
+  CustomStoreFooter,
+  CustomStorefrontHeader,
+} from "@/components/cart/product-marketplace";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import {
   ProductReviewList,
@@ -203,23 +208,42 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       : null;
   const requestHeaders = await headers();
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
-  const storeBaseHref = storeSubdomainSlug === detail.store.slug ? "/" : getStorePath(detail.store.slug);
+  const currentPath = requestHeaders.get("x-current-path") ?? "";
+  const isLegacyProductRoute =
+    currentPath === `/store/${detail.store.slug}/products/${detail.product.slug}` ||
+    currentPath === `/store/${detail.store.slug}/products/${detail.product.id}` ||
+    currentPath.startsWith(`/store/${detail.store.slug}/products/`);
+  const isCustomStorefrontProduct = !isLegacyProductRoute;
+  const storeBaseHref =
+    storeSubdomainSlug === detail.store.slug
+      ? "/"
+      : isLegacyProductRoute
+        ? getStorePath(detail.store.slug)
+        : `/${detail.store.slug}`;
+  const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
+  const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-0 py-4 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-4 sm:py-8 md:pb-8 lg:py-10">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
         url={`${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`}
       />
       <ViewTracker productId={detail.product.id} />
+      {isCustomStorefrontProduct ? (
+        <CustomStorefrontHeader
+          store={detail.store}
+          storeHomeHref={storeBaseHref}
+        />
+      ) : null}
       <div className="mx-auto w-full max-w-[1280px] px-4 py-3 sm:px-6 md:py-6 lg:px-8">
         <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
             <ProductBackButton />
             <div className="flex min-w-0 items-center overflow-hidden">
-              <Link href="/products" className="hover:text-blue-600 dark:hover:text-blue-300">
-                Mağazalar
+              <Link href={breadcrumbHomeHref} className="hover:text-blue-600 dark:hover:text-blue-300">
+                {breadcrumbHomeLabel}
               </Link>
               <span className="mx-2">·</span>
               <Link href={storeBaseHref} className="min-w-0 truncate hover:text-blue-600 dark:hover:text-blue-300">
@@ -410,17 +434,27 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         </section>
       </div>
-      <SiteFooter
-        siteName={siteSettings.shortName || siteSettings.siteName}
-        logoUrl={siteSettings.logoUrl}
-        darkLogoUrl={siteSettings.darkLogoUrl}
-        description={siteSettings.defaultMetaDescription}
-        socialLinks={{
-          instagram: siteSettings.socialLinks.instagram,
-          tiktok: siteSettings.socialLinks.tiktok,
-          whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
-        }}
-      />
+      {isCustomStorefrontProduct ? (
+        <>
+          <CustomStoreFooter store={detail.store} storeHomeHref={storeBaseHref} />
+          <MobileBottomNav
+            storeHomeHref={storeBaseHref}
+            storeSubdomainSlug={storeSubdomainSlug}
+          />
+        </>
+      ) : (
+        <SiteFooter
+          siteName={siteSettings.shortName || siteSettings.siteName}
+          logoUrl={siteSettings.logoUrl}
+          darkLogoUrl={siteSettings.darkLogoUrl}
+          description={siteSettings.defaultMetaDescription}
+          socialLinks={{
+            instagram: siteSettings.socialLinks.instagram,
+            tiktok: siteSettings.socialLinks.tiktok,
+            whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+          }}
+        />
+      )}
     </main>
   );
 }
