@@ -61,6 +61,31 @@ function getMapUrl(location: StoreLocation) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
+function LocationMapButton({
+  location,
+  className,
+}: {
+  location: StoreLocation;
+  className?: string;
+}) {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="sm"
+      className={cn(
+        "h-10 shrink-0 rounded-[10px] border-slate-300 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-background dark:text-slate-100",
+        className,
+      )}
+    >
+      <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
+        Xəritəni göstər
+        <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
+      </a>
+    </Button>
+  );
+}
+
 export function PublicStoreLocationSection({
   locations,
   socialLinks,
@@ -163,14 +188,7 @@ export function PublicStoreLocationSection({
                     ) : null}
                   </div>
                 </div>
-                {location.showMap ? (
-                  <Button asChild variant="outline" size="sm" className="hidden h-10 shrink-0 rounded-[10px] border-slate-300 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-background dark:text-slate-100 sm:inline-flex">
-                    <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
-                      Xəritəni göstər
-                      <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
-                    </a>
-                  </Button>
-                ) : null}
+                <LocationMapButton location={location} className="hidden sm:inline-flex" />
               </div>
 
               <div className={cn("mt-4 flex max-w-full flex-wrap items-center gap-2", hasSingleLocation && "md:mt-0 md:justify-end")}>
@@ -225,14 +243,7 @@ export function PublicStoreLocationSection({
                     <span className="min-w-0 break-words">{location.phone}</span>
                   </a>
                 ) : null}
-                {location.showMap ? (
-                  <Button asChild variant="outline" size="sm" className="h-9 rounded-[10px] border-slate-300 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-background dark:text-slate-100 sm:hidden">
-                    <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
-                      Xəritəni göstər
-                      <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
-                    </a>
-                  </Button>
-                ) : null}
+                <LocationMapButton location={location} className="h-9 sm:hidden" />
               </div>
               </article>
             ))}

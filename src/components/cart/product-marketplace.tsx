@@ -21,6 +21,7 @@ import { PublicStoreLocationSection } from "@/components/locations/public-store-
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
+import { TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -47,6 +48,7 @@ import {
   Dumbbell,
   Heart,
   Home as HomeIcon,
+  Instagram,
   Laptop,
   PackageSearch,
   Pencil,
@@ -194,6 +196,27 @@ function scrollToPageSection(sectionId: string, updateHash = false) {
   }
 }
 
+function scheduleScrollToPageSection(sectionId: string, updateHash = false) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  let attempts = 0;
+
+  function scrollWhenReady() {
+    attempts += 1;
+
+    if (document.getElementById(sectionId) || attempts >= 4) {
+      scrollToPageSection(sectionId, updateHash);
+      return;
+    }
+
+    window.requestAnimationFrame(scrollWhenReady);
+  }
+
+  window.requestAnimationFrame(scrollWhenReady);
+}
+
 function scrollToPageTop(updateUrl?: string) {
   if (typeof window === "undefined") {
     return;
@@ -207,6 +230,24 @@ function scrollToPageTop(updateUrl?: string) {
   if (updateUrl) {
     window.history.replaceState(null, "", updateUrl);
   }
+}
+
+function normalizeStoreSocialHref(kind: "instagram" | "tiktok", value?: string | null) {
+  const cleanValue = value?.trim();
+
+  if (!cleanValue) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(cleanValue)) {
+    return cleanValue;
+  }
+
+  const handle = cleanValue.replace(/^@/, "");
+
+  return kind === "instagram"
+    ? `https://instagram.com/${handle}`
+    : `https://tiktok.com/@${handle}`;
 }
 
 export function CustomStorefrontHeader({
@@ -227,8 +268,23 @@ export function CustomStorefrontHeader({
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: "Kateqoriyalar" },
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
   ];
+  const socialLinks = [
+    {
+      key: "instagram" as const,
+      label: "Instagram",
+      href: normalizeStoreSocialHref("instagram", store.socialInstagram),
+      icon: Instagram,
+    },
+    {
+      key: "tiktok" as const,
+      label: "TikTok",
+      href: normalizeStoreSocialHref("tiktok", store.socialTiktok),
+      icon: TikTokIcon,
+    },
+  ].filter((item) => item.href);
   const iconButtonClass =
-    "grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30 [&_svg]:!size-8";
+    "group grid size-12 shrink-0 place-items-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 md:hover:!border-transparent md:hover:!bg-transparent md:hover:text-blue-600 md:hover:shadow-none dark:border-transparent dark:text-white dark:md:hover:!border-transparent dark:md:hover:text-blue-300 [&_svg]:!size-8";
+  const storefrontIconClass = "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
 
   useEffect(() => {
     function updateHeaderSearchVisibility() {
@@ -246,7 +302,7 @@ export function CustomStorefrontHeader({
       data-storefront-header
       className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95"
     >
-      <div className="mx-auto flex min-h-16 w-full max-w-[1680px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-2.5 sm:px-6 lg:px-8 2xl:px-10">
+      <div className="container mx-auto flex min-h-16 w-full max-w-[1440px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-2.5 sm:px-6 lg:px-8">
         <Link
           href={storeHomeHref}
           prefetch
@@ -275,14 +331,14 @@ export function CustomStorefrontHeader({
                   return;
                 }
 
-                const targetUrl = new URL(item.href, window.location.origin);
+                const targetUrl = new URL(item.href, window.location.href);
                 if (targetUrl.pathname !== window.location.pathname) {
                   return;
                 }
 
                 event.preventDefault();
                 if (sectionId) {
-                  scrollToPageSection(sectionId, true);
+                  scheduleScrollToPageSection(sectionId, true);
                 } else {
                   scrollToPageTop(item.href);
                 }
@@ -297,19 +353,41 @@ export function CustomStorefrontHeader({
           <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 2xl:ml-0">
+          {socialLinks.length > 0 ? (
+            <div className="hidden shrink-0 items-center gap-1 xl:flex">
+              {socialLinks.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Button
+                    key={item.key}
+                    asChild
+                    variant="ghost"
+                    size="icon"
+                    className={iconButtonClass}
+                    aria-label={item.label}
+                  >
+                    <a href={item.href} target="_blank" rel="noreferrer">
+                      <Icon className={storefrontIconClass} aria-hidden="true" />
+                    </a>
+                  </Button>
+                );
+              })}
+            </div>
+          ) : null}
           {isAuthenticated ? (
             <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
               <Link href="/favorites" prefetch>
-                <Heart className="!size-8 stroke-[2.15]" aria-hidden="true" />
+                <Heart className={storefrontIconClass} aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
-              <ShoppingCart className="!size-8 stroke-[2.15]" aria-hidden="true" />
+              <ShoppingCart className={storefrontIconClass} aria-hidden="true" />
             </Link>
           </Button>
-          <ThemeToggle className={iconButtonClass} iconClassName="!size-8 stroke-[2.15]" />
+          <ThemeToggle className={iconButtonClass} iconClassName={storefrontIconClass} />
         </div>
       </div>
       {showHeaderSearch ? (
@@ -1768,7 +1846,7 @@ export function Storefront({
     }
 
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-    window.requestAnimationFrame(() => scrollToPageSection("products"));
+    scheduleScrollToPageSection("products");
   }
 
   function selectSort(nextSort: MarketplaceProductSort) {
@@ -1800,7 +1878,7 @@ export function Storefront({
   }
 
   function scrollToSection(sectionId: string) {
-    scrollToPageSection(sectionId, true);
+    scheduleScrollToPageSection(sectionId, true);
   }
 
   const filterBar = (
@@ -1925,7 +2003,7 @@ export function Storefront({
             onClick={() => {
               if (isCustomStorefront && !showAllMobileCategories) {
                 setShowAllMobileCategories(true);
-                window.requestAnimationFrame(() => scrollToPageSection("store-categories"));
+                scheduleScrollToPageSection("store-categories");
                 return;
               }
 
