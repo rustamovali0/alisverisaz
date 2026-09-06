@@ -123,13 +123,13 @@ export function MarketplaceHeader({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
-    "group inline-flex size-11 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300";
+    "group inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-8";
   const commerceUtilityIconClass =
-    "size-7 min-h-7 min-w-7 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "size-7 min-h-7 min-w-7 stroke-[2] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
   const mobileCommerceIconClass =
-    "size-7 stroke-[2] transition-transform duration-200";
+    "!size-8 stroke-[2.15] transition-transform duration-200";
 
   useEffect(() => {
     if (!hasInlinePrimarySearch) {

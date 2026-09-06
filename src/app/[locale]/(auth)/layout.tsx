@@ -12,10 +12,22 @@ type AuthLayoutProps = {
   }>;
 };
 
+function getSafeNextPath(currentUrl: string) {
+  const query = currentUrl.includes("?") ? currentUrl.slice(currentUrl.indexOf("?")) : "";
+  const next = new URLSearchParams(query).get("next") ?? "";
+
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "";
+  }
+
+  return next;
+}
+
 export default async function AuthLayout({ children, params }: AuthLayoutProps) {
   await params;
   const headerList = await headers();
   const pathname = headerList.get("x-current-path") ?? "";
+  const currentUrl = headerList.get("x-current-url") ?? pathname;
   const current = await getCurrentUserProfile();
 
   if (
@@ -24,7 +36,7 @@ export default async function AuthLayout({ children, params }: AuthLayoutProps) 
     pathname !== "/forgot-password" &&
     pathname !== "/reset-password"
   ) {
-    redirect(getDashboardPath(current.role));
+    redirect(getSafeNextPath(currentUrl) || getDashboardPath(current.role));
   }
 
   return (

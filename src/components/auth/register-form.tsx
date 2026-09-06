@@ -197,6 +197,9 @@ export function RegisterForm({
     : userRegistrationEnabled || storeRegistrationEnabled;
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
   const next = searchParams.get("next") ?? "";
+  const loginHref = next
+    ? `/login?${new URLSearchParams({ next }).toString()}`
+    : "/login";
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -316,7 +319,7 @@ export function RegisterForm({
       }
       topEnd={
         <Button asChild variant="outline" size="sm" className="h-10 px-2 text-sm">
-          <Link href="/login">
+          <Link href={loginHref}>
             Hesabınız var?
             <ArrowRight className="ml-2 size-4" aria-hidden="true" />
           </Link>

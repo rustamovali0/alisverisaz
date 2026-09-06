@@ -43,6 +43,9 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const next = searchParams.get("next") ?? "";
   const isAdminMode = mode === "admin";
+  const registerHref = next
+    ? `/register?${new URLSearchParams({ next, customerOnly: "1" }).toString()}`
+    : "/register";
 
   const visualLabel = useMemo(
     () => (mode === "admin" ? "Admin panelinə giriş" : ""),
@@ -151,7 +154,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           </Button>
         ) : (
           <Button asChild variant="outline" size="sm" className="h-10 px-2 text-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-            <Link href="/register">
+            <Link href={registerHref}>
               Qeydiyyat
               <ArrowRight className="ml-2 size-4" aria-hidden="true" />
             </Link>

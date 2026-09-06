@@ -104,6 +104,7 @@ type StorefrontProps = {
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
 const PRODUCT_PAGE_SIZE = 52;
+const DEFAULT_STICKY_SCROLL_OFFSET = 96;
 
 type FooterProps = {
   siteName?: string;
@@ -158,6 +159,56 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
   );
 }
 
+function getStickyScrollOffset() {
+  if (typeof document === "undefined") {
+    return DEFAULT_STICKY_SCROLL_OFFSET;
+  }
+
+  const header = document.querySelector<HTMLElement>("[data-storefront-header]");
+
+  return Math.max(header?.offsetHeight ?? DEFAULT_STICKY_SCROLL_OFFSET, DEFAULT_STICKY_SCROLL_OFFSET) + 18;
+}
+
+function scrollToPageSection(sectionId: string, updateHash = false) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const section = document.getElementById(sectionId);
+
+  if (!section) {
+    return;
+  }
+
+  const top = section.getBoundingClientRect().top + window.scrollY - getStickyScrollOffset();
+
+  window.scrollTo({
+    top: Math.max(top, 0),
+    behavior: "smooth",
+  });
+
+  if (updateHash) {
+    const url = new URL(window.location.href);
+    url.hash = sectionId;
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+}
+
+function scrollToPageTop(updateUrl?: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+
+  if (updateUrl) {
+    window.history.replaceState(null, "", updateUrl);
+  }
+}
+
 export function CustomStorefrontHeader({
   store,
   storeHomeHref,
@@ -177,7 +228,7 @@ export function CustomStorefrontHeader({
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
   ];
   const iconButtonClass =
-    "grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 sm:size-12 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
+    "grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 shadow-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30 [&_svg]:!size-8";
 
   useEffect(() => {
     function updateHeaderSearchVisibility() {
@@ -191,7 +242,10 @@ export function CustomStorefrontHeader({
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+    <header
+      data-storefront-header
+      className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-950/95"
+    >
       <div className="mx-auto flex min-h-16 w-full max-w-[1680px] min-w-0 items-center gap-2 px-4 sm:min-h-[68px] sm:gap-2.5 sm:px-6 lg:px-8 2xl:px-10">
         <Link
           href={storeHomeHref}
@@ -206,16 +260,38 @@ export function CustomStorefrontHeader({
         <nav
           className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex"
         >
-          {navItems.map((item) => (
+          {navItems.map((item) => {
+            const hashIndex = item.href.indexOf("#");
+            const sectionId = hashIndex >= 0 ? item.href.slice(hashIndex + 1) : null;
+
+            return (
             <Link
               key={item.href}
               href={item.href}
               prefetch
               className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
+              onClick={(event) => {
+                if (typeof window === "undefined") {
+                  return;
+                }
+
+                const targetUrl = new URL(item.href, window.location.origin);
+                if (targetUrl.pathname !== window.location.pathname) {
+                  return;
+                }
+
+                event.preventDefault();
+                if (sectionId) {
+                  scrollToPageSection(sectionId, true);
+                } else {
+                  scrollToPageTop(item.href);
+                }
+              }}
             >
               {item.label}
             </Link>
-          ))}
+            );
+          })}
         </nav>
         <div className="hidden shrink-0 lg:block">
           <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
@@ -224,16 +300,16 @@ export function CustomStorefrontHeader({
           {isAuthenticated ? (
             <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
               <Link href="/favorites" prefetch>
-                <Heart className="!size-[30px] stroke-[2.1]" aria-hidden="true" />
+                <Heart className="!size-8 stroke-[2.15]" aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
-              <ShoppingCart className="!size-[30px] stroke-[2.1]" aria-hidden="true" />
+              <ShoppingCart className="!size-8 stroke-[2.15]" aria-hidden="true" />
             </Link>
           </Button>
-          <ThemeToggle className={iconButtonClass} iconClassName="!size-[30px] stroke-[2.1]" />
+          <ThemeToggle className={iconButtonClass} iconClassName="!size-8 stroke-[2.15]" />
         </div>
       </div>
       {showHeaderSearch ? (
@@ -1692,6 +1768,7 @@ export function Storefront({
     }
 
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.requestAnimationFrame(() => scrollToPageSection("products"));
   }
 
   function selectSort(nextSort: MarketplaceProductSort) {
@@ -1723,10 +1800,7 @@ export function Storefront({
   }
 
   function scrollToSection(sectionId: string) {
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    scrollToPageSection(sectionId, true);
   }
 
   const filterBar = (
@@ -1765,7 +1839,7 @@ export function Storefront({
   );
 
   const productsSection = (
-    <section id="products" className="mt-4 min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8">
+    <section id="products" className="mt-4 min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="break-words text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
           {t("storeProducts")}
@@ -1835,7 +1909,7 @@ export function Storefront({
         id="store-categories"
         data-home-categories
         className={cn(
-          "min-w-0 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
+          "min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
           isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
         )}
       >
@@ -1851,6 +1925,7 @@ export function Storefront({
             onClick={() => {
               if (isCustomStorefront && !showAllMobileCategories) {
                 setShowAllMobileCategories(true);
+                window.requestAnimationFrame(() => scrollToPageSection("store-categories"));
                 return;
               }
 
@@ -1903,7 +1978,7 @@ export function Storefront({
       <section
         id="products"
         className={cn(
-          "min-w-0 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
+          "min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
           isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
         )}
       >
@@ -2144,7 +2219,7 @@ export function Storefront({
         {modernCategoriesSection}
         {modernProductsSection}
         {!isStoreOwner ? (
-          <div id="contact" className="scroll-mt-24">
+          <div id="contact" className="scroll-mt-28">
             <PublicStoreLocationSection
               locations={locations}
               socialLinks={{

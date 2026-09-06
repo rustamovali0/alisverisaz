@@ -34,6 +34,7 @@ type SearchSuggestion = {
 
 const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
 const SEARCH_SYNC_STORAGE_KEY = "alisveris_marketplace_search_query";
+const SEARCH_SCROLL_OFFSET = 110;
 
 function normalize(value: string) {
   return value
@@ -49,6 +50,27 @@ function suggestionIcon(type: SearchSuggestion["type"]) {
   }
 
   return <PackageSearch className="size-5 text-primary" aria-hidden="true" />;
+}
+
+function scrollToResultsAnchor(anchorId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const element = document.getElementById(anchorId);
+
+  if (!element) {
+    return;
+  }
+
+  const header = document.querySelector<HTMLElement>("[data-storefront-header], .marketplace-header");
+  const offset = Math.max(header?.offsetHeight ?? SEARCH_SCROLL_OFFSET, SEARCH_SCROLL_OFFSET) + 18;
+  const top = element.getBoundingClientRect().top + window.scrollY - offset;
+
+  window.scrollTo({
+    top: Math.max(top, 0),
+    behavior: "smooth",
+  });
 }
 
 export function MarketplaceSearch({
@@ -315,16 +337,11 @@ export function MarketplaceSearch({
     }
 
     router.push(nextHref, {
-      scroll: true,
+      scroll: !resultsAnchorId,
     });
 
     if (resultsAnchorId && typeof window !== "undefined") {
-      window.setTimeout(() => {
-        document.getElementById(resultsAnchorId)?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 80);
+      window.setTimeout(() => scrollToResultsAnchor(resultsAnchorId), 100);
     }
   }
 

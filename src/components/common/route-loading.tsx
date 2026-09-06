@@ -1,7 +1,7 @@
 import { GlobalLoader } from "@/components/common/global-loader";
 
 type RouteLoadingProps = {
-  variant?: "marketplace" | "dashboard" | "account" | "favorites" | "cart";
+  variant?: "marketplace" | "storefront" | "dashboard" | "account" | "favorites" | "cart";
 };
 
 export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
@@ -83,46 +83,122 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
   if (variant === "marketplace") {
     return (
       <main
-        className="bg-background px-4 py-5"
+        className="min-h-screen bg-slate-50 px-4 py-5 pb-[calc(90px+env(safe-area-inset-bottom))] dark:bg-slate-950 md:py-8 md:pb-10"
         role="status"
         aria-live="polite"
       >
         <span className="sr-only">{label}</span>
-        <div className="container grid gap-5">
-          <div className="grid gap-4 rounded-xl border bg-card p-4 shadow-sm lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="container grid max-w-[1280px] gap-8">
+          <div className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-8 lg:min-h-[360px] lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
             <div className="space-y-4">
-              <div className="h-8 w-36 animate-pulse rounded-lg bg-muted" />
+              <div className="h-7 w-36 animate-pulse rounded-full bg-muted" />
+              <div className="h-14 w-4/5 max-w-md animate-pulse rounded-xl bg-muted" />
+              <div className="h-5 w-full max-w-lg animate-pulse rounded bg-muted" />
               <div className="h-12 w-full max-w-xl animate-pulse rounded-xl bg-muted" />
               <div className="flex flex-wrap gap-2">
-                <div className="h-9 w-24 animate-pulse rounded-full bg-muted" />
-                <div className="h-9 w-28 animate-pulse rounded-full bg-muted" />
-                <div className="h-9 w-20 animate-pulse rounded-full bg-muted" />
+                <div className="h-8 w-24 animate-pulse rounded-full bg-muted" />
+                <div className="h-8 w-28 animate-pulse rounded-full bg-muted" />
+                <div className="h-8 w-20 animate-pulse rounded-full bg-muted" />
               </div>
             </div>
-            <div className="hidden aspect-[4/3] animate-pulse rounded-lg bg-muted lg:block" />
+            <div className="hidden aspect-[16/10] animate-pulse rounded-2xl bg-muted lg:block" />
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-24 animate-pulse rounded-lg border bg-card" />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="overflow-hidden rounded-xl border bg-card">
-                <div className="aspect-[4/3] animate-pulse bg-muted" />
-                <div className="space-y-2 p-3">
-                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-                  <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <div className="mb-4 h-7 w-48 animate-pulse rounded-lg bg-muted" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-24 animate-pulse rounded-xl border border-slate-200 bg-card dark:border-slate-800" />
+              ))}
+            </div>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 md:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="h-7 w-44 animate-pulse rounded-lg bg-muted" />
+              <div className="hidden h-10 w-64 animate-pulse rounded-xl bg-muted sm:block" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="overflow-hidden rounded-xl border border-slate-200 bg-card dark:border-slate-800">
+                  <div className="aspect-[4/3] animate-pulse bg-muted" />
+                  <div className="space-y-2 p-3">
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                    <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                    <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </section>
         </div>
       </main>
     );
   }
 
+  if (variant === "storefront") {
+    return (
+      <main
+        className="min-h-screen bg-white px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 md:py-8 md:pb-10"
+        role="status"
+        aria-live="polite"
+      >
+        <span className="sr-only">{label}</span>
+        <div className="mx-auto grid w-full max-w-[1280px] gap-6 md:gap-10">
+          <section className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] dark:border-slate-800 dark:bg-slate-900/70 sm:p-6 lg:grid-cols-[0.9fr_0.8fr] lg:items-center lg:p-8">
+            <div className="min-w-0">
+              <div className="mb-5 flex items-center gap-3">
+                <div className="size-16 animate-pulse rounded-2xl bg-muted sm:size-20" />
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+                  <div className="h-10 w-4/5 max-w-md animate-pulse rounded-lg bg-muted" />
+                </div>
+              </div>
+              <div className="h-5 w-3/5 animate-pulse rounded bg-muted" />
+              <div className="mt-4 flex gap-2.5">
+                <div className="h-11 w-36 animate-pulse rounded-[10px] bg-muted" />
+                <div className="h-11 w-24 animate-pulse rounded-[10px] bg-muted" />
+              </div>
+              <div className="mt-4 h-12 w-full max-w-xl animate-pulse rounded-[14px] bg-muted" />
+              <div className="mt-3 flex gap-2 overflow-hidden">
+                <div className="h-8 w-24 shrink-0 animate-pulse rounded-full bg-muted" />
+                <div className="h-8 w-32 shrink-0 animate-pulse rounded-full bg-muted" />
+                <div className="h-8 w-24 shrink-0 animate-pulse rounded-full bg-muted" />
+              </div>
+            </div>
+            <div className="hidden aspect-[4/3] animate-pulse rounded-2xl border border-slate-200 bg-muted dark:border-slate-800 sm:block" />
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="h-7 w-52 animate-pulse rounded-lg bg-muted" />
+              <div className="h-5 w-24 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="h-[84px] animate-pulse rounded-[14px] border border-slate-200 bg-card dark:border-slate-800 sm:h-28" />
+              ))}
+            </div>
+          </section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+            <div className="mb-4 grid gap-3 sm:flex sm:items-center sm:justify-between">
+              <div className="h-7 w-44 animate-pulse rounded-lg bg-muted" />
+              <div className="h-10 w-full animate-pulse rounded-xl bg-muted sm:w-72" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className="overflow-hidden rounded-xl border border-slate-200 bg-card dark:border-slate-800">
+                  <div className="aspect-[4/3] animate-pulse bg-muted" />
+                  <div className="space-y-2 p-3">
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+                    <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                    <div className="h-10 w-full animate-pulse rounded-lg bg-muted" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
   return (
     <main
       className="grid min-h-[18dvh] place-items-center bg-transparent px-4 py-6"

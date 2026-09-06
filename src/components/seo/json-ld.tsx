@@ -59,9 +59,11 @@ export function JsonLd({ data }: JsonLdProps) {
 export function ProductJsonLd({
   detail,
   url,
+  sellerUrl,
 }: {
   detail: MarketplaceProductDetail;
   url: string;
+  sellerUrl?: string;
 }) {
   const product = detail.product;
   const price = Math.max(0, product.priceAmount - product.discountAmount);
@@ -78,6 +80,7 @@ export function ProductJsonLd({
       data={{
         "@context": "https://schema.org",
         "@type": "Product",
+        "@id": `${url}#product`,
         name: product.name,
         description: product.description || `${product.name} məhsul detalları.`,
         image: images.length ? images : undefined,
@@ -99,7 +102,7 @@ export function ProductJsonLd({
           seller: {
             "@type": "Organization",
             name: detail.store.name,
-            url: `${siteConfig.url}/store/${detail.store.slug}`,
+            url: sellerUrl ?? `${siteConfig.url}/store/${detail.store.slug}`,
           },
         },
       }}
@@ -124,6 +127,7 @@ export function StoreJsonLd({
       data={{
         "@context": "https://schema.org",
         "@type": ["Store", "LocalBusiness"],
+        "@id": `${url}#store`,
         name: store.name,
         description: store.description || `${store.name} mağazası Alisveris.az-da.`,
         url,
@@ -138,6 +142,35 @@ export function StoreJsonLd({
             }
           : undefined,
         sameAs: sameAs.length ? sameAs : undefined,
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${url}?q={search_term_string}#products`,
+          "query-input": "required name=search_term_string",
+        },
+      }}
+    />
+  );
+}
+
+export function BreadcrumbJsonLd({
+  items,
+}: {
+  items: Array<{
+    name: string;
+    item: string;
+  }>;
+}) {
+  return (
+    <JsonLd
+      data={{
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: items.map((item, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: item.name,
+          item: absoluteUrl(item.item),
+        })),
       }}
     />
   );

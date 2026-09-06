@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { siteConfig } from "@/lib/config/site";
+import { getStorefrontUrl } from "@/lib/config/domains";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 
 export const revalidate = 86_400;
@@ -125,12 +126,31 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
 
     return ((data ?? []) as Array<{ slug: string | null; updated_at: string | null }>)
       .filter((store) => store.slug)
-      .map((store) => ({
-        url: absoluteUrl(`/store/${store.slug}`),
-        lastModified: store.updated_at ? new Date(store.updated_at) : now,
-        changeFrequency: "daily" as const,
-        priority: 0.75,
-      }));
+      .flatMap((store) => {
+        const lastModified = store.updated_at ? new Date(store.updated_at) : now;
+        const slug = store.slug as string;
+
+        return [
+          {
+            url: absoluteUrl(`/store/${slug}`),
+            lastModified,
+            changeFrequency: "daily" as const,
+            priority: 0.75,
+          },
+          {
+            url: absoluteUrl(`/${slug}`),
+            lastModified,
+            changeFrequency: "daily" as const,
+            priority: 0.74,
+          },
+          {
+            url: getStorefrontUrl(slug),
+            lastModified,
+            changeFrequency: "daily" as const,
+            priority: 0.72,
+          },
+        ];
+      });
   } catch {
     return [];
   }

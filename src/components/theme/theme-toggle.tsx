@@ -57,7 +57,7 @@ export function ThemeToggle({ className, iconClassName }: ThemeToggleProps) {
       variant="ghost"
       size="icon"
       className={cn(
-        "glass-panel size-11 rounded-lg border bg-card hover:bg-primary hover:text-primary-foreground",
+        "size-11 rounded-xl border border-slate-200 bg-white text-slate-950 shadow-none transition hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 dark:hover:text-blue-300",
         className,
       )}
       onClick={toggleTheme}

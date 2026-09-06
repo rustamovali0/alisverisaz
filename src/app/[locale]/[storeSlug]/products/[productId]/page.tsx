@@ -22,14 +22,14 @@ import {
 } from "@/components/products/product-detail-gallery";
 import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
-import { ProductJsonLd } from "@/components/seo/json-ld";
+import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById, getSimilarMarketplaceProductPage } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
-import { getStorePath, getStoreSubdomainSlug } from "@/lib/config/domains";
+import { getStorePath, getStorefrontUrl, getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import {
@@ -106,14 +106,50 @@ export async function generateMetadata({
     return {};
   }
 
-  const canonicalUrl = `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`;
-  const description = detail.product.description || `${detail.product.name} məhsul detalları.`;
+  const requestHeaders = await headers();
+  const currentPath = requestHeaders.get("x-current-path") ?? "";
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const isMarketplaceRoute =
+    currentPath === `/store/${detail.store.slug}/products/${detail.product.slug}` ||
+    currentPath === `/store/${detail.store.slug}/products/${detail.product.id}` ||
+    currentPath.startsWith(`/store/${detail.store.slug}/products/`);
+  const canonicalUrl =
+    storeSubdomainSlug === detail.store.slug
+      ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
+      : isMarketplaceRoute
+        ? `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`
+        : `${siteConfig.url}/${detail.store.slug}/products/${detail.product.slug}`;
+  const price = formatAznDiscountedPrice(
+    detail.product.priceAmount,
+    detail.product.discountAmount,
+  );
+  const description =
+    detail.product.description ||
+    `${detail.product.name} ${detail.store.name} mağazasında ${price}. Stok və sifariş məlumatlarına baxın.`;
 
   return {
     title: `${detail.product.name} | ${detail.store.name}`,
     description,
+    keywords: [
+      detail.product.name,
+      detail.store.name,
+      `${detail.product.name} qiyməti`,
+      `${detail.product.name} al`,
+      "online alışveriş Azərbaycan",
+    ],
     alternates: {
       canonical: canonicalUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
     },
     openGraph: {
       title: `${detail.product.name} | ${detail.store.name}`,
@@ -220,6 +256,18 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       : isLegacyProductRoute
         ? getStorePath(detail.store.slug)
         : `/${detail.store.slug}`;
+  const canonicalProductUrl =
+    storeSubdomainSlug === detail.store.slug
+      ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
+      : isLegacyProductRoute
+        ? `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`
+        : `${siteConfig.url}/${detail.store.slug}/products/${detail.product.slug}`;
+  const canonicalStoreUrl =
+    storeSubdomainSlug === detail.store.slug
+      ? getStorefrontUrl(detail.store.slug)
+      : isLegacyProductRoute
+        ? `${siteConfig.url}/store/${detail.store.slug}`
+        : `${siteConfig.url}/${detail.store.slug}`;
   const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
   const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
 
@@ -228,7 +276,21 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
-        url={`${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`}
+        url={canonicalProductUrl}
+        sellerUrl={canonicalStoreUrl}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Alışveriş", item: siteConfig.url },
+          {
+            name: isCustomStorefrontProduct ? detail.store.name : "Mağazalar",
+            item: isCustomStorefrontProduct ? canonicalStoreUrl : `${siteConfig.url}/stores`,
+          },
+          ...(isCustomStorefrontProduct
+            ? []
+            : [{ name: detail.store.name, item: canonicalStoreUrl }]),
+          { name: detail.product.name, item: canonicalProductUrl },
+        ]}
       />
       <ViewTracker productId={detail.product.id} />
       {isCustomStorefrontProduct ? (

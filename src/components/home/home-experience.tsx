@@ -44,6 +44,7 @@ type HomeExperienceProps = {
   productNextCursor?: string | null;
   productHasMore?: boolean;
   categories: CategoryOption[];
+  popularSearches?: string[];
   title: string;
   description: string;
   productsLabel: string;
@@ -310,6 +311,7 @@ export function HomeExperience({
   productNextCursor,
   productHasMore,
   categories,
+  popularSearches = [],
   title,
   description,
   productsLabel,
@@ -340,6 +342,17 @@ export function HomeExperience({
   );
   const activeCategories = categories.slice(0, visibleLimit(categorySection, 14));
   const heroPills = activeCategories.slice(0, 4);
+  const popularSearchPills = popularSearches.length
+    ? popularSearches.slice(0, 4).map((term) => ({
+        key: term,
+        label: term,
+        href: `/products?q=${encodeURIComponent(term)}`,
+      }))
+    : heroPills.map((category) => ({
+        key: category.id,
+        label: category.name,
+        href: `/products?category=${category.slug}`,
+      }));
   const heroEyebrow = "Alış-verişin yeni ünvanı";
   const heroTitle = normalizeHeroTitle(hero?.title || title);
   const shouldUseDefaultHeroCopy = heroTitle === DEFAULT_HERO_TITLE;
@@ -385,18 +398,18 @@ export function HomeExperience({
                 compactActions
                 placeholder="Məhsul, brend və ya mağaza axtar..."
               />
-              {heroPills.length > 0 ? (
+              {popularSearchPills.length > 0 ? (
                 <div className="-mx-5 mt-5 flex max-w-[calc(100%+2.5rem)] items-center gap-2 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:mx-0 md:max-w-full md:flex-wrap md:gap-2.5 md:overflow-visible md:px-0">
                   <span className="shrink-0 text-sm text-slate-500 dark:text-slate-400">
                     Populyar axtarışlar:
                   </span>
-                  {heroPills.map((category) => (
+                  {popularSearchPills.map((item) => (
                     <Link
-                      key={category.id}
-                      href={`/products?category=${category.slug}`}
+                      key={item.key}
+                      href={item.href}
                       className="inline-flex h-9 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-[13px] font-medium text-slate-700 transition hover:border-blue-200 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400/40 dark:hover:text-blue-200 md:h-auto md:py-1.5 md:text-sm"
                     >
-                      {category.name}
+                      {item.label}
                     </Link>
                   ))}
                 </div>

@@ -176,6 +176,7 @@ function createLocalizedRewrite(
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("X-NEXT-INTL-LOCALE", locale);
   requestHeaders.set("x-current-path", currentPathHeader);
+  requestHeaders.set("x-current-url", `${currentPathHeader}${request.nextUrl.search}`);
 
   const response = NextResponse.rewrite(url, {
     request: {

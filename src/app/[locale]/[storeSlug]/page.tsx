@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
-import { StoreJsonLd } from "@/components/seo/json-ld";
+import { BreadcrumbJsonLd, StoreJsonLd } from "@/components/seo/json-ld";
 import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
   getStoreSubdomainSlug,
+  getStorefrontUrl,
   getStorePath,
   isReservedStoreSubdomain,
 } from "@/lib/config/domains";
@@ -51,19 +52,51 @@ export async function generateMetadata({
     return {};
   }
 
-  const canonicalUrl = `${siteConfig.url}/store/${store.slug}`;
+  const requestHeaders = await headers();
+  const currentPath = requestHeaders.get("x-current-path") ?? "";
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const isMarketplaceRoute =
+    currentPath === `/store/${store.slug}` ||
+    currentPath.startsWith(`/store/${store.slug}/`);
+  const canonicalUrl =
+    storeSubdomainSlug === store.slug
+      ? getStorefrontUrl(store.slug)
+      : isMarketplaceRoute
+        ? `${siteConfig.url}/store/${store.slug}`
+        : `${siteConfig.url}/${store.slug}`;
+  const pageTitle = isMarketplaceRoute
+    ? `${store.name} mağazası | Alışveriş`
+    : `${store.name} | Rəsmi onlayn mağaza`;
   const description =
     store.description ||
-    `${store.name} mağazasının yeni məhsulları Alışveriş-də.`;
+    `${store.name} mağazasının yeni məhsulları, kateqoriyaları və əlaqə məlumatları.`;
 
   return {
-    title: `${store.name} | Alışveriş`,
+    title: pageTitle,
     description,
+    keywords: [
+      store.name,
+      `${store.name} məhsulları`,
+      `${store.name} online mağaza`,
+      `${store.name} əlaqə`,
+      "Azərbaycanda online alışveriş",
+    ],
     alternates: {
       canonical: canonicalUrl,
     },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-snippet": -1,
+        "max-image-preview": "large",
+        "max-video-preview": -1,
+      },
+    },
     openGraph: {
-      title: `${store.name} | Alışveriş`,
+      title: pageTitle,
       description,
       url: canonicalUrl,
       images: store.coverUrl ? [store.coverUrl] : undefined,
@@ -71,7 +104,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${store.name} | Alışveriş`,
+      title: pageTitle,
       description,
       images: store.coverUrl ? [store.coverUrl] : undefined,
     },
@@ -127,6 +160,11 @@ export async function renderStorePage(
     : isLegacyStoreRoute
       ? getStorePath(store.slug)
       : `/${store.slug}`;
+  const canonicalStoreUrl = storeSubdomainSlug === store.slug
+    ? getStorefrontUrl(store.slug)
+    : isLegacyStoreRoute
+      ? `${siteConfig.url}/store/${store.slug}`
+      : `${siteConfig.url}/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
 
@@ -144,7 +182,19 @@ export async function renderStorePage(
   return (
     <>
       <ViewTracker storeId={store.id} />
-      <StoreJsonLd store={store} url={`${siteConfig.url}/store/${store.slug}`} />
+      <StoreJsonLd store={store} url={canonicalStoreUrl} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Alışveriş", item: siteConfig.url },
+          {
+            name: isLegacyStoreRoute ? "Mağazalar" : store.name,
+            item: isLegacyStoreRoute ? `${siteConfig.url}/stores` : canonicalStoreUrl,
+          },
+          ...(isLegacyStoreRoute
+            ? [{ name: store.name, item: canonicalStoreUrl }]
+            : []),
+        ]}
+      />
       <Storefront
         store={store}
         categories={categories}

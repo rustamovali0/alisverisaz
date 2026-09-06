@@ -43,9 +43,9 @@ export function PopularSearchManager({
             <Search className="size-5" aria-hidden="true" />
           </span>
           <div>
-            <h3 className="font-bold">Göstərilən top 4 axtarış</h3>
+            <h3 className="font-bold">Homepage-də görünən top 4 axtarış</h3>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Boş saxlasanız, istifadəçilərin real axtarışlarından avtomatik top 4 göstəriləcək.
+              Məhsul adı və ya axtarış sözünü yazın. Boş saxlasanız, istifadəçilərin real axtarışlarından avtomatik top 4 göstəriləcək.
             </p>
           </div>
         </div>
