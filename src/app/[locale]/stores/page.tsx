@@ -59,10 +59,10 @@ export default async function StoresPage({ params }: StoresPageProps) {
               <Link
                 key={store.id}
                 href={getStorePath(store.slug)}
-                className="group min-w-0 overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
+                className="group relative min-w-0 overflow-visible rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
               >
                 <div className="relative">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-t-[14px] bg-slate-100 dark:bg-slate-800">
                     {coverUrl ? (
                       <img
                         src={coverUrl}
@@ -79,7 +79,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     )}
                     <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/28 to-transparent" />
                   </div>
-                  <span className="absolute -bottom-7 left-5 z-20 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-md shadow-slate-950/10 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
+                  <span className="absolute -bottom-7 left-5 z-30 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
                     {store.logoUrl ? (
                       <img
                         src={store.logoUrl}
@@ -92,7 +92,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     )}
                   </span>
                 </div>
-                <div className="min-w-0 px-4 pb-4 pt-10 md:pt-12">
+                <div className="relative z-10 min-w-0 rounded-b-[14px] bg-white px-4 pb-4 pt-10 dark:bg-slate-900 md:pt-12">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 sm:text-base">

@@ -849,10 +849,11 @@ export function CartCheckout({
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="ml-auto size-12 rounded-[10px] text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 sm:ml-0 sm:size-11"
+                      className="ml-auto size-12 rounded-[10px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/45 sm:ml-0 sm:size-11"
                       onClick={() => void removeCartItem(itemKey, product.name)}
+                      aria-label={`${product.name} məhsulunu səbətdən sil`}
                     >
-                      <Trash2 className="size-6 sm:size-5" aria-hidden="true" />
+                      <Trash2 className="size-7 stroke-[2.2] sm:size-6" aria-hidden="true" />
                     </Button>
                   </div>
                   </div>
@@ -869,7 +870,7 @@ export function CartCheckout({
                 className="rounded-[10px] border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:bg-transparent dark:hover:bg-rose-950/30"
                 onClick={() => void clearCart()}
               >
-                <Trash2 className="mr-2 size-5" aria-hidden="true" />
+                <Trash2 className="mr-2 size-6 stroke-[2.2]" aria-hidden="true" />
                 Səbəti boşalt
               </Button>
             </div>

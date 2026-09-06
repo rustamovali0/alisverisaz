@@ -177,7 +177,7 @@ export function CustomStorefrontHeader({
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə" },
   ];
   const iconButtonClass =
-    "grid size-12 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
+    "grid size-11 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-slate-900 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 sm:size-12 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30";
 
   useEffect(() => {
     function updateHeaderSearchVisibility() {
@@ -196,18 +196,15 @@ export function CustomStorefrontHeader({
         <Link
           href={storeHomeHref}
           prefetch
-          className="flex min-w-0 flex-[0_1_260px] items-center gap-2.5 sm:gap-3 xl:flex-[0_1_280px] 2xl:flex-[0_1_320px]"
+          className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_300px] xl:flex-[0_1_340px] 2xl:flex-[0_1_420px]"
         >
           <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
-          <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+          <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl 2xl:text-[27px]">
             {store.name}
           </span>
         </Link>
         <nav
-          className={cn(
-            "ml-2 hidden shrink-0 items-center gap-0.5",
-            showHeaderSearch ? "xl:flex" : "lg:flex",
-          )}
+          className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex"
         >
           {navItems.map((item) => (
             <Link
@@ -220,44 +217,44 @@ export function CustomStorefrontHeader({
             </Link>
           ))}
         </nav>
-        <div
-          className={cn(
-            "ml-auto hidden flex-[1_1_240px] transition-[max-width,opacity] duration-200 xl:block",
-            showHeaderSearch
-              ? "min-w-[210px] max-w-[300px] opacity-100 2xl:max-w-[340px]"
-              : "pointer-events-none max-w-0 flex-none overflow-hidden opacity-0",
-          )}
-        >
-          <MarketplaceSearch
-            stores={[store]}
-            defaultValue={searchQuery}
-            storeSlug={store.slug}
-            searchBaseHref={storeHomeHref}
-            resultsAnchorId="products"
-            className="rounded-xl border border-slate-200 bg-white p-1 shadow-none dark:border-slate-800 dark:bg-slate-950"
-            inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 text-sm text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
-            buttonClassName="h-10 rounded-lg bg-blue-600 px-4 text-white md:hover:bg-blue-700"
-          />
-        </div>
         <div className="hidden shrink-0 lg:block">
           <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
         </div>
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 xl:ml-0">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 2xl:ml-0">
           {isAuthenticated ? (
             <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Favorilər">
               <Link href="/favorites" prefetch>
-                <Heart className="!size-7 stroke-[2.1]" aria-hidden="true" />
+                <Heart className="!size-[30px] stroke-[2.1]" aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label="Səbət">
             <Link href="/cart" prefetch>
-              <ShoppingCart className="!size-7 stroke-[2.1]" aria-hidden="true" />
+              <ShoppingCart className="!size-[30px] stroke-[2.1]" aria-hidden="true" />
             </Link>
           </Button>
-          <ThemeToggle className={iconButtonClass} iconClassName="!size-7 stroke-[2.1]" />
+          <ThemeToggle className={iconButtonClass} iconClassName="!size-[30px] stroke-[2.1]" />
         </div>
       </div>
+      {showHeaderSearch ? (
+        <div className="border-t border-slate-200 bg-white/95 px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[680px]">
+            <MarketplaceSearch
+              stores={[store]}
+              defaultValue={searchQuery}
+              storeSlug={store.slug}
+              searchBaseHref={storeHomeHref}
+              resultsAnchorId="products"
+              stackOnMobile
+              compactActions
+              className="rounded-xl border border-slate-200 bg-white p-1 shadow-none dark:border-slate-800 dark:bg-slate-950"
+              inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 text-[16px] text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
+              buttonClassName="!size-10 !min-w-10 rounded-lg bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+              buttonSize="lg"
+            />
+          </div>
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -564,9 +561,9 @@ function MarketplaceFilterBar({
   const isWide = layout === "wide";
 
   return (
-    <section className={cn("relative z-20 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card", isWide ? "p-3 md:p-4" : "p-2.5")}>
+    <section className={cn("relative z-20 w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card", isWide ? "p-3 md:p-4" : "p-2.5")}>
       <h2 className={cn("text-xs font-bold text-slate-950 dark:text-slate-100", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
-      <div className={cn(isWide ? "grid gap-2 md:grid-cols-[repeat(4,minmax(0,1fr))_minmax(11rem,0.8fr)] md:items-center" : "space-y-2")}>
+      <div className={cn(isWide ? "grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(12rem,0.9fr)] lg:items-center" : "space-y-2")}>
         <MarketplaceDropdown
           label={t("categoryFilter")}
           value={selectedCategoryId ?? ""}
@@ -1508,7 +1505,24 @@ export function ProductMarketplace({
             </div>
             {isFiltersOpen ? (
               <div id="marketplace-filters" className="relative z-20 w-full">
-                {filterBar}
+                <MarketplaceFilterBar
+                  categories={categories}
+                  selectedCategoryId={activeCategoryId}
+                  colors={variantFilterValues.colors}
+                  sizes={variantFilterValues.sizes}
+                  color={colorFilter}
+                  size={sizeFilter}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  inStockOnly={inStockOnly}
+                  onCategory={selectCategory}
+                  onColor={setColorFilter}
+                  onSize={setSizeFilter}
+                  onMinPrice={setMinPrice}
+                  onMaxPrice={setMaxPrice}
+                  onStockOnly={setInStockOnly}
+                  layout="wide"
+                />
               </div>
             ) : null}
             {productGrid}
@@ -1869,8 +1883,8 @@ export function Storefront({
                 )}
                 onClick={() => selectCategory(category)}
               >
-                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-9 sm:size-11" : "size-11", iconStyle)}>
-                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-[18px] sm:size-5" : "size-5")} aria-hidden="true" />
+                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-11 sm:size-12" : "size-11", iconStyle)}>
+                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-6 sm:size-6" : "size-5")} aria-hidden="true" />
                 </span>
                 <span className={cn("flex min-w-0 gap-2", isCustomStorefront ? "flex-1 items-center justify-between sm:w-full sm:items-end" : "w-full items-end justify-between")}>
                   <span className="line-clamp-2 min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:text-sm">
@@ -2117,9 +2131,9 @@ export function Storefront({
                 <StoreHeroCover store={store} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
-              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/25 bg-slate-950/90 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
-                <p className="text-xs font-medium text-slate-300">Mağaza</p>
-                <p className="mt-1 line-clamp-2 break-words text-lg font-semibold text-white">
+              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
+                <p className="text-xs font-semibold text-slate-200">Mağaza</p>
+                <p className="mt-1 line-clamp-2 break-words text-lg font-bold text-white drop-shadow-sm">
                   {heroSubtitle}
                 </p>
               </div>

@@ -148,7 +148,7 @@ export function SiteFooter({
             {footer("platform")}
           </h2>
           <div className="mt-2 grid gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-3 md:text-sm">
-            <Link href="/products" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/stores" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
               {nav("stores")}
             </Link>
             <Link href="/products" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">

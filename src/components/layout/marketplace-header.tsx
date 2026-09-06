@@ -352,7 +352,7 @@ export function MarketplaceHeader({
             </Button>
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[200px] max-w-[300px] flex-[1_1_220px] items-center gap-2 md:flex 2xl:max-w-[380px]">
+            <div className="ml-auto hidden min-w-[220px] max-w-[300px] flex-[1_1_240px] items-center gap-2 xl:flex 2xl:max-w-[380px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}

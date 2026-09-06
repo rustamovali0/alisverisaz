@@ -248,7 +248,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
   return (
-    <article className="group h-full min-w-0 rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:rounded-2xl md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700">
+    <article className="group h-full min-w-0 overflow-visible rounded-[14px] border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:rounded-2xl md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700">
       <Link href={getStorePath(store.slug)} className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
         <div className="relative">
           <div className="aspect-[16/9] overflow-hidden rounded-t-[14px] bg-slate-100 dark:bg-slate-800 md:aspect-[16/7] md:rounded-t-2xl">
@@ -268,7 +268,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
             )}
             <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-950/24 to-transparent" />
           </div>
-          <div className="absolute -bottom-7 left-4 z-10 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-md shadow-slate-950/10 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
+          <div className="absolute -bottom-7 left-4 z-30 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
             {store.logoUrl ? (
               <img
                 src={store.logoUrl}
@@ -281,7 +281,7 @@ function HomeStoreCard({ store }: { store: MarketplaceStore }) {
             )}
           </div>
         </div>
-        <div className="flex min-h-[112px] flex-col justify-between px-4 pb-4 pt-10 md:min-h-[126px] md:pt-12">
+        <div className="relative z-10 flex min-h-[112px] flex-col justify-between rounded-b-[14px] bg-white px-4 pb-4 pt-10 dark:bg-slate-900 md:min-h-[126px] md:rounded-b-2xl md:pt-12">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:text-base">
