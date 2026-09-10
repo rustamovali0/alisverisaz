@@ -202,11 +202,17 @@ function scheduleScrollToPageSection(sectionId: string, updateHash = false) {
   }
 
   let attempts = 0;
+  let settledFrames = 0;
 
   function scrollWhenReady() {
     attempts += 1;
+    const section = document.getElementById(sectionId);
 
-    if (document.getElementById(sectionId) || attempts >= 4) {
+    if (section) {
+      settledFrames += 1;
+    }
+
+    if ((section && settledFrames >= 2) || attempts >= 8) {
       scrollToPageSection(sectionId, updateHash);
       return;
     }
@@ -1644,7 +1650,7 @@ export function ProductMarketplace({
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
               <h1 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
-                {activeCategoryId ? activeCategory?.name ?? t("categoryProducts") : t("allProducts")}
+                {labels.title}
               </h1>
               <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
                 <Button
@@ -2057,7 +2063,9 @@ export function Storefront({
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
-                onClick={() => selectCategory(category, { scrollToProducts: !isCustomStorefront })}
+                onClick={() =>
+                  selectCategory(category, { scrollToProducts: !isCustomStorefront })
+                }
               >
                 <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-11 sm:size-12" : "size-11", iconStyle)}>
                   <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-6 sm:size-6" : "size-5")} aria-hidden="true" />
@@ -2230,7 +2238,11 @@ export function Storefront({
                           key={category.id}
                           type="button"
                           className="max-w-full rounded-full border border-white/20 bg-white/90 px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm transition md:hover:bg-white md:hover:text-blue-700"
-                          onClick={() => selectCategory(category)}
+                          onClick={() =>
+                            selectCategory(category, {
+                              scrollToProducts: !isCustomStorefront,
+                            })
+                          }
                         >
                           {category.name}
                         </button>
@@ -2345,7 +2357,9 @@ export function Storefront({
                       key={category.id}
                       type="button"
                       className="flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 sm:h-auto sm:px-3.5 sm:py-2 sm:text-xs"
-                      onClick={() => selectCategory(category)}
+                      onClick={() =>
+                        selectCategory(category, { scrollToProducts: !isCustomStorefront })
+                      }
                     >
                       {category.name}
                     </button>

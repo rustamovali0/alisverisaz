@@ -73,6 +73,33 @@ function scrollToResultsAnchor(anchorId: string) {
   });
 }
 
+function scheduleScrollToResultsAnchor(anchorId: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  let attempts = 0;
+  let settledFrames = 0;
+
+  function scrollWhenReady() {
+    attempts += 1;
+    const element = document.getElementById(anchorId);
+
+    if (element) {
+      settledFrames += 1;
+    }
+
+    if ((element && settledFrames >= 2) || attempts >= 8) {
+      scrollToResultsAnchor(anchorId);
+      return;
+    }
+
+    window.requestAnimationFrame(scrollWhenReady);
+  }
+
+  window.requestAnimationFrame(scrollWhenReady);
+}
+
 export function MarketplaceSearch({
   stores,
   defaultValue = "",
@@ -340,8 +367,8 @@ export function MarketplaceSearch({
       scroll: !resultsAnchorId,
     });
 
-    if (resultsAnchorId && typeof window !== "undefined") {
-      window.setTimeout(() => scrollToResultsAnchor(resultsAnchorId), 100);
+    if (resultsAnchorId) {
+      scheduleScrollToResultsAnchor(resultsAnchorId);
     }
   }
 

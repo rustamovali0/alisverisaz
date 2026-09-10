@@ -145,19 +145,19 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
         <div className="mx-auto grid w-full max-w-[1280px] gap-6 md:gap-10">
           <section className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] dark:border-slate-800 dark:bg-slate-900/70 sm:p-6 lg:grid-cols-[0.9fr_0.8fr] lg:items-center lg:p-8">
             <div className="min-w-0">
-              <div className="mb-5 flex items-center gap-3">
+              <div className="mb-4 flex items-center gap-3 sm:mb-5">
                 <div className="size-16 animate-pulse rounded-2xl bg-muted sm:size-20" />
                 <div className="min-w-0 flex-1 space-y-3">
                   <div className="h-3 w-32 animate-pulse rounded bg-muted" />
-                  <div className="h-10 w-4/5 max-w-md animate-pulse rounded-lg bg-muted" />
+                  <div className="h-8 w-4/5 max-w-md animate-pulse rounded-lg bg-muted sm:h-10" />
                 </div>
               </div>
-              <div className="h-5 w-3/5 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-3/5 animate-pulse rounded bg-muted sm:h-5" />
               <div className="mt-4 flex gap-2.5">
                 <div className="h-11 w-36 animate-pulse rounded-[10px] bg-muted" />
                 <div className="h-11 w-24 animate-pulse rounded-[10px] bg-muted" />
               </div>
-              <div className="mt-4 h-12 w-full max-w-xl animate-pulse rounded-[14px] bg-muted" />
+              <div className="mt-4 h-11 w-full max-w-xl animate-pulse rounded-[14px] bg-muted sm:h-12" />
               <div className="mt-3 flex gap-2 overflow-hidden">
                 <div className="h-8 w-24 shrink-0 animate-pulse rounded-full bg-muted" />
                 <div className="h-8 w-32 shrink-0 animate-pulse rounded-full bg-muted" />
@@ -173,7 +173,7 @@ export function RouteLoading({ variant = "marketplace" }: RouteLoadingProps) {
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="h-[84px] animate-pulse rounded-[14px] border border-slate-200 bg-card dark:border-slate-800 sm:h-28" />
+                <div key={index} className="h-[84px] animate-pulse rounded-[14px] border border-slate-200 bg-card dark:border-slate-800 sm:h-[104px]" />
               ))}
             </div>
           </section>

@@ -97,16 +97,24 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   ) {
     startTransition(async () => {
       setPendingActionKey(actionKey);
-      const result = await work();
-      setPendingActionKey(null);
+      try {
+        const result = await work();
 
-      if (!result.ok) {
-        void appAlert.error(result.message, "Əməliyyat alınmadı");
-        return;
+        if (!result.ok) {
+          void appAlert.error(result.message, "Əməliyyat alınmadı");
+          return;
+        }
+
+        void appAlert.success(successTitle, result.message);
+        router.refresh();
+      } catch (error) {
+        void appAlert.error(
+          error instanceof Error ? error.message : "Gözlənilməyən xəta baş verdi.",
+          "Əməliyyat alınmadı",
+        );
+      } finally {
+        setPendingActionKey(null);
       }
-
-      void appAlert.success(successTitle, result.message);
-      router.refresh();
     });
   }
 
@@ -134,11 +142,6 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
     const userId = String(formData.get("userId") ?? "");
     const action = String(formData.get("userAction") ?? "");
 
-    if (action === "delete") {
-      const confirmed = window.confirm("Bu istifadəçi silinsin?");
-      if (!confirmed) return;
-    }
-
     const work =
       action === "activate"
         ? () => activateUserAction(formData)
@@ -152,6 +155,45 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         : action === "deactivate"
           ? "İstifadəçi deaktiv edildi"
           : "İstifadəçi silindi";
+
+    if (action === "delete") {
+      startTransition(async () => {
+        const confirmed = await appAlert.confirm({
+          title: "İstifadəçi silinsin?",
+          message:
+            "Bu əməliyyat istifadəçini, satıcı mağazasını və həmin hesaba bağlı məhsulları siləcək. Əməliyyat geri qaytarılmır.",
+          confirmText: "Sil",
+          cancelText: "Ləğv et",
+          variant: "danger",
+        });
+
+        if (!confirmed.isConfirmed) {
+          return;
+        }
+
+        setPendingActionKey(`${action}:${userId}`);
+
+        try {
+          const result = await work();
+
+          if (!result.ok) {
+            void appAlert.error(result.message, "Əməliyyat alınmadı");
+            return;
+          }
+
+          void appAlert.success(successTitle, result.message);
+          router.refresh();
+        } catch (error) {
+          void appAlert.error(
+            error instanceof Error ? error.message : "Gözlənilməyən xəta baş verdi.",
+            "Əməliyyat alınmadı",
+          );
+        } finally {
+          setPendingActionKey(null);
+        }
+      });
+      return;
+    }
 
     runMutation(`${action}:${userId}`, work, successTitle);
   }
