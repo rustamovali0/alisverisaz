@@ -54,6 +54,18 @@ function getActionMessage(message: string) {
     : "Əməliyyat tamamlanmadı. Zəhmət olmasa bir az sonra yenidən yoxlayın.";
 }
 
+function getUnknownActionMessage(error: unknown) {
+  if (error instanceof Error) {
+    return getActionMessage(error.message);
+  }
+
+  if (typeof error === "string") {
+    return getActionMessage(error);
+  }
+
+  return "Əməliyyat tamamlanmadı. Zəhmət olmasa bir az sonra yenidən yoxlayın.";
+}
+
 export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -117,7 +129,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         router.refresh();
       } catch (error) {
         void appAlert.error(
-          error instanceof Error ? error.message : "Gözlənilməyən xəta baş verdi.",
+          getUnknownActionMessage(error),
           "Əməliyyat alınmadı",
         );
       } finally {
@@ -193,7 +205,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
           router.refresh();
         } catch (error) {
           void appAlert.error(
-            error instanceof Error ? error.message : "Gözlənilməyən xəta baş verdi.",
+            getUnknownActionMessage(error),
             "Əməliyyat alınmadı",
           );
         } finally {

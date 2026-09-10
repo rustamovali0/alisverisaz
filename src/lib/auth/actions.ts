@@ -1546,6 +1546,33 @@ async function deleteRowsByColumn(input: {
   }
 }
 
+async function nullRowsByColumn(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  table: string;
+  matchColumn: string;
+  nullColumn: string;
+  value: string;
+  optional?: boolean;
+}) {
+  const { error } = await (input.supabaseAdmin as any)
+    .from(input.table)
+    .update({ [input.nullColumn]: null })
+    .eq(input.matchColumn, input.value);
+
+  if (error) {
+    if (input.optional && isMissingRelationError(error)) {
+      return;
+    }
+
+    throw new Error(
+      readErrorMessage(
+        error,
+        `${input.table} məlumatları yenilənmədi.`,
+      ),
+    );
+  }
+}
+
 async function cleanupDirectUserReferences(input: {
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
   userId: string;
@@ -1564,24 +1591,28 @@ async function cleanupDirectUserReferences(input: {
     table: "notifications",
     column: "user_id",
     value: userId,
+    optional: true,
   });
   await deleteRowsByColumn({
     supabaseAdmin,
     table: "ai_generations",
     column: "user_id",
     value: userId,
+    optional: true,
   });
   await deleteRowsByColumn({
     supabaseAdmin,
     table: "favorites",
     column: "user_id",
     value: userId,
+    optional: true,
   });
   await deleteRowsByColumn({
     supabaseAdmin,
     table: "reviews",
     column: "user_id",
     value: userId,
+    optional: true,
   });
   await deleteRowsByColumn({
     supabaseAdmin,
@@ -1629,6 +1660,77 @@ async function cleanupDirectUserReferences(input: {
     supabaseAdmin,
     table: "store_statistics",
     column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "admin_session_registry",
+    column: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "customers",
+    matchColumn: "user_id",
+    nullColumn: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "orders",
+    matchColumn: "user_id",
+    nullColumn: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "deposits",
+    matchColumn: "user_id",
+    nullColumn: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "support_messages",
+    matchColumn: "user_id",
+    nullColumn: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "product_messages",
+    matchColumn: "sender_id",
+    nullColumn: "sender_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "product_messages",
+    matchColumn: "reply_by",
+    nullColumn: "reply_by",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "activity_events",
+    matchColumn: "actor_id",
+    nullColumn: "actor_id",
+    value: userId,
+    optional: true,
+  });
+  await nullRowsByColumn({
+    supabaseAdmin,
+    table: "admin_audit_logs",
+    matchColumn: "admin_id",
+    nullColumn: "admin_id",
     value: userId,
     optional: true,
   });
