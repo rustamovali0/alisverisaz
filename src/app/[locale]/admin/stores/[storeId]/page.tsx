@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { StoreManagementForm } from "@/components/admin/cms/store-management-form";
+import { DeleteStoreProductsButton } from "@/components/admin/stores/delete-store-products-button";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { StatGrid } from "@/components/dashboard/stat-card";
 import { ProductList } from "@/components/products/product-list";
@@ -63,6 +64,21 @@ export default async function AdminStoreDetailPage({
         title="Mağaza məhsulları"
         description="Admin bu mağazanın məhsullarını görə, redaktə edə və silə bilər."
       >
+        <div className="mb-4 flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold text-destructive">
+              Satıcının bütün məhsullarını sil
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              Bu əməliyyat yalnız məhsulları silir, mağaza və satıcı hesabı qalır.
+            </p>
+          </div>
+          <DeleteStoreProductsButton
+            storeId={detail.store.id}
+            storeName={detail.store.name}
+            productCount={detail.productCount}
+          />
+        </div>
         <ProductList
           products={products}
           categories={categories}

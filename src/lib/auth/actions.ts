@@ -13,6 +13,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
 import { ensureAuthProfile, ensureSellerStore } from "@/lib/auth/profiles";
+import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import { clientEnv } from "@/lib/config/env.client";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { requireRole } from "@/lib/auth/session";
@@ -20,7 +21,7 @@ import { getSiteSettings } from "@/lib/cms/data";
 import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
-import { uploadImageToR2 } from "@/lib/storage/r2";
+import { deleteR2ImagesByUrls, uploadImageToR2 } from "@/lib/storage/r2";
 import { sendPasswordResetEmail } from "@/lib/email/password-reset";
 import { sendWelcomeRegistrationEmail } from "@/lib/email/welcome";
 import {
@@ -1458,6 +1459,123 @@ type AdminUserMutationResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
 
+function uniqueStrings(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .filter(Boolean),
+    ),
+  );
+}
+
+async function cleanupUserMarketplaceData(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  userId: string;
+}) {
+  const { supabaseAdmin, userId } = input;
+  const { data: stores, error: storesError } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,slug,logo_url,cover_url")
+    .eq("owner_id", userId);
+
+  if (storesError) {
+    throw new Error(storesError.message);
+  }
+
+  const storeRows = (stores ?? []) as Array<{
+    id: string;
+    slug: string | null;
+    logo_url: string | null;
+    cover_url: string | null;
+  }>;
+  const storeIds = storeRows.map((store) => store.id);
+  const mediaUrls = uniqueStrings(
+    storeRows.flatMap((store) => [store.logo_url, store.cover_url]),
+  );
+
+  let storeProductIds: Array<{ id: string }> = [];
+
+  const { data: ownedProducts, error: ownedProductsError } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id")
+    .eq("owner_id", userId);
+
+  if (ownedProductsError) {
+    throw new Error(ownedProductsError.message);
+  }
+
+  if (storeIds.length > 0) {
+    const { data: storeProducts, error: storeProductsError } = await (
+      supabaseAdmin as any
+    )
+      .from("products")
+      .select("id")
+      .in("store_id", storeIds);
+
+    if (storeProductsError) {
+      throw new Error(storeProductsError.message);
+    }
+
+    storeProductIds = (storeProducts ?? []) as Array<{ id: string }>;
+  }
+
+  const productIds = uniqueStrings([
+    ...storeProductIds.map((product) => product.id),
+    ...((ownedProducts ?? []) as Array<{ id: string }>).map((product) => product.id),
+  ]);
+
+  if (productIds.length > 0) {
+    const chunkSize = 200;
+
+    for (let index = 0; index < productIds.length; index += chunkSize) {
+      const productIdChunk = productIds.slice(index, index + chunkSize);
+      const { data: images, error: imagesError } = await (supabaseAdmin as any)
+        .from("product_images")
+        .select("url")
+        .in("product_id", productIdChunk);
+
+      if (imagesError) {
+        throw new Error(imagesError.message);
+      }
+
+      mediaUrls.push(
+        ...uniqueStrings(
+          ((images ?? []) as Array<{ url: string | null }>).map(
+            (image) => image.url,
+          ),
+        ),
+      );
+    }
+  }
+
+  const { error: deleteOwnedProductsError } = await (supabaseAdmin as any)
+    .from("products")
+    .delete()
+    .eq("owner_id", userId);
+
+  if (deleteOwnedProductsError) {
+    throw new Error(deleteOwnedProductsError.message);
+  }
+
+  if (storeIds.length > 0) {
+    const { error: deleteStoresError } = await (supabaseAdmin as any)
+      .from("stores")
+      .delete()
+      .eq("owner_id", userId);
+
+    if (deleteStoresError) {
+      throw new Error(deleteStoresError.message);
+    }
+  }
+
+  return {
+    storeIds,
+    storeSlugs: uniqueStrings(storeRows.map((store) => store.slug)),
+    mediaUrls: uniqueStrings(mediaUrls),
+  };
+}
+
 async function revokeProfileSessions(userId: string) {
   const supabaseAdmin = createSupabaseAdminClient();
   await (supabaseAdmin as any)
@@ -1641,19 +1759,59 @@ export async function deleteUserAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  let cleanup: Awaited<ReturnType<typeof cleanupUserMarketplaceData>>;
 
-  if (error) {
+  try {
+    cleanup = await cleanupUserMarketplaceData({ supabaseAdmin, userId });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "İstifadəçi dataları təmizlənmədi.";
+
     void recordAdminAudit({
       action: "ADMIN_USER_DELETE",
       adminId: current.user.id,
       entityType: "user",
       entityId: userId,
       success: false,
-      metadata: { reason: error.message },
+      metadata: { reason: message },
     });
 
-    return { ok: false, message: "İstifadəçi silinmədi." };
+    return { ok: false, message };
+  }
+
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+
+  if (error) {
+    if (isMissingAuthUserError(error)) {
+      const { error: profileDeleteError } = await (supabaseAdmin as any)
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
+      if (profileDeleteError) {
+        void recordAdminAudit({
+          action: "ADMIN_USER_DELETE",
+          adminId: current.user.id,
+          entityType: "user",
+          entityId: userId,
+          success: false,
+          metadata: { reason: profileDeleteError.message },
+        });
+
+        return { ok: false, message: profileDeleteError.message };
+      }
+    } else {
+      void recordAdminAudit({
+        action: "ADMIN_USER_DELETE",
+        adminId: current.user.id,
+        entityType: "user",
+        entityId: userId,
+        success: false,
+        metadata: { reason: error.message },
+      });
+
+      return { ok: false, message: error.message };
+    }
   }
 
   void recordAdminAudit({
@@ -1661,10 +1819,22 @@ export async function deleteUserAction(
     adminId: current.user.id,
     entityType: "user",
     entityId: userId,
+    metadata: {
+      deletedStoreCount: cleanup.storeIds.length,
+      deletedMediaCount: cleanup.mediaUrls.length,
+    },
   });
 
   revalidatePath("/admin/users");
   revalidatePath("/radmin/users");
+  revalidatePath("/admin/stores");
+  revalidatePath("/radmin/stores");
+  revalidatePath("/stores");
+  revalidatePath("/products");
+  cleanup.storeSlugs.forEach((storeSlug) => {
+    invalidateStorePublicData({ storeSlug });
+  });
+  await deleteR2ImagesByUrls(cleanup.mediaUrls);
 
   return { ok: true, message: "İstifadəçi silindi." };
 }

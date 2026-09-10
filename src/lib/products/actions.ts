@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
@@ -61,6 +62,44 @@ function readNumber(formData: FormData, key: string) {
   const value = Number(readString(formData, key));
 
   return Number.isFinite(value) ? value : 0;
+}
+
+function uniqueStrings(values: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => (typeof value === "string" ? value.trim() : ""))
+        .filter(Boolean),
+    ),
+  );
+}
+
+async function readProductImageUrls(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  productIds: string[];
+}) {
+  const urls: string[] = [];
+  const chunkSize = 200;
+
+  for (let index = 0; index < input.productIds.length; index += chunkSize) {
+    const productIdChunk = input.productIds.slice(index, index + chunkSize);
+    const { data, error } = await (input.supabaseAdmin as any)
+      .from("product_images")
+      .select("url")
+      .in("product_id", productIdChunk);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    urls.push(
+      ...uniqueStrings(
+        ((data ?? []) as Array<{ url: string | null }>).map((image) => image.url),
+      ),
+    );
+  }
+
+  return uniqueStrings(urls);
 }
 
 function normalizeSeoText(value: string, fallback: string, maxLength: number) {
@@ -1220,6 +1259,135 @@ export async function deleteProductAction(
   return {
     ok: true,
     message: "Məhsul silindi.",
+  };
+}
+
+export async function deleteStoreProductsByAdminAction(
+  formData: FormData,
+): Promise<ProductActionResult> {
+  const current = await requireRole(["admin"], "/radmin/stores");
+  const storeId = readString(formData, "storeId");
+
+  if (!storeId) {
+    return {
+      ok: false,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: store, error: storeError } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,name,slug")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (storeError || !store) {
+    return {
+      ok: false,
+      message: storeError?.message ?? "Mağaza tapılmadı.",
+    };
+  }
+
+  const { data: products, error: productsError } = await (supabaseAdmin as any)
+    .from("products")
+    .select("id,category_id,status")
+    .eq("store_id", storeId);
+
+  if (productsError) {
+    return {
+      ok: false,
+      message: productsError.message,
+    };
+  }
+
+  const productRows = (products ?? []) as Array<{
+    id: string;
+    category_id: string | null;
+    status: string | null;
+  }>;
+  const productIds = productRows.map((product) => product.id);
+
+  if (productIds.length === 0) {
+    return {
+      ok: true,
+      message: "Bu satıcının silinəcək məhsulu yoxdur.",
+    };
+  }
+
+  let imageUrls: string[] = [];
+
+  try {
+    imageUrls = await readProductImageUrls({ supabaseAdmin, productIds });
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error ? error.message : "Məhsul şəkilləri oxunmadı.",
+    };
+  }
+
+  const { error: deleteError, count } = await (supabaseAdmin as any)
+    .from("products")
+    .delete({ count: "exact" })
+    .eq("store_id", storeId);
+
+  if (deleteError) {
+    void recordAdminAudit({
+      action: "ADMIN_STORE_PRODUCTS_DELETE_ALL",
+      adminId: current.user.id,
+      entityType: "store",
+      entityId: storeId,
+      success: false,
+      metadata: { reason: deleteError.message },
+    });
+
+    return {
+      ok: false,
+      message: deleteError.message,
+    };
+  }
+
+  const categoryIds = uniqueStrings(
+    productRows.map((product) => product.category_id),
+  );
+  const deletedCount = count ?? productIds.length;
+
+  void recordAdminAudit({
+    action: "ADMIN_STORE_PRODUCTS_DELETE_ALL",
+    adminId: current.user.id,
+    entityType: "store",
+    entityId: storeId,
+    metadata: {
+      deletedCount,
+      storeSlug: store.slug,
+    },
+  });
+
+  revalidatePath("/store/dashboard/products");
+  revalidatePath("/dashboard/listings");
+  revalidatePath("/radmin/products");
+  revalidatePath("/radmin/stores");
+  revalidatePath(`/radmin/stores/${storeId}`);
+  categoryIds.forEach((categoryId) => {
+    revalidateMarketplaceSurfaces({
+      storeId,
+      categoryId,
+      storeSlug: store.slug,
+      homepage: true,
+    });
+  });
+  revalidateMarketplaceSurfaces({
+    storeId,
+    storeSlug: store.slug,
+    homepage: true,
+  });
+
+  await deleteR2ImagesByUrls(imageUrls);
+
+  return {
+    ok: true,
+    message: `${deletedCount} məhsul silindi.`,
   };
 }
 
