@@ -8,6 +8,7 @@ import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import {
   activateUserAction,
+  deleteUsersByScopeAction,
   deactivateUserAction,
   deleteUserAction,
   updateUserContactByAdminAction,
@@ -90,6 +91,24 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
       ) as Record<string, AssignableRole>,
     [users],
   );
+  const bulkCounts = useMemo(() => {
+    return users.reduce(
+      (counts, user) => {
+        if (user.role === "admin") {
+          return counts;
+        }
+
+        if (user.role === "seller" || user.requested_role === "seller") {
+          counts.sellers += 1;
+        } else if (user.role === "customer") {
+          counts.customers += 1;
+        }
+
+        return counts;
+      },
+      { customers: 0, sellers: 0 },
+    );
+  }, [users]);
 
   useEffect(() => {
     setDraftRoles(initialRoles);
@@ -230,6 +249,61 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
     setPasswordDrafts((current) => ({ ...current, [userId]: "" }));
   }
 
+  function handleBulkDelete(scope: "customers" | "sellers") {
+    const isSellerScope = scope === "sellers";
+    const count = isSellerScope ? bulkCounts.sellers : bulkCounts.customers;
+    const title = isSellerScope ? "Satıcılar silinsin?" : "İstifadəçilər silinsin?";
+    const targetLabel = isSellerScope ? "satıcı" : "istifadəçi";
+    const actionKey = `bulk:${scope}`;
+
+    startTransition(async () => {
+      const firstConfirm = await appAlert.confirm({
+        title,
+        message: `${count} ${targetLabel} hesabı silinəcək. Bu əməliyyat həmin hesablara bağlı dataları da təmizləyəcək.`,
+        confirmText: "Davam et",
+        cancelText: "Ləğv et",
+        variant: "danger",
+      });
+
+      if (!firstConfirm.isConfirmed) {
+        return;
+      }
+
+      const secondConfirm = await appAlert.confirm({
+        title: "Son təsdiq",
+        message: "Bu əməliyyat geri qaytarılmır. Silməyə tam əminsiniz?",
+        confirmText: "Bəli, sil",
+        cancelText: "Ləğv et",
+        variant: "danger",
+      });
+
+      if (!secondConfirm.isConfirmed) {
+        return;
+      }
+
+      setPendingActionKey(actionKey);
+
+      try {
+        const result = await deleteUsersByScopeAction(scope);
+
+        if (!result.ok) {
+          void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
+          return;
+        }
+
+        void appAlert.success(
+          isSellerScope ? "Satıcılar silindi" : "İstifadəçilər silindi",
+          result.message,
+        );
+        router.refresh();
+      } catch (error) {
+        void appAlert.error(getUnknownActionMessage(error), "Əməliyyat alınmadı");
+      } finally {
+        setPendingActionKey(null);
+      }
+    });
+  }
+
   if (users.length === 0) {
     return (
       <p className="py-10 text-center text-sm text-muted-foreground">
@@ -240,6 +314,40 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
 
   return (
     <div className="grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-red-950 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-100">
+        <div className="min-w-0">
+          <p className="text-sm font-bold">Kütləvi silmə</p>
+          <p className="text-xs text-red-700 dark:text-red-200">
+            Admin hesablar qorunur. Hər əməliyyatda iki dəfə təsdiq tələb olunur.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={
+              bulkCounts.customers === 0 ||
+              (isPending && pendingActionKey === "bulk:customers")
+            }
+            onClick={() => handleBulkDelete("customers")}
+          >
+            <Trash2 className="mr-2 size-4" aria-hidden="true" />
+            İstifadəçiləri sil ({bulkCounts.customers})
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={
+              bulkCounts.sellers === 0 ||
+              (isPending && pendingActionKey === "bulk:sellers")
+            }
+            onClick={() => handleBulkDelete("sellers")}
+          >
+            <Trash2 className="mr-2 size-4" aria-hidden="true" />
+            Satıcıları sil ({bulkCounts.sellers})
+          </Button>
+        </div>
+      </div>
       {users.map((user) => {
         const currentRole = draftRoles[user.id] ?? initialRoles[user.id] ?? "customer";
         const isSellerPending =

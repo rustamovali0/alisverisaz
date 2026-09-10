@@ -1458,6 +1458,7 @@ export async function updateUserRoleAction(
 type AdminUserMutationResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
+type AdminBulkUserDeleteScope = "customers" | "sellers";
 
 function uniqueStrings(values: Array<string | null | undefined>) {
   return Array.from(
@@ -2135,6 +2136,106 @@ export async function deleteUserAction(
   await deleteR2ImagesByUrls(cleanup.mediaUrls);
 
   return { ok: true, message: "İstifadəçi silindi." };
+}
+
+export async function deleteUsersByScopeAction(
+  scope: AdminBulkUserDeleteScope,
+): Promise<AdminUserMutationResult> {
+  const current = await requireRole(["admin"], "/radmin/users");
+  const supabaseAdmin = createSupabaseAdminClient();
+  let query = supabaseAdmin
+    .from("profiles")
+    .select("id,email,full_name,role,requested_role,seller_application_status")
+    .neq("id", current.user.id)
+    .neq("role", "admin");
+
+  if (scope === "sellers") {
+    query = query.or("role.eq.seller,requested_role.eq.seller");
+  } else {
+    query = query.eq("role", "customer").or("requested_role.is.null,requested_role.neq.seller");
+  }
+
+  const { data: rows, error } = await query.returns<
+    Array<{
+      id: string;
+      email: string | null;
+      full_name: string | null;
+      role: string | null;
+      requested_role: string | null;
+      seller_application_status: string | null;
+    }>
+  >();
+
+  if (error) {
+    return {
+      ok: false,
+      message: readErrorMessage(error, "Silinəcək hesablar oxunmadı."),
+    };
+  }
+
+  const users = rows ?? [];
+
+  if (users.length === 0) {
+    return {
+      ok: false,
+      message:
+        scope === "sellers"
+          ? "Silinəcək satıcı tapılmadı."
+          : "Silinəcək istifadəçi tapılmadı.",
+    };
+  }
+
+  let deletedCount = 0;
+  const failedUsers: string[] = [];
+
+  for (const user of users) {
+    const formData = new FormData();
+    formData.set("userId", user.id);
+    const result = await deleteUserAction(formData);
+
+    if (result.ok) {
+      deletedCount += 1;
+    } else {
+      failedUsers.push(user.full_name ?? user.email ?? user.id);
+    }
+  }
+
+  void recordAdminAudit({
+    action: scope === "sellers" ? "ADMIN_SELLERS_BULK_DELETE" : "ADMIN_USERS_BULK_DELETE",
+    adminId: current.user.id,
+    entityType: "user",
+    metadata: {
+      scope,
+      attemptedCount: users.length,
+      deletedCount,
+      failedCount: failedUsers.length,
+      failedUsers: failedUsers.slice(0, 20),
+    },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/radmin/users");
+  revalidatePath("/admin/stores");
+  revalidatePath("/radmin/stores");
+  revalidatePath("/stores");
+  revalidatePath("/products");
+
+  if (failedUsers.length > 0) {
+    return {
+      ok: false,
+      message: `${deletedCount} hesab silindi, ${failedUsers.length} hesab silinmədi: ${failedUsers
+        .slice(0, 3)
+        .join(", ")}${failedUsers.length > 3 ? "..." : ""}`,
+    };
+  }
+
+  return {
+    ok: true,
+    message:
+      scope === "sellers"
+        ? `${deletedCount} satıcı silindi.`
+        : `${deletedCount} istifadəçi silindi.`,
+  };
 }
 
 export async function updateUserPasswordByAdminAction(
