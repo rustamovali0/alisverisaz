@@ -137,10 +137,19 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       className={cn(
         "mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
         isAdminMode &&
-          "border-emerald-500/25 bg-black/72 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_input]:border-emerald-500/25 [&_input]:bg-black/45 [&_input]:font-mono [&_input]:text-emerald-100 [&_input]:placeholder:text-emerald-400/50 [&_input]:focus-visible:border-emerald-400 [&_input]:focus-visible:ring-emerald-400/25",
+          "border-emerald-400/35 bg-[#06100d]/95 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_h1]:text-white [&_input]:border-emerald-300/45 [&_input]:bg-emerald-50 [&_input]:font-mono [&_input]:text-slate-950 [&_input]:placeholder:text-slate-500 [&_input]:focus-visible:border-emerald-300 [&_input]:focus-visible:ring-emerald-300/35 [&_p]:text-emerald-100",
       )}
       topStart={
-        <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "h-10 px-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white",
+            isAdminMode &&
+              "text-emerald-100 hover:bg-emerald-400/10 hover:text-white dark:text-emerald-100 dark:hover:text-white",
+          )}
+        >
           <Link href="/">
             <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
             Ana səhifə
@@ -149,7 +158,12 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       }
       topEnd={
         mode === "admin" ? (
-          <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="h-10 px-2 text-sm text-emerald-100 hover:bg-emerald-400/10 hover:text-white dark:text-emerald-100 dark:hover:text-white"
+          >
             <Link href="/login">Sayt girişi</Link>
           </Button>
         ) : (
@@ -190,7 +204,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           }}
           hint={undefined}
           error={fieldErrors.identifier}
-          className={isAdminMode ? "gap-1 text-[13px]" : undefined}
+          className={isAdminMode ? "gap-1 text-[13px] text-emerald-100" : undefined}
           inputClassName={isAdminMode ? "h-10 rounded-lg px-3" : undefined}
           required
         />
@@ -205,22 +219,30 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             setFieldErrors((current) => ({ ...current, password: undefined }));
           }}
           error={fieldErrors.password}
-          className={isAdminMode ? "gap-1 text-[13px]" : undefined}
+          className={isAdminMode ? "gap-1 text-[13px] text-emerald-100" : undefined}
           inputClassName={isAdminMode ? "h-10 rounded-lg px-3 pr-10" : undefined}
           toggleClassName={
             isAdminMode
-              ? "right-1.5 size-8 text-emerald-200 hover:text-emerald-100 [&_svg]:size-5"
+              ? "right-1.5 size-8 text-emerald-700 hover:text-emerald-900 [&_svg]:size-5"
               : undefined
           }
           required
         />
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-          <label className="flex items-center gap-2 font-medium text-foreground">
+          <label
+            className={cn(
+              "flex items-center gap-2 font-medium text-foreground",
+              isAdminMode && "text-emerald-100",
+            )}
+          >
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(event) => setRememberMe(event.target.checked)}
-              className="size-4 rounded border-input"
+              className={cn(
+                "size-4 rounded border-input",
+                isAdminMode && "accent-emerald-400",
+              )}
             />
             Məni xatırla
           </label>

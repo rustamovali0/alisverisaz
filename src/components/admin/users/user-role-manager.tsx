@@ -46,6 +46,14 @@ function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+function getActionMessage(message: string) {
+  const text = message.trim();
+
+  return text && text !== "{}"
+    ? text
+    : "Əməliyyat tamamlanmadı. Zəhmət olmasa bir az sonra yenidən yoxlayın.";
+}
+
 export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -101,7 +109,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         const result = await work();
 
         if (!result.ok) {
-          void appAlert.error(result.message, "Əməliyyat alınmadı");
+          void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
           return;
         }
 
@@ -177,7 +185,7 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
           const result = await work();
 
           if (!result.ok) {
-            void appAlert.error(result.message, "Əməliyyat alınmadı");
+            void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
             return;
           }
 

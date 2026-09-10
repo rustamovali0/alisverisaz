@@ -1469,6 +1469,171 @@ function uniqueStrings(values: Array<string | null | undefined>) {
   );
 }
 
+function readErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message.trim() && error.message.trim() !== "{}") {
+    return error.message.trim();
+  }
+
+  if (typeof error === "string" && error.trim() && error.trim() !== "{}") {
+    return error.trim();
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+      status?: unknown;
+    };
+
+    for (const value of [
+      record.message,
+      record.details,
+      record.hint,
+      record.code,
+      record.status,
+    ]) {
+      const text =
+        typeof value === "number" ? String(value) : typeof value === "string" ? value.trim() : "";
+
+      if (text && text !== "{}") {
+        return text;
+      }
+    }
+  }
+
+  return fallback;
+}
+
+function isMissingRelationError(error: unknown) {
+  const message = readErrorMessage(error, "");
+
+  return (
+    /relation .* does not exist|column .* does not exist|could not find the table|could not find .* in the schema cache/i.test(
+      message,
+    ) ||
+    message === "42P01" ||
+    message === "42703" ||
+    message === "PGRST204" ||
+    message === "PGRST205"
+  );
+}
+
+async function deleteRowsByColumn(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  table: string;
+  column: string;
+  value: string;
+  optional?: boolean;
+}) {
+  const { error } = await (input.supabaseAdmin as any)
+    .from(input.table)
+    .delete()
+    .eq(input.column, input.value);
+
+  if (error) {
+    if (input.optional && isMissingRelationError(error)) {
+      return;
+    }
+
+    throw new Error(
+      readErrorMessage(
+        error,
+        `${input.table} məlumatları silinmədi.`,
+      ),
+    );
+  }
+}
+
+async function cleanupDirectUserReferences(input: {
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
+  userId: string;
+}) {
+  const { supabaseAdmin, userId } = input;
+
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "customer_addresses",
+    column: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "notifications",
+    column: "user_id",
+    value: userId,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "ai_generations",
+    column: "user_id",
+    value: userId,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "favorites",
+    column: "user_id",
+    value: userId,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "reviews",
+    column: "user_id",
+    value: userId,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "seller_promo_codes",
+    column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "product_views",
+    column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "product_views",
+    column: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "store_views",
+    column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "store_views",
+    column: "user_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "product_statistics",
+    column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+  await deleteRowsByColumn({
+    supabaseAdmin,
+    table: "store_statistics",
+    column: "seller_id",
+    value: userId,
+    optional: true,
+  });
+}
+
 async function cleanupUserMarketplaceData(input: {
   supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>;
   userId: string;
@@ -1480,7 +1645,7 @@ async function cleanupUserMarketplaceData(input: {
     .eq("owner_id", userId);
 
   if (storesError) {
-    throw new Error(storesError.message);
+    throw new Error(readErrorMessage(storesError, "Mağaza məlumatları oxunmadı."));
   }
 
   const storeRows = (stores ?? []) as Array<{
@@ -1502,7 +1667,7 @@ async function cleanupUserMarketplaceData(input: {
     .eq("owner_id", userId);
 
   if (ownedProductsError) {
-    throw new Error(ownedProductsError.message);
+    throw new Error(readErrorMessage(ownedProductsError, "Məhsullar oxunmadı."));
   }
 
   if (storeIds.length > 0) {
@@ -1514,7 +1679,7 @@ async function cleanupUserMarketplaceData(input: {
       .in("store_id", storeIds);
 
     if (storeProductsError) {
-      throw new Error(storeProductsError.message);
+      throw new Error(readErrorMessage(storeProductsError, "Mağaza məhsulları oxunmadı."));
     }
 
     storeProductIds = (storeProducts ?? []) as Array<{ id: string }>;
@@ -1536,7 +1701,7 @@ async function cleanupUserMarketplaceData(input: {
         .in("product_id", productIdChunk);
 
       if (imagesError) {
-        throw new Error(imagesError.message);
+        throw new Error(readErrorMessage(imagesError, "Məhsul şəkilləri oxunmadı."));
       }
 
       mediaUrls.push(
@@ -1555,7 +1720,7 @@ async function cleanupUserMarketplaceData(input: {
     .eq("owner_id", userId);
 
   if (deleteOwnedProductsError) {
-    throw new Error(deleteOwnedProductsError.message);
+    throw new Error(readErrorMessage(deleteOwnedProductsError, "Məhsullar silinmədi."));
   }
 
   if (storeIds.length > 0) {
@@ -1565,7 +1730,7 @@ async function cleanupUserMarketplaceData(input: {
       .eq("owner_id", userId);
 
     if (deleteStoresError) {
-      throw new Error(deleteStoresError.message);
+      throw new Error(readErrorMessage(deleteStoresError, "Mağaza silinmədi."));
     }
   }
 
@@ -1762,10 +1927,10 @@ export async function deleteUserAction(
   let cleanup: Awaited<ReturnType<typeof cleanupUserMarketplaceData>>;
 
   try {
+    await cleanupDirectUserReferences({ supabaseAdmin, userId });
     cleanup = await cleanupUserMarketplaceData({ supabaseAdmin, userId });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "İstifadəçi dataları təmizlənmədi.";
+    const message = readErrorMessage(error, "İstifadəçi dataları təmizlənmədi.");
 
     void recordAdminAudit({
       action: "ADMIN_USER_DELETE",
@@ -1779,7 +1944,8 @@ export async function deleteUserAction(
     return { ok: false, message };
   }
 
-  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  const deleteAuthUser = () => supabaseAdmin.auth.admin.deleteUser(userId);
+  let { error } = await deleteAuthUser();
 
   if (error) {
     if (isMissingAuthUserError(error)) {
@@ -1789,29 +1955,59 @@ export async function deleteUserAction(
         .eq("id", userId);
 
       if (profileDeleteError) {
+        const message = readErrorMessage(profileDeleteError, "Profil silinmədi.");
+
         void recordAdminAudit({
           action: "ADMIN_USER_DELETE",
           adminId: current.user.id,
           entityType: "user",
           entityId: userId,
           success: false,
-          metadata: { reason: profileDeleteError.message },
+          metadata: { reason: message },
         });
 
-        return { ok: false, message: profileDeleteError.message };
+        return { ok: false, message };
       }
     } else {
+      const firstAuthMessage = readErrorMessage(error, "Auth istifadəçisi silinmədi.");
+      const { error: profileDeleteError } = await (supabaseAdmin as any)
+        .from("profiles")
+        .delete()
+        .eq("id", userId);
+
+      if (!profileDeleteError) {
+        const retry = await deleteAuthUser();
+        error = retry.error;
+      } else {
+        const message = readErrorMessage(profileDeleteError, firstAuthMessage);
+
+        void recordAdminAudit({
+          action: "ADMIN_USER_DELETE",
+          adminId: current.user.id,
+          entityType: "user",
+          entityId: userId,
+          success: false,
+          metadata: { reason: message },
+        });
+
+        return { ok: false, message };
+      }
+    }
+  }
+
+  if (error && !isMissingAuthUserError(error)) {
+    const message = readErrorMessage(error, "Auth istifadəçisi silinmədi.");
+
       void recordAdminAudit({
         action: "ADMIN_USER_DELETE",
         adminId: current.user.id,
         entityType: "user",
         entityId: userId,
         success: false,
-        metadata: { reason: error.message },
+        metadata: { reason: message },
       });
 
-      return { ok: false, message: error.message };
-    }
+    return { ok: false, message };
   }
 
   void recordAdminAudit({
