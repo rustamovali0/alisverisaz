@@ -75,6 +75,36 @@ type ParsedCommand = {
   args: string;
 };
 
+type TelegramProductInput = {
+  storeRef: string;
+  name: string;
+  priceAmount: number;
+  stockQuantity: number;
+  categoryRef: string | null;
+  description: string | null;
+  imageUrl: string | null;
+};
+
+type ProductWizardStep =
+  | "store"
+  | "name"
+  | "price"
+  | "stock"
+  | "category"
+  | "description"
+  | "image"
+  | "confirm";
+
+type ProductWizardValues = Partial<TelegramProductInput>;
+
+type ProductWizardAction = {
+  id: string;
+  metadata: {
+    step?: ProductWizardStep;
+    values?: ProductWizardValues;
+  } | null;
+};
+
 type CommandConfig = {
   description: string;
   risk: "read" | "write" | "danger";
@@ -677,6 +707,203 @@ function parseAddProductArgs(args: string) {
   };
 }
 
+const PRODUCT_WIZARD_STEPS: Exclude<ProductWizardStep, "confirm">[] = [
+  "store",
+  "name",
+  "price",
+  "stock",
+  "category",
+  "description",
+  "image",
+];
+
+const PRODUCT_WIZARD_FIELD_BY_STEP: Record<
+  Exclude<ProductWizardStep, "confirm">,
+  keyof ProductWizardValues
+> = {
+  store: "storeRef",
+  name: "name",
+  price: "priceAmount",
+  stock: "stockQuantity",
+  category: "categoryRef",
+  description: "description",
+  image: "imageUrl",
+};
+
+function getNextProductWizardStep(step: ProductWizardStep): ProductWizardStep {
+  if (step === "confirm") {
+    return "confirm";
+  }
+
+  const index = PRODUCT_WIZARD_STEPS.indexOf(step);
+  const next = PRODUCT_WIZARD_STEPS[index + 1];
+  return next ?? "confirm";
+}
+
+function getPreviousProductWizardStep(step: ProductWizardStep): ProductWizardStep {
+  if (step === "confirm") {
+    return "image";
+  }
+
+  const index = PRODUCT_WIZARD_STEPS.indexOf(step);
+  return PRODUCT_WIZARD_STEPS[Math.max(index - 1, 0)] ?? "store";
+}
+
+function pruneProductWizardValues(values: ProductWizardValues, fromStep: ProductWizardStep) {
+  if (fromStep === "confirm") {
+    return values;
+  }
+
+  const nextValues = { ...values };
+  const index = PRODUCT_WIZARD_STEPS.indexOf(fromStep);
+
+  for (const step of PRODUCT_WIZARD_STEPS.slice(Math.max(index, 0))) {
+    delete nextValues[PRODUCT_WIZARD_FIELD_BY_STEP[step]];
+  }
+
+  return nextValues;
+}
+
+function getProductWizardQuestion(step: ProductWizardStep, values: ProductWizardValues = {}) {
+  switch (step) {
+    case "store":
+      return [
+        "1/7 <b>Hansı mağazaya əlavə edək?</b>",
+        "Mağaza slug, adı və ya ID yazın.",
+        "Məsələn: <code>test-magaza</code>",
+        "",
+        "Mağazaları görmək üçün: /sales",
+      ].join("\n");
+    case "name":
+      return "2/7 <b>Məhsulun adı nədir?</b>\nMəsələn: <code>Telefon qabı</code>";
+    case "price":
+      return "3/7 <b>Qiyməti nə qədərdir?</b>\nMəsələn: <code>12.50</code>";
+    case "stock":
+      return "4/7 <b>Stok neçə ədəddir?</b>\nMəsələn: <code>20</code>";
+    case "category":
+      return [
+        "5/7 <b>Kateqoriya hansıdır?</b>",
+        "Kateqoriya adı, slug və ya ID yazın.",
+        "Məsələn: <code>elektronika</code>",
+        "Yoxdursa: <code>-</code>",
+      ].join("\n");
+    case "description":
+      return "6/7 <b>Məhsul təsviri nədir?</b>\nYoxdursa: <code>-</code>";
+    case "image":
+      return "7/7 <b>Şəkil linki varmı?</b>\nYalnız http/https URL yazın. Yoxdursa: <code>-</code>";
+    case "confirm":
+      return [
+        "✅ <b>Məhsulu əlavə edim?</b>",
+        "",
+        formatProductWizardSummary(values),
+        "",
+        "Təsdiq üçün <code>bəli</code> yazın.",
+        "Əvvəlki suala qayıtmaq üçün /again yazın.",
+        "Ləğv etmək üçün /cancel yazın.",
+      ].join("\n");
+  }
+}
+
+function formatProductWizardSummary(values: ProductWizardValues) {
+  return [
+    `Mağaza: ${escapeHtml(values.storeRef ?? "-")}`,
+    `Məhsul: ${escapeHtml(values.name ?? "-")}`,
+    `Qiymət: ${escapeHtml(
+      typeof values.priceAmount === "number" ? formatMoney(values.priceAmount, "AZN") : "-",
+    )}`,
+    `Stok: ${escapeHtml(typeof values.stockQuantity === "number" ? values.stockQuantity : "-")}`,
+    `Kateqoriya: ${escapeHtml(values.categoryRef ?? "-")}`,
+    `Təsvir: ${escapeHtml(values.description ?? "-")}`,
+    `Şəkil: ${escapeHtml(values.imageUrl ?? "-")}`,
+  ].join("\n");
+}
+
+function isProductWizardConfirmText(value: string) {
+  return ["bəli", "beli", "hə", "he", "ha", "yes", "ok", "təsdiq", "tesdiq"].includes(
+    value.trim().toLowerCase(),
+  );
+}
+
+function isProductWizardComplete(values: ProductWizardValues): values is TelegramProductInput {
+  return (
+    typeof values.storeRef === "string" &&
+    values.storeRef.trim().length > 0 &&
+    typeof values.name === "string" &&
+    values.name.trim().length > 0 &&
+    typeof values.priceAmount === "number" &&
+    typeof values.stockQuantity === "number" &&
+    Object.prototype.hasOwnProperty.call(values, "categoryRef") &&
+    Object.prototype.hasOwnProperty.call(values, "description") &&
+    Object.prototype.hasOwnProperty.call(values, "imageUrl")
+  );
+}
+
+async function getPendingProductWizardAction(ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  await clearExpiredPendingActions();
+  const { data } = await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .select("id,metadata")
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "product_create")
+    .is("used_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data as ProductWizardAction | null;
+}
+
+async function startProductWizard(
+  ctx: TelegramContext,
+  values: ProductWizardValues = {},
+  step: ProductWizardStep = "store",
+) {
+  const supabase = createSupabaseAdminClient();
+  await clearExpiredPendingActions();
+  await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .update({ used_at: new Date().toISOString() })
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "product_create")
+    .is("used_at", null);
+
+  const { error } = await (supabase as any).from("telegram_pending_admin_actions").insert({
+    telegram_user_id: ctx.userId,
+    telegram_chat_id: ctx.chatId,
+    command: "/mehsulelave",
+    command_args: null,
+    phase: "product_create",
+    message_id: ctx.messageId ?? null,
+    metadata: { step, values },
+    expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+  });
+
+  if (error) {
+    return `Məhsul əlavə etmə sessiyası başlaya bilmədi: ${escapeHtml(error.message)}`;
+  }
+
+  return getProductWizardQuestion(step, values);
+}
+
+async function updateProductWizardAction(
+  id: string,
+  step: ProductWizardStep,
+  values: ProductWizardValues,
+) {
+  const supabase = createSupabaseAdminClient();
+  await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .update({
+      metadata: { step, values },
+      expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    })
+    .eq("id", id);
+}
+
 async function findStoreForTelegramProduct(storeRef: string) {
   const supabase = createSupabaseAdminClient();
   const trimmedRef = storeRef.trim();
@@ -755,15 +982,9 @@ async function findCategoryForTelegramProduct(categoryRef: string | null) {
   return (byName ?? null) as any | null;
 }
 
-async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) {
-  const parsed = parseAddProductArgs(args);
-
-  if (!parsed.ok) {
-    return parsed.message;
-  }
-
+async function createSellerProductFromTelegram(input: TelegramProductInput, ctx: TelegramContext) {
   const supabase = createSupabaseAdminClient();
-  const store = await findStoreForTelegramProduct(parsed.value.storeRef);
+  const store = await findStoreForTelegramProduct(input.storeRef);
 
   if (!store) {
     return [
@@ -772,10 +993,10 @@ async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) 
     ].join("\n");
   }
 
-  const category = await findCategoryForTelegramProduct(parsed.value.categoryRef);
+  const category = await findCategoryForTelegramProduct(input.categoryRef);
 
-  if (parsed.value.categoryRef && !category) {
-    return `Kateqoriya tapılmadı: ${escapeHtml(parsed.value.categoryRef)}`;
+  if (input.categoryRef && !category) {
+    return `Kateqoriya tapılmadı: ${escapeHtml(input.categoryRef)}`;
   }
 
   const { data: product, error } = await (supabase as any)
@@ -784,17 +1005,17 @@ async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) 
       store_id: store.id,
       owner_id: store.owner_id,
       category_id: category?.id ?? null,
-      name: parsed.value.name,
+      name: input.name,
       name_translations: {},
-      slug: createProductSlug(parsed.value.name),
-      description: parsed.value.description,
+      slug: createProductSlug(input.name),
+      description: input.description,
       description_translations: {},
       seo_title_translations: {},
       seo_description_translations: {},
-      price_amount: parsed.value.priceAmount,
+      price_amount: input.priceAmount,
       compare_at_price_amount: null,
       discount_amount: 0,
-      stock_quantity: parsed.value.stockQuantity,
+      stock_quantity: input.stockQuantity,
       status: "active",
       listing_type: "store",
       currency: "AZN",
@@ -813,11 +1034,11 @@ async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) 
 
   let imageMessage = "";
 
-  if (parsed.value.imageUrl) {
+  if (input.imageUrl) {
     const { error: imageError } = await (supabase as any).from("product_images").insert({
       product_id: product.id,
-      url: parsed.value.imageUrl,
-      alt_text: parsed.value.name,
+      url: input.imageUrl,
+      alt_text: input.name,
       sort_order: 0,
       is_primary: true,
     });
@@ -844,23 +1065,217 @@ async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) 
     metadata: {
       storeId: store.id,
       storeSlug: store.slug,
-      name: parsed.value.name,
-      priceAmount: parsed.value.priceAmount,
-      stockQuantity: parsed.value.stockQuantity,
+      name: input.name,
+      priceAmount: input.priceAmount,
+      stockQuantity: input.stockQuantity,
       categoryId: category?.id ?? null,
-      hasImage: Boolean(parsed.value.imageUrl),
+      hasImage: Boolean(input.imageUrl),
     },
   });
 
   return [
     "✅ <b>Məhsul əlavə olundu</b>",
     `Mağaza: ${escapeHtml(store.name)} (${escapeHtml(store.slug)})`,
-    `Məhsul: ${escapeHtml(parsed.value.name)}`,
-    `Qiymət: ${escapeHtml(formatMoney(parsed.value.priceAmount, "AZN"))}`,
-    `Stok: ${escapeHtml(parsed.value.stockQuantity)}`,
+    `Məhsul: ${escapeHtml(input.name)}`,
+    `Qiymət: ${escapeHtml(formatMoney(input.priceAmount, "AZN"))}`,
+    `Stok: ${escapeHtml(input.stockQuantity)}`,
     `Kateqoriya: ${escapeHtml(category?.name ?? "-")}`,
     `ID: <code>${escapeHtml(product.id)}</code>${imageMessage}`,
   ].join("\n");
+}
+
+async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) {
+  const trimmedArgs = args.trim();
+
+  if (!trimmedArgs) {
+    return startProductWizard(ctx);
+  }
+
+  if (!trimmedArgs.includes("|")) {
+    const store = await findStoreForTelegramProduct(trimmedArgs);
+
+    if (!store) {
+      return [
+        "Mağaza tapılmadı.",
+        "Mağaza slug və ya ID-ni /sales komandası ilə yoxlayın.",
+      ].join("\n");
+    }
+
+    return startProductWizard(ctx, { storeRef: store.slug ?? trimmedArgs }, "name");
+  }
+
+  const parsed = parseAddProductArgs(trimmedArgs);
+
+  if (!parsed.ok) {
+    return parsed.message;
+  }
+
+  return createSellerProductFromTelegram(parsed.value, ctx);
+}
+
+async function handleProductWizardMessage(
+  message: TelegramMessage,
+  ctx: TelegramContext,
+  wizard: ProductWizardAction,
+) {
+  const text = typeof message.text === "string" ? message.text.trim() : "";
+  const metadata = wizard.metadata ?? {};
+  const step = metadata.step ?? "store";
+  const values = metadata.values ?? {};
+
+  if (ctx.messageId) {
+    void deleteTelegramMessage({ chatId: ctx.chatId, messageId: ctx.messageId });
+  }
+
+  if (text.toLowerCase() === "/again") {
+    const previousStep = getPreviousProductWizardStep(step);
+    const previousValues = pruneProductWizardValues(values, previousStep);
+
+    await updateProductWizardAction(wizard.id, previousStep, previousValues);
+    await sendTelegramMessage({
+      chatId: ctx.chatId,
+      text: getProductWizardQuestion(previousStep, previousValues),
+    });
+    return;
+  }
+
+  if (step === "confirm") {
+    if (!isProductWizardConfirmText(text)) {
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: [
+          "Təsdiq üçün <code>bəli</code> yazın.",
+          "Əvvəlki suala qayıtmaq üçün /again yazın.",
+          "Ləğv etmək üçün /cancel yazın.",
+        ].join("\n"),
+      });
+      return;
+    }
+
+    if (!isProductWizardComplete(values)) {
+      await updateProductWizardAction(wizard.id, "store", {});
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: [
+          "Məlumatlar tam deyil, yenidən başlayaq.",
+          "",
+          getProductWizardQuestion("store"),
+        ].join("\n"),
+      });
+      return;
+    }
+
+    await markPendingUsed(wizard.id);
+    const result = await createSellerProductFromTelegram(values, ctx);
+    await sendTelegramMessage({ chatId: ctx.chatId, text: result });
+    return;
+  }
+
+  const nextValues = { ...values };
+
+  switch (step) {
+    case "store": {
+      const store = await findStoreForTelegramProduct(text);
+
+      if (!store) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: [
+            "Mağaza tapılmadı.",
+            "Slug, ad və ya ID-ni yenidən yazın.",
+            "",
+            getProductWizardQuestion("store"),
+          ].join("\n"),
+        });
+        return;
+      }
+
+      nextValues.storeRef = store.slug ?? text;
+      break;
+    }
+    case "name":
+      if (!text) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: "Məhsul adı boş ola bilməz.\n\n" + getProductWizardQuestion("name"),
+        });
+        return;
+      }
+
+      nextValues.name = text;
+      break;
+    case "price": {
+      const priceAmount = parsePositivePrice(text);
+
+      if (priceAmount === null) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: "Qiymət düzgün deyil.\n\n" + getProductWizardQuestion("price"),
+        });
+        return;
+      }
+
+      nextValues.priceAmount = priceAmount;
+      break;
+    }
+    case "stock": {
+      const stockQuantity = parseStockQuantity(text);
+
+      if (stockQuantity === null) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: "Stok düzgün deyil.\n\n" + getProductWizardQuestion("stock"),
+        });
+        return;
+      }
+
+      nextValues.stockQuantity = stockQuantity;
+      break;
+    }
+    case "category": {
+      const categoryRef = normalizeOptionalField(text);
+      const category = await findCategoryForTelegramProduct(categoryRef);
+
+      if (categoryRef && !category) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: [
+            `Kateqoriya tapılmadı: ${escapeHtml(categoryRef)}`,
+            "Yenidən yazın və ya boş saxlamaq üçün <code>-</code> yazın.",
+          ].join("\n"),
+        });
+        return;
+      }
+
+      nextValues.categoryRef = category?.slug ?? categoryRef;
+      break;
+    }
+    case "description":
+      nextValues.description = normalizeOptionalField(text);
+      break;
+    case "image": {
+      const rawImageUrl = normalizeOptionalField(text);
+      const imageUrl = normalizeImageUrl(rawImageUrl);
+
+      if (rawImageUrl && !imageUrl) {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: "Şəkil URL-i düzgün deyil. Yalnız http/https link yazın və ya <code>-</code> göndərin.",
+        });
+        return;
+      }
+
+      nextValues.imageUrl = imageUrl;
+      break;
+    }
+  }
+
+  const nextStep = getNextProductWizardStep(step);
+  await updateProductWizardAction(wizard.id, nextStep, nextValues);
+  await sendTelegramMessage({
+    chatId: ctx.chatId,
+    text: getProductWizardQuestion(nextStep, nextValues),
+  });
 }
 
 async function listOrders(args: string) {
@@ -1383,6 +1798,32 @@ async function handleMessage(update: TelegramUpdate) {
     }
 
     await handleUnlockCodeMessage(message, ctx);
+    return;
+  }
+
+  const productWizard = await getPendingProductWizardAction(ctx);
+
+  if (productWizard) {
+    const currentStep = productWizard.metadata?.step ?? "store";
+    const maybeCommand = parseCommand(message.text);
+
+    if (maybeCommand) {
+      if (maybeCommand.command === "/sales" && currentStep === "store") {
+        await sendTelegramMessage({
+          chatId: ctx.chatId,
+          text: await listSellers(maybeCommand.args),
+        });
+        return;
+      }
+
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: "Əvvəl məhsul əlavə etmə prosesini tamamlayın. Əvvəlki suala qayıtmaq üçün /again, ləğv etmək üçün /cancel yazın.",
+      });
+      return;
+    }
+
+    await handleProductWizardMessage(message, ctx, productWizard);
     return;
   }
 
