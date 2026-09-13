@@ -14,12 +14,15 @@ import {
   setSystemFlag,
   type SystemFlagKey,
 } from "@/lib/platform/system-settings";
+import { uploadImageToR2 } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   answerTelegramCallback,
   deleteTelegramMessage,
+  downloadTelegramFile,
   editTelegramMessage,
   escapeHtml,
+  getTelegramFile,
   sendTelegramMessage,
   setTelegramCommandMenu,
 } from "@/lib/telegram/api";
@@ -43,9 +46,26 @@ type TelegramUser = {
   last_name?: string;
 };
 
+type TelegramPhotoSize = {
+  file_id?: string;
+  file_unique_id?: string;
+  width?: number;
+  height?: number;
+  file_size?: number;
+};
+
+type TelegramDocument = {
+  file_id?: string;
+  file_name?: string;
+  mime_type?: string;
+  file_size?: number;
+};
+
 type TelegramMessage = {
   message_id?: number;
   text?: string;
+  photo?: TelegramPhotoSize[];
+  document?: TelegramDocument;
   chat?: TelegramChat;
   from?: TelegramUser;
 };
@@ -83,6 +103,7 @@ type TelegramProductInput = {
   categoryRef: string | null;
   description: string | null;
   imageUrl: string | null;
+  telegramPhotoFileId: string | null;
 };
 
 type ProductWizardStep =
@@ -576,6 +597,7 @@ function formatDelivery(value: unknown) {
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_TELEGRAM_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
 
 function normalizeSlug(value: string) {
   return value
@@ -635,6 +657,60 @@ function normalizeImageUrl(value: string | null) {
   } catch {
     return null;
   }
+}
+
+function getTelegramImageFileId(message: TelegramMessage) {
+  const photo = (message.photo ?? [])
+    .filter((item): item is TelegramPhotoSize & { file_id: string } => Boolean(item.file_id))
+    .sort((a, b) => {
+      const sizeA = a.file_size ?? (a.width ?? 0) * (a.height ?? 0);
+      const sizeB = b.file_size ?? (b.width ?? 0) * (b.height ?? 0);
+      return sizeB - sizeA;
+    })[0];
+
+  if (photo?.file_id) {
+    return photo.file_id;
+  }
+
+  const document = message.document;
+
+  if (document?.file_id && document.mime_type?.toLowerCase().startsWith("image/")) {
+    return document.file_id;
+  }
+
+  return null;
+}
+
+function fileNameFromTelegramPath(path: string) {
+  return path.split("/").pop()?.trim() || "telegram-photo.jpg";
+}
+
+async function uploadTelegramProductImageToR2(input: {
+  fileId: string;
+  ownerId: string | null | undefined;
+  productId: string;
+}) {
+  const telegramFile = await getTelegramFile(input.fileId);
+
+  if (!telegramFile.file_path) {
+    throw new Error("Telegram şəkil yolu tapılmadı.");
+  }
+
+  if (typeof telegramFile.file_size === "number" && telegramFile.file_size > MAX_TELEGRAM_PRODUCT_IMAGE_SIZE) {
+    throw new Error("Şəkil maksimum 5MB ola bilər.");
+  }
+
+  const downloaded = await downloadTelegramFile(telegramFile.file_path);
+  const file = new File([downloaded.buffer], fileNameFromTelegramPath(telegramFile.file_path), {
+    type: downloaded.contentType,
+  });
+
+  return uploadImageToR2({
+    file,
+    folder: `products/${input.ownerId ?? "telegram-admin"}/${input.productId}`,
+    maxSizeBytes: MAX_TELEGRAM_PRODUCT_IMAGE_SIZE,
+    allowedMimeTypes: ["image/*"],
+  });
 }
 
 function parseAddProductArgs(args: string) {
@@ -703,6 +779,7 @@ function parseAddProductArgs(args: string) {
       categoryRef,
       description,
       imageUrl,
+      telegramPhotoFileId: null,
     },
   };
 }
@@ -759,6 +836,10 @@ function pruneProductWizardValues(values: ProductWizardValues, fromStep: Product
 
   for (const step of PRODUCT_WIZARD_STEPS.slice(Math.max(index, 0))) {
     delete nextValues[PRODUCT_WIZARD_FIELD_BY_STEP[step]];
+
+    if (step === "image") {
+      delete nextValues.telegramPhotoFileId;
+    }
   }
 
   return nextValues;
@@ -790,7 +871,12 @@ function getProductWizardQuestion(step: ProductWizardStep, values: ProductWizard
     case "description":
       return "6/7 <b>Məhsul təsviri nədir?</b>\nYoxdursa: <code>-</code>";
     case "image":
-      return "7/7 <b>Şəkil linki varmı?</b>\nYalnız http/https URL yazın. Yoxdursa: <code>-</code>";
+      return [
+        "7/7 <b>Şəkil göndərin</b>",
+        "Telegram-a foto göndərin, bot özü R2-yə yükləyəcək.",
+        "İstəsəniz http/https URL də yaza bilərsiniz.",
+        "Şəkil yoxdursa: <code>-</code>",
+      ].join("\n");
     case "confirm":
       return [
         "✅ <b>Məhsulu əlavə edim?</b>",
@@ -805,6 +891,12 @@ function getProductWizardQuestion(step: ProductWizardStep, values: ProductWizard
 }
 
 function formatProductWizardSummary(values: ProductWizardValues) {
+  const imageLabel = values.telegramPhotoFileId
+    ? "Telegram foto"
+    : values.imageUrl
+      ? values.imageUrl
+      : "-";
+
   return [
     `Mağaza: ${escapeHtml(values.storeRef ?? "-")}`,
     `Məhsul: ${escapeHtml(values.name ?? "-")}`,
@@ -814,7 +906,7 @@ function formatProductWizardSummary(values: ProductWizardValues) {
     `Stok: ${escapeHtml(typeof values.stockQuantity === "number" ? values.stockQuantity : "-")}`,
     `Kateqoriya: ${escapeHtml(values.categoryRef ?? "-")}`,
     `Təsvir: ${escapeHtml(values.description ?? "-")}`,
-    `Şəkil: ${escapeHtml(values.imageUrl ?? "-")}`,
+    `Şəkil: ${escapeHtml(imageLabel)}`,
   ].join("\n");
 }
 
@@ -834,7 +926,8 @@ function isProductWizardComplete(values: ProductWizardValues): values is Telegra
     typeof values.stockQuantity === "number" &&
     Object.prototype.hasOwnProperty.call(values, "categoryRef") &&
     Object.prototype.hasOwnProperty.call(values, "description") &&
-    Object.prototype.hasOwnProperty.call(values, "imageUrl")
+    Object.prototype.hasOwnProperty.call(values, "imageUrl") &&
+    Object.prototype.hasOwnProperty.call(values, "telegramPhotoFileId")
   );
 }
 
@@ -1033,19 +1126,39 @@ async function createSellerProductFromTelegram(input: TelegramProductInput, ctx:
   }
 
   let imageMessage = "";
+  let imageUrl = input.imageUrl;
 
-  if (input.imageUrl) {
+  if (input.telegramPhotoFileId) {
+    try {
+      const uploaded = await uploadTelegramProductImageToR2({
+        fileId: input.telegramPhotoFileId,
+        ownerId: store.owner_id,
+        productId: product.id,
+      });
+
+      imageUrl = uploaded.url;
+      imageMessage = "\nTelegram fotosu R2-yə yükləndi.";
+    } catch (error) {
+      imageMessage = `\nTelegram fotosu yüklənmədi: ${escapeHtml(
+        error instanceof Error ? error.message : "Naməlum xəta",
+      )}`;
+    }
+  }
+
+  if (imageUrl) {
     const { error: imageError } = await (supabase as any).from("product_images").insert({
       product_id: product.id,
-      url: input.imageUrl,
+      url: imageUrl,
       alt_text: input.name,
       sort_order: 0,
       is_primary: true,
     });
 
-    imageMessage = imageError
-      ? `\nŞəkil əlavə olunmadı: ${escapeHtml(imageError.message)}`
-      : "\nŞəkil əlavə olundu.";
+    if (imageError) {
+      imageMessage = `\nŞəkil əlavə olunmadı: ${escapeHtml(imageError.message)}`;
+    } else if (!imageMessage) {
+      imageMessage = "\nŞəkil əlavə olundu.";
+    }
   }
 
   invalidateProductPublicData({
@@ -1069,7 +1182,8 @@ async function createSellerProductFromTelegram(input: TelegramProductInput, ctx:
       priceAmount: input.priceAmount,
       stockQuantity: input.stockQuantity,
       categoryId: category?.id ?? null,
-      hasImage: Boolean(input.imageUrl),
+      hasImage: Boolean(imageUrl),
+      imageSource: input.telegramPhotoFileId ? "telegram" : input.imageUrl ? "url" : null,
     },
   });
 
@@ -1254,18 +1368,27 @@ async function handleProductWizardMessage(
       nextValues.description = normalizeOptionalField(text);
       break;
     case "image": {
+      const telegramPhotoFileId = getTelegramImageFileId(message);
+
+      if (telegramPhotoFileId) {
+        nextValues.imageUrl = null;
+        nextValues.telegramPhotoFileId = telegramPhotoFileId;
+        break;
+      }
+
       const rawImageUrl = normalizeOptionalField(text);
       const imageUrl = normalizeImageUrl(rawImageUrl);
 
       if (rawImageUrl && !imageUrl) {
         await sendTelegramMessage({
           chatId: ctx.chatId,
-          text: "Şəkil URL-i düzgün deyil. Yalnız http/https link yazın və ya <code>-</code> göndərin.",
+          text: "Foto göndərin, http/https link yazın və ya <code>-</code> göndərin.",
         });
         return;
       }
 
       nextValues.imageUrl = imageUrl;
+      nextValues.telegramPhotoFileId = null;
       break;
     }
   }
@@ -1773,13 +1896,15 @@ async function handleMessage(update: TelegramUpdate) {
   const message = update.message;
   const ctx = getMessageContext(message);
 
-  if (!ctx || typeof message?.text !== "string") {
+  if (!ctx || !message) {
     return;
   }
 
   await configureCommandMenu();
 
-  if (message.text.trim() === "/cancel") {
+  const messageText = typeof message.text === "string" ? message.text.trim() : "";
+
+  if (messageText === "/cancel") {
     await cancelPendingActions(ctx);
     return;
   }
@@ -1787,12 +1912,20 @@ async function handleMessage(update: TelegramUpdate) {
   const unlockPending = await getPendingUnlockAction(ctx);
 
   if (unlockPending) {
-    const maybeCommand = parseCommand(message.text);
+    const maybeCommand = messageText ? parseCommand(messageText) : null;
 
     if (maybeCommand) {
       await sendTelegramMessage({
         chatId: ctx.chatId,
         text: "🔓 Əvvəl bərpa kodunu daxil edin və ya /cancel yazın.",
+      });
+      return;
+    }
+
+    if (!messageText) {
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: "🔓 Bərpa kodunu mətn kimi yazın və ya /cancel yazın.",
       });
       return;
     }
@@ -1805,7 +1938,7 @@ async function handleMessage(update: TelegramUpdate) {
 
   if (productWizard) {
     const currentStep = productWizard.metadata?.step ?? "store";
-    const maybeCommand = parseCommand(message.text);
+    const maybeCommand = messageText ? parseCommand(messageText) : null;
 
     if (maybeCommand) {
       if (maybeCommand.command === "/sales" && currentStep === "store") {
@@ -1830,7 +1963,7 @@ async function handleMessage(update: TelegramUpdate) {
   const pending = await getPendingPasswordAction(ctx);
 
   if (pending) {
-    const maybeCommand = parseCommand(message.text);
+    const maybeCommand = messageText ? parseCommand(messageText) : null;
 
     if (maybeCommand) {
       await sendTelegramMessage({
@@ -1840,11 +1973,23 @@ async function handleMessage(update: TelegramUpdate) {
       return;
     }
 
+    if (!messageText) {
+      await sendTelegramMessage({
+        chatId: ctx.chatId,
+        text: "🔐 Admin şifrəsini mətn kimi yazın və ya /cancel yazın.",
+      });
+      return;
+    }
+
     await handlePasswordMessage(message, ctx);
     return;
   }
 
-  const command = parseCommand(message.text);
+  if (!messageText) {
+    return;
+  }
+
+  const command = parseCommand(messageText);
 
   if (!command) {
     return;

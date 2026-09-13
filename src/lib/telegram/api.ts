@@ -43,6 +43,40 @@ async function postTelegram(method: string, body: Record<string, unknown>) {
   }
 }
 
+async function requestTelegram<T>(method: string, body: Record<string, unknown>) {
+  const url = getTelegramUrl(method);
+
+  if (!url) {
+    throw new Error("Telegram bot token ayarı tamamlanmayıb.");
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; result?: T; description?: string }
+      | null;
+
+    if (!response.ok || !payload?.ok || !payload.result) {
+      throw new Error(payload?.description ?? "Telegram sorğusu alınmadı.");
+    }
+
+    return payload.result;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function escapeHtml(value: unknown) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -117,4 +151,38 @@ export async function setTelegramCommandMenu(commands: Array<{
       chat_id: serverEnv.telegramAdminChatId,
     },
   });
+}
+
+export async function getTelegramFile(fileId: string) {
+  return requestTelegram<{
+    file_id: string;
+    file_unique_id: string;
+    file_size?: number;
+    file_path?: string;
+  }>("getFile", {
+    file_id: fileId,
+  });
+}
+
+export async function downloadTelegramFile(filePath: string) {
+  const token = serverEnv.telegramBotToken;
+
+  if (!token) {
+    throw new Error("Telegram bot token ayarı tamamlanmayıb.");
+  }
+
+  const encodedPath = filePath.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(`https://api.telegram.org/file/bot${token}/${encodedPath}`);
+
+  if (!response.ok) {
+    throw new Error("Telegram şəkli endirilə bilmədi.");
+  }
+
+  const contentType = response.headers.get("content-type") || "application/octet-stream";
+  const arrayBuffer = await response.arrayBuffer();
+
+  return {
+    buffer: Buffer.from(arrayBuffer),
+    contentType,
+  };
 }
