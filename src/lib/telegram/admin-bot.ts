@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
+import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import {
   getAdminSessionStatus,
   revokeAdminSessions,
@@ -95,6 +96,8 @@ const COMMANDS: Record<string, CommandConfig> = {
   "/startsales": { description: "Seller bildirişlərini aç", risk: "write" },
   "/stopadmin": { description: "Admin bildirişlərini söndür", risk: "write" },
   "/startadmin": { description: "Admin bildirişlərini aç", risk: "write" },
+  "/mehsulelave": { description: "Satıcı mağazasına məhsul əlavə et", risk: "write" },
+  "/addproduct": { description: "Satıcı mağazasına məhsul əlavə et", risk: "write" },
   "/logoutadmin": { description: "Admin sessiyalarını bağla", risk: "danger", confirm: true },
   "/offlineadmin": { description: "Admin paneli deaktiv et", risk: "danger", confirm: true },
   "/onlineadmin": { description: "Admin paneli aktiv et", risk: "danger" },
@@ -541,6 +544,325 @@ function formatDelivery(value: unknown) {
   return "Çatdırılma";
 }
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function normalizeSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ğ/g, "g")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function createProductSlug(value: string) {
+  const slug = normalizeSlug(value);
+  return `${slug || "mehsul"}-${randomBytes(4).toString("hex")}`;
+}
+
+function normalizeOptionalField(value: string | undefined) {
+  const trimmed = value?.trim() ?? "";
+  return trimmed && trimmed !== "-" ? trimmed : null;
+}
+
+function parsePositivePrice(value: string) {
+  const normalized = value.trim().replace(",", ".");
+  const amount = Number(normalized);
+
+  if (!Number.isFinite(amount) || amount < 0) {
+    return null;
+  }
+
+  return Math.round(amount * 100) / 100;
+}
+
+function parseStockQuantity(value: string) {
+  const stock = Number.parseInt(value.trim(), 10);
+
+  if (!Number.isInteger(stock) || stock < 0) {
+    return null;
+  }
+
+  return stock;
+}
+
+function normalizeImageUrl(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseAddProductArgs(args: string) {
+  const parts = args.split("|").map((part) => part.trim());
+
+  if (parts.length < 4) {
+    return {
+      ok: false as const,
+      message: [
+        "Format:",
+        "<code>/mehsulelave mağaza | məhsul adı | qiymət | stok | kateqoriya | təsvir | şəkil_url</code>",
+        "",
+        "Nümunə:",
+        "<code>/mehsulelave test-magaza | Telefon qabı | 12.50 | 20 | elektronika | Qara silikon qab | https://example.com/image.jpg</code>",
+        "",
+        "Boş hissə üçün <code>-</code> yazın.",
+      ].join("\n"),
+    };
+  }
+
+  const [storeRefRaw, nameRaw, priceRaw, stockRaw, categoryRefRaw, descriptionRaw, imageUrlRaw] =
+    parts;
+  const storeRef = storeRefRaw?.trim();
+  const name = nameRaw?.trim();
+  const priceAmount = parsePositivePrice(priceRaw ?? "");
+  const stockQuantity = parseStockQuantity(stockRaw ?? "");
+  const categoryRef = normalizeOptionalField(categoryRefRaw);
+  const description = normalizeOptionalField(descriptionRaw);
+  const imageUrl = normalizeImageUrl(normalizeOptionalField(imageUrlRaw));
+
+  if (!storeRef || !name) {
+    return {
+      ok: false as const,
+      message: "Mağaza və məhsul adı boş ola bilməz.",
+    };
+  }
+
+  if (priceAmount === null) {
+    return {
+      ok: false as const,
+      message: "Qiymət düzgün deyil. Məsələn: <code>12.50</code>",
+    };
+  }
+
+  if (stockQuantity === null) {
+    return {
+      ok: false as const,
+      message: "Stok düzgün deyil. Məsələn: <code>20</code>",
+    };
+  }
+
+  if (imageUrlRaw && normalizeOptionalField(imageUrlRaw) && !imageUrl) {
+    return {
+      ok: false as const,
+      message: "Şəkil URL-i düzgün deyil. Yalnız http/https link qəbul olunur.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    value: {
+      storeRef,
+      name,
+      priceAmount,
+      stockQuantity,
+      categoryRef,
+      description,
+      imageUrl,
+    },
+  };
+}
+
+async function findStoreForTelegramProduct(storeRef: string) {
+  const supabase = createSupabaseAdminClient();
+  const trimmedRef = storeRef.trim();
+
+  if (UUID_PATTERN.test(trimmedRef)) {
+    const { data } = await (supabase as any)
+      .from("stores")
+      .select("id,owner_id,name,slug,status")
+      .eq("id", trimmedRef)
+      .maybeSingle();
+
+    if (data) {
+      return data as any;
+    }
+  }
+
+  const slug = normalizeSlug(trimmedRef);
+  const { data: bySlug } = await (supabase as any)
+    .from("stores")
+    .select("id,owner_id,name,slug,status")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (bySlug) {
+    return bySlug as any;
+  }
+
+  const { data: byName } = await (supabase as any)
+    .from("stores")
+    .select("id,owner_id,name,slug,status")
+    .ilike("name", trimmedRef)
+    .limit(1)
+    .maybeSingle();
+
+  return (byName ?? null) as any | null;
+}
+
+async function findCategoryForTelegramProduct(categoryRef: string | null) {
+  if (!categoryRef) {
+    return null;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const trimmedRef = categoryRef.trim();
+
+  if (UUID_PATTERN.test(trimmedRef)) {
+    const { data } = await (supabase as any)
+      .from("categories")
+      .select("id,name,slug")
+      .eq("id", trimmedRef)
+      .maybeSingle();
+
+    if (data) {
+      return data as any;
+    }
+  }
+
+  const slug = normalizeSlug(trimmedRef);
+  const { data: bySlug } = await (supabase as any)
+    .from("categories")
+    .select("id,name,slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (bySlug) {
+    return bySlug as any;
+  }
+
+  const { data: byName } = await (supabase as any)
+    .from("categories")
+    .select("id,name,slug")
+    .ilike("name", trimmedRef)
+    .limit(1)
+    .maybeSingle();
+
+  return (byName ?? null) as any | null;
+}
+
+async function addSellerProductFromTelegram(args: string, ctx: TelegramContext) {
+  const parsed = parseAddProductArgs(args);
+
+  if (!parsed.ok) {
+    return parsed.message;
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const store = await findStoreForTelegramProduct(parsed.value.storeRef);
+
+  if (!store) {
+    return [
+      "Mağaza tapılmadı.",
+      "Mağaza slug və ya ID-ni /sales komandası ilə yoxlayın.",
+    ].join("\n");
+  }
+
+  const category = await findCategoryForTelegramProduct(parsed.value.categoryRef);
+
+  if (parsed.value.categoryRef && !category) {
+    return `Kateqoriya tapılmadı: ${escapeHtml(parsed.value.categoryRef)}`;
+  }
+
+  const { data: product, error } = await (supabase as any)
+    .from("products")
+    .insert({
+      store_id: store.id,
+      owner_id: store.owner_id,
+      category_id: category?.id ?? null,
+      name: parsed.value.name,
+      name_translations: {},
+      slug: createProductSlug(parsed.value.name),
+      description: parsed.value.description,
+      description_translations: {},
+      seo_title_translations: {},
+      seo_description_translations: {},
+      price_amount: parsed.value.priceAmount,
+      compare_at_price_amount: null,
+      discount_amount: 0,
+      stock_quantity: parsed.value.stockQuantity,
+      status: "active",
+      listing_type: "store",
+      currency: "AZN",
+      metadata: {
+        source: "telegram_admin_bot",
+        telegram_admin_user_id: ctx.userId,
+        telegram_chat_id: ctx.chatId,
+      },
+    })
+    .select("id,slug")
+    .single();
+
+  if (error || !product) {
+    return `Məhsul yaradıla bilmədi: ${escapeHtml(error?.message ?? "Naməlum xəta")}`;
+  }
+
+  let imageMessage = "";
+
+  if (parsed.value.imageUrl) {
+    const { error: imageError } = await (supabase as any).from("product_images").insert({
+      product_id: product.id,
+      url: parsed.value.imageUrl,
+      alt_text: parsed.value.name,
+      sort_order: 0,
+      is_primary: true,
+    });
+
+    imageMessage = imageError
+      ? `\nŞəkil əlavə olunmadı: ${escapeHtml(imageError.message)}`
+      : "\nŞəkil əlavə olundu.";
+  }
+
+  invalidateProductPublicData({
+    productId: product.id,
+    storeId: store.id,
+    categoryId: category?.id ?? null,
+    storeSlug: store.slug,
+    homepage: true,
+  });
+
+  await recordAdminAudit({
+    action: "TELEGRAM_PRODUCT_CREATED",
+    telegramUserId: ctx.userId,
+    telegramChatId: ctx.chatId,
+    entityType: "products",
+    entityId: product.id,
+    metadata: {
+      storeId: store.id,
+      storeSlug: store.slug,
+      name: parsed.value.name,
+      priceAmount: parsed.value.priceAmount,
+      stockQuantity: parsed.value.stockQuantity,
+      categoryId: category?.id ?? null,
+      hasImage: Boolean(parsed.value.imageUrl),
+    },
+  });
+
+  return [
+    "✅ <b>Məhsul əlavə olundu</b>",
+    `Mağaza: ${escapeHtml(store.name)} (${escapeHtml(store.slug)})`,
+    `Məhsul: ${escapeHtml(parsed.value.name)}`,
+    `Qiymət: ${escapeHtml(formatMoney(parsed.value.priceAmount, "AZN"))}`,
+    `Stok: ${escapeHtml(parsed.value.stockQuantity)}`,
+    `Kateqoriya: ${escapeHtml(category?.name ?? "-")}`,
+    `ID: <code>${escapeHtml(product.id)}</code>${imageMessage}`,
+  ].join("\n");
+}
+
 async function listOrders(args: string) {
   const supabase = createSupabaseAdminClient();
   const page = parsePage(args);
@@ -755,6 +1077,9 @@ async function executeCommand(command: ParsedCommand, ctx: TelegramContext) {
       return adminStatus();
     case "/systemstatus":
       return systemStatus();
+    case "/mehsulelave":
+    case "/addproduct":
+      return addSellerProductFromTelegram(command.args, ctx);
     case "/stoporder":
       return updateNotificationFlag({
         key: "order_notifications_enabled",
@@ -910,7 +1235,7 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
     void deleteTelegramMessage({ chatId: ctx.chatId, messageId: ctx.messageId });
   }
 
-  const passwordText = typeof message.text === "string" ? message.text : "";
+  const passwordText = typeof message.text === "string" ? message.text.trim() : "";
   const passwordRule = {
     scope: "password" as const,
     telegramUserId: ctx.userId,
@@ -984,7 +1309,7 @@ async function handleUnlockCodeMessage(message: TelegramMessage, ctx: TelegramCo
     void deleteTelegramMessage({ chatId: ctx.chatId, messageId: ctx.messageId });
   }
 
-  const unlockCodeText = typeof message.text === "string" ? message.text : "";
+  const unlockCodeText = typeof message.text === "string" ? message.text.trim() : "";
   const unlockRule = {
     scope: "unlock" as const,
     telegramUserId: ctx.userId,

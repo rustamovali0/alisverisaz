@@ -18,11 +18,28 @@ function scrypt(
   });
 }
 
+function unwrapEnvValue(value: string) {
+  const trimmed = value.trim();
+  const first = trimmed[0];
+  const last = trimmed[trimmed.length - 1];
+
+  if (
+    trimmed.length >= 2 &&
+    ((first === "'" && last === "'") ||
+      (first === '"' && last === '"') ||
+      (first === "`" && last === "`"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+
+  return trimmed;
+}
+
 export async function verifyTelegramAdminPassword(input: {
   password: string;
   hash: string;
 }) {
-  const [algorithm, nRaw, rRaw, pRaw, salt, expectedHex] = input.hash.split("$");
+  const [algorithm, nRaw, rRaw, pRaw, salt, expectedHex] = unwrapEnvValue(input.hash).split("$");
 
   if (algorithm !== "scrypt" || !salt || !expectedHex) {
     return false;
