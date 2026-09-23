@@ -81,7 +81,7 @@ function SellerImageDropzone({
     }
 
     setError("");
-    if (inputRef.current) {
+    if (inputRef.current && typeof DataTransfer !== "undefined") {
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       inputRef.current.files = dataTransfer.files;

@@ -42,6 +42,22 @@ function isMissingTableError(error: unknown) {
   return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
 }
 
+function isMissingVariantStorageError(error: unknown) {
+  const value = error as { code?: string; message?: string } | null | undefined;
+  const message = String(value?.message ?? "").toLowerCase();
+
+  return (
+    isMissingTableError(error) ||
+    value?.code === "42703" ||
+    value?.code === "PGRST204" ||
+    message.includes("product_options") ||
+    message.includes("product_option_values") ||
+    message.includes("combination") ||
+    message.includes("price_override_amount") ||
+    message.includes("is_enabled")
+  );
+}
+
 function revalidateMarketplaceSurfaces(input: {
   productId?: string | null;
   storeId?: string | null;
@@ -570,16 +586,23 @@ async function replaceVariants(input: {
   legacyVariants: ProductVariantInput[];
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
-
-  await (supabaseAdmin as any)
+  const deleteOptionsResult = await (supabaseAdmin as any)
     .from("product_options")
     .delete()
     .eq("product_id", input.productId);
 
-  await (supabaseAdmin as any)
+  if (deleteOptionsResult.error && !isMissingVariantStorageError(deleteOptionsResult.error)) {
+    throw new Error(deleteOptionsResult.error.message);
+  }
+
+  const deleteVariantsResult = await (supabaseAdmin as any)
     .from("product_variants")
     .delete()
     .eq("product_id", input.productId);
+
+  if (deleteVariantsResult.error && !isMissingVariantStorageError(deleteVariantsResult.error)) {
+    throw new Error(deleteVariantsResult.error.message);
+  }
 
   const enabledOptions = getEnabledProductOptions(input.options);
 
@@ -597,6 +620,10 @@ async function replaceVariants(input: {
       .single();
 
     if (optionError || !optionRow) {
+      if (isMissingVariantStorageError(optionError)) {
+        return;
+      }
+
       throw new Error(optionError?.message ?? "Variant seçimi saxlanmadı.");
     }
 
@@ -613,6 +640,10 @@ async function replaceVariants(input: {
         );
 
       if (valuesError) {
+        if (isMissingVariantStorageError(valuesError)) {
+          return;
+        }
+
         throw new Error(valuesError.message);
       }
     }
@@ -636,6 +667,10 @@ async function replaceVariants(input: {
     );
 
     if (error) {
+      if (isMissingVariantStorageError(error)) {
+        return;
+      }
+
       throw new Error(error.message);
     }
 
@@ -661,6 +696,10 @@ async function replaceVariants(input: {
   );
 
   if (error) {
+    if (isMissingVariantStorageError(error)) {
+      return;
+    }
+
     throw new Error(error.message);
   }
 }

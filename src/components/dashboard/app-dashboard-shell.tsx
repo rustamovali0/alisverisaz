@@ -217,14 +217,16 @@ export function AppDashboardShell({
               prefetch
               onClick={handleDashboardLinkClick}
               className={cn(
-                "flex min-h-12 min-w-0 items-center gap-2 rounded-lg border bg-card px-3 text-sm font-bold shadow-sm transition",
+                "flex min-h-16 min-w-0 items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] font-bold leading-tight shadow-sm transition min-[390px]:text-sm",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border text-foreground hover:border-primary/30 hover:bg-primary/5",
               )}
             >
-              <DashboardIconView name={item.icon} className="size-5 shrink-0" />
-              <span className="min-w-0 truncate">{item.titleKey ? t(item.titleKey as any) : item.title}</span>
+              <DashboardIconView name={item.icon} className="size-6 shrink-0" />
+              <span className="min-w-0 overflow-hidden text-wrap break-words">
+                {item.titleKey ? t(item.titleKey as any) : item.title}
+              </span>
             </Link>
           );
         })}
@@ -332,7 +334,7 @@ export function AppDashboardShell({
           </div>
         </header>
         {!mobileRail ? renderMobileCardNavigation() : null}
-        <main className="min-w-0 max-w-full overflow-x-clip px-3 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
+        <main className="min-w-0 max-w-full overflow-x-clip px-3 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
           {children}
         </main>
       </div>

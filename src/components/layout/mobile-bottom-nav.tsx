@@ -34,25 +34,25 @@ const CART_KEY = "alisveris_cart";
 
 const navVariantClass: Record<MobileNavbarVariant, string> = {
   classic:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   floating:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   pill:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   compact:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   outlined:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   soft:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   solid:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none dark:border-slate-800 dark:bg-slate-950",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none dark:border-slate-800 dark:bg-slate-950",
   glass:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   minimal:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   rail:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.45rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
 };
 
 const itemVariantClass: Record<MobileNavbarVariant, string> = {
@@ -407,7 +407,7 @@ export function MobileBottomNav({
                   </span>
                 ) : null}
               </span>
-              <span className="max-w-full truncate leading-none">{item.label}</span>
+              <span className="max-w-full whitespace-normal leading-[1.05]">{item.label}</span>
             </button>
           );
         })}
@@ -437,7 +437,7 @@ export function MobileBottomNav({
           >
             <AccountIcon role={role} />
           </span>
-          <span className="max-w-full truncate leading-none">{accountText}</span>
+          <span className="max-w-full whitespace-normal leading-[1.05]">{accountText}</span>
         </button>
       </div>
     </nav>

@@ -124,12 +124,18 @@ export function MarketplaceHeader({
   const [cartCount, setCartCount] = useState(0);
   const commerceUtilityButtonClass =
     "group inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-8";
+  const mobileUtilityButtonClass = cn(
+    commerceUtilityButtonClass,
+    isSellerDashboard && "size-10 rounded-lg [&_svg]:!size-7",
+  );
   const commerceUtilityIconClass =
     "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
     "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
-  const mobileCommerceIconClass =
-    "!size-8 stroke-[2.15] transition-transform duration-200";
+  const mobileCommerceIconClass = cn(
+    "!size-8 stroke-[2.15] transition-transform duration-200",
+    isSellerDashboard && "!size-7",
+  );
 
   useEffect(() => {
     if (!hasInlinePrimarySearch) {
@@ -219,7 +225,12 @@ export function MarketplaceHeader({
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
         }
       >
-        <div className="container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-wrap items-center gap-2 py-2 sm:min-h-[68px] sm:gap-2 xl:flex-nowrap">
+        <div
+          className={cn(
+            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-wrap items-center gap-2 py-2 sm:min-h-[68px] sm:gap-2 xl:flex-nowrap",
+            isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
+          )}
+        >
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {logoUrl ? (
               <span className="grid size-9 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
@@ -252,7 +263,7 @@ export function MarketplaceHeader({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className={commerceUtilityButtonClass}
+                className={mobileUtilityButtonClass}
                 onClick={() => setIsMobileSearchOpen((value) => !value)}
                 aria-label={isMobileSearchOpen ? "Axtarışı gizlət" : "Axtarışı aç"}
                 aria-expanded={isMobileSearchOpen}
@@ -266,7 +277,7 @@ export function MarketplaceHeader({
             {!isGuest ? (
               <>
                 <NotificationCenter
-                  buttonClassName={commerceUtilityButtonClass}
+                  buttonClassName={mobileUtilityButtonClass}
                   iconClassName={mobileCommerceIconClass}
                 />
                 <Button
@@ -275,7 +286,7 @@ export function MarketplaceHeader({
                   variant="ghost"
                   className={cn(
                     "max-[374px]:hidden",
-                    commerceUtilityButtonClass,
+                    mobileUtilityButtonClass,
                   )}
                   aria-label={nav("favorites")}
                 >
@@ -291,7 +302,7 @@ export function MarketplaceHeader({
                   asChild
                   size="icon"
                   variant="ghost"
-                  className={commerceUtilityButtonClass}
+                  className={mobileUtilityButtonClass}
                   aria-label={common("cart")}
                 >
                   <Link href="/cart" prefetch className="relative grid place-items-center">
@@ -306,7 +317,7 @@ export function MarketplaceHeader({
               </>
             ) : null}
             <ThemeToggle
-              className={commerceUtilityButtonClass}
+              className={mobileUtilityButtonClass}
               iconClassName={mobileCommerceIconClass}
             />
           </div>
