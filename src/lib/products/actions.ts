@@ -965,30 +965,40 @@ export async function createStoreProductAction(
   }
 
   try {
-    await Promise.all([
-      replaceVariants({
-        productId: product.id,
-        options: payload.variantOptions,
-        combinations: payload.variantCombinations,
-        legacyVariants: payload.variants,
-      }),
-      replaceProductLocations({
-        productId: product.id,
-        storeId,
-        formData,
-      }),
-      uploadProductImages({
-        userId: current.user.id,
-        productId: product.id,
-        productName: payload.name,
-        files: imageFiles,
-      }),
-    ]);
+    await replaceVariants({
+      productId: product.id,
+      options: payload.variantOptions,
+      combinations: payload.variantCombinations,
+      legacyVariants: payload.variants,
+    });
+    await replaceProductLocations({
+      productId: product.id,
+      storeId,
+      formData,
+    });
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Şəkil yüklənmədi.",
+      message: error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
     };
+  }
+
+  let imageWarning = "";
+
+  try {
+    await uploadProductImages({
+      userId: current.user.id,
+      productId: product.id,
+      productName: payload.name,
+      files: imageFiles,
+    });
+  } catch (error) {
+    console.error("Product image upload failed after product create", {
+      productId: product.id,
+      storeId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    imageWarning = error instanceof Error ? ` Şəkil yüklənmədi: ${error.message}` : " Şəkil yüklənmədi.";
   }
 
   const storeSlug = stores.find((store) => store.id === storeId)?.slug ?? null;
@@ -1021,8 +1031,8 @@ export async function createStoreProductAction(
   return {
     ok: true,
     message: requiresApproval
-      ? "Məhsul əlavə edildi, qəbul edildikdən sonra dərc olunacaq."
-      : "Məhsul yaradıldı.",
+      ? `Məhsul əlavə edildi, qəbul edildikdən sonra dərc olunacaq.${imageWarning}`
+      : `Məhsul yaradıldı.${imageWarning}`,
   };
 }
 
@@ -1177,6 +1187,16 @@ export async function updateProductAction(
         formData,
       });
     }
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
+    };
+  }
+
+  let imageWarning = "";
+
+  try {
     await uploadProductImages({
       userId: current.user.id,
       productId,
@@ -1184,10 +1204,11 @@ export async function updateProductAction(
       files: getImageFiles(formData),
     });
   } catch (error) {
-    return {
-      ok: false,
-      message: error instanceof Error ? error.message : "Şəkil yüklənmədi.",
-    };
+    console.error("Product image upload failed after product update", {
+      productId,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    imageWarning = error instanceof Error ? ` Şəkil yüklənmədi: ${error.message}` : " Şəkil yüklənmədi.";
   }
 
   revalidatePath("/store/dashboard/products");
@@ -1207,8 +1228,8 @@ export async function updateProductAction(
   return {
     ok: true,
     message: requiresApproval
-      ? "Məhsul yeniləndi, qəbul edildikdən sonra dərc olunacaq."
-      : "Məhsul yeniləndi.",
+      ? `Məhsul yeniləndi, qəbul edildikdən sonra dərc olunacaq.${imageWarning}`
+      : `Məhsul yeniləndi.${imageWarning}`,
   };
 }
 

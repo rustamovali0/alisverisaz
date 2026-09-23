@@ -92,6 +92,16 @@ function accountPath(role: AuthRole | null) {
   return role === "customer" ? "/dashboard" : "/login?next=/dashboard";
 }
 
+function sellerRegisterPath(pathname: string) {
+  const nextPath = pathname === "/login" || pathname === "/register" ? "/" : pathname;
+  const params = new URLSearchParams({
+    next: nextPath,
+    role: "seller",
+  });
+
+  return `/register?${params.toString()}`;
+}
+
 function scrollPageToTop() {
   if (typeof window === "undefined") {
     return;
@@ -252,7 +262,7 @@ export function MobileBottomNav({
           { href: storefrontProductsHref, label: nav("products"), icon: Package },
           ...(isAuthenticated
             ? [{ href: "/favorites", label: nav("favorites"), icon: Heart }]
-            : []),
+            : [{ href: sellerRegisterPath(pathname), label: "Satıcı ol", icon: Store }]),
           { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
         ];
   const totalNavItems = items.length + 1;
