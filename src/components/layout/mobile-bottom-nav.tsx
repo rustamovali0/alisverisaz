@@ -290,11 +290,9 @@ export function MobileBottomNav({
         return;
       }
 
-      router.push(href, { scroll: true });
+      router.push(href, { scroll: !hash });
       if (hash) {
         window.setTimeout(() => scrollToHash(hash), 80);
-      } else {
-        scrollPageToTop();
       }
     },
     [isCurrentRoute, router],

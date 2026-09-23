@@ -19,9 +19,18 @@ export default async function StoreProductsPage() {
     return <FeatureBlocked title="Məhsullar" />;
   }
 
+  let setupError = false;
   const [stores, categories] = await Promise.all([
-    getOwnedStores(current.user.id),
-    getCategoryOptions(),
+    getOwnedStores(current.user.id).catch((error) => {
+      console.error("Seller stores could not be loaded for products page", error);
+      setupError = true;
+      return [];
+    }),
+    getCategoryOptions().catch((error) => {
+      console.error("Product categories could not be loaded for products page", error);
+      setupError = true;
+      return [];
+    }),
   ]);
   const storeIds = stores.map((store) => store.id);
   const [products, locations] = await Promise.all([
@@ -32,10 +41,18 @@ export default async function StoreProductsPage() {
     getLocationsForStores(storeIds).catch(() => []),
   ]);
   const firstStore = stores[0];
-  const limit = firstStore ? await canCreateListing(firstStore.id) : null;
+  const limit = firstStore
+    ? await canCreateListing(firstStore.id).catch((error) => {
+        console.error("Product limit could not be loaded for products page", error);
+        setupError = true;
+        return null;
+      })
+    : null;
   const productLimit = limit?.subscription?.productLimit ?? 100;
   const remainingListings = limit?.subscription?.remainingListings ?? 0;
   const imageLimit = limit?.subscription?.imagesPerProductLimit ?? 5;
+  const isFormDisabled =
+    setupError || categories.length === 0 || !firstStore || !limit?.allowed;
 
   return (
     <div className="space-y-6">
@@ -45,7 +62,9 @@ export default async function StoreProductsPage() {
       >
         <div id="create-product" className="scroll-mt-24" />
         <div className="mb-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          {firstStore
+          {setupError || categories.length === 0
+            ? "Məhsul əlavə etmək üçün lazım olan məlumatlar tam yüklənmədi. Səhifəni yeniləyib yenidən cəhd edin."
+            : firstStore
             ? limit?.allowed
               ? productLimit === null
                 ? "Məhsul limiti limitsizdir."
@@ -58,7 +77,7 @@ export default async function StoreProductsPage() {
           categories={categories}
           stores={stores}
           locations={locations}
-          disabled={!firstStore || !limit?.allowed}
+          disabled={isFormDisabled}
           imageLimit={imageLimit}
         />
       </DashboardPanel>

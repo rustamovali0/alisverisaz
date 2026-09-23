@@ -44,7 +44,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   const next = searchParams.get("next") ?? "";
   const isAdminMode = mode === "admin";
   const registerHref = next
-    ? `/register?${new URLSearchParams({ next, customerOnly: "1" }).toString()}`
+    ? `/register?${new URLSearchParams({ next }).toString()}`
     : "/register";
 
   const visualLabel = useMemo(
