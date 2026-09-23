@@ -685,6 +685,45 @@ function fileNameFromTelegramPath(path: string) {
   return path.split("/").pop()?.trim() || "telegram-photo.jpg";
 }
 
+function mimeTypeFromTelegramPath(path: string, fallback: string) {
+  const extension = fileNameFromTelegramPath(path).split(".").pop()?.trim().toLowerCase();
+
+  if (extension === "jpg" || extension === "jpeg") {
+    return "image/jpeg";
+  }
+
+  if (extension === "png") {
+    return "image/png";
+  }
+
+  if (extension === "webp") {
+    return "image/webp";
+  }
+
+  if (extension === "gif") {
+    return "image/gif";
+  }
+
+  return fallback && fallback !== "application/octet-stream" ? fallback : "image/jpeg";
+}
+
+function telegramBufferToUploadFile(input: {
+  buffer: Buffer;
+  fileName: string;
+  contentType: string;
+}) {
+  return {
+    name: input.fileName,
+    type: input.contentType,
+    size: input.buffer.byteLength,
+    arrayBuffer: async () =>
+      input.buffer.buffer.slice(
+        input.buffer.byteOffset,
+        input.buffer.byteOffset + input.buffer.byteLength,
+      ),
+  } as File;
+}
+
 async function uploadTelegramProductImageToR2(input: {
   fileId: string;
   ownerId: string | null | undefined;
@@ -701,8 +740,16 @@ async function uploadTelegramProductImageToR2(input: {
   }
 
   const downloaded = await downloadTelegramFile(telegramFile.file_path);
-  const file = new File([downloaded.buffer], fileNameFromTelegramPath(telegramFile.file_path), {
-    type: downloaded.contentType,
+  const fileName = fileNameFromTelegramPath(telegramFile.file_path);
+
+  if (downloaded.buffer.byteLength > MAX_TELEGRAM_PRODUCT_IMAGE_SIZE) {
+    throw new Error("Şəkil maksimum 5MB ola bilər.");
+  }
+
+  const file = telegramBufferToUploadFile({
+    buffer: downloaded.buffer,
+    fileName,
+    contentType: mimeTypeFromTelegramPath(telegramFile.file_path, downloaded.contentType),
   });
 
   return uploadImageToR2({
@@ -1139,6 +1186,11 @@ async function createSellerProductFromTelegram(input: TelegramProductInput, ctx:
       imageUrl = uploaded.url;
       imageMessage = "\nTelegram fotosu R2-yə yükləndi.";
     } catch (error) {
+      console.error("Telegram product photo upload failed", {
+        message: error instanceof Error ? error.message : String(error),
+        productId: product.id,
+        ownerId: store.owner_id,
+      });
       imageMessage = `\nTelegram fotosu yüklənmədi: ${escapeHtml(
         error instanceof Error ? error.message : "Naməlum xəta",
       )}`;
