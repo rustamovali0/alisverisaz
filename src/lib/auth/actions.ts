@@ -263,7 +263,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const fullNameInput = readString(formData, "fullName");
   const firstName = readString(formData, "firstName");
   const lastName = readString(formData, "lastName");
-  const fullName = fullNameInput || [firstName, lastName].filter(Boolean).join(" ").trim();
+  const storeNameInput = readString(formData, "storeName");
   const email = readString(formData, "email").toLowerCase();
   const password = readString(formData, "password");
   const confirmPassword = readString(formData, "confirmPassword");
@@ -275,6 +275,11 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   const nextPath = normalizeNextPath(readString(formData, "next"));
   const role: AuthRole = isPublicAuthRole(requestedRole) ? requestedRole : "customer";
   const accountRole: AuthRole = role === "seller" ? "customer" : role;
+  const fullName =
+    role === "seller"
+      ? storeNameInput || fullNameInput
+      : fullNameInput || [firstName, lastName].filter(Boolean).join(" ").trim();
+  const storeName = role === "seller" ? fullName : "";
   const [siteSettings, systemFlags] = await Promise.all([
     getSiteSettings(),
     getSystemFlags(),
@@ -318,7 +323,10 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   if (!fullName || !email || !password || !confirmPassword || !phone) {
     return {
       ok: false,
-      message: "Ad, email, telefon, şifrə və şifrənin təkrarı mütləqdir.",
+      message:
+        role === "seller"
+          ? "Mağaza adı, email, telefon, şifrə və şifrənin təkrarı mütləqdir."
+          : "Ad, email, telefon, şifrə və şifrənin təkrarı mütləqdir.",
     };
   }
 
@@ -360,6 +368,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       phone,
       requested_role: role,
       seller_application_status: role === "seller" ? "pending" : "active",
+      store_name: storeName || undefined,
     },
   });
 
@@ -459,8 +468,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   if (role === "seller") {
     void notifySellerRegistered({
       id: data.user.id,
-      storeName: fullName,
-      sellerName: fullName,
+      storeName,
+      sellerName: storeName,
       phone,
       email,
       status: "pending",

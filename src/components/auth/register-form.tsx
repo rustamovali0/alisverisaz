@@ -24,6 +24,7 @@ type RegisterFormProps = {
 type FieldErrors = {
   firstName?: string;
   lastName?: string;
+  storeName?: string;
   email?: string;
   phone?: string;
   password?: string;
@@ -185,6 +186,7 @@ export function RegisterForm({
   );
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [storeName, setStoreName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -203,12 +205,17 @@ export function RegisterForm({
 
   function validate() {
     const nextErrors: FieldErrors = {};
+    const isSellerRegistration = !customerOnly && role === "seller";
 
-    if (!firstName.trim()) {
+    if (isSellerRegistration) {
+      if (!storeName.trim()) {
+        nextErrors.storeName = "Mağaza adı daxil edin.";
+      }
+    } else if (!firstName.trim()) {
       nextErrors.firstName = "Ad daxil edin.";
     }
 
-    if (!lastName.trim()) {
+    if (!isSellerRegistration && !lastName.trim()) {
       nextErrors.lastName = "Soyad daxil edin.";
     }
 
@@ -251,9 +258,15 @@ export function RegisterForm({
         return;
       }
 
-      formData.set("firstName", firstName.trim());
-      formData.set("lastName", lastName.trim());
-      formData.set("fullName", `${firstName.trim()} ${lastName.trim()}`.trim());
+      const isSellerRegistration = !customerOnly && role === "seller";
+      const resolvedFullName = isSellerRegistration
+        ? storeName.trim()
+        : `${firstName.trim()} ${lastName.trim()}`.trim();
+
+      formData.set("firstName", isSellerRegistration ? "" : firstName.trim());
+      formData.set("lastName", isSellerRegistration ? "" : lastName.trim());
+      formData.set("storeName", isSellerRegistration ? storeName.trim() : "");
+      formData.set("fullName", resolvedFullName);
       formData.set("email", email.trim());
       formData.set("phone", phone);
       formData.set("password", password);
@@ -343,34 +356,97 @@ export function RegisterForm({
       {canRegister ? (
         <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3">
           <AuthErrorAlert message={serverError} />
-          <div className="grid gap-3 sm:grid-cols-2">
+          {!customerOnly ? (
+            <fieldset className="grid gap-2">
+              <legend className="text-sm font-medium">Hesab tipi</legend>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {userRegistrationEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRole("customer");
+                      setFieldErrors((current) => ({ ...current, storeName: undefined }));
+                    }}
+                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                      role === "customer"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-foreground hover:border-primary/50"
+                    }`}
+                    aria-pressed={role === "customer"}
+                  >
+                    <UserRound className="size-4" aria-hidden="true" />
+                    İstifadəçi / Müştəri
+                  </button>
+                ) : null}
+                {storeRegistrationEnabled ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRole("seller");
+                      setFieldErrors((current) => ({
+                        ...current,
+                        firstName: undefined,
+                        lastName: undefined,
+                      }));
+                    }}
+                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
+                      role === "seller"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-foreground hover:border-primary/50"
+                    }`}
+                    aria-pressed={role === "seller"}
+                  >
+                    <Store className="size-4" aria-hidden="true" />
+                    Mağaza sahibi
+                  </button>
+                ) : null}
+              </div>
+            </fieldset>
+          ) : null}
+          {!customerOnly && role === "seller" ? (
             <AuthField
-              id="firstName"
-              name="firstName"
-              label="Ad"
-              autoComplete="given-name"
-              value={firstName}
+              id="storeName"
+              name="storeName"
+              label="Mağaza adı"
+              autoComplete="organization"
+              value={storeName}
               onChange={(event) => {
-                setFirstName(event.target.value);
-                setFieldErrors((current) => ({ ...current, firstName: undefined }));
+                setStoreName(event.target.value);
+                setFieldErrors((current) => ({ ...current, storeName: undefined }));
               }}
-              error={fieldErrors.firstName}
+              error={fieldErrors.storeName}
               required
             />
-            <AuthField
-              id="lastName"
-              name="lastName"
-              label="Soyad"
-              autoComplete="family-name"
-              value={lastName}
-              onChange={(event) => {
-                setLastName(event.target.value);
-                setFieldErrors((current) => ({ ...current, lastName: undefined }));
-              }}
-              error={fieldErrors.lastName}
-              required
-            />
-          </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <AuthField
+                id="firstName"
+                name="firstName"
+                label="Ad"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(event) => {
+                  setFirstName(event.target.value);
+                  setFieldErrors((current) => ({ ...current, firstName: undefined }));
+                }}
+                error={fieldErrors.firstName}
+                required
+              />
+              <AuthField
+                id="lastName"
+                name="lastName"
+                label="Soyad"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(event) => {
+                  setLastName(event.target.value);
+                  setFieldErrors((current) => ({ ...current, lastName: undefined }));
+                }}
+                error={fieldErrors.lastName}
+                required
+              />
+            </div>
+          )}
           <AuthField
             id="email"
             name="email"
@@ -442,43 +518,6 @@ export function RegisterForm({
             minLength={8}
             required
           />
-          {!customerOnly ? (
-            <fieldset className="grid gap-2">
-              <legend className="text-sm font-medium">Hesab tipi</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {userRegistrationEnabled ? (
-                  <button
-                    type="button"
-                    onClick={() => setRole("customer")}
-                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
-                      role === "customer"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background text-foreground hover:border-primary/50"
-                    }`}
-                    aria-pressed={role === "customer"}
-                  >
-                    <UserRound className="size-4" aria-hidden="true" />
-                    İstifadəçi / Müştəri
-                  </button>
-                ) : null}
-                {storeRegistrationEnabled ? (
-                  <button
-                    type="button"
-                    onClick={() => setRole("seller")}
-                    className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
-                      role === "seller"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-input bg-background text-foreground hover:border-primary/50"
-                    }`}
-                    aria-pressed={role === "seller"}
-                  >
-                    <Store className="size-4" aria-hidden="true" />
-                    Mağaza sahibi
-                  </button>
-                ) : null}
-              </div>
-            </fieldset>
-          ) : null}
           {!customerOnly && role === "seller" ? (
             <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
               <div>
