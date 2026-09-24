@@ -627,6 +627,7 @@ export async function getNavigationMenus(options?: { ensureDefaults?: boolean })
 async function applyDashboardFeatureFilters(
   role: "seller" | "customer" | "admin",
   items: DashboardNavItem[],
+  options: { userId?: string } = {},
 ) {
   if (role === "admin") {
     return items.filter(
@@ -639,6 +640,9 @@ async function applyDashboardFeatureFilters(
   }
 
   const siteSettings = await getSiteSettings();
+  const earningsVisible = options.userId
+    ? await getSellerFeatureAccess(options.userId, "earnings")
+    : true;
   const subscriptionVisible =
     siteSettings.subscriptionsDisabledForSellers !== true &&
     siteSettings.showSubscriptionInSellerPanel === true;
@@ -658,6 +662,10 @@ async function applyDashboardFeatureFilters(
       return false;
     }
 
+    if (!earningsVisible && item.href.includes("/earnings")) {
+      return false;
+    }
+
     return true;
   });
 }
@@ -674,7 +682,10 @@ function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: str
   return href;
 }
 
-export async function getDashboardNavigationForRole(role: "seller" | "customer" | "admin") {
+export async function getDashboardNavigationForRole(
+  role: "seller" | "customer" | "admin",
+  options: { userId?: string } = {},
+) {
   const fallback = dashboardNavigation[role];
   const location =
     role === "seller"
@@ -686,7 +697,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
   const menu = menus.find((item) => item.location === location && item.isActive);
 
   if (!menu || menu.items.length === 0) {
-    return applyDashboardFeatureFilters(role, fallback);
+    return applyDashboardFeatureFilters(role, fallback, options);
   }
 
   const normalizedMenuItems = menu.items.map((item) => ({
@@ -724,7 +735,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
       }),
     );
 
-  return applyDashboardFeatureFilters(role, [...merged, ...extra]);
+  return applyDashboardFeatureFilters(role, [...merged, ...extra], options);
 }
 
 export async function getMediaAssets() {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { Archive, PackageSearch, Trash2 } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { Archive, Eye, EyeOff, PackageSearch, Trash2 } from "lucide-react";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ type OrderListProps = {
   canDelete?: boolean;
   viewerRole?: OrderViewerRole;
 };
+
+const ORDER_ACTION_VISIBILITY_KEY = "alisveris-order-actions-hidden";
 
 function formatMoney(value: number, currency: string) {
   return new Intl.NumberFormat("az-AZ", {
@@ -103,8 +105,11 @@ export function OrderList({
   viewerRole = "customer",
 }: OrderListProps) {
   const [isPending, startTransition] = useTransition();
+  const [areActionsHidden, setAreActionsHidden] = useState(false);
   const router = useRouter();
   const isSeller = viewerRole === "seller";
+  const actionStorageKey = `${ORDER_ACTION_VISIBILITY_KEY}:${viewerRole}`;
+  const hasActions = canUpdateStatus || canDelete;
   const statusOptions =
     viewerRole === "seller"
       ? orderStatusOptions.filter((status) =>
@@ -112,6 +117,28 @@ export function OrderList({
         )
       : orderStatusOptions;
   const DeleteIcon = isSeller ? Archive : Trash2;
+
+  useEffect(() => {
+    try {
+      setAreActionsHidden(window.localStorage.getItem(actionStorageKey) === "1");
+    } catch {
+      setAreActionsHidden(false);
+    }
+  }, [actionStorageKey]);
+
+  function toggleActions() {
+    setAreActionsHidden((current) => {
+      const next = !current;
+
+      try {
+        window.localStorage.setItem(actionStorageKey, next ? "1" : "0");
+      } catch {
+        // Visibility preference is only a convenience; ignore storage failures.
+      }
+
+      return next;
+    });
+  }
 
   function deleteOrder(orderId: string) {
     startTransition(async () => {
@@ -192,19 +219,35 @@ export function OrderList({
 
   return (
     <div className="space-y-4">
-      {canDelete ? (
-        <div className="flex justify-end">
+      {hasActions ? (
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="text-destructive hover:text-destructive"
-            disabled={isPending}
-            onClick={deleteAllOrders}
+            onClick={toggleActions}
+            aria-pressed={areActionsHidden}
           >
-            <DeleteIcon className="mr-2 size-4" aria-hidden="true" />
-            {isSeller ? "Hamısını arxivlə" : "Hamısını sil"}
+            {areActionsHidden ? (
+              <Eye className="mr-2 size-4" aria-hidden="true" />
+            ) : (
+              <EyeOff className="mr-2 size-4" aria-hidden="true" />
+            )}
+            {areActionsHidden ? "Əməliyyatları göstər" : "Əməliyyatları gizlət"}
           </Button>
+          {canDelete && !areActionsHidden ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              disabled={isPending}
+              onClick={deleteAllOrders}
+            >
+              <DeleteIcon className="mr-2 size-4" aria-hidden="true" />
+              {isSeller ? "Hamısını arxivlə" : "Hamısını sil"}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       {orders.map((order) => (
@@ -239,10 +282,10 @@ export function OrderList({
               <p className="text-muted-foreground">
                 Status: {orderStatusLabels[order.status]}
               </p>
-              {canUpdateStatus ? (
+              {canUpdateStatus && !areActionsHidden ? (
                 <OrderStatusForm order={order} statusOptions={statusOptions} />
               ) : null}
-              {canDelete ? (
+              {canDelete && !areActionsHidden ? (
                 <Button
                   type="button"
                   variant="ghost"

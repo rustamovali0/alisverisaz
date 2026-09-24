@@ -43,6 +43,7 @@ type ProductFormProps = {
   disabled?: boolean;
   imageLimit?: number | null;
   successRedirect?: string;
+  showCostFields?: boolean;
 };
 
 function variantsToText(product?: ManagedProduct) {
@@ -440,6 +441,7 @@ export function ProductForm({
   disabled = false,
   imageLimit = 5,
   successRedirect,
+  showCostFields = true,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -536,7 +538,7 @@ export function ProductForm({
         </label>
       </div>
 
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className={showCostFields ? "grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5" : "grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4"}>
         <label className="grid gap-2 text-sm font-medium">
           Stok sayı
           <input
@@ -551,19 +553,21 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Maya dəyəri
-          <input
-            name="costAmount"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={product?.costAmount ?? undefined}
-            placeholder="Maya dəyəri"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-          />
-        </label>
+        {showCostFields ? (
+          <label className="grid gap-2 text-sm font-medium">
+            Maya dəyəri
+            <input
+              name="costAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={product?.costAmount ?? undefined}
+              placeholder="Maya dəyəri"
+              className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              disabled={disabled}
+            />
+          </label>
+        ) : null}
         <label className="grid gap-2 text-sm font-medium">
           Əsas qiymət
           <input

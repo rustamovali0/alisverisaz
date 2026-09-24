@@ -33,12 +33,13 @@ export default async function StoreProductsPage() {
     }),
   ]);
   const storeIds = stores.map((store) => store.id);
-  const [products, locations] = await Promise.all([
+  const [products, locations, earningsEnabled] = await Promise.all([
     getManagedProducts({
       storeIds,
       listingType: "store",
     }).catch(() => []),
     getLocationsForStores(storeIds).catch(() => []),
+    getSellerFeatureAccess(current.user.id, "earnings").catch(() => false),
   ]);
   const firstStore = stores[0];
   const limit = firstStore
@@ -79,6 +80,7 @@ export default async function StoreProductsPage() {
           locations={locations}
           disabled={isFormDisabled}
           imageLimit={imageLimit}
+          showCostFields={earningsEnabled}
         />
       </DashboardPanel>
 
@@ -90,6 +92,7 @@ export default async function StoreProductsPage() {
           products={products}
           categories={categories}
           imageLimit={imageLimit}
+          showCostFields={earningsEnabled}
           editHref={(product) => `/store/dashboard/products/${product.id}/edit`}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={

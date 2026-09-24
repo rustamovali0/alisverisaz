@@ -30,7 +30,7 @@ export default async function ListingsPage() {
         title="Yeni elan"
         description="Fərdi elan real ödəniş təsdiqindən sonra aktivləşir."
       >
-        <ProductForm mode="personal-create" categories={categories} />
+        <ProductForm mode="personal-create" categories={categories} showCostFields={false} />
       </DashboardPanel>
       <DashboardPanel
         title="Elanlarım"
@@ -42,6 +42,7 @@ export default async function ListingsPage() {
           emptyTitle="Elan yoxdur"
           emptyDescription="Yeni elan yerləşdirdikcə burada görünəcək."
           allowPaymentActivation
+          showCostFields={false}
         />
       </DashboardPanel>
     </div>

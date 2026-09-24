@@ -26,6 +26,7 @@ type ProductListProps = {
   imageLimit?: number | null;
   openProductId?: string;
   editHref?: (product: ManagedProduct) => string;
+  showCostFields?: boolean;
 };
 
 function formatMoney(value: number) {
@@ -107,6 +108,7 @@ export function ProductList({
   imageLimit = 5,
   openProductId,
   editHref,
+  showCostFields = true,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -200,6 +202,7 @@ export function ProductList({
                   )}
                   productLocations={productLocationMap[product.id] ?? []}
                   imageLimit={imageLimit}
+                  showCostFields={showCostFields}
                 />
               </div>
             </details>

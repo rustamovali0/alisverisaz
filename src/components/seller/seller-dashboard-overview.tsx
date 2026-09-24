@@ -34,6 +34,7 @@ type SellerDashboardOverviewProps = {
     };
     unreadNotifications: number;
   };
+  showEarnings?: boolean;
 };
 
 function formatMoney(value: number, currency: string) {
@@ -119,7 +120,7 @@ function LimitWarning({
   );
 }
 
-export function SellerDashboardOverview({ overview }: SellerDashboardOverviewProps) {
+export function SellerDashboardOverview({ overview, showEarnings = true }: SellerDashboardOverviewProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <section className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
@@ -143,19 +144,21 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
         <Stat label="Arxiv məhsullar" value={overview.products.archived} href="/store/dashboard/products" />
       </section>
 
-      <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <div className="rounded-lg border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <TrendingUp className="size-5 text-primary" aria-hidden="true" />
-            <h2 className="text-base font-black">Satış xülasəsi</h2>
+      <section className={cn("grid gap-5", showEarnings && "lg:grid-cols-[0.8fr_1.2fr]")}>
+        {showEarnings ? (
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <TrendingUp className="size-5 text-primary" aria-hidden="true" />
+              <h2 className="text-base font-black">Satış xülasəsi</h2>
+            </div>
+            <div className="grid gap-3">
+              <Stat label="Bu gün" value={formatMoney(overview.sales.today, overview.currency)} href="/store/dashboard/earnings" />
+              <Stat label="Son 7 gün" value={formatMoney(overview.sales.last7Days, overview.currency)} href="/store/dashboard/earnings" />
+              <Stat label="Bu ay" value={formatMoney(overview.sales.month, overview.currency)} href="/store/dashboard/earnings" />
+              <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} href="/seller/orders" />
+            </div>
           </div>
-          <div className="grid gap-3">
-            <Stat label="Bu gün" value={formatMoney(overview.sales.today, overview.currency)} href="/store/dashboard/earnings" />
-            <Stat label="Son 7 gün" value={formatMoney(overview.sales.last7Days, overview.currency)} href="/store/dashboard/earnings" />
-            <Stat label="Bu ay" value={formatMoney(overview.sales.month, overview.currency)} href="/store/dashboard/earnings" />
-            <Stat label="Tamamlanmış sifariş" value={overview.sales.completedOrderCount} href="/seller/orders" />
-          </div>
-        </div>
+        ) : null}
 
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-3">

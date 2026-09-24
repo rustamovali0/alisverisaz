@@ -1,6 +1,7 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { ProductForm } from "@/components/products/product-form";
 import { requireRole } from "@/lib/auth/session";
+import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { getLocationsForStores } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function SellProductPage() {
   const current = await requireRole(["seller"], "/sell");
   let setupError = false;
-  const [stores, categories] = await Promise.all([
+  const [stores, categories, earningsEnabled] = await Promise.all([
     getOwnedStores(current.user.id).catch((error) => {
       console.error("Seller stores could not be loaded for product create", error);
       setupError = true;
@@ -22,6 +23,7 @@ export default async function SellProductPage() {
       setupError = true;
       return [];
     }),
+    getSellerFeatureAccess(current.user.id, "earnings").catch(() => false),
   ]);
   const firstStore = stores[0];
   const [locations, limit] = await Promise.all([
@@ -67,6 +69,7 @@ export default async function SellProductPage() {
           locations={locations}
           disabled={isFormDisabled}
           imageLimit={imageLimit}
+          showCostFields={earningsEnabled}
         />
       </DashboardPanel>
     </main>
