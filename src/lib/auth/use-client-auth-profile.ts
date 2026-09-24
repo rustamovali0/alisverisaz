@@ -37,6 +37,7 @@ let currentIsResolved = false;
 let authProfilePromise: Promise<ClientAuthProfile> | null = null;
 let authProfileVersion = 0;
 let authWatcherStarted = false;
+let hasHydratedClientAuthProfile = false;
 const profileListeners = new Set<(state: ClientAuthProfileState) => void>();
 
 const emptyProfile: ClientAuthProfile = {
@@ -157,6 +158,10 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
 }
 
 function getCurrentProfile() {
+  if (!hasHydratedClientAuthProfile) {
+    return emptyProfile;
+  }
+
   if (!didReadInitialCache) {
     currentProfile = readCachedProfile() ?? emptyProfile;
     didReadInitialCache = true;
@@ -294,6 +299,12 @@ function ensureAuthProfileWatcher() {
 
 function ensureAuthProfileLoaded() {
   ensureAuthProfileWatcher();
+
+  if (!hasHydratedClientAuthProfile) {
+    hasHydratedClientAuthProfile = true;
+    currentProfile = readCachedProfile() ?? emptyProfile;
+    didReadInitialCache = true;
+  }
 
   if (!currentIsResolved && !authProfilePromise) {
     void refreshClientAuthProfile();
