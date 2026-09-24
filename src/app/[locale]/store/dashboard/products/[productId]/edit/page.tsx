@@ -49,7 +49,7 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
   }
 
   let setupError = false;
-  const [categories, locations, productLocationMap, entitlements, earningsEnabled] = await Promise.all([
+  const [categories, locations, productLocationMap, entitlements] = await Promise.all([
     getCategoryOptions().catch((error) => {
       console.error("Product categories could not be loaded for product edit", error);
       setupError = true;
@@ -74,7 +74,6 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
         remainingProducts: null,
       };
     }),
-    getSellerFeatureAccess(current.user.id, "earnings").catch(() => false),
   ]);
 
   return (
@@ -111,7 +110,6 @@ export default async function ProductEditPage({ params }: ProductEditPageProps) 
         imageLimit={entitlements.imagesPerProductLimit ?? 5}
         disabled={setupError || categories.length === 0}
         successRedirect="/store/dashboard/products"
-        showCostFields={earningsEnabled}
       />
     </DashboardPanel>
   );

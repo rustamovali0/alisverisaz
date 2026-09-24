@@ -527,11 +527,7 @@ export async function getStoreAnalytics(userId: string) {
   };
 }
 
-export async function getStoreEarnings(
-  userId: string,
-  options: { includeCostBreakdown?: boolean } = {},
-) {
-  const includeCostBreakdown = options.includeCostBreakdown ?? true;
+export async function getStoreEarnings(userId: string) {
   const storeIds = (await getOwnedStores(userId)).map((store) => store.id);
   const orders = await getRows<{
     id: string;
@@ -550,7 +546,7 @@ export async function getStoreEarnings(
   const orderIds = revenueOrders.map((order) => order.id);
   const supabase = await createSupabaseServerClient();
   const { data: itemRows } =
-    includeCostBreakdown && orderIds.length > 0
+    orderIds.length > 0
       ? await (supabase as any)
           .from("order_items")
           .select("id,order_id,quantity,total_amount,products(name,cost_amount)")
@@ -580,20 +576,16 @@ export async function getStoreEarnings(
         value: formatMoney(grossRevenue, currency),
         description: "Ləğv edilməmiş sifarişlərin toplamı",
       },
-      ...(includeCostBreakdown
-        ? [
-            {
-              label: "Maya dəyəri",
-              value: formatMoney(totalCost, currency),
-              description: "Məhsullara yazılan maya dəyərləri",
-            },
-            {
-              label: "Xalis gəlir",
-              value: formatMoney(grossRevenue - totalCost, currency),
-              description: "Ümumi gəlir - maya dəyəri",
-            },
-          ]
-        : []),
+      {
+        label: "Maya dəyəri",
+        value: formatMoney(totalCost, currency),
+        description: "Məhsullara yazılan maya dəyərləri",
+      },
+      {
+        label: "Xalis gəlir",
+        value: formatMoney(grossRevenue - totalCost, currency),
+        description: "Ümumi gəlir - maya dəyəri",
+      },
       {
         label: "Sifariş sayı",
         value: revenueOrders.length,

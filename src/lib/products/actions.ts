@@ -839,22 +839,13 @@ function readProductPayload(formData: FormData) {
   };
 }
 
-function validatePayload(
-  payload: ReturnType<typeof readProductPayload>,
-  options: { validateCost?: boolean } = {},
-) {
-  const validateCost = options.validateCost ?? true;
-
+function validatePayload(payload: ReturnType<typeof readProductPayload>) {
   if (!payload.name) {
     return "Ad mütləqdir.";
   }
 
-  if (validateCost && payload.costAmount < 0) {
-    return "Maya dəyəri mənfi ola bilməz.";
-  }
-
-  if (payload.priceAmount < 0 || payload.discountAmount < 0) {
-    return "Qiymət və endirim mənfi ola bilməz.";
+  if (payload.costAmount < 0 || payload.priceAmount < 0 || payload.discountAmount < 0) {
+    return "Maya dəyəri, qiymət və endirim mənfi ola bilməz.";
   }
 
   if (payload.depositValue < 0) {
@@ -877,10 +868,8 @@ export async function createStoreProductAction(
     };
   }
 
-  const earningsEnabled = await getSellerFeatureAccess(current.user.id, "earnings");
   const storeId = readString(formData, "storeId");
   const payload = readProductPayload(formData);
-  payload.costAmount = earningsEnabled ? payload.costAmount : 0;
   const validationError = validatePayload(payload);
 
   if (validationError) {
@@ -1067,11 +1056,19 @@ export async function updateProductAction(
 
   const productId = readString(formData, "productId");
   const payload = readProductPayload(formData);
+  const validationError = validatePayload(payload);
 
   if (!productId) {
     return {
       ok: false,
       message: "Məhsul ID tapılmadı.",
+    };
+  }
+
+  if (validationError) {
+    return {
+      ok: false,
+      message: validationError,
     };
   }
 
@@ -1101,22 +1098,6 @@ export async function updateProductAction(
     return {
       ok: false,
       message: "Bu məhsul üzərində icazəniz yoxdur.",
-    };
-  }
-
-  const canManageCost =
-    current.role === "admin" ||
-    (current.role === "seller" &&
-      existing.listing_type === "store" &&
-      (await getSellerFeatureAccess(current.user.id, "earnings")));
-  const validationError = validatePayload(payload, {
-    validateCost: canManageCost,
-  });
-
-  if (validationError) {
-    return {
-      ok: false,
-      message: validationError,
     };
   }
 
@@ -1163,28 +1144,26 @@ export async function updateProductAction(
               }
             : {}),
         };
-  const updateValues = {
-    category_id: payload.categoryId,
-    name: payload.name,
-    name_translations: payload.nameTranslations,
-    description: payload.description,
-    description_translations: payload.descriptionTranslations,
-    seo_title_translations: payload.seoTitleTranslations,
-    seo_description_translations: payload.seoDescriptionTranslations,
-    ...(canManageCost ? { cost_amount: payload.costAmount } : {}),
-    price_amount: payload.priceAmount,
-    discount_amount: payload.discountAmount,
-    stock_quantity: payload.stockQuantity,
-    status,
-    deposit_enabled: payload.depositEnabled,
-    deposit_type: payload.depositType,
-    deposit_value: payload.depositValue,
-    metadata,
-  };
-
   const { error } = await (supabase as any)
     .from("products")
-    .update(updateValues)
+    .update({
+      category_id: payload.categoryId,
+      name: payload.name,
+      name_translations: payload.nameTranslations,
+      description: payload.description,
+      description_translations: payload.descriptionTranslations,
+      seo_title_translations: payload.seoTitleTranslations,
+      seo_description_translations: payload.seoDescriptionTranslations,
+      cost_amount: payload.costAmount,
+      price_amount: payload.priceAmount,
+      discount_amount: payload.discountAmount,
+      stock_quantity: payload.stockQuantity,
+      status,
+      deposit_enabled: payload.depositEnabled,
+      deposit_type: payload.depositType,
+      deposit_value: payload.depositValue,
+      metadata,
+    })
     .eq("id", productId);
 
   if (error) {
@@ -1781,7 +1760,7 @@ export async function createPersonalListingAction(
         description_translations: payload.descriptionTranslations,
         seo_title_translations: payload.seoTitleTranslations,
         seo_description_translations: payload.seoDescriptionTranslations,
-        cost_amount: 0,
+        cost_amount: payload.costAmount,
         price_amount: payload.priceAmount,
         discount_amount: payload.discountAmount,
         stock_quantity: payload.stockQuantity,

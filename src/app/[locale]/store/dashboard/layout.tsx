@@ -15,9 +15,7 @@ export default async function StoreDashboardLayout({
 }: StoreDashboardLayoutProps) {
   const current = await requireSeller();
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Mağaza sahibi";
-  const navItems = await getDashboardNavigationForRole("seller", {
-    userId: current.user.id,
-  });
+  const navItems = await getDashboardNavigationForRole("seller");
 
   return (
     <SellerDashboardShell userLabel={userLabel} navItems={navItems}>

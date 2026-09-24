@@ -1,21 +1,17 @@
 import { EmptyState } from "@/components/common/empty-state";
 import { SellerDashboardOverview } from "@/components/seller/seller-dashboard-overview";
 import { requireRole } from "@/lib/auth/session";
-import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getSellerDashboardOverview } from "@/lib/seller-dashboard/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function StoreDashboardPage() {
   const current = await requireRole(["seller"], "/store/dashboard");
-  const [overview, earningsEnabled] = await Promise.all([
-    getSellerDashboardOverview(current.user.id),
-    getSellerFeatureAccess(current.user.id, "earnings").catch(() => false),
-  ]);
+  const overview = await getSellerDashboardOverview(current.user.id);
 
   return (
     <div className="space-y-6">
-      <SellerDashboardOverview overview={overview} showEarnings={earningsEnabled} />
+      <SellerDashboardOverview overview={overview} />
       {overview.stores.length === 0 ? (
         <EmptyState
           className="rounded-md border bg-card p-8 shadow-sm"
