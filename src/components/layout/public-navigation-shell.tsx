@@ -93,11 +93,7 @@ export function PublicNavigationShell({
       pathname === `/store/${store.slug}` ||
       pathname.startsWith(`/store/${store.slug}/`),
   )?.slug;
-  const pathStoreSlug = matchedStoreSlug ?? (
-    firstPathSegment && !reservedPublicSegments.has(firstPathSegment)
-      ? firstPathSegment
-      : undefined
-  );
+  const pathStoreSlug = matchedStoreSlug;
   const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
   const isLegacyStorePath = Boolean(
     pathStoreSlug &&

@@ -133,7 +133,7 @@ function SellerImageDropzone({
         type="file"
         name={name}
         accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
-        className="sr-only"
+        className="hidden"
         onChange={(event) => void handleFiles(event.target.files)}
       />
       {error ? <span className="text-xs font-medium text-destructive">{error}</span> : null}
