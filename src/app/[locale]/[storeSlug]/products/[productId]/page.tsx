@@ -381,7 +381,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             ) : null}
             {isStoreOwner ? (
               <Button asChild className="mt-6 h-[52px] w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                <Link href={`/store/dashboard/products?edit=${detail.product.id}#edit-product-${detail.product.id}`}>
+                <Link href={`/store/dashboard/products/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
                 </Link>

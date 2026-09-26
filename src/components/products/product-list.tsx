@@ -193,7 +193,7 @@ export function ProductList({
           </div>
           {editHrefBase ? (
             <Button asChild variant="outline" size="sm" className="mt-4">
-              <Link href={`${editHrefBase}/${product.id}`}>
+              <Link href={`${editHrefBase}/${product.id}/edit`}>
                 <Pencil className="mr-2 size-4" aria-hidden="true" />
                 Redaktə et
               </Link>
