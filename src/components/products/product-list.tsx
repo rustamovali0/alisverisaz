@@ -32,7 +32,7 @@ type ProductListProps = {
   productLocationMap?: Record<string, ProductLocationAvailability[]>;
   imageLimit?: number | null;
   openProductId?: string;
-  editHref?: (product: ManagedProduct) => string;
+  editHrefBase?: string;
   deleteAction: DeleteProductAction;
 };
 
@@ -120,7 +120,7 @@ export function ProductList({
   productLocationMap = {},
   imageLimit = 5,
   openProductId,
-  editHref,
+  editHrefBase,
   deleteAction,
 }: ProductListProps) {
   if (products.length === 0) {
@@ -191,9 +191,9 @@ export function ProductList({
               />
             </div>
           </div>
-          {editHref ? (
+          {editHrefBase ? (
             <Button asChild variant="outline" size="sm" className="mt-4">
-              <Link href={editHref(product)}>
+              <Link href={`${editHrefBase}/${product.id}`}>
                 <Pencil className="mr-2 size-4" aria-hidden="true" />
                 Redaktə et
               </Link>

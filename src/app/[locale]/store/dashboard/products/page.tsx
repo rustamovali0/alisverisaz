@@ -91,7 +91,7 @@ export default async function StoreProductsPage() {
           products={products}
           categories={categories}
           imageLimit={imageLimit}
-          editHref={(product) => `/store/dashboard/products/${product.id}/edit`}
+          editHrefBase="/store/dashboard/products"
           deleteAction={deleteProductAction}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
