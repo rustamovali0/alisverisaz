@@ -676,55 +676,60 @@ function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: str
 
 export async function getDashboardNavigationForRole(role: "seller" | "customer" | "admin") {
   const fallback = dashboardNavigation[role];
-  const location =
-    role === "seller"
-      ? "seller_sidebar"
-      : role === "customer"
-        ? "customer_sidebar"
-        : "admin_extra";
-  const menus = await getNavigationMenus();
-  const menu = menus.find((item) => item.location === location && item.isActive);
+  try {
+    const location =
+      role === "seller"
+        ? "seller_sidebar"
+        : role === "customer"
+          ? "customer_sidebar"
+          : "admin_extra";
+    const menus = await getNavigationMenus();
+    const menu = menus.find((item) => item.location === location && item.isActive);
 
-  if (!menu || menu.items.length === 0) {
-    return applyDashboardFeatureFilters(role, fallback);
+    if (!menu || menu.items.length === 0) {
+      return applyDashboardFeatureFilters(role, fallback);
+    }
+
+    const normalizedMenuItems = menu.items.map((item) => ({
+      ...item,
+      href: normalizeDashboardHref(role, item.href),
+    }));
+    const overrides = new Map(normalizedMenuItems.map((item) => [item.href, item]));
+    const merged = fallback
+      .map((item) => {
+        const override = overrides.get(item.href);
+
+        if (!override) {
+          return item;
+        }
+
+        if (!override.isActive) {
+          return null;
+        }
+
+        return {
+          ...item,
+          title: override.title,
+          icon: override.icon as DashboardNavItem["icon"],
+        };
+      })
+      .filter(Boolean) as DashboardNavItem[];
+
+    const extra = normalizedMenuItems
+      .filter((item) => !fallback.some((base) => base.href === item.href) && item.isActive)
+      .map(
+        (item): DashboardNavItem => ({
+          title: item.title,
+          href: item.href,
+          icon: item.icon as DashboardNavItem["icon"],
+        }),
+      );
+
+    return applyDashboardFeatureFilters(role, [...merged, ...extra]);
+  } catch (error) {
+    console.error("Dashboard navigation could not be loaded", error);
+    return fallback;
   }
-
-  const normalizedMenuItems = menu.items.map((item) => ({
-    ...item,
-    href: normalizeDashboardHref(role, item.href),
-  }));
-  const overrides = new Map(normalizedMenuItems.map((item) => [item.href, item]));
-  const merged = fallback
-    .map((item) => {
-      const override = overrides.get(item.href);
-
-      if (!override) {
-        return item;
-      }
-
-      if (!override.isActive) {
-        return null;
-      }
-
-      return {
-        ...item,
-        title: override.title,
-        icon: override.icon as DashboardNavItem["icon"],
-      };
-    })
-    .filter(Boolean) as DashboardNavItem[];
-
-  const extra = normalizedMenuItems
-    .filter((item) => !fallback.some((base) => base.href === item.href) && item.isActive)
-    .map(
-      (item): DashboardNavItem => ({
-        title: item.title,
-        href: item.href,
-        icon: item.icon as DashboardNavItem["icon"],
-      }),
-    );
-
-  return applyDashboardFeatureFilters(role, [...merged, ...extra]);
 }
 
 export async function getMediaAssets() {
@@ -809,77 +814,82 @@ export async function getAdminStoreDetail(storeId: string) {
 }
 
 export async function getSellerFeatureAccess(userId: string, featureKey: string) {
-  const supabase = await createSupabaseServerClient();
-  const { data: stores } = await (supabase as any)
-    .from("stores")
-    .select("id")
-    .eq("owner_id", userId);
-  const { data: globalSettings, error: globalSettingsError } = await (supabase as any)
-    .from("store_panel_settings")
-    .select("features")
-    .is("store_id", null)
-    .limit(1)
-    .maybeSingle();
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: stores } = await (supabase as any)
+      .from("stores")
+      .select("id")
+      .eq("owner_id", userId);
+    const { data: globalSettings, error: globalSettingsError } = await (supabase as any)
+      .from("store_panel_settings")
+      .select("features")
+      .is("store_id", null)
+      .limit(1)
+      .maybeSingle();
 
-  if (globalSettingsError?.code === "42P01" || globalSettingsError?.code === "PGRST205") {
-    return true;
-  }
-
-  const storeIds = ((stores ?? []) as Array<{ id: string }>).map((store) => store.id);
-  const globalValue = (globalSettings?.features ?? {})[featureKey];
-
-  if (globalValue === false) {
-    return false;
-  }
-
-  if (storeIds.length === 0) {
-    return globalValue !== false;
-  }
-
-  const [{ data: panelRows, error: panelRowsError }, { data: overrides, error: overridesError }] =
-    await Promise.all([
-      (supabase as any)
-        .from("store_panel_settings")
-        .select("store_id,features")
-        .in("store_id", storeIds),
-      (supabase as any)
-        .from("store_feature_overrides")
-        .select("store_id,is_enabled")
-        .eq("feature_key", featureKey)
-        .in("store_id", storeIds),
-    ]);
-
-  if (
-    panelRowsError?.code === "42P01" ||
-    panelRowsError?.code === "PGRST205" ||
-    overridesError?.code === "42P01" ||
-    overridesError?.code === "PGRST205"
-  ) {
-    return true;
-  }
-
-  const overrideMap = new Map(
-    ((overrides ?? []) as Array<{ store_id: string; is_enabled: boolean }>).map(
-      (override) => [override.store_id, override.is_enabled],
-    ),
-  );
-  const panelMap = new Map(
-    ((panelRows ?? []) as Array<{ store_id: string; features: Record<string, boolean> }>).map(
-      (row) => [row.store_id, row.features],
-    ),
-  );
-
-  return storeIds.some((storeId) => {
-    const override = overrideMap.get(storeId);
-
-    if (typeof override === "boolean") {
-      return override;
+    if (globalSettingsError?.code === "42P01" || globalSettingsError?.code === "PGRST205") {
+      return true;
     }
 
-    const storeValue = panelMap.get(storeId)?.[featureKey];
+    const storeIds = ((stores ?? []) as Array<{ id: string }>).map((store) => store.id);
+    const globalValue = (globalSettings?.features ?? {})[featureKey];
 
-    return storeValue !== false;
-  });
+    if (globalValue === false) {
+      return false;
+    }
+
+    if (storeIds.length === 0) {
+      return globalValue !== false;
+    }
+
+    const [{ data: panelRows, error: panelRowsError }, { data: overrides, error: overridesError }] =
+      await Promise.all([
+        (supabase as any)
+          .from("store_panel_settings")
+          .select("store_id,features")
+          .in("store_id", storeIds),
+        (supabase as any)
+          .from("store_feature_overrides")
+          .select("store_id,is_enabled")
+          .eq("feature_key", featureKey)
+          .in("store_id", storeIds),
+      ]);
+
+    if (
+      panelRowsError?.code === "42P01" ||
+      panelRowsError?.code === "PGRST205" ||
+      overridesError?.code === "42P01" ||
+      overridesError?.code === "PGRST205"
+    ) {
+      return true;
+    }
+
+    const overrideMap = new Map(
+      ((overrides ?? []) as Array<{ store_id: string; is_enabled: boolean }>).map(
+        (override) => [override.store_id, override.is_enabled],
+      ),
+    );
+    const panelMap = new Map(
+      ((panelRows ?? []) as Array<{ store_id: string; features: Record<string, boolean> }>).map(
+        (row) => [row.store_id, row.features],
+      ),
+    );
+
+    return storeIds.some((storeId) => {
+      const override = overrideMap.get(storeId);
+
+      if (typeof override === "boolean") {
+        return override;
+      }
+
+      const storeValue = panelMap.get(storeId)?.[featureKey];
+
+      return storeValue !== false;
+    });
+  } catch (error) {
+    console.error("Seller feature access could not be loaded", error);
+    return true;
+  }
 }
 
 export async function getCustomerFeatureAccess(featureKey: string) {
