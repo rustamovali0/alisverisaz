@@ -18,9 +18,18 @@ export default async function StorePendingProductsPage() {
     return <FeatureBlocked title="Məhsullar" />;
   }
 
+  let setupError = false;
   const [stores, categories] = await Promise.all([
-    getOwnedStores(current.user.id),
-    getCategoryOptions(),
+    getOwnedStores(current.user.id).catch((error) => {
+      console.error("Seller stores could not be loaded for pending products", error);
+      setupError = true;
+      return [];
+    }),
+    getCategoryOptions().catch((error) => {
+      console.error("Product categories could not be loaded for pending products", error);
+      setupError = true;
+      return [];
+    }),
   ]);
   const storeIds = stores.map((store) => store.id);
   const [products, locations] = await Promise.all([
@@ -32,13 +41,24 @@ export default async function StorePendingProductsPage() {
     getLocationsForStores(storeIds).catch(() => []),
   ]);
   const firstStoreId = products[0]?.storeId ?? storeIds[0] ?? null;
-  const entitlements = firstStoreId ? await getStoreEntitlements(firstStoreId) : null;
+  const entitlements = firstStoreId
+    ? await getStoreEntitlements(firstStoreId).catch((error) => {
+        console.error("Store entitlements could not be loaded for pending products", error);
+        setupError = true;
+        return null;
+      })
+    : null;
 
   return (
     <DashboardPanel
       title="Təsdiq gözləyən məhsullar"
       description="Bu məhsullar yoxlanılır və admin təsdiqindən sonra saytda dərc olunacaq."
     >
+      {setupError ? (
+        <div className="mb-4 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+          Məhsul məlumatlarının bir hissəsi yüklənmədi. Səhifəni yeniləyib yenidən cəhd edin.
+        </div>
+      ) : null}
       <ProductList
         products={products}
         categories={categories}
