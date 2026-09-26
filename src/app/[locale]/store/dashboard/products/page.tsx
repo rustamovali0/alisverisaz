@@ -6,6 +6,7 @@ import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { getLocationsForStores } from "@/lib/locations/data";
+import { deleteProductAction } from "@/lib/products/actions";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { canCreateListing } from "@/lib/subscriptions/data";
 
@@ -91,6 +92,7 @@ export default async function StoreProductsPage() {
           categories={categories}
           imageLimit={imageLimit}
           editHref={(product) => `/store/dashboard/products/${product.id}/edit`}
+          deleteAction={deleteProductAction}
           emptyTitle="Məhsul yoxdur"
           emptyDescription={
             limit?.allowed

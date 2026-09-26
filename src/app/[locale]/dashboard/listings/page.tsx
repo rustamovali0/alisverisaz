@@ -4,6 +4,7 @@ import { ProductForm } from "@/components/products/product-form";
 import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
 import { getCustomerFeatureAccess } from "@/lib/cms/data";
+import { deleteProductAction } from "@/lib/products/actions";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function ListingsPage() {
         <ProductList
           products={products}
           categories={categories}
+          deleteAction={deleteProductAction}
           emptyTitle="Elan yoxdur"
           emptyDescription="Yeni elan yerləşdirdikcə burada görünəcək."
           allowPaymentActivation

@@ -12,8 +12,15 @@ import type {
   ProductLocationAvailability,
   StoreLocation,
 } from "@/lib/locations/types";
-import { deleteProductAction } from "@/lib/products/actions";
-import type { CategoryOption, ManagedProduct } from "@/lib/products/types";
+import type {
+  CategoryOption,
+  ManagedProduct,
+  ProductActionResult,
+} from "@/lib/products/types";
+
+type DeleteProductAction = (
+  formData: FormData,
+) => Promise<ProductActionResult>;
 
 type ProductListProps = {
   products: ManagedProduct[];
@@ -26,6 +33,7 @@ type ProductListProps = {
   imageLimit?: number | null;
   openProductId?: string;
   editHref?: (product: ManagedProduct) => string;
+  deleteAction: DeleteProductAction;
 };
 
 function formatMoney(value: number) {
@@ -35,7 +43,13 @@ function formatMoney(value: number) {
   }).format(value);
 }
 
-function DeleteProductButton({ productId }: { productId: string }) {
+function DeleteProductButton({
+  productId,
+  deleteAction,
+}: {
+  productId: string;
+  deleteAction: DeleteProductAction;
+}) {
   const [isPending, startTransition] = useTransition();
 
   function handleDelete() {
@@ -51,7 +65,7 @@ function DeleteProductButton({ productId }: { productId: string }) {
 
       const formData = new FormData();
       formData.set("productId", productId);
-      const result = await deleteProductAction(formData);
+      const result = await deleteAction(formData);
 
       if (!result.ok) {
         void appAlert.error(result.message, "Silinmədi");
@@ -107,6 +121,7 @@ export function ProductList({
   imageLimit = 5,
   openProductId,
   editHref,
+  deleteAction,
 }: ProductListProps) {
   if (products.length === 0) {
     return (
@@ -170,7 +185,10 @@ export function ProductList({
                   Ödəniş gözlənilir
                 </span>
               ) : null}
-              <DeleteProductButton productId={product.id} />
+              <DeleteProductButton
+                productId={product.id}
+                deleteAction={deleteAction}
+              />
             </div>
           </div>
           {editHref ? (

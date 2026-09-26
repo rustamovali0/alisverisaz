@@ -5,6 +5,7 @@ import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { getLocationsForStores } from "@/lib/locations/data";
+import { deleteProductAction } from "@/lib/products/actions";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 import { getStoreEntitlements } from "@/lib/subscriptions/data";
 
@@ -65,6 +66,7 @@ export default async function StorePendingProductsPage() {
         locations={locations}
         imageLimit={entitlements?.imagesPerProductLimit ?? 5}
         editHref={(product) => `/store/dashboard/products/${product.id}/edit`}
+        deleteAction={deleteProductAction}
         emptyTitle="Təsdiq gözləyən məhsul yoxdur"
         emptyDescription="Təsdiqə göndərilən məhsullar burada görünəcək."
       />

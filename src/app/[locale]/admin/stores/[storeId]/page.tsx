@@ -7,6 +7,7 @@ import { StatGrid } from "@/components/dashboard/stat-card";
 import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminStoreDetail } from "@/lib/cms/data";
+import { deleteProductAction } from "@/lib/products/actions";
 import { getCategoryOptions, getManagedProducts } from "@/lib/products/data";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +83,7 @@ export default async function AdminStoreDetailPage({
         <ProductList
           products={products}
           categories={categories}
+          deleteAction={deleteProductAction}
           emptyTitle="Məhsul yoxdur"
           emptyDescription="Bu mağazaya bağlı məhsul tapılmadı."
         />
