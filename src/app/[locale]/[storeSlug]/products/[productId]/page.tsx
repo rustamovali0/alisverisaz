@@ -292,7 +292,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           { name: detail.product.name, item: canonicalProductUrl },
         ]}
       />
-      <ViewTracker productId={detail.product.id} />
+      {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
       {isCustomStorefrontProduct ? (
         <CustomStorefrontHeader
           store={detail.store}

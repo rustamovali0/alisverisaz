@@ -10,6 +10,12 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 type ViewSource = "normal" | "share" | "direct";
 type DeleteScope = "all" | "product_views" | "store_views" | "link_views";
 
+function isDuplicateViewError(error: unknown) {
+  const value = error as { code?: string } | null;
+
+  return value?.code === "23505";
+}
+
 function cleanVisitorId(value: string) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
 }
@@ -45,13 +51,38 @@ export async function trackProductViewAction(input: {
     return;
   }
 
-  await (admin as any).from("product_views").insert({
+  if (user?.id === product.owner_id) {
+    return;
+  }
+
+  const source = normalizeSource(input.source);
+  const { error } = await (admin as any).from("product_views").insert({
     product_id: product.id,
     seller_id: product.owner_id,
     visitor_id: user?.id ? null : visitorId,
     user_id: user?.id ?? null,
-    source: normalizeSource(input.source),
+    source,
   });
+
+  if (!isDuplicateViewError(error)) {
+    return;
+  }
+
+  const updatePayload = {
+    source,
+    viewed_at: new Date().toISOString(),
+  };
+  const query = (admin as any)
+    .from("product_views")
+    .update(updatePayload)
+    .eq("product_id", product.id);
+
+  if (user?.id) {
+    await query.eq("user_id", user.id);
+    return;
+  }
+
+  await query.eq("visitor_id", visitorId).is("user_id", null);
 }
 
 export async function trackStoreViewAction(input: {
@@ -81,13 +112,38 @@ export async function trackStoreViewAction(input: {
     return;
   }
 
-  await (admin as any).from("store_views").insert({
+  if (user?.id === store.owner_id) {
+    return;
+  }
+
+  const source = normalizeSource(input.source);
+  const { error } = await (admin as any).from("store_views").insert({
     store_id: store.id,
     seller_id: store.owner_id,
     visitor_id: user?.id ? null : visitorId,
     user_id: user?.id ?? null,
-    source: normalizeSource(input.source),
+    source,
   });
+
+  if (!isDuplicateViewError(error)) {
+    return;
+  }
+
+  const updatePayload = {
+    source,
+    viewed_at: new Date().toISOString(),
+  };
+  const query = (admin as any)
+    .from("store_views")
+    .update(updatePayload)
+    .eq("store_id", store.id);
+
+  if (user?.id) {
+    await query.eq("user_id", user.id);
+    return;
+  }
+
+  await query.eq("visitor_id", visitorId).is("user_id", null);
 }
 
 function applyDeleteRange(query: any, range: AnalyticsRange) {
