@@ -445,7 +445,7 @@ export function HomeExperience({
                 <div
                   key={store.id}
                   className={cn(
-                    "w-[70vw] max-w-[260px] shrink-0 snap-start md:w-auto md:max-w-none",
+                    "w-[62vw] max-w-[240px] shrink-0 snap-start md:w-auto md:max-w-none",
                     index >= 4 && "hidden lg:block",
                   )}
                 >

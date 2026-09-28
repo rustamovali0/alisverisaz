@@ -1318,6 +1318,7 @@ export async function createWhatsAppOrderIntentAction(
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard");
   revalidatePath("/store/dashboard/orders");
+  revalidatePath("/store/dashboard/orders");
   revalidatePath("/seller/orders");
   revalidatePath("/admin/orders");
   revalidatePath("/radmin/orders");

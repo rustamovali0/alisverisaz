@@ -255,7 +255,7 @@ export function MobileBottomNav({
             label: nav("addProduct"),
             icon: Plus,
           },
-          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
+          { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
           storefrontItem,

@@ -82,7 +82,7 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
     },
     {
       title: "Yeni məhsul əlavə et",
-      href: "/store/dashboard/products#create-product",
+      href: "/store/dashboard/products/new",
       icon: "package",
     },
     {
