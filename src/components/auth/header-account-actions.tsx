@@ -90,6 +90,11 @@ export function HeaderAccountActions({
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -130,7 +135,7 @@ export function HeaderAccountActions({
     });
   }
 
-  if (profile.status === "loading") {
+  if (!isMounted || profile.status === "loading") {
     return (
       <div
         className={cn(
