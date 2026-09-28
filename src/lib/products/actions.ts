@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
-import { notifyProductSubmitted } from "@/lib/products/approval-actions";
+import { notifyProductSubmitted } from "@/lib/products/approval-notifications";
 import { getProductApprovalSettings } from "@/lib/products/approval-settings";
 import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
 import {

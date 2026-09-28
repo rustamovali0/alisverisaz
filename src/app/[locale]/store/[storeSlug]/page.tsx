@@ -2,7 +2,7 @@ import {
   generateMetadata,
   renderStorePage,
   type StorePageProps,
-} from "../../[storeSlug]/page";
+} from "@/components/cart/store-page";
 
 export { generateMetadata };
 

@@ -119,7 +119,12 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
   const supabase = createSupabaseBrowserClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (error && (error.name === "AuthRetryableFetchError" || !error.status || error.status >= 500)) {
+    throw error;
+  }
 
   if (!user) {
     return guestProfile;
@@ -312,7 +317,12 @@ function ensureAuthProfileLoaded() {
 }
 
 export function useClientAuthProfileState(): ClientAuthProfileState {
-  const [state, setState] = useState<ClientAuthProfileState>(() => getSnapshot());
+  // Suspense siblings may hydrate after another consumer has already filled the cache.
+  // Every component must still start from the same snapshot it rendered on the server.
+  const [state, setState] = useState<ClientAuthProfileState>({
+    profile: emptyProfile,
+    isResolved: false,
+  });
 
   useEffect(() => {
     ensureAuthProfileLoaded();

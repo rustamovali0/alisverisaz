@@ -816,7 +816,7 @@ export async function getAdminStoreDetail(storeId: string) {
 export async function getSellerFeatureAccess(userId: string, featureKey: string) {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: stores } = await (supabase as any)
+    const { data: stores, error: storesError } = await (supabase as any)
       .from("stores")
       .select("id")
       .eq("owner_id", userId);
@@ -827,8 +827,8 @@ export async function getSellerFeatureAccess(userId: string, featureKey: string)
       .limit(1)
       .maybeSingle();
 
-    if (globalSettingsError?.code === "42P01" || globalSettingsError?.code === "PGRST205") {
-      return true;
+    if (storesError || globalSettingsError) {
+      return false;
     }
 
     const storeIds = ((stores ?? []) as Array<{ id: string }>).map((store) => store.id);
@@ -855,13 +855,8 @@ export async function getSellerFeatureAccess(userId: string, featureKey: string)
           .in("store_id", storeIds),
       ]);
 
-    if (
-      panelRowsError?.code === "42P01" ||
-      panelRowsError?.code === "PGRST205" ||
-      overridesError?.code === "42P01" ||
-      overridesError?.code === "PGRST205"
-    ) {
-      return true;
+    if (panelRowsError || overridesError) {
+      return false;
     }
 
     const overrideMap = new Map(
@@ -888,7 +883,7 @@ export async function getSellerFeatureAccess(userId: string, featureKey: string)
     });
   } catch (error) {
     console.error("Seller feature access could not be loaded", error);
-    return true;
+    return false;
   }
 }
 

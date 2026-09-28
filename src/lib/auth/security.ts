@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isIP } from "node:net";
 
 import { headers } from "next/headers";
 
@@ -15,6 +16,7 @@ type RateLimitBucket = {
 type RateLimitRule = {
   endpoint:
     | "login"
+    | "register"
     | "password_reset"
     | "guest_checkout"
     | "marketplace_search"
@@ -34,14 +36,15 @@ type BucketInput = {
 
 const GENERIC_CAPTCHA_ERROR = "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
 const GENERIC_RATE_LIMIT_ERROR =
-  "Brut-force detected. 2 dəqiqə sonra yenidən cəhd edin.";
+  "Çox sayda cəhd edildi. Bir az sonra yenidən cəhd edin.";
+const RATE_LIMIT_UNAVAILABLE = "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
 
 function hashValue(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
 
 function isSafeIp(value: string) {
-  return /^[a-fA-F0-9:.]{3,45}$/.test(value);
+  return isIP(value) !== 0;
 }
 
 function readForwardedIp(value: string | null) {
@@ -52,6 +55,11 @@ function readForwardedIp(value: string | null) {
 
 export async function getClientIp() {
   const headerList = await headers();
+  if (process.env.VERCEL === "1") {
+    // Vercel overwrites these headers. Client-supplied proxy headers are not trusted.
+    return readForwardedIp(headerList.get("x-vercel-forwarded-for")) ||
+      readForwardedIp(headerList.get("x-forwarded-for")) || "unknown";
+  }
   const directIp =
     readForwardedIp(headerList.get("cf-connecting-ip")) ||
     readForwardedIp(headerList.get("true-client-ip")) ||
@@ -98,6 +106,7 @@ export async function verifyCaptchaToken(token: string, remoteIp: string) {
       {
         method: "POST",
         body,
+        signal: AbortSignal.timeout(5000),
       },
     );
     const data = (await response.json()) as { success?: boolean };
@@ -167,10 +176,14 @@ export async function assertAuthRateLimit(input: RateLimitRule & { ip: string })
     ip: input.ip,
   });
   const bucketKeys = bucketInputs.map(getBucketKey);
-  const { data } = await (supabaseAdmin as any)
+  const { data, error } = await (supabaseAdmin as any)
     .from("auth_rate_limits")
     .select("bucket_key,attempts,window_start,blocked_until")
     .in("bucket_key", bucketKeys);
+  if (error) {
+    console.error("Rate limit lookup failed", { code: error.code });
+    return { ok: false, message: RATE_LIMIT_UNAVAILABLE };
+  }
   const buckets = new Map(
     ((data ?? []) as RateLimitBucket[]).map((bucket) => [bucket.bucket_key, bucket]),
   );
@@ -221,11 +234,15 @@ export async function recordAuthRateLimitAttempt(
 
   for (const bucketInput of bucketInputs) {
     const bucketKey = getBucketKey(bucketInput);
-    const { data } = await (supabaseAdmin as any)
+    const { data, error } = await (supabaseAdmin as any)
       .from("auth_rate_limits")
       .select("bucket_key,attempts,window_start,blocked_until")
       .eq("bucket_key", bucketKey)
       .maybeSingle();
+    if (error) {
+      console.error("Rate limit attempt lookup failed", { code: error.code });
+      return { isBlocked: true, message: RATE_LIMIT_UNAVAILABLE };
+    }
     const bucket = data as RateLimitBucket | null;
     const expired = !bucket || isWindowExpired(bucket, now, input.windowSeconds);
     const attempts = expired ? 1 : Number(bucket.attempts ?? 0) + 1;
@@ -235,7 +252,7 @@ export async function recordAuthRateLimitAttempt(
         : null;
     isBlocked = isBlocked || Boolean(blockedUntil);
 
-    await (supabaseAdmin as any).from("auth_rate_limits").upsert({
+    const { error: writeError } = await (supabaseAdmin as any).from("auth_rate_limits").upsert({
       bucket_key: bucketKey,
       endpoint: input.endpoint,
       bucket_type: bucketInput.bucketType,
@@ -245,6 +262,10 @@ export async function recordAuthRateLimitAttempt(
       window_start: expired ? windowStart : bucket.window_start,
       blocked_until: blockedUntil,
     });
+    if (writeError) {
+      console.error("Rate limit attempt write failed", { code: writeError.code });
+      return { isBlocked: true, message: RATE_LIMIT_UNAVAILABLE };
+    }
   }
 
   return {
@@ -256,6 +277,7 @@ export async function recordAuthRateLimitAttempt(
 export async function resetAuthRateLimit(input: {
   endpoint:
     | "login"
+    | "register"
     | "password_reset"
     | "guest_checkout"
     | "marketplace_search"

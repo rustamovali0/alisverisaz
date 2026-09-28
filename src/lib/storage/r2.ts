@@ -233,7 +233,11 @@ function keyFromPublicUrl(url: string) {
     return null;
   }
 
-  return decodeURIComponent(url.slice(prefix.length));
+  try {
+    return decodeURIComponent(url.slice(prefix.length).split(/[?#]/, 1)[0]);
+  } catch {
+    return null;
+  }
 }
 
 export function isR2PublicUrl(url: string) {

@@ -12,7 +12,7 @@ import { updateSession } from "@/lib/supabase/middleware";
 
 function copyCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
-    to.cookies.set(cookie.name, cookie.value);
+    to.cookies.set(cookie);
   });
 }
 

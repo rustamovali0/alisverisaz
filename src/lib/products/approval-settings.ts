@@ -35,14 +35,15 @@ export function normalizeProductApprovalSettings(value: unknown): ProductApprova
 export async function getProductApprovalSettings(): Promise<ProductApprovalSettings> {
   try {
     const supabase = createSupabaseAdminClient();
-    const { data } = await (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("platform_settings")
       .select("value")
       .eq("key", "product_approval")
       .maybeSingle();
 
+    if (error) return { requireApproval: true };
     return normalizeProductApprovalSettings(data?.value);
   } catch {
-    return DEFAULT_PRODUCT_APPROVAL_SETTINGS;
+    return { requireApproval: true };
   }
 }

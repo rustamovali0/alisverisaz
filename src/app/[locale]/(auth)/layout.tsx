@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { getDashboardPath } from "@/lib/auth/redirects";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
 type AuthLayoutProps = {
@@ -16,11 +17,7 @@ function getSafeNextPath(currentUrl: string) {
   const query = currentUrl.includes("?") ? currentUrl.slice(currentUrl.indexOf("?")) : "";
   const next = new URLSearchParams(query).get("next") ?? "";
 
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "";
-  }
-
-  return next;
+  return normalizeNextPath(next);
 }
 
 export default async function AuthLayout({ children, params }: AuthLayoutProps) {

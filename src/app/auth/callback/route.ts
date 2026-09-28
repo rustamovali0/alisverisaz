@@ -1,16 +1,9 @@
 import { NextResponse } from "next/server";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import type { AuthRole } from "@/lib/auth/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function normalizeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/";
-  }
-
-  return value;
-}
 
 function readMetadataString(metadata: Record<string, unknown>, keys: string[]) {
   for (const key of keys) {
@@ -28,7 +21,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const origin = requestUrl.origin;
   const code = requestUrl.searchParams.get("code");
-  const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"));
+  const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"), "/");
 
   if (!code) {
     return NextResponse.redirect(new URL("/login?error=google", origin));

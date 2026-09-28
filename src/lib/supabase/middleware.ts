@@ -47,7 +47,7 @@ function createRedirectResponse(request: NextRequest, response: NextResponse, pa
   const redirectResponse = NextResponse.redirect(new URL(path, request.url));
 
   response.cookies.getAll().forEach((cookie) => {
-    redirectResponse.cookies.set(cookie.name, cookie.value);
+    redirectResponse.cookies.set(cookie);
   });
 
   return redirectResponse;

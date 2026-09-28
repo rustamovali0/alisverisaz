@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { after } from "next/server";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
 import {
@@ -12,6 +13,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { ensureAuthProfile, ensureSellerStore } from "@/lib/auth/profiles";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import { clientEnv } from "@/lib/config/env.client";
@@ -50,12 +52,15 @@ const ALLOWED_AUTH_MEDIA_TYPES = ["image/*"];
 const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
 const GENERIC_RESET_RESPONSE =
   "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
+const ACCEPTED_PASSWORD_RESET: AuthResult = {
+  ok: true,
+  message: GENERIC_RESET_RESPONSE,
+  redirectTo: "/login",
+};
 const PASSWORD_RESET_SEND_ERROR =
   "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
 const PASSWORD_RESET_CONFIG_ERROR =
   "Şifrə bərpası üçün email ayarları tamamlanmayıb.";
-const PASSWORD_RESET_INACTIVE_ACCOUNT =
-  "Sizin aktiv hesabınız yoxdur.";
 const PASSWORD_RESET_TIMEOUT_MS = 15_000;
 
 function readString(formData: FormData, key: string) {
@@ -125,12 +130,6 @@ function isLocalhostOrigin(value: string) {
   }
 }
 
-function isLocalhostHost(value: string) {
-  const host = value.split(":")[0]?.toLowerCase() ?? "";
-
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
-}
-
 async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -152,42 +151,11 @@ async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promi
 }
 
 async function getPublicRequestOrigin() {
-  const headerList = await headers();
-  const forwardedHost = headerList.get("x-forwarded-host");
-  const forwardedProto = headerList.get("x-forwarded-proto") ?? "https";
-  const host = forwardedHost ?? headerList.get("host");
-
-  if (host && !isLocalhostHost(host)) {
-    return `${forwardedProto}://${host}`;
+  // Recovery tokens must never be sent to a host supplied by the request.
+  if (process.env.NODE_ENV !== "production" || !isLocalhostOrigin(clientEnv.appUrl)) {
+    return new URL(clientEnv.appUrl).origin;
   }
-
-  if (clientEnv.appUrl && !isLocalhostOrigin(clientEnv.appUrl)) {
-    return clientEnv.appUrl.replace(/\/+$/, "");
-  }
-
-  return host ? `${forwardedProto}://${host}` : clientEnv.appUrl;
-}
-
-function normalizeNextPath(value: string) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "";
-  }
-
-  return value;
-}
-
-async function getRequestOrigin() {
-  const headerList = await headers();
-  const forwardedHost = headerList.get("x-forwarded-host");
-  const forwardedProto = headerList.get("x-forwarded-proto") ?? "https";
-  const host = forwardedHost ?? headerList.get("host");
-  const origin = headerList.get("origin");
-
-  if (origin) {
-    return origin;
-  }
-
-  return host ? `${forwardedProto}://${host}` : clientEnv.appUrl;
+  return new URL(`https://${clientEnv.storeRootDomain}`).origin;
 }
 
 async function recordLoginFailure(
@@ -344,7 +312,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  if (password.length < 8) {
+  if (password.length < 8 || password.length > 1024) {
     return {
       ok: false,
       message: "Şifrə minimum 8 simvol olmalıdır.",
@@ -357,6 +325,19 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       message: "Qeydiyyat üçün istifadəçi razılaşmasını təsdiqləyin.",
     };
   }
+
+  const rateLimitRule = {
+    endpoint: "register" as const,
+    identifier: email,
+    ip: await getClientIp(),
+    maxAttempts: 5,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
+  if (attempt.isBlocked) return { ok: false, message: attempt.message };
 
   const supabaseAdmin = createSupabaseAdminClient();
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -590,7 +571,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const captchaToken = readCaptchaToken(formData);
   const captcha =
-    mode === "admin" || !captchaToken
+    mode === "admin" || (!serverEnv.hasTurnstileConfig && !captchaToken)
       ? { ok: true, message: "" }
       : await verifyCaptchaToken(captchaToken, ip);
 
@@ -1044,6 +1025,33 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     };
   }
 
+  const rateLimitRule = {
+    endpoint: "password_reset" as const,
+    identifier: email,
+    ip: await getClientIp(),
+    maxAttempts: 5,
+    windowSeconds: 15 * 60,
+    blockSeconds: 15 * 60,
+  };
+  const rateLimit = await assertAuthRateLimit(rateLimitRule);
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
+  if (attempt.isBlocked) return { ok: false, message: attempt.message };
+
+  // Respond before account lookup so neither response content nor mail latency
+  // reveals whether the supplied address has an active account.
+  after(async () => {
+    try {
+      await sendAccountRecoveryEmail(email);
+    } catch (error) {
+      console.error("Password reset background delivery failed", error);
+    }
+  });
+  return ACCEPTED_PASSWORD_RESET;
+}
+
+async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
+  const accepted = ACCEPTED_PASSWORD_RESET;
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: resetProfile, error: resetProfileError } = await (supabaseAdmin as any)
     .from("profiles")
@@ -1065,10 +1073,7 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
   }
 
   if (!resetProfile?.id) {
-    return {
-      ok: false,
-      message: PASSWORD_RESET_INACTIVE_ACCOUNT,
-    };
+    return accepted;
   }
 
   let authUserResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.getUserById>>;
@@ -1100,10 +1105,7 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     !(bannedUntil && bannedUntil > Date.now());
 
   if (!isAccountActive) {
-    return {
-      ok: false,
-      message: PASSWORD_RESET_INACTIVE_ACCOUNT,
-    };
+    return accepted;
   }
 
   const redirectUrl = new URL("/auth/callback", await getPublicRequestOrigin());
@@ -1140,10 +1142,7 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
 
     if (error) {
       if (isMissingAuthUserError(error)) {
-        return {
-          ok: false,
-          message: PASSWORD_RESET_INACTIVE_ACCOUNT,
-        };
+        return accepted;
       }
 
       console.error("Password reset link generation failed", {
@@ -1226,11 +1225,7 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     }
   }
 
-  return {
-    ok: true,
-    message: GENERIC_RESET_RESPONSE,
-    redirectTo: "/login",
-  };
+  return accepted;
 }
 
 export async function updatePasswordAction(formData: FormData): Promise<AuthResult> {

@@ -5,11 +5,8 @@ import { revalidatePath } from "next/cache";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
-import {
-  sendProductRejectedEmail,
-  sendProductSubmittedEmail,
-} from "@/lib/email/product-approval";
-import { getProductApprovalSettings } from "@/lib/products/approval-settings";
+import { sendProductRejectedEmail } from "@/lib/email/product-approval";
+import { notifySeller } from "@/lib/products/approval-notifications";
 import { deleteR2ImagesByUrls } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -76,30 +73,6 @@ async function getPendingProduct(productId: string) {
       .map((image) => image.url)
       .filter((url): url is string => Boolean(url)),
   };
-}
-
-async function notifySeller(input: {
-  userId: string | null;
-  type: string;
-  title: string;
-  body: string;
-  productId: string;
-}) {
-  if (!input.userId) {
-    return;
-  }
-
-  const supabase = createSupabaseAdminClient();
-  await (supabase as any).from("notifications").insert({
-    user_id: input.userId,
-    type: input.type,
-    title: input.title,
-    body: input.body,
-    data: {
-      source: "product_approval",
-      product_id: input.productId,
-    },
-  });
 }
 
 export async function updateProductApprovalSettingsAction(
@@ -322,39 +295,6 @@ export async function deletePendingProductAction(
     ok: true,
     message: "Məhsul silindi və satıcıya bildiriş göndərildi.",
   };
-}
-
-export async function notifyProductSubmitted(input: {
-  sellerId: string;
-  sellerName: string;
-  sellerEmail: string | null;
-  productId: string;
-  productName: string;
-}) {
-  await notifySeller({
-    userId: input.sellerId,
-    type: "product_pending_review",
-    title: "Məhsul təsdiqə göndərildi",
-    body: "Məhsul əlavə edildi, qəbul edildikdən sonra dərc olunacaq.",
-    productId: input.productId,
-  });
-
-  if (!input.sellerEmail) {
-    return;
-  }
-
-  try {
-    await sendProductSubmittedEmail({
-      to: input.sellerEmail,
-      sellerName: input.sellerName,
-      productName: input.productName,
-    });
-  } catch (error) {
-    console.error("Product submitted email failed", {
-      productId: input.productId,
-      error,
-    });
-  }
 }
 
 function revalidateProductApprovalPaths(product: {

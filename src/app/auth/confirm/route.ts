@@ -1,21 +1,17 @@
 import { NextResponse } from "next/server";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-
-function normalizeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) {
-    return "/reset-password?mode=recovery";
-  }
-
-  return value;
-}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const origin = requestUrl.origin;
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
-  const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"));
+  const nextPath = normalizeNextPath(
+    requestUrl.searchParams.get("next"),
+    "/reset-password?mode=recovery",
+  );
   const expiredUrl = new URL("/forgot-password", origin);
 
   expiredUrl.searchParams.set("reset", "expired");
