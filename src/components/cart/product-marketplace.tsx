@@ -920,6 +920,12 @@ export function ProductGrid({
   const t = useTranslations("marketplace");
   const router = useRouter();
   const isLiquidGlass = productCardVariant === "liquid-glass";
+  const [clientNow, setClientNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setClientNow(Date.now());
+  }, []);
+
   if (products.length === 0) {
     return (
       <EmptyState
@@ -929,8 +935,6 @@ export function ProductGrid({
       />
     );
   }
-
-  const now = Date.now();
 
   return (
     <div
@@ -958,9 +962,10 @@ export function ProductGrid({
           : "/products";
         const createdTime = product.createdAt ? new Date(product.createdAt).getTime() : 0;
         const isNewProduct =
+          clientNow !== null &&
           Number.isFinite(createdTime) &&
           createdTime > 0 &&
-          now - createdTime < 14 * 24 * 60 * 60 * 1000;
+          clientNow - createdTime < 14 * 24 * 60 * 60 * 1000;
 
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
