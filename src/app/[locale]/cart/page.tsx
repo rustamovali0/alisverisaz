@@ -6,8 +6,6 @@ import {
   getDeliveryStoreOverrides,
 } from "@/lib/delivery/data";
 
-export const dynamic = "force-dynamic";
-
 type CartPageProps = {
   params: Promise<{
     locale: string;
@@ -28,8 +26,9 @@ function formatDefaultAddress(addresses: CustomerAddress[]) {
 export default async function CartPage({ params, searchParams }: CartPageProps) {
   const { locale } = await params;
   const query = await searchParams;
+  const checkoutOnly = query?.mode === "checkout";
   const [current, deliverySettings, deliveryStoreOverrides] = await Promise.all([
-    getCurrentUserProfile(),
+    checkoutOnly ? getCurrentUserProfile() : Promise.resolve(null),
     getDeliverySettings(),
     getDeliveryStoreOverrides(),
   ]);
@@ -38,7 +37,7 @@ export default async function CartPage({ params, searchParams }: CartPageProps) 
   return (
     <CartCheckout
       locale={locale}
-      checkoutOnly={query?.mode === "checkout"}
+      checkoutOnly={checkoutOnly}
       defaultFullName={current?.profile?.full_name ?? current?.user.email ?? ""}
       defaultPhone={current?.profile?.phone ?? ""}
       defaultAddress={formatDefaultAddress(addresses)}

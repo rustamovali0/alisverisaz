@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
 import { recordAdminAudit } from "@/lib/admin/audit";
+import { CACHE_TAGS } from "@/lib/cache/public-cache";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { DeliveryActionResult } from "@/lib/delivery/types";
 
@@ -53,6 +54,7 @@ function readOverrideBoolean(formData: FormData, key: string) {
 }
 
 function revalidateDeliveryPaths() {
+  revalidateTag(CACHE_TAGS.delivery, "max");
   revalidatePath("/radmin/delivery");
   revalidatePath("/admin/delivery");
   revalidatePath("/cart");

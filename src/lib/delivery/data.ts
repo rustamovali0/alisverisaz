@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 import type { DeliverySettings, DeliveryStoreOverride } from "@/lib/delivery/types";
 
 type DeliverySettingsRow = {
@@ -81,57 +82,79 @@ function readSettings(row: DeliverySettingsRow | null | undefined): DeliverySett
   };
 }
 
-export async function getDeliverySettings() {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const { data } = await (supabaseAdmin as any)
-    .from("delivery_settings")
-    .select(
-      "pickup_enabled,courier_enabled,region_enabled,baku_price,region_price,free_delivery_threshold,pickup_estimate,courier_estimate,region_estimate",
-    )
-    .eq("key", "global")
-    .maybeSingle();
+const getCachedDeliverySettings = publicCache(
+  async () => {
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { data } = await (supabaseAdmin as any)
+      .from("delivery_settings")
+      .select(
+        "pickup_enabled,courier_enabled,region_enabled,baku_price,region_price,free_delivery_threshold,pickup_estimate,courier_estimate,region_estimate",
+      )
+      .eq("key", "global")
+      .maybeSingle();
 
-  return readSettings(data as DeliverySettingsRow | null);
+    return readSettings(data as DeliverySettingsRow | null);
+  },
+  ["delivery-settings"],
+  {
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.delivery],
+  },
+);
+
+export async function getDeliverySettings() {
+  return getCachedDeliverySettings();
 }
 
-export async function getDeliveryStoreOverrides() {
+const getCachedDeliveryStoreOverrides = publicCache(
+  async () => {
   const supabaseAdmin = createSupabaseAdminClient();
-  const [{ data: stores }, { data: overrides }] = await Promise.all([
-    (supabaseAdmin as any)
-      .from("stores")
-      .select("id,name,slug")
-      .order("name", { ascending: true }),
-    (supabaseAdmin as any)
-      .from("delivery_store_overrides")
-      .select(
-        "store_id,pickup_enabled,courier_enabled,region_enabled,baku_price,region_price,free_delivery_threshold,pickup_estimate,courier_estimate,region_estimate",
-      ),
-  ]);
-  const overrideMap = new Map(
-    ((overrides ?? []) as OverrideRow[]).map((override) => [
-      override.store_id,
-      override,
-    ]),
-  );
+    const [{ data: stores }, { data: overrides }] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("stores")
+        .select("id,name,slug")
+        .order("name", { ascending: true }),
+      (supabaseAdmin as any)
+        .from("delivery_store_overrides")
+        .select(
+          "store_id,pickup_enabled,courier_enabled,region_enabled,baku_price,region_price,free_delivery_threshold,pickup_estimate,courier_estimate,region_estimate",
+        ),
+    ]);
+    const overrideMap = new Map(
+      ((overrides ?? []) as OverrideRow[]).map((override) => [
+        override.store_id,
+        override,
+      ]),
+    );
 
-  return ((stores ?? []) as StoreRow[]).map((store): DeliveryStoreOverride => {
-    const override = overrideMap.get(store.id);
+    return ((stores ?? []) as StoreRow[]).map((store): DeliveryStoreOverride => {
+      const override = overrideMap.get(store.id);
 
-    return {
-      storeId: store.id,
-      storeName: store.name ?? "Mağaza",
-      storeSlug: store.slug,
-      pickupEnabled: override?.pickup_enabled ?? null,
-      courierEnabled: override?.courier_enabled ?? null,
-      regionEnabled: override?.region_enabled ?? null,
-      bakuPrice: readOptionalNumber(override?.baku_price),
-      regionPrice: readOptionalNumber(override?.region_price),
-      freeDeliveryThreshold: readOptionalNumber(
-        override?.free_delivery_threshold,
-      ),
-      pickupEstimate: override?.pickup_estimate ?? null,
-      courierEstimate: override?.courier_estimate ?? null,
-      regionEstimate: override?.region_estimate ?? null,
-    };
-  });
+      return {
+        storeId: store.id,
+        storeName: store.name ?? "Mağaza",
+        storeSlug: store.slug,
+        pickupEnabled: override?.pickup_enabled ?? null,
+        courierEnabled: override?.courier_enabled ?? null,
+        regionEnabled: override?.region_enabled ?? null,
+        bakuPrice: readOptionalNumber(override?.baku_price),
+        regionPrice: readOptionalNumber(override?.region_price),
+        freeDeliveryThreshold: readOptionalNumber(
+          override?.free_delivery_threshold,
+        ),
+        pickupEstimate: override?.pickup_estimate ?? null,
+        courierEstimate: override?.courier_estimate ?? null,
+        regionEstimate: override?.region_estimate ?? null,
+      };
+    });
+  },
+  ["delivery-store-overrides"],
+  {
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.delivery, CACHE_TAGS.marketplaceStores],
+  },
+);
+
+export async function getDeliveryStoreOverrides() {
+  return getCachedDeliveryStoreOverrides();
 }

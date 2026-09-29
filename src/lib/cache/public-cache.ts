@@ -52,6 +52,7 @@ export const CACHE_TAGS = {
   marketplaceStores: "marketplace-stores",
   store: (storeId: string) => `store:${storeId}`,
   storeProducts: (storeId: string) => `store-products:${storeId}`,
+  delivery: "delivery",
   faq: "faq",
   helpCenter: "help-center",
   articles: "articles",
