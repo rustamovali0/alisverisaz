@@ -8,7 +8,8 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "qa:smoke": "node scripts/qa-smoke.mjs"
+    "qa:smoke": "node scripts/qa-smoke.mjs",
+    "qa:perf": "node scripts/qa-performance.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1114.0",

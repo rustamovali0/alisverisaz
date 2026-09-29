@@ -22,7 +22,7 @@ export default async function HomePage({ params }: HomePageProps) {
       getHomepageSections(),
       getActiveHomeThemeSetting(),
       getMarketplaceStoreCards({ limit: 16 }),
-      getMarketplaceProductPage(locale, { limit: 16 }),
+      getMarketplaceProductPage(locale, { limit: 8 }),
       getCategoryOptions({ rootOnly: true }),
       getPopularMarketplaceSearches(),
     ]);

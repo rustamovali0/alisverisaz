@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 
 const MAX_SEARCH_TERM_LENGTH = 120;
 
@@ -82,24 +83,35 @@ async function getSiteSearchOverrides() {
   );
 }
 
+const getCachedPopularMarketplaceSearches = publicCache(
+  async () => {
+    const [overrides, automaticTerms] = await Promise.all([
+      getSiteSearchOverrides(),
+      getAutomaticTerms(4),
+    ]);
+
+    const seen = new Set<string>();
+
+    return [...overrides, ...automaticTerms.map((item) => item.term)].filter((term) => {
+      const key = term.toLocaleLowerCase("az-AZ");
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    }).slice(0, 4);
+  },
+  ["public-popular-marketplace-searches"],
+  {
+    revalidate: CACHE_TTL.MEDIUM,
+    tags: [CACHE_TAGS.homepage],
+  },
+);
+
 export async function getPopularMarketplaceSearches() {
-  const [overrides, automaticTerms] = await Promise.all([
-    getSiteSearchOverrides(),
-    getAutomaticTerms(4),
-  ]);
-
-  const seen = new Set<string>();
-
-  return [...overrides, ...automaticTerms.map((item) => item.term)].filter((term) => {
-    const key = term.toLocaleLowerCase("az-AZ");
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  }).slice(0, 4);
+  return getCachedPopularMarketplaceSearches();
 }
 
 export async function getSearchAdministrationData(): Promise<SearchAdministrationData> {
