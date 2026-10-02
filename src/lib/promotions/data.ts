@@ -147,7 +147,7 @@ export async function getActivePromotionMaps() {
     .select("target_type,store_id,product_id,ends_at")
     .eq("status", "approved")
     .lte("starts_at", now)
-    .gt("ends_at", now);
+    .or(`ends_at.is.null,ends_at.gt.${now}`);
 
   const promotedStoreIds = new Set<string>();
   const promotedProductIds = new Set<string>();

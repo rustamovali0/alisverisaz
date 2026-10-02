@@ -1,17 +1,33 @@
 "use client";
 
-import { Check, Crown, X } from "lucide-react";
-import { useTransition } from "react";
+import { BadgePlus, Check, Crown, Package, Store, X } from "lucide-react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
 import {
   approvePromotionRequestAction,
+  cancelPromotionRequestAction,
+  createAdminPromotionAction,
   rejectPromotionRequestAction,
 } from "@/lib/promotions/actions";
-import type { PromotionActionResult, PromotionRequest } from "@/lib/promotions/types";
+import type {
+  PromotionActionResult,
+  PromotionRequest,
+  PromotionTargetType,
+} from "@/lib/promotions/types";
+import type { ManagedProduct } from "@/lib/products/types";
+
+type StoreOption = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+};
 
 type AdminPromotionManagerProps = {
+  stores: StoreOption[];
+  products: ManagedProduct[];
   requests: PromotionRequest[];
 };
 
@@ -24,7 +40,7 @@ function formatMoney(value: number, currency = "AZN") {
 
 function formatDate(value: string | null) {
   if (!value) {
-    return "-";
+    return "Ömürlük";
   }
 
   return new Intl.DateTimeFormat("az-AZ", {
@@ -88,17 +104,131 @@ function AdminPromotionActionButton({
   );
 }
 
-export function AdminPromotionManager({ requests }: AdminPromotionManagerProps) {
-  if (requests.length === 0) {
-    return (
-      <div className="rounded-xl border bg-background p-8 text-sm text-muted-foreground">
-        Hələ önə çıxarma sorğusu yoxdur.
-      </div>
-    );
+function AdminDirectPromotionForm({
+  stores,
+  products,
+}: {
+  stores: StoreOption[];
+  products: ManagedProduct[];
+}) {
+  const [targetType, setTargetType] = useState<PromotionTargetType>("store");
+  const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
+  const [isPending, startTransition] = useTransition();
+  const visibleProducts = useMemo(
+    () => products.filter((product) => product.storeId === storeId),
+    [products, storeId],
+  );
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const result = await createAdminPromotionAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Aktiv edilmədi");
+        return;
+      }
+
+      void appAlert.success("Önə çıxarıldı", result.message);
+    });
   }
 
   return (
+    <form onSubmit={handleSubmit} className="grid gap-4 rounded-xl border bg-background p-4">
+      <div className="grid gap-2 md:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+        <div className="grid gap-2">
+          <span className="text-sm font-black">Tip</span>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: "store" as const, label: "Mağaza", icon: Store },
+              { value: "product" as const, label: "Məhsul", icon: Package },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <label
+                  key={item.value}
+                  className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3 text-sm font-bold has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 has-[:checked]:text-emerald-800"
+                >
+                  <input
+                    type="radio"
+                    name="targetType"
+                    value={item.value}
+                    checked={targetType === item.value}
+                    onChange={() => setTargetType(item.value)}
+                    className="sr-only"
+                  />
+                  <Icon className="size-4" aria-hidden="true" />
+                  {item.label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <label className="grid gap-2 text-sm font-black">
+          Mağaza
+          <select
+            name="storeId"
+            value={storeId}
+            onChange={(event) => setStoreId(event.target.value)}
+            required
+            className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {stores.map((store) => (
+              <option key={store.id} value={store.id}>
+                {store.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {targetType === "product" ? (
+          <label className="grid gap-2 text-sm font-black">
+            Məhsul
+            <select
+              name="productId"
+              required
+              className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Məhsul seçin</option>
+              {visibleProducts.map((product) => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <input type="hidden" name="productId" value="" />
+        )}
+
+        <Button type="submit" disabled={isPending || stores.length === 0}>
+          <BadgePlus className="mr-2 size-4" aria-hidden="true" />
+          {isPending ? "Aktiv edilir" : "Ömürlük önə çıxar"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export function AdminPromotionManager({
+  stores,
+  products,
+  requests,
+}: AdminPromotionManagerProps) {
+  return (
     <div className="grid gap-4">
+      <AdminDirectPromotionForm stores={stores} products={products} />
+
+      {requests.length === 0 ? (
+        <div className="rounded-xl border bg-background p-8 text-sm text-muted-foreground">
+          Hələ önə çıxarma sorğusu yoxdur.
+        </div>
+      ) : null}
+
       {requests.map((request) => (
         <article key={request.id} className="rounded-xl border bg-background p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -124,7 +254,9 @@ export function AdminPromotionManager({ requests }: AdminPromotionManagerProps) 
                 Satıcı: {request.requesterName ?? request.requesterEmail ?? request.requesterId}
               </p>
               <p className="mt-2 text-sm font-black">
-                {request.requestedDays} gün · {formatMoney(request.dailyPriceAmount, request.currency)} / gün · Cəmi {formatMoney(request.totalAmount, request.currency)}
+                {request.status === "approved" && !request.endsAt
+                  ? "Ömürlük önə çıxarılıb"
+                  : `${request.requestedDays} gün · ${formatMoney(request.dailyPriceAmount, request.currency)} / gün · Cəmi ${formatMoney(request.totalAmount, request.currency)}`}
               </p>
               <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
                 <span>Yaradıldı: {formatDate(request.createdAt)}</span>
@@ -148,6 +280,17 @@ export function AdminPromotionManager({ requests }: AdminPromotionManagerProps) 
                   action={rejectPromotionRequestAction}
                   label="Rədd et"
                   successTitle="Rədd edildi"
+                  variant="destructive"
+                />
+              </div>
+            ) : null}
+            {request.status === "approved" ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <AdminPromotionActionButton
+                  requestId={request.id}
+                  action={cancelPromotionRequestAction}
+                  label="Ləğv et"
+                  successTitle="Ləğv edildi"
                   variant="destructive"
                 />
               </div>

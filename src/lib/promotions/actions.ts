@@ -9,9 +9,7 @@ import {
   invalidateStorePublicData,
 } from "@/lib/cache/public-cache";
 import { getOwnedStores } from "@/lib/dashboard/data";
-import {
-  getPromotionRequestById,
-} from "@/lib/promotions/data";
+import { getPromotionRequestById } from "@/lib/promotions/data";
 import {
   notifyPromotionRequestResolved,
   notifyPromotionRequestSubmitted,
@@ -44,13 +42,6 @@ function readRequestedDays(value: string) {
   }
 
   return Math.min(Math.max(days, 1), 90);
-}
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-
-  return next;
 }
 
 function revalidatePromotionPaths(input?: {
@@ -203,6 +194,161 @@ export async function createPromotionRequestAction(
   };
 }
 
+async function resolvePromotionTarget(input: {
+  targetType: PromotionTargetType;
+  storeId: string;
+  productId: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+  const { data: store } = await (supabase as any)
+    .from("stores")
+    .select("id,name,slug,owner_id")
+    .eq("id", input.storeId)
+    .maybeSingle();
+
+  if (!store) {
+    return {
+      ok: false as const,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  if (input.targetType === "store") {
+    return {
+      ok: true as const,
+      store: store as { id: string; name: string; slug: string | null; owner_id: string | null },
+      product: null,
+    };
+  }
+
+  if (!UUID_PATTERN.test(input.productId)) {
+    return {
+      ok: false as const,
+      message: "Məhsul seçilməlidir.",
+    };
+  }
+
+  const { data: product } = await (supabase as any)
+    .from("products")
+    .select("id,name,store_id")
+    .eq("id", input.productId)
+    .eq("store_id", input.storeId)
+    .maybeSingle();
+
+  if (!product) {
+    return {
+      ok: false as const,
+      message: "Məhsul bu mağazaya aid deyil.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    store: store as { id: string; name: string; slug: string | null; owner_id: string | null },
+    product: product as { id: string; name: string | null; store_id: string },
+  };
+}
+
+export async function createAdminPromotionAction(
+  formData: FormData,
+): Promise<PromotionActionResult> {
+  const current = await requireRole(["admin"], "/radmin/promotions");
+  const targetType = readTargetType(readString(formData, "targetType"));
+  const storeId = readString(formData, "storeId");
+  const productId = readString(formData, "productId");
+  const adminNote = readString(formData, "adminNote").slice(0, 600) || null;
+
+  if (!targetType || !UUID_PATTERN.test(storeId)) {
+    return {
+      ok: false,
+      message: "Mağaza və tip seçilməlidir.",
+    };
+  }
+
+  const resolved = await resolvePromotionTarget({ targetType, storeId, productId });
+
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      message: resolved.message,
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  let activeQuery = (supabase as any)
+    .from("promotion_requests")
+    .select("id")
+    .eq("target_type", targetType)
+    .eq("store_id", storeId)
+    .eq("status", "approved")
+    .limit(1);
+
+  activeQuery =
+    targetType === "product"
+      ? activeQuery.eq("product_id", resolved.product!.id)
+      : activeQuery.is("product_id", null);
+
+  const { data: existing } = await activeQuery;
+
+  if ((existing ?? []).length > 0) {
+    return {
+      ok: false,
+      message: "Bu seçim artıq önə çıxarılıb.",
+    };
+  }
+
+  const startsAt = new Date();
+  const requesterId = resolved.store.owner_id || current.user.id;
+  const { data, error } = await (supabase as any)
+    .from("promotion_requests")
+    .insert({
+      requester_id: requesterId,
+      target_type: targetType,
+      store_id: storeId,
+      product_id: targetType === "product" ? resolved.product!.id : null,
+      status: "approved",
+      requested_days: 1,
+      daily_price_amount: 0,
+      total_amount: 0,
+      currency: "AZN",
+      starts_at: startsAt.toISOString(),
+      ends_at: null,
+      approved_by: current.user.id,
+      approved_at: startsAt.toISOString(),
+      admin_note: adminNote || "RAdmin tərəfindən ömürlük önə çıxarıldı.",
+      metadata: {
+        source: "radmin_lifetime",
+        lifetime: true,
+        product_name: resolved.product?.name ?? null,
+      },
+    })
+    .select("id")
+    .single();
+
+  if (error || !data?.id) {
+    return {
+      ok: false,
+      message: error?.message ?? "Önə çıxarma aktiv edilmədi.",
+    };
+  }
+
+  const request = await getPromotionRequestById(data.id);
+
+  if (request) {
+    await notifyPromotionRequestResolved(request);
+    revalidatePromotionPaths({
+      productId: request.productId,
+      storeId: request.storeId,
+      storeSlug: request.storeSlug,
+    });
+  }
+
+  return {
+    ok: true,
+    message: "Ömürlük önə çıxarma aktiv edildi.",
+  };
+}
+
 export async function approvePromotionRequestAction(
   formData: FormData,
 ): Promise<PromotionActionResult> {
@@ -234,17 +380,16 @@ export async function approvePromotionRequestAction(
   }
 
   const startsAt = new Date();
-  const endsAt = addDays(startsAt, request.requestedDays);
   const supabase = createSupabaseAdminClient();
   const { error } = await (supabase as any)
     .from("promotion_requests")
     .update({
       status: "approved",
       starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
+      ends_at: null,
       approved_by: current.user.id,
       approved_at: startsAt.toISOString(),
-      admin_note: adminNote,
+      admin_note: adminNote || "Admin təsdiqi ilə ömürlük aktiv edildi.",
     })
     .eq("id", requestId);
 
@@ -268,7 +413,52 @@ export async function approvePromotionRequestAction(
 
   return {
     ok: true,
-    message: "Önə çıxarma aktiv edildi.",
+    message: "Önə çıxarma ömürlük aktiv edildi.",
+  };
+}
+
+export async function cancelPromotionRequestAction(
+  formData: FormData,
+): Promise<PromotionActionResult> {
+  await requireRole(["admin"], "/radmin/promotions");
+  const requestId = readString(formData, "requestId");
+  const adminNote = readString(formData, "adminNote").slice(0, 600) || null;
+
+  if (!UUID_PATTERN.test(requestId)) {
+    return {
+      ok: false,
+      message: "Sorğu tapılmadı.",
+    };
+  }
+
+  const currentRequest = await getPromotionRequestById(requestId);
+  const supabase = createSupabaseAdminClient();
+  const { error } = await (supabase as any)
+    .from("promotion_requests")
+    .update({
+      status: "canceled",
+      ends_at: new Date().toISOString(),
+      admin_note: adminNote || "RAdmin tərəfindən ləğv edildi.",
+    })
+    .eq("id", requestId)
+    .eq("status", "approved");
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePromotionPaths({
+    productId: currentRequest?.productId,
+    storeId: currentRequest?.storeId,
+    storeSlug: currentRequest?.storeSlug,
+  });
+
+  return {
+    ok: true,
+    message: "Önə çıxarma ləğv edildi.",
   };
 }
 

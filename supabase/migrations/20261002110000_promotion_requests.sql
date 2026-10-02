@@ -44,11 +44,11 @@ create index if not exists promotion_requests_status_idx
 on public.promotion_requests (status, created_at desc);
 
 create index if not exists promotion_requests_store_active_idx
-on public.promotion_requests (store_id, ends_at desc)
+on public.promotion_requests (store_id, starts_at desc)
 where status = 'approved';
 
 create index if not exists promotion_requests_product_active_idx
-on public.promotion_requests (product_id, ends_at desc)
+on public.promotion_requests (product_id, starts_at desc)
 where status = 'approved' and product_id is not null;
 
 alter table public.promotion_requests enable row level security;

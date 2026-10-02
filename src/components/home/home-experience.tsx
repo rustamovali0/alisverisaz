@@ -6,14 +6,11 @@ import {
   BadgePlus,
   Bot,
   Building2,
-  Clock3,
   Crown,
-  Flame,
   MapPin,
   Package,
   Search,
   ShieldCheck,
-  Sparkles,
   Store,
   Truck,
   type LucideIcon,
@@ -28,7 +25,6 @@ import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import { getStorePath } from "@/lib/config/domains";
-import { formatAznDiscountedPrice } from "@/lib/format";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +98,7 @@ function isDefaultHeroTitle(value: string) {
 }
 
 const homeDesignStyle: CSSProperties & Record<string, string> = {
-  "--background": "42 56% 97%",
+  "--background": "0 0% 100%",
   "--foreground": "221 39% 12%",
   "--card": "0 0% 100%",
   "--card-foreground": "221 39% 12%",
@@ -148,13 +144,6 @@ const modeTabs = [
   { label: "Elanlar", href: "/products", icon: Search },
   { label: "Mağazalar", href: "/stores", icon: Building2 },
   { label: "Məhsullar", href: "/products?sort=newest", icon: Package },
-];
-
-const feedTabs = [
-  { label: "Təcili", icon: Flame, tone: "text-rose-700 bg-rose-50 ring-rose-100" },
-  { label: "Video", icon: Sparkles, tone: "text-violet-700 bg-violet-50 ring-violet-100" },
-  { label: "VIP", icon: Crown, tone: "text-amber-700 bg-amber-50 ring-amber-100" },
-  { label: "Yeni", icon: Clock3, tone: "text-emerald-700 bg-emerald-50 ring-emerald-100" },
 ];
 
 function SectionHeader({
@@ -209,54 +198,6 @@ function CategoryCard({ category }: { category: CategoryOption }) {
         </span>
         <ArrowRight className="hidden size-4 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-emerald-700" />
       </span>
-    </Link>
-  );
-}
-
-function MiniProductCard({ product }: { product: CartProduct }) {
-  const productHref =
-    product.storeSlug && product.slug
-      ? `/${product.storeSlug}/products/${product.slug}`
-      : "/products";
-
-  return (
-    <Link
-      href={productHref}
-      className="grid min-w-0 grid-cols-[68px_minmax(0,1fr)] gap-3 rounded-xl border border-stone-200 bg-white p-2 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-emerald-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900"
-    >
-      <div className="aspect-square overflow-hidden rounded-lg bg-stone-100 dark:bg-slate-800">
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-emerald-700">
-            <Package className="size-6" aria-hidden="true" />
-          </div>
-        )}
-      </div>
-      <div className="min-w-0 py-1">
-        <div className={cn(
-          "mb-1 inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase ring-1",
-          product.isPromoted
-            ? "bg-amber-50 text-amber-700 ring-amber-100"
-            : "bg-emerald-50 text-emerald-700 ring-emerald-100",
-        )}>
-          {product.isPromoted ? "Önə çıxarılıb" : "Yeni elan"}
-        </div>
-        <h3 className="line-clamp-2 text-sm font-black leading-4 text-slate-950 dark:text-slate-50">
-          {product.name}
-        </h3>
-        <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">
-          {product.storeName ?? "Mağaza"}
-        </p>
-        <p className="mt-1 text-sm font-black text-emerald-700 dark:text-emerald-300">
-          {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
-        </p>
-      </div>
     </Link>
   );
 }
@@ -398,7 +339,7 @@ export function HomeExperience({
     0,
     visibleLimit(featuredSection, 8),
   );
-  const activeCategories = categories.slice(0, visibleLimit(categorySection, 12));
+  const activeCategories = categories.slice(0, visibleLimit(categorySection, 24));
   const heroPills = activeCategories.slice(0, 4);
   const popularSearchPills = popularSearches.length
     ? popularSearches.slice(0, 4).map((term) => ({
@@ -421,14 +362,13 @@ export function HomeExperience({
       ? "Mağazalar, elanlar və gündəlik fürsətlər bir yerdə. Mobildən sürətli bax, müqayisə et və satıcı ilə əlaqə saxla."
       : hero?.description || description;
   const heroBackgroundImage = mobileHeroImageUrl || heroImageUrl;
-  const previewProducts = products.slice(0, 3);
   const featuredStorePreview = featuredStores.slice(0, 2);
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
 
   return (
     <main
-      className="min-h-screen w-full max-w-full overflow-x-clip bg-[#f7f2e9] px-3 pb-[calc(92px+env(safe-area-inset-bottom))] pt-3 text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-5 md:pb-10 md:pt-6 lg:px-8"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-white px-3 pb-[calc(92px+env(safe-area-inset-bottom))] pt-3 text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-5 md:pb-10 md:pt-6 lg:px-8"
       data-homepage-preset={siteSettings.design.homepagePreset}
       style={{
         ...homeDesignStyle,
@@ -436,7 +376,7 @@ export function HomeExperience({
       }}
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-8 md:space-y-14">
-        <section className="grid min-w-0 gap-4 lg:grid-cols-[248px_minmax(0,1fr)_324px] lg:items-stretch">
+        <section className="grid min-w-0 gap-4 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-stretch">
           <aside className="hidden rounded-2xl border border-stone-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 lg:block">
             <div className="mb-3 flex items-center justify-between px-1">
               <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
@@ -447,7 +387,7 @@ export function HomeExperience({
               </Link>
             </div>
             <div className="grid gap-1.5">
-              {activeCategories.slice(0, 9).map((category) => {
+              {activeCategories.slice(0, 18).map((category) => {
                 const CategoryIcon = getCategoryIcon(category);
 
                 return (
@@ -476,7 +416,7 @@ export function HomeExperience({
                   fetchPriority="high"
                 />
               ) : null}
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.72)_0%,rgba(15,23,42,0.42)_38%,rgba(247,242,233,0.96)_100%)] dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.74)_0%,rgba(2,6,23,0.54)_38%,rgba(2,6,23,0.98)_100%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.72)_0%,rgba(15,23,42,0.42)_38%,rgba(255,255,255,0.96)_100%)] dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.74)_0%,rgba(2,6,23,0.54)_38%,rgba(2,6,23,0.98)_100%)]" />
 
               <div className="relative z-10 flex min-h-[560px] flex-col justify-between p-4 text-white sm:p-5 md:min-h-[510px] md:p-7">
                 <div className="flex items-start justify-between gap-3">
@@ -568,45 +508,6 @@ export function HomeExperience({
             </div>
           </div>
 
-          <aside className="grid gap-3 lg:content-between">
-            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
-                  Canlı lent
-                </h2>
-                <Link href="/products" className="text-xs font-bold text-emerald-700">
-                  Aç
-                </Link>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {feedTabs.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <Link
-                      key={item.label}
-                      href="/products"
-                      className={cn(
-                        "grid min-h-14 place-items-center rounded-xl px-1 py-2 text-center text-[11px] font-black ring-1",
-                        item.tone,
-                      )}
-                    >
-                      <Icon className="mb-1 size-4" aria-hidden="true" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {previewProducts.length > 0 ? (
-              <div className="grid gap-2">
-                {previewProducts.map((product) => (
-                  <MiniProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : null}
-          </aside>
         </section>
 
         <section className="grid grid-cols-2 gap-2 dark:border-slate-800 md:border-y md:border-stone-200 md:py-5 lg:grid-cols-4 lg:gap-4">
@@ -642,7 +543,7 @@ export function HomeExperience({
               href="/categories"
               action={home("viewAll")}
             />
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
               {activeCategories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}

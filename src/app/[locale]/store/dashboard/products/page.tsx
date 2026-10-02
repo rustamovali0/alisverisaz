@@ -42,9 +42,8 @@ export default async function StoreProductsPage() {
         request.status === "approved" &&
         request.productId &&
         request.startsAt &&
-        request.endsAt &&
         Date.parse(request.startsAt) <= now &&
-        Date.parse(request.endsAt) > now,
+        (!request.endsAt || Date.parse(request.endsAt) > now),
     )
     .map((request) => request.productId!);
 
