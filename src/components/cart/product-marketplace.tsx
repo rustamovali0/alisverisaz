@@ -104,7 +104,7 @@ type StorefrontProps = {
   storeSubdomainSlug?: string | null;
 };
 
-const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
 const PRODUCT_PAGE_SIZE = 52;
 const DEFAULT_STICKY_SCROLL_OFFSET = 96;
 

@@ -22,7 +22,7 @@ type StoreBrandingQuickEditProps = {
 };
 
 const IMAGE_ACCEPT = "image/*,.heic,.heif,.avif,.tif,.tiff,.bmp";
-const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
 type EditableFieldKey = "heroTitle" | "heroSubtitle" | "socialInstagram" | "socialTiktok";
 
 const editableFields: Array<{

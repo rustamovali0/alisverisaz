@@ -38,7 +38,7 @@ type HomeExperienceProps = {
   productsLabel: string;
 };
 
-const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.png";
+const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
 const LEGACY_HERO_TITLE = "Alışverişdə hər mağaza öz vitrinini qurur";
 const DEFAULT_HERO_TITLE = "ALISVERIS.AZ Alışverişin ünvanı";
 

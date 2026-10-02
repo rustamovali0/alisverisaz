@@ -29,7 +29,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   return (
     <aside className="relative hidden h-full min-h-[360px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
       <Image
-        src="/auth/auth-marketplace-panel.png"
+        src="/auth/auth-marketplace-panel.webp"
         alt="Alisveris marketplace auth banner"
         fill
         quality={70}
