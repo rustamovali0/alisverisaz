@@ -23,6 +23,7 @@ export type CartProduct = {
   depositAmount: number;
   options?: ProductOptionInput[];
   variantCombinations?: ProductVariantCombinationInput[];
+  isPromoted?: boolean;
 };
 
 export type MarketplaceProductSort = "newest" | "oldest" | "price_asc" | "price_desc";
@@ -59,6 +60,7 @@ export type MarketplaceStore = {
   productNextCursor?: string | null;
   productHasMore?: boolean;
   categoryIds: string[];
+  isPromoted?: boolean;
 };
 
 export type MarketplaceProductDetail = {

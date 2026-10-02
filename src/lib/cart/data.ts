@@ -20,6 +20,7 @@ import type {
   ProductVariantCombinationInput,
 } from "@/lib/products/types";
 import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
+import { getActivePromotionMaps } from "@/lib/promotions/data";
 
 type ProductRow = {
   id: string;
@@ -216,6 +217,38 @@ function toProductImages(row: ProductRow) {
       url: image.url,
       isPrimary: image.is_primary,
     }));
+}
+
+function markPromotedProducts(
+  products: CartProduct[],
+  promotedProductIds: Set<string>,
+) {
+  return products.map((product) => ({
+    ...product,
+    isPromoted: promotedProductIds.has(product.id),
+  }));
+}
+
+function markPromotedStores(
+  stores: MarketplaceStore[],
+  promotedStoreIds: Set<string>,
+  promotedProductIds: Set<string>,
+) {
+  return stores.map((store) => ({
+    ...store,
+    isPromoted: promotedStoreIds.has(store.id),
+    sampleProducts: markPromotedProducts(store.sampleProducts, promotedProductIds),
+  }));
+}
+
+function sortPromotedFirst<T extends { isPromoted?: boolean }>(values: T[]) {
+  return [...values].sort((left, right) => {
+    if (Boolean(left.isPromoted) !== Boolean(right.isPromoted)) {
+      return left.isPromoted ? -1 : 1;
+    }
+
+    return 0;
+  });
 }
 
 function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
@@ -565,7 +598,13 @@ async function getMarketplaceProductPageUncached(
     throw new Error(error.message);
   }
 
-  const rows = ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row));
+  const { promotedProductIds } = await getActivePromotionMaps();
+  const rows = sortPromotedFirst(
+    markPromotedProducts(
+      ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row)),
+      promotedProductIds,
+    ),
+  );
   const products = rows.slice(0, input.limit);
   const lastProduct = products.at(-1);
 
@@ -697,8 +736,9 @@ async function getMarketplaceStoresUncached(
   });
 
   const normalizedSearch = normalizeSearchValue(searchQuery);
+  const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
 
-  return storeRows
+  const marketplaceStores = storeRows
     .map((store): MarketplaceStore => {
       const storeProducts = productsByStore.get(store.id) ?? [];
 
@@ -751,6 +791,10 @@ async function getMarketplaceStoresUncached(
 
       return normalizeSearchValue(searchableText).includes(normalizedSearch);
     });
+
+  return sortPromotedFirst(
+    markPromotedStores(marketplaceStores, promotedStoreIds, promotedProductIds),
+  );
 }
 
 export async function getMarketplaceStores(input: {
@@ -825,23 +869,31 @@ export async function getMarketplaceStoreCards(input: {
         }
       }
 
-      return storeRows.map((store): MarketplaceStore => ({
-        id: store.id,
-        name: store.name,
-        slug: store.slug,
-        description: store.description,
-        aboutContent: readSetting(store.settings, "aboutContent"),
-        address: readSetting(store.settings, "address"),
-        phone: readSetting(store.settings, "phone"),
-        socialInstagram: readSetting(store.settings, "socialInstagram"),
-        socialTiktok: readSetting(store.settings, "socialTiktok"),
-        logoUrl: store.logo_url,
-        coverUrl: store.cover_url,
-        updatedAt: store.updated_at ?? null,
-        productCount: productCounts.get(store.id) ?? 0,
-        sampleProducts: [],
-        categoryIds: [],
-      }));
+      const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
+
+      return sortPromotedFirst(
+        markPromotedStores(
+          storeRows.map((store): MarketplaceStore => ({
+            id: store.id,
+            name: store.name,
+            slug: store.slug,
+            description: store.description,
+            aboutContent: readSetting(store.settings, "aboutContent"),
+            address: readSetting(store.settings, "address"),
+            phone: readSetting(store.settings, "phone"),
+            socialInstagram: readSetting(store.settings, "socialInstagram"),
+            socialTiktok: readSetting(store.settings, "socialTiktok"),
+            logoUrl: store.logo_url,
+            coverUrl: store.cover_url,
+            updatedAt: store.updated_at ?? null,
+            productCount: productCounts.get(store.id) ?? 0,
+            sampleProducts: [],
+            categoryIds: [],
+          })),
+          promotedStoreIds,
+          promotedProductIds,
+        ),
+      );
     },
     ["marketplace-store-cards", String(limit)],
     {
@@ -919,7 +971,9 @@ async function getMarketplaceStoreBySlugUncached(input: {
   const pageProducts = productRows
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
     .map((product) => toCartProduct(product));
-  const lastProduct = pageProducts.at(-1);
+  const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
+  const promotedPageProducts = markPromotedProducts(pageProducts, promotedProductIds);
+  const lastProduct = promotedPageProducts.at(-1);
 
   return {
     id: store.id,
@@ -937,8 +991,8 @@ async function getMarketplaceStoreBySlugUncached(input: {
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
     updatedAt: store.updated_at ?? null,
-    productCount: count ?? pageProducts.length,
-    sampleProducts: pageProducts,
+    productCount: count ?? promotedPageProducts.length,
+    sampleProducts: promotedPageProducts,
     productHasMore: productRows.length > DEFAULT_PRODUCT_PAGE_LIMIT,
     productNextCursor:
       productRows.length > DEFAULT_PRODUCT_PAGE_LIMIT && lastProduct
@@ -951,6 +1005,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
           .filter((value): value is string => Boolean(value)),
       ),
     ),
+    isPromoted: promotedStoreIds.has(store.id),
   } satisfies MarketplaceStore;
 }
 

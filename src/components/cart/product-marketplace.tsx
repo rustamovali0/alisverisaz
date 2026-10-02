@@ -45,6 +45,7 @@ import {
   Car,
   Check,
   ChevronDown,
+  Crown,
   Dumbbell,
   Heart,
   Home as HomeIcon,
@@ -1028,6 +1029,12 @@ export function ProductGrid({
                 </div>
               )}
               <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
+                {product.isPromoted ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-slate-950 shadow-sm">
+                    <Crown className="size-3" aria-hidden="true" />
+                    Önə çıxarılıb
+                  </span>
+                ) : null}
                 {hasDiscount ? (
                   <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-black text-white">
                     -{discountPercent}%

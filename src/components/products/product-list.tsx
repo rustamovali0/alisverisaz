@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Crown, Pencil, Trash2 } from "lucide-react";
 import { useTransition } from "react";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -33,6 +33,7 @@ type ProductListProps = {
   imageLimit?: number | null;
   openProductId?: string;
   editHrefBase?: string;
+  promotedProductIds?: string[];
   deleteAction: DeleteProductAction;
 };
 
@@ -121,8 +122,11 @@ export function ProductList({
   imageLimit = 5,
   openProductId,
   editHrefBase,
+  promotedProductIds = [],
   deleteAction,
 }: ProductListProps) {
+  const promotedProductIdSet = new Set(promotedProductIds);
+
   if (products.length === 0) {
     return (
       <EmptyState
@@ -150,11 +154,22 @@ export function ProductList({
                     className="h-full w-full object-cover"
                   />
                 ) : null}
+                {promotedProductIdSet.has(product.id) ? (
+                  <span className="absolute left-1 top-1 grid size-7 place-items-center rounded-full bg-amber-400 text-slate-950 shadow-sm">
+                    <Crown className="size-4" aria-hidden="true" />
+                  </span>
+                ) : null}
               </div>
               <div className="min-w-0">
                 <h3 className="truncate text-base font-semibold tracking-normal">
                   {product.name}
                 </h3>
+                {promotedProductIdSet.has(product.id) ? (
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-700">
+                    <Crown className="size-3.5" aria-hidden="true" />
+                    Önə çıxarılıb
+                  </p>
+                ) : null}
                 <p className="mt-1 text-sm text-muted-foreground">
                   {formatMoney(product.priceAmount)}
                   {product.discountAmount > 0

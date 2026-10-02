@@ -62,6 +62,18 @@ function getMapUrl(location: StoreLocation) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
+function getDirectionsUrl(location: StoreLocation) {
+  if (location.latitude !== null && location.longitude !== null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
+  }
+
+  const query = [location.city, location.district, location.address]
+    .filter(Boolean)
+    .join(", ");
+
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+}
+
 function LocationMapButton({
   location,
   label,
@@ -84,6 +96,30 @@ function LocationMapButton({
       <a href={getMapUrl(location)} target="_blank" rel="noreferrer">
         {label}
         <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
+      </a>
+    </Button>
+  );
+}
+
+function LocationDirectionsButton({
+  location,
+  className,
+}: {
+  location: StoreLocation;
+  className?: string;
+}) {
+  return (
+    <Button
+      asChild
+      size="sm"
+      className={cn(
+        "h-10 shrink-0 rounded-[10px] bg-blue-600 px-3 text-xs font-semibold text-white shadow-none md:hover:bg-blue-700",
+        className,
+      )}
+    >
+      <a href={getDirectionsUrl(location)} target="_blank" rel="noreferrer">
+        <Navigation className="mr-1.5 size-3.5" aria-hidden="true" />
+        Marşrut
       </a>
     </Button>
   );
@@ -192,7 +228,10 @@ export function PublicStoreLocationSection({
                     ) : null}
                   </div>
                 </div>
-                <LocationMapButton location={location} label={storefront("showMap")} className="hidden sm:inline-flex" />
+                <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                  <LocationDirectionsButton location={location} />
+                  <LocationMapButton location={location} label={storefront("showMap")} />
+                </div>
               </div>
 
               <div className={cn("mt-4 flex max-w-full flex-wrap items-center gap-2", hasSingleLocation && "md:mt-0 md:justify-end")}>
@@ -247,6 +286,7 @@ export function PublicStoreLocationSection({
                     <span className="min-w-0 break-words">{location.phone}</span>
                   </a>
                 ) : null}
+                <LocationDirectionsButton location={location} className="h-9 sm:hidden" />
                 <LocationMapButton location={location} label={storefront("showMap")} className="h-9 sm:hidden" />
               </div>
               </article>

@@ -96,6 +96,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "receipt",
     },
     {
+      title: "Önə çıxarma",
+      href: "/store/dashboard/promotions",
+      icon: "sparkles",
+    },
+    {
       title: "Satış nöqtələri",
       href: "/store/dashboard/locations",
       icon: "building",
@@ -196,6 +201,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       title: "Promo kodlar",
       href: "/radmin/promos",
       icon: "receipt",
+    },
+    {
+      title: "Önə çıxarma",
+      href: "/radmin/promotions",
+      icon: "sparkles",
     },
     {
       title: "Abunəliklər",
