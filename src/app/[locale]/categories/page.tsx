@@ -31,6 +31,18 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
     getSiteSettings(),
     getTranslations("home"),
   ]);
+  const rootCategories = categories.filter((category) => !category.parentId);
+  const childrenByParentId = categories.reduce((map, category) => {
+    if (!category.parentId) {
+      return map;
+    }
+
+    const children = map.get(category.parentId) ?? [];
+    children.push(category);
+    map.set(category.parentId, children);
+
+    return map;
+  }, new Map<string, typeof categories>());
 
   return (
     <main className="min-h-screen bg-muted/20 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -44,25 +56,44 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
             {home("allCategories")}
           </h1>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {categories.map((category) => {
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {rootCategories.map((category) => {
             const CategoryIcon = getCategoryIcon(category);
+            const children = childrenByParentId.get(category.id) ?? [];
 
             return (
-              <Link
+              <article
                 key={category.id}
-                href={`/products?category=${category.slug}`}
-                scroll
-                className="group flex min-h-[52px] min-w-0 items-center gap-2 rounded-lg border bg-card px-2.5 py-2 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+                className="min-w-0 rounded-xl border bg-card p-3 shadow-sm"
               >
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
-                  <CategoryIcon className="size-4 stroke-[2.1]" aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] font-bold sm:text-sm">
-                  {category.name}
-                </span>
-                <ArrowRight className="hidden size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:block" />
-              </Link>
+                <Link
+                  href={`/products?category=${category.slug}`}
+                  scroll
+                  className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg px-1 transition hover:text-primary"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
+                    <CategoryIcon className="size-4.5 stroke-[2.1]" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-base font-black">
+                    {category.name}
+                  </span>
+                  <ArrowRight className="size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+                </Link>
+                {children.length > 0 ? (
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {children.slice(0, 8).map((child) => (
+                      <Link
+                        key={child.id}
+                        href={`/products?category=${child.slug}`}
+                        scroll
+                        className="min-w-0 truncate rounded-lg bg-muted/55 px-2.5 py-2 text-[13px] font-semibold text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </article>
             );
           })}
         </div>
