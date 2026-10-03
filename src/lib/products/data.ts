@@ -240,6 +240,22 @@ function sortPublicRootCategories(categories: CategoryOption[]) {
     .sort((a, b) => Number(order.get(a.slug)) - Number(order.get(b.slug)));
 }
 
+type CategoryOptionRow = {
+  id: string;
+  name: string;
+  slug: string;
+  parent_id: string | null;
+};
+
+function toCategoryOption(row: CategoryOptionRow): CategoryOption {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parent_id,
+  };
+}
+
 const getRootCategoryOptionsCached = publicCache(
   async () => {
     const supabase = createSupabasePublicClient();
@@ -252,7 +268,7 @@ const getRootCategoryOptionsCached = publicCache(
         ascending: true,
       });
 
-    return sortPublicRootCategories((data ?? []) as CategoryOption[]);
+    return sortPublicRootCategories(((data ?? []) as CategoryOptionRow[]).map(toCategoryOption));
   },
   ["public-root-categories"],
   {
@@ -275,7 +291,7 @@ export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
       ascending: true,
     });
 
-  return (data ?? []) as CategoryOption[];
+  return ((data ?? []) as CategoryOptionRow[]).map(toCategoryOption);
 }
 
 export async function getManagedProducts(filters: {

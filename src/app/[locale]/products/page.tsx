@@ -16,6 +16,27 @@ type ProductsPageProps = {
   }>;
 };
 
+function getDescendantCategoryIds(categories: Array<{ id: string; parentId?: string | null }>, categoryId?: string) {
+  if (!categoryId) {
+    return [];
+  }
+
+  const ids = new Set([categoryId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    categories.forEach((category) => {
+      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+        ids.add(category.id);
+        changed = true;
+      }
+    });
+  }
+
+  return [...ids];
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Yeni məhsullar",
@@ -50,6 +71,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   );
   const productPage = await getMarketplaceProductPage(locale, {
     categoryId: selectedCategory?.id,
+    categoryIds: getDescendantCategoryIds(categories, selectedCategory?.id),
     searchQuery: search?.q,
     sort: search?.sort,
     limit: 52,

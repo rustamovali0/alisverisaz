@@ -429,6 +429,7 @@ export async function getMarketplaceProductPage(
   locale = "az",
   input: {
     categoryId?: string;
+    categoryIds?: string[];
     searchQuery?: string;
     storeId?: string;
     limit?: number;
@@ -438,6 +439,13 @@ export async function getMarketplaceProductPage(
 ): Promise<MarketplaceProductPage> {
   const normalizedLocale = normalizeCacheLocale(locale);
   const categoryId = input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
+  const categoryIds = Array.from(
+    new Set(
+      (input.categoryIds?.length ? input.categoryIds : categoryId ? [categoryId] : [])
+        .filter((id) => isUuid(id))
+        .slice(0, 40),
+    ),
+  );
   const storeId = input.storeId && isUuid(input.storeId) ? input.storeId : "";
   const rawSearch = normalizeRawSearchValue(input.searchQuery);
   const normalizedSearch = normalizeSearchValue(rawSearch);
@@ -449,6 +457,7 @@ export async function getMarketplaceProductPage(
       () =>
         getMarketplaceProductPageUncached(normalizedLocale, {
           categoryId,
+          categoryIds,
           searchQuery: "",
           storeId,
           limit,
@@ -459,6 +468,7 @@ export async function getMarketplaceProductPage(
         "marketplace-products",
         normalizedLocale,
         categoryId || "all",
+        categoryIds.join(",") || "all-descendants",
         storeId || "all-stores",
         String(limit),
       ],
@@ -476,6 +486,7 @@ export async function getMarketplaceProductPage(
 
   return getMarketplaceProductPageUncached(normalizedLocale, {
     categoryId,
+    categoryIds,
     searchQuery: rawSearch,
     storeId,
     limit,
@@ -549,6 +560,7 @@ async function getMarketplaceProductPageUncached(
   locale: string,
   input: {
     categoryId?: string;
+    categoryIds?: string[];
     searchQuery?: string;
     storeId?: string;
     limit: number;
@@ -567,8 +579,14 @@ async function getMarketplaceProductPageUncached(
       .eq("status", "active")
       .eq("stores.status", "active");
 
-    if (input.categoryId && isUuid(input.categoryId)) {
-      query = query.eq("category_id", input.categoryId);
+    const categoryIds = Array.from(
+      new Set((input.categoryIds?.length ? input.categoryIds : input.categoryId ? [input.categoryId] : []).filter((id) => isUuid(id))),
+    );
+
+    if (categoryIds.length > 1) {
+      query = query.in("category_id", categoryIds);
+    } else if (categoryIds.length === 1) {
+      query = query.eq("category_id", categoryIds[0]);
     }
 
     if (input.storeId && isUuid(input.storeId)) {

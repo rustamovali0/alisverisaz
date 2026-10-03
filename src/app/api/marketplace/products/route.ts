@@ -16,6 +16,14 @@ function cleanParam(value: string | null, maxLength = 120) {
   return value ? value.trim().slice(0, maxLength) : undefined;
 }
 
+function cleanParamList(value: string | null, maxItems = 40, maxLength = 80) {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim().slice(0, maxLength))
+    .filter(Boolean)
+    .slice(0, maxItems);
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const limit = clampLimit(searchParams.get("limit"));
@@ -23,6 +31,7 @@ export async function GET(request: NextRequest) {
   try {
     const page = await getMarketplaceProductPage(searchParams.get("locale") ?? "az", {
       categoryId: cleanParam(searchParams.get("categoryId"), 80),
+      categoryIds: cleanParamList(searchParams.get("categoryIds")),
       searchQuery: cleanParam(searchParams.get("q"), 120),
       storeId: cleanParam(searchParams.get("storeId"), 80),
       cursor: cleanParam(searchParams.get("cursor"), 200) ?? null,

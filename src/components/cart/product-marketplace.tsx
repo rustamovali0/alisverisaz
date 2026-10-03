@@ -543,6 +543,44 @@ function buildStoreProductHref(storeSlug: string, productSlug: string, storeBase
   return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
 
+function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: string) {
+  if (!categoryId) {
+    return [];
+  }
+
+  const ids = new Set([categoryId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    categories.forEach((category) => {
+      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+        ids.add(category.id);
+        changed = true;
+      }
+    });
+  }
+
+  return [...ids];
+}
+
+function getScopedCategoryOptions(categories: CategoryOption[], selectedCategoryId?: string) {
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+  const children = selectedCategory
+    ? categories.filter((category) => category.parentId === selectedCategory.id)
+    : [];
+
+  if (children.length > 0) {
+    return selectedCategory ? [selectedCategory, ...children] : children;
+  }
+
+  if (selectedCategory?.parentId) {
+    return categories.filter((category) => category.parentId === selectedCategory.parentId);
+  }
+
+  return categories.filter((category) => !category.parentId);
+}
+
 function CategoryFilters({
   categories,
   selectedCategoryId,
@@ -1159,6 +1197,7 @@ function useInfiniteProducts({
   initialHasMore,
   locale,
   categoryId,
+  categoryIds,
   storeId,
   searchQuery,
   sort,
@@ -1168,6 +1207,7 @@ function useInfiniteProducts({
   initialHasMore?: boolean;
   locale: string;
   categoryId?: string;
+  categoryIds?: string[];
   storeId?: string;
   searchQuery?: string;
   sort?: MarketplaceProductSort;
@@ -1180,8 +1220,8 @@ function useInfiniteProducts({
   const requestRef = useRef(0);
   const mountedRef = useRef(false);
   const queryKey = useMemo(
-    () => [locale, categoryId ?? "", storeId ?? "", searchQuery ?? "", sort ?? "newest"].join("|"),
-    [categoryId, locale, searchQuery, sort, storeId],
+    () => [locale, categoryId ?? "", categoryIds?.join(",") ?? "", storeId ?? "", searchQuery ?? "", sort ?? "newest"].join("|"),
+    [categoryId, categoryIds, locale, searchQuery, sort, storeId],
   );
 
   useEffect(() => {
@@ -1212,6 +1252,10 @@ function useInfiniteProducts({
 
     if (categoryId) {
       params.set("categoryId", categoryId);
+    }
+
+    if (categoryIds?.length) {
+      params.set("categoryIds", categoryIds.join(","));
     }
 
     if (storeId) {
@@ -1253,7 +1297,7 @@ function useInfiniteProducts({
           setIsLoadingNext(false);
         }
       });
-  }, [initialCursor, initialHasMore, initialProducts, queryKey, categoryId, searchQuery]);
+  }, [initialCursor, initialHasMore, initialProducts, queryKey, categoryId, categoryIds, searchQuery]);
 
   const loadNext = useCallback(async () => {
     if (isLoadingNext || !hasMore || !cursor) {
@@ -1276,6 +1320,10 @@ function useInfiniteProducts({
 
     if (categoryId) {
       params.set("categoryId", categoryId);
+    }
+
+    if (categoryIds?.length) {
+      params.set("categoryIds", categoryIds.join(","));
     }
 
     if (storeId) {
@@ -1313,7 +1361,7 @@ function useInfiniteProducts({
         setIsLoadingNext(false);
       }
     }
-  }, [categoryId, cursor, hasMore, isLoadingNext, locale, searchQuery, sort, storeId]);
+  }, [categoryId, categoryIds, cursor, hasMore, isLoadingNext, locale, searchQuery, sort, storeId]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -1471,19 +1519,24 @@ export function ProductMarketplace({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const categoryQueryIds = useMemo(
+    () => getDescendantCategoryIds(categories, activeCategoryId),
+    [activeCategoryId, categories],
+  );
+  const visibleCategoryOptions = useMemo(
+    () => getScopedCategoryOptions(categories, activeCategoryId),
+    [activeCategoryId, categories],
+  );
   const infinite = useInfiniteProducts({
     initialProducts: products,
     initialCursor: nextCursor,
     initialHasMore: hasMore,
     locale,
     categoryId: activeCategoryId,
+    categoryIds: categoryQueryIds,
     searchQuery,
     sort: activeSort,
   });
-  const activeCategory = useMemo(
-    () => categories.find((category) => category.id === activeCategoryId),
-    [activeCategoryId, categories],
-  );
   const variantFilterValues = useMemo(() => {
     const values = {
       color: new Set<string>(),
@@ -1604,7 +1657,7 @@ export function ProductMarketplace({
 
   const filterBar = (
     <MarketplaceFilterBar
-      categories={categories}
+      categories={visibleCategoryOptions}
       selectedCategoryId={activeCategoryId}
       colors={variantFilterValues.colors}
       sizes={variantFilterValues.sizes}
@@ -1697,7 +1750,7 @@ export function ProductMarketplace({
             {isFiltersOpen ? (
               <div id="marketplace-filters" className="relative z-20 w-full">
                 <MarketplaceFilterBar
-                  categories={categories}
+                  categories={visibleCategoryOptions}
                   selectedCategoryId={activeCategoryId}
                   colors={variantFilterValues.colors}
                   sizes={variantFilterValues.sizes}
