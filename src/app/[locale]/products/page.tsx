@@ -41,7 +41,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
   const [categories, siteSettings, activeTheme] = await Promise.all([
-    getCategoryOptions({ rootOnly: true }),
+    getCategoryOptions(),
     getSiteSettings(),
     getActiveHomeThemeSetting(),
   ]);

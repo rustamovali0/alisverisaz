@@ -146,6 +146,50 @@ const modeTabs = [
   { label: "Məhsullar", href: "/products?sort=newest", icon: Package },
 ];
 
+const TAP_AZ_CATEGORY_ORDER = [
+  "ev-ve-bag-ucun",
+  "ev-ve-bag",
+  "elektronika",
+  "neqliyyat",
+  "ehtiyat-hisseleri-ve-aksesuarlar",
+  "ehtiyat-hisseleri",
+  "aksesuarlar",
+  "dasinmaz-emlak",
+  "xidmetler-ve-biznes",
+  "xidmetler",
+  "biznes",
+  "sexsi-esyalar",
+  "shexsi-esyalar",
+  "hobbi-ve-asude",
+  "hobbi",
+  "meiset-texnikasi",
+  "məişət-texnikası",
+  "telefonlar",
+  "usaq-alemi",
+  "ana-ve-usaq",
+  "is-elanlari",
+  "heyvanlar",
+  "nomreler-ve-sim-kartlar",
+  "nomreler",
+  "sim-kartlar",
+  "magazalar",
+];
+
+function sortTapAzLikeCategories(categories: CategoryOption[]) {
+  const order = new Map(TAP_AZ_CATEGORY_ORDER.map((slug, index) => [slug, index]));
+
+  return [...categories].sort((a, b) => {
+    const aOrder = order.get(a.slug) ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = order.get(b.slug) ?? Number.MAX_SAFE_INTEGER;
+
+    if (aOrder !== bOrder) {
+      return aOrder - bOrder;
+    }
+
+    return a.name.localeCompare(b.name, "az");
+  });
+}
+
 function SectionHeader({
   title,
   mobileTitle,
@@ -187,16 +231,16 @@ function CategoryCard({ category }: { category: CategoryOption }) {
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group grid min-h-[86px] min-w-0 grid-rows-[auto_1fr] gap-3 rounded-xl border border-stone-200 bg-white p-3 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[118px] sm:p-4 md:hover:-translate-y-0.5 md:hover:border-emerald-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]"
+      className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[56px] sm:px-3 md:hover:-translate-y-0.5 md:hover:border-emerald-200 md:hover:shadow-[0_8px_22px_rgba(15,23,42,0.07)]"
     >
-      <span className="grid size-10 place-items-center rounded-lg bg-emerald-50 text-emerald-700 transition dark:bg-emerald-400/10 dark:text-emerald-300 sm:size-11">
-        <CategoryIcon className="size-5 stroke-[2.1] sm:size-6" aria-hidden="true" />
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 transition dark:bg-emerald-400/10 dark:text-emerald-300 sm:size-9">
+        <CategoryIcon className="size-4 stroke-[2.1] sm:size-[18px]" aria-hidden="true" />
       </span>
-      <span className="flex min-w-0 items-end justify-between gap-3">
-        <span className="line-clamp-2 min-w-0 break-words text-[13px] font-bold leading-4 sm:text-base sm:leading-5">
+      <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+        <span className="truncate text-[12px] font-bold leading-4 sm:text-[13px]">
           {category.name}
         </span>
-        <ArrowRight className="hidden size-4 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-emerald-700" />
+        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-emerald-700" />
       </span>
     </Link>
   );
@@ -339,7 +383,10 @@ export function HomeExperience({
     0,
     visibleLimit(featuredSection, 8),
   );
-  const activeCategories = categories.slice(0, visibleLimit(categorySection, 24));
+  const activeCategories = sortTapAzLikeCategories(categories).slice(
+    0,
+    visibleLimit(categorySection, 36),
+  );
   const heroPills = activeCategories.slice(0, 4);
   const popularSearchPills = popularSearches.length
     ? popularSearches.slice(0, 4).map((term) => ({
@@ -387,7 +434,7 @@ export function HomeExperience({
               </Link>
             </div>
             <div className="grid gap-1.5">
-              {activeCategories.slice(0, 18).map((category) => {
+              {activeCategories.slice(0, 22).map((category) => {
                 const CategoryIcon = getCategoryIcon(category);
 
                 return (
@@ -543,7 +590,7 @@ export function HomeExperience({
               href="/categories"
               action={home("viewAll")}
             />
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {activeCategories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
               ))}

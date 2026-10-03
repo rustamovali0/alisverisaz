@@ -867,7 +867,7 @@ function MobileCategoryCatalog({
 
   return (
     <section className="md:hidden">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-2">
         {categories.map((category, index) => {
           const Icon = getCategoryIcon(category);
           const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
@@ -877,13 +877,13 @@ function MobileCategoryCatalog({
               key={category.id}
               type="button"
               onClick={() => onSelect(category)}
-              className="group flex min-h-[112px] min-w-0 touch-manipulation flex-col items-center justify-between rounded-[14px] border border-slate-200 bg-white p-3.5 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:border-slate-800 dark:bg-card"
+              className="group flex min-h-[52px] min-w-0 touch-manipulation items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:border-slate-800 dark:bg-card"
             >
-              <span className={cn("grid size-12 place-items-center rounded-xl ring-1", iconStyle)}>
-                <Icon className="size-6 stroke-[2.2]" aria-hidden="true" />
+              <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+                <Icon className="size-4 stroke-[2.2]" aria-hidden="true" />
               </span>
-                <span className="grid min-w-0 gap-0.5">
-                  <span className="line-clamp-2 min-w-0 text-[14px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
+                <span className="grid min-w-0 flex-1 gap-0.5">
+                  <span className="truncate text-[13px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
                     {category.name}
                   </span>
                 </span>

@@ -119,22 +119,18 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
   }
 
   if (!normalizedSiteKey) {
-    return (
-      <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-        CAPTCHA ayarları tamamlanmayıb.
-      </div>
-    );
+    return <input type="hidden" name="captchaToken" value="" />;
   }
 
   return (
-    <div className="sr-only">
+    <div className="min-h-0">
       <Script
         src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
         strategy="afterInteractive"
         onLoad={() => setIsReady(true)}
       />
       <input type="hidden" name="captchaToken" value={token} />
-      <div id={widgetId} ref={containerRef} />
+      <div id={widgetId} ref={containerRef} className="min-h-0" />
     </div>
   );
 }

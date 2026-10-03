@@ -818,6 +818,14 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       await ensureSellerStore({
         userId: data.user.id,
         name: profile?.full_name ?? data.user.user_metadata?.full_name ?? data.user.email,
+        logoUrl:
+          typeof data.user.user_metadata?.avatar_url === "string"
+            ? data.user.user_metadata.avatar_url
+            : null,
+        coverUrl:
+          typeof data.user.user_metadata?.banner_url === "string"
+            ? data.user.user_metadata.banner_url
+            : null,
       });
     } catch (storeError) {
       return {
@@ -918,7 +926,9 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
     };
   }
 
-  const captcha = await verifyCaptchaToken(readCaptchaToken(formData), ip);
+  const captcha = serverEnv.hasTurnstileConfig
+    ? await verifyCaptchaToken(readCaptchaToken(formData), ip)
+    : { ok: true, message: "" };
 
   if (!captcha.ok) {
     return {

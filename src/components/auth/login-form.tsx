@@ -14,7 +14,7 @@ import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
 import { showToast } from "@/lib/toast";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
@@ -32,7 +32,6 @@ function getInitialIdentifier(params: URLSearchParams) {
 }
 
 export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
@@ -106,8 +105,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         dedupeKey: "login-success",
       });
       clearClientAuthProfileCache();
-      router.replace(result.redirectTo);
-      router.refresh();
+      window.location.assign(result.redirectTo);
     });
   }
 

@@ -50,11 +50,13 @@ export async function ensureSellerStore(input: {
   userId: string;
   name?: string | null;
   description?: string | null;
+  logoUrl?: string | null;
+  coverUrl?: string | null;
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: existingStore, error: existingError } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id")
+    .select("id,logo_url,cover_url")
     .eq("owner_id", input.userId)
     .maybeSingle();
 
@@ -63,6 +65,27 @@ export async function ensureSellerStore(input: {
   }
 
   if (existingStore) {
+    const payload: Record<string, string> = {};
+
+    if (!existingStore.logo_url && input.logoUrl) {
+      payload.logo_url = input.logoUrl;
+    }
+
+    if (!existingStore.cover_url && input.coverUrl) {
+      payload.cover_url = input.coverUrl;
+    }
+
+    if (Object.keys(payload).length > 0) {
+      const { error } = await (supabaseAdmin as any)
+        .from("stores")
+        .update(payload)
+        .eq("id", existingStore.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    }
+
     return existingStore.id as string;
   }
 
@@ -73,6 +96,8 @@ export async function ensureSellerStore(input: {
       owner_id: input.userId,
       name: storeName,
       description: input.description ?? "Satıcı mağazası",
+      logo_url: input.logoUrl ?? null,
+      cover_url: input.coverUrl ?? null,
       status: "active",
     })
     .select("id")

@@ -27,7 +27,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
   setRequestLocale(locale);
 
   const [categories, siteSettings, home] = await Promise.all([
-    getCategoryOptions({ rootOnly: true }),
+    getCategoryOptions(),
     getSiteSettings(),
     getTranslations("home"),
   ]);
@@ -44,7 +44,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
             {home("allCategories")}
           </h1>
         </div>
-        <div className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {categories.map((category) => {
             const CategoryIcon = getCategoryIcon(category);
 
@@ -53,15 +53,15 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
                 key={category.id}
                 href={`/products?category=${category.slug}`}
                 scroll
-                className="group flex min-h-24 items-center justify-between gap-3 rounded-lg border bg-card px-4 py-3 shadow-sm transition hover:border-primary/40 hover:shadow-md"
+                className="group flex min-h-[52px] min-w-0 items-center gap-2 rounded-lg border bg-card px-2.5 py-2 shadow-sm transition hover:border-primary/40 hover:shadow-md"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
-                  <CategoryIcon className="size-5 stroke-[2.1]" aria-hidden="true" />
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
+                  <CategoryIcon className="size-4 stroke-[2.1]" aria-hidden="true" />
                 </span>
-                <span className="min-w-0 flex-1 break-words text-base font-bold">
+                <span className="min-w-0 flex-1 truncate text-[13px] font-bold sm:text-sm">
                   {category.name}
                 </span>
-                <ArrowRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" />
+                <ArrowRight className="hidden size-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary sm:block" />
               </Link>
             );
           })}
