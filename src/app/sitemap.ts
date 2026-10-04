@@ -169,7 +169,7 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
             url: absoluteUrl(`/store/${slug}`),
             lastModified,
             changeFrequency: "daily" as const,
-            priority: 0.75,
+            priority: 0.9,
           },
         ];
       });

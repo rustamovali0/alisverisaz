@@ -129,19 +129,22 @@ export async function generateMetadata({
   );
   const description =
     detail.product.description ||
-    `${detail.product.name} ${detail.store.name} mağazasında ${price}. Stok və sifariş məlumatlarına baxın.`;
+    `${detail.product.name} ${detail.store.name} (${detail.store.slug}) mağazasında ${price}. Alışveriş.az-da stok və sifariş məlumatlarına baxın.`;
 
   return {
-    title: `${detail.product.name} | ${detail.store.name}`,
+    title: `${detail.product.name} | ${detail.store.name} (${detail.store.slug})`,
     description,
     keywords: [
       detail.product.name,
       detail.store.name,
       detail.store.slug,
-      `${detail.store.slug}.alisveris.az`,
+      isCustomStorefrontAllowed
+        ? `${detail.store.slug}.alisveris.az`
+        : `alisveris.az/store/${detail.store.slug}`,
       `${detail.product.name} qiyməti`,
       `${detail.product.name} al`,
       `${detail.store.name} rəsmi mağaza`,
+      `${detail.store.name} Alışveriş.az`,
       "online alışveriş Azərbaycan",
     ],
     alternates: {

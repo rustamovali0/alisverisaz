@@ -70,12 +70,12 @@ export async function generateMetadata({
   const canonicalUrl = isCustomStorefrontAllowed
     ? getStorefrontUrl(store.slug)
     : `${siteConfig.url}/store/${store.slug}`;
-  const pageTitle = isMarketplaceRoute
-    ? `${store.name} mağazası | Alışveriş`
-    : `${store.name} (${store.slug}) | Rəsmi mağaza`;
+  const pageTitle = isCustomStorefrontAllowed
+    ? `${store.name} (${store.slug}) | Rəsmi mağaza`
+    : `${store.name} (${store.slug}) mağazası | Alışveriş.az`;
   const description =
     store.description ||
-    `${store.name} (${store.slug}) rəsmi mağazası. Yeni məhsullar, kateqoriyalar və əlaqə məlumatları.`;
+    `${store.name} (${store.slug}) mağazasının Alışveriş.az səhifəsi. Yeni məhsullar, kateqoriyalar və əlaqə məlumatları.`;
 
   return {
     title: pageTitle,
@@ -84,10 +84,13 @@ export async function generateMetadata({
       store.name,
       store.slug,
       `${store.slug} mağaza`,
-      `${store.slug}.alisveris.az`,
+      isCustomStorefrontAllowed
+        ? `${store.slug}.alisveris.az`
+        : `alisveris.az/store/${store.slug}`,
       `${store.name} məhsulları`,
       `${store.name} online mağaza`,
       `${store.name} rəsmi mağaza`,
+      `${store.name} Alışveriş.az`,
       `${store.name} əlaqə`,
       "Azərbaycanda online alışveriş",
     ],
