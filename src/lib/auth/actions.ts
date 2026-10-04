@@ -571,7 +571,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const captchaToken = readCaptchaToken(formData);
   const captcha =
-    mode === "admin" || (!serverEnv.hasTurnstileConfig && !captchaToken)
+    mode === "admin" || !captchaToken || !serverEnv.hasTurnstileConfig
       ? { ok: true, message: "" }
       : await verifyCaptchaToken(captchaToken, ip);
 
@@ -926,8 +926,9 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
     };
   }
 
-  const captcha = serverEnv.hasTurnstileConfig
-    ? await verifyCaptchaToken(readCaptchaToken(formData), ip)
+  const captchaToken = readCaptchaToken(formData);
+  const captcha = serverEnv.hasTurnstileConfig && captchaToken
+    ? await verifyCaptchaToken(captchaToken, ip)
     : { ok: true, message: "" };
 
   if (!captcha.ok) {
