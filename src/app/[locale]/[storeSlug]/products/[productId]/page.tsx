@@ -120,12 +120,9 @@ export async function generateMetadata({
   if (storeSubdomainSlug === detail.store.slug && !isCustomStorefrontAllowed) {
     return {};
   }
-  const canonicalUrl =
-    storeSubdomainSlug === detail.store.slug
-      ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
-      : isMarketplaceRoute
-        ? `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`
-        : `${siteConfig.url}/${detail.store.slug}/products/${detail.product.slug}`;
+  const canonicalUrl = isCustomStorefrontAllowed
+    ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
+    : `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`;
   const price = formatAznDiscountedPrice(
     detail.product.priceAmount,
     detail.product.discountAmount,
@@ -140,8 +137,11 @@ export async function generateMetadata({
     keywords: [
       detail.product.name,
       detail.store.name,
+      detail.store.slug,
+      `${detail.store.slug}.alisveris.az`,
       `${detail.product.name} qiyməti`,
       `${detail.product.name} al`,
+      `${detail.store.name} rəsmi mağaza`,
       "online alışveriş Azərbaycan",
     ],
     alternates: {
@@ -273,18 +273,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       : isLegacyProductRoute
         ? getStorePath(detail.store.slug)
         : `/${detail.store.slug}`;
-  const canonicalProductUrl =
-    storeSubdomainSlug === detail.store.slug
-      ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
-      : isLegacyProductRoute
-        ? `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`
-        : `${siteConfig.url}/${detail.store.slug}/products/${detail.product.slug}`;
-  const canonicalStoreUrl =
-    storeSubdomainSlug === detail.store.slug
-      ? getStorefrontUrl(detail.store.slug)
-      : isLegacyProductRoute
-        ? `${siteConfig.url}/store/${detail.store.slug}`
-        : `${siteConfig.url}/${detail.store.slug}`;
+  const canonicalProductUrl = isCustomStorefrontAllowed
+    ? getStorefrontUrl(detail.store.slug, `/products/${detail.product.slug}`)
+    : `${siteConfig.url}/store/${detail.store.slug}/products/${detail.product.slug}`;
+  const canonicalStoreUrl = isCustomStorefrontAllowed
+    ? getStorefrontUrl(detail.store.slug)
+    : `${siteConfig.url}/store/${detail.store.slug}`;
   const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
   const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
 

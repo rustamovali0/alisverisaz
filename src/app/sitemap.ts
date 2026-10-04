@@ -54,12 +54,20 @@ function readJoinedStore(value: unknown) {
     return null;
   }
 
-  const row = store as { slug?: unknown; updated_at?: unknown };
+  const row = store as {
+    slug?: unknown;
+    updated_at?: unknown;
+    settings?: unknown;
+  };
 
   return typeof row.slug === "string" && row.slug
     ? {
         slug: row.slug,
         updatedAt: typeof row.updated_at === "string" ? row.updated_at : null,
+        customStorefrontEnabled: readBooleanSetting(
+          row.settings,
+          "customStorefrontEnabled",
+        ),
       }
     : null;
 }
@@ -70,7 +78,7 @@ async function getProductUrls(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
     let { data, error } = await (supabase as any)
       .from("products")
-      .select("slug,created_at,updated_at,stores!inner(slug,updated_at,status)")
+      .select("slug,created_at,updated_at,stores!inner(slug,updated_at,status,settings)")
       .eq("status", "active")
       .eq("stores.status", "active")
       .not("slug", "is", null)
@@ -103,7 +111,9 @@ async function getProductUrls(now: Date): Promise<MetadataRoute.Sitemap> {
         }
 
         return {
-          url: absoluteUrl(`/store/${store.slug}/products/${slug}`),
+          url: store.customStorefrontEnabled
+            ? getStorefrontUrl(store.slug, `/products/${slug}`)
+            : absoluteUrl(`/store/${store.slug}/products/${slug}`),
           lastModified: readDate(
             (product.updated_at as string | null | undefined) ?? store.updatedAt,
             readDate(product.created_at as string | null | undefined, now),
@@ -142,7 +152,19 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
       .flatMap((store) => {
         const lastModified = store.updated_at ? new Date(store.updated_at) : now;
         const slug = store.slug as string;
-        const urls: MetadataRoute.Sitemap = [
+
+        if (readBooleanSetting(store.settings, "customStorefrontEnabled")) {
+          return [
+            {
+              url: getStorefrontUrl(slug),
+              lastModified,
+              changeFrequency: "daily" as const,
+              priority: 0.9,
+            },
+          ];
+        }
+
+        return [
           {
             url: absoluteUrl(`/store/${slug}`),
             lastModified,
@@ -150,25 +172,6 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
             priority: 0.75,
           },
         ];
-
-        if (readBooleanSetting(store.settings, "customStorefrontEnabled")) {
-          urls.push(
-            {
-              url: absoluteUrl(`/${slug}`),
-              lastModified,
-              changeFrequency: "daily" as const,
-              priority: 0.74,
-            },
-            {
-              url: getStorefrontUrl(slug),
-              lastModified,
-              changeFrequency: "daily" as const,
-              priority: 0.72,
-            },
-          );
-        }
-
-        return urls;
       });
   } catch {
     return [];

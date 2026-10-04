@@ -67,26 +67,27 @@ export async function generateMetadata({
   if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
     return {};
   }
-  const canonicalUrl =
-    storeSubdomainSlug === store.slug
-      ? getStorefrontUrl(store.slug)
-      : isMarketplaceRoute
-        ? `${siteConfig.url}/store/${store.slug}`
-        : `${siteConfig.url}/${store.slug}`;
+  const canonicalUrl = isCustomStorefrontAllowed
+    ? getStorefrontUrl(store.slug)
+    : `${siteConfig.url}/store/${store.slug}`;
   const pageTitle = isMarketplaceRoute
     ? `${store.name} mağazası | Alışveriş`
-    : `${store.name} | Rəsmi onlayn mağaza`;
+    : `${store.name} (${store.slug}) | Rəsmi mağaza`;
   const description =
     store.description ||
-    `${store.name} mağazasının yeni məhsulları, kateqoriyaları və əlaqə məlumatları.`;
+    `${store.name} (${store.slug}) rəsmi mağazası. Yeni məhsullar, kateqoriyalar və əlaqə məlumatları.`;
 
   return {
     title: pageTitle,
     description,
     keywords: [
       store.name,
+      store.slug,
+      `${store.slug} mağaza`,
+      `${store.slug}.alisveris.az`,
       `${store.name} məhsulları`,
       `${store.name} online mağaza`,
+      `${store.name} rəsmi mağaza`,
       `${store.name} əlaqə`,
       "Azərbaycanda online alışveriş",
     ],
@@ -179,11 +180,9 @@ export async function renderStorePage(
     : isLegacyStoreRoute
       ? getStorePath(store.slug)
       : `/${store.slug}`;
-  const canonicalStoreUrl = storeSubdomainSlug === store.slug
+  const canonicalStoreUrl = isCustomStorefrontAllowed
     ? getStorefrontUrl(store.slug)
-    : isLegacyStoreRoute
-      ? `${siteConfig.url}/store/${store.slug}`
-      : `${siteConfig.url}/${store.slug}`;
+    : `${siteConfig.url}/store/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
 
