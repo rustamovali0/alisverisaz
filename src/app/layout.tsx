@@ -20,6 +20,12 @@ export const metadata: Metadata = {
   publisher: "Alışveriş",
   category: "marketplace",
   keywords: [
+    "alisveris",
+    "alisveris.az",
+    "alışveriş az",
+    "alışveriş.az",
+    "Alisveris.az",
+    "Alışveriş.az",
     "alışveriş",
     "online alışveriş",
     "marketplace Azərbaycan",

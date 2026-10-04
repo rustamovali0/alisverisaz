@@ -108,6 +108,12 @@ export async function generateMetadata({
     },
     description: seoDescription,
     keywords: [
+      "alisveris",
+      "alisveris.az",
+      "alışveriş az",
+      "alışveriş.az",
+      "Alisveris.az",
+      "Alışveriş.az",
       "alışveriş Azərbaycan",
       "online mağaza",
       "marketplace",

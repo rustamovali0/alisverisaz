@@ -7,7 +7,13 @@ const structuredData = {
       "@type": "Organization",
       "@id": `${siteConfig.url}/#organization`,
       name: "Alisveris.az",
-      alternateName: siteConfig.name,
+      alternateName: [
+        siteConfig.name,
+        "Alışveriş.az",
+        "Alisveris",
+        "Alışveriş",
+        "alisveris az",
+      ],
       url: siteConfig.url,
       logo: `${siteConfig.url}/icon.png`,
       sameAs: [siteConfig.url],
@@ -17,6 +23,13 @@ const structuredData = {
       "@id": `${siteConfig.url}/#website`,
       url: siteConfig.url,
       name: "Alisveris.az",
+      alternateName: [
+        "Alışveriş.az",
+        "Alisveris",
+        "Alışveriş",
+        "alisveris",
+        "alışveriş az",
+      ],
       description: siteConfig.description,
       inLanguage: "az-AZ",
       publisher: {
