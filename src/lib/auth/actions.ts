@@ -1242,6 +1242,8 @@ async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
 export async function updatePasswordAction(formData: FormData): Promise<AuthResult> {
   const password = readString(formData, "password");
   const confirmPassword = readString(formData, "confirmPassword");
+  const expiredResetLinkMessage =
+    "Bərpa linki aktiv deyil və ya vaxtı bitib. Yenidən bərpa linki istəyin.";
 
   if (!password || !confirmPassword) {
     return {
@@ -1265,12 +1267,29 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
   }
 
   const supabase = await createSupabaseServerClient();
+  const { data: userData } = await supabase.auth.getUser();
+
+  if (!userData.user) {
+    return {
+      ok: false,
+      message: expiredResetLinkMessage,
+    };
+  }
+
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
+    const message = error.message.toLowerCase();
+    const isMissingSession =
+      message.includes("session") ||
+      message.includes("jwt") ||
+      message.includes("token");
+
     return {
       ok: false,
-      message: "Şifrə təhlükəsizlik tələblərinə uyğun deyil.",
+      message: isMissingSession
+        ? expiredResetLinkMessage
+        : "Şifrə təhlükəsizlik tələblərinə uyğun deyil.",
     };
   }
 
