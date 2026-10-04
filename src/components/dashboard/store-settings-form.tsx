@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSellerStoreSettingsAction } from "@/lib/store-settings/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { getStorefrontUrl } from "@/lib/config/domains";
+import { getStorefrontUrl, getStorePath } from "@/lib/config/domains";
 import { updateSellerOrderMethodAction } from "@/lib/whatsapp-orders/actions";
 import { normalizeOrderMethod } from "@/lib/whatsapp-orders/template";
 import { cn } from "@/lib/utils";
@@ -27,6 +27,10 @@ function readSetting(settings: Record<string, unknown> | null | undefined, key: 
   const value = settings?.[key];
 
   return typeof value === "string" ? value : "";
+}
+
+function readBooleanSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  return settings?.[key] === true;
 }
 
 function MediaPicker({
@@ -115,7 +119,8 @@ function MediaPicker({
 export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isOrderMethodPending, startOrderMethodTransition] = useTransition();
-  const publicUrl = getStorefrontUrl(store.slug);
+  const customStorefrontEnabled = readBooleanSetting(store.settings, "customStorefrontEnabled");
+  const publicUrl = customStorefrontEnabled ? getStorefrontUrl(store.slug) : getStorePath(store.slug);
   const heroTitle = readSetting(store.settings, "heroTitle");
   const heroSubtitle = readSetting(store.settings, "heroSubtitle");
   const aboutContent = readSetting(store.settings, "aboutContent");
@@ -238,6 +243,19 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             className="premium-input h-11"
             required
           />
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Mağaza URL-i
+          <input
+            name="slug"
+            defaultValue={store.slug}
+            placeholder="magazaadi"
+            className="premium-input h-11"
+            required
+          />
+          <span className="text-xs text-muted-foreground">
+            RAdmin icazə veribsə /{store.slug} və subdomain işləyəcək; əks halda mağaza /store/{store.slug} ilə açılır.
+          </span>
         </label>
         <label className="grid gap-2 text-sm font-medium">
           Mağaza səhifəsində title

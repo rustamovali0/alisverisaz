@@ -61,6 +61,7 @@ export type MarketplaceStore = {
   productHasMore?: boolean;
   categoryIds: string[];
   isPromoted?: boolean;
+  customStorefrontEnabled?: boolean;
 };
 
 export type MarketplaceProductDetail = {

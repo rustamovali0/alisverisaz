@@ -60,6 +60,13 @@ export async function generateMetadata({
   const isMarketplaceRoute =
     currentPath === `/store/${store.slug}` ||
     currentPath.startsWith(`/store/${store.slug}/`);
+  const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
+  if (!isMarketplaceRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
+    return {};
+  }
+  if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
+    return {};
+  }
   const canonicalUrl =
     storeSubdomainSlug === store.slug
       ? getStorefrontUrl(store.slug)
@@ -157,6 +164,16 @@ export async function renderStorePage(
     currentPath.startsWith(`/store/${store.slug}/`) ||
     currentPath === `/${locale}/store/${store.slug}` ||
     currentPath.startsWith(`/${locale}/store/${store.slug}/`);
+  const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
+
+  if (!isLegacyStoreRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
+    notFound();
+  }
+
+  if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
+    notFound();
+  }
+
   const storeBaseHref = storeSubdomainSlug === store.slug
     ? "/"
     : isLegacyStoreRoute

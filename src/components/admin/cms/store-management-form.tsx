@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { getStorefrontUrl } from "@/lib/config/domains";
+import { getStorefrontUrl, getStorePath } from "@/lib/config/domains";
 import {
   updateStoreManagementAction,
   updateStoreStatusAction,
@@ -36,13 +36,18 @@ function readSetting(settings: Record<string, unknown> | null | undefined, key: 
   return typeof value === "string" ? value : "";
 }
 
+function readBooleanSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  return settings?.[key] === true;
+}
+
 export function StoreManagementForm({
   store,
   panelSettings,
 }: StoreManagementFormProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const publicUrl = getStorefrontUrl(store.slug);
+  const customStorefrontEnabled = readBooleanSetting(store.settings, "customStorefrontEnabled");
+  const publicUrl = customStorefrontEnabled ? getStorefrontUrl(store.slug) : getStorePath(store.slug);
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
   const whatsappPhone = readSetting(store.settings, "whatsappPhone");
 
@@ -162,6 +167,20 @@ export function StoreManagementForm({
           </div>
         </div>
       </div>
+      <label className="flex items-start gap-3 rounded-lg border bg-background p-3 text-sm">
+        <input
+          type="checkbox"
+          name="customStorefrontEnabled"
+          defaultChecked={customStorefrontEnabled}
+          className="mt-1 size-4"
+        />
+        <span>
+          <span className="block font-black">/{store.slug} və subdomain icazəsi</span>
+          <span className="mt-1 block text-muted-foreground">
+            Aktiv olanda mağaza /{store.slug} və {store.slug}.alisveris.az ilə açılır. Passiv olanda yalnız /store/{store.slug} işləyir.
+          </span>
+        </span>
+      </label>
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2 text-sm font-medium">
           Mağaza adı

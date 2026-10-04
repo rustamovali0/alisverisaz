@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
-import { getStorePath } from "@/lib/config/domains";
+import { getStorePath, getStorePrettyPath } from "@/lib/config/domains";
 
 type StoresPageProps = {
   params: Promise<{
@@ -53,18 +53,18 @@ export default async function StoresPage({ params }: StoresPageProps) {
             <Store className="size-5" aria-hidden="true" />
           </span>
         </div>
-        <div className="grid min-w-0 grid-cols-1 gap-4 min-[520px]:grid-cols-2 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4">
           {stores.map((store) => {
             const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
             return (
               <Link
                 key={store.id}
-                href={getStorePath(store.slug)}
-                className="group relative min-w-0 overflow-visible rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
+                href={store.customStorefrontEnabled ? getStorePrettyPath(store.slug) : getStorePath(store.slug)}
+                className="group relative grid min-w-0 grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:block md:overflow-visible md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
               >
                 <div className="relative">
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-t-[14px] bg-slate-100 dark:bg-slate-800">
+                  <div className="relative h-full min-h-[124px] overflow-hidden rounded-l-[14px] bg-slate-100 dark:bg-slate-800 md:aspect-[16/10] md:h-auto md:min-h-0 md:rounded-l-none md:rounded-t-[14px]">
                     {coverUrl ? (
                       <img
                         src={coverUrl}
@@ -81,7 +81,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     )}
                     <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-slate-950/28 to-transparent" />
                   </div>
-                  <span className="absolute -bottom-7 left-5 z-30 grid size-14 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-semibold text-blue-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:size-16 md:text-xl">
+                  <span className="absolute bottom-3 left-3 z-30 grid size-11 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-base font-semibold text-blue-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:left-5 md:size-16 md:text-xl">
                     {store.logoUrl ? (
                       <img
                         src={store.logoUrl}
@@ -94,7 +94,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     )}
                   </span>
                 </div>
-                <div className="relative z-10 min-w-0 rounded-b-[14px] bg-white px-4 pb-4 pt-10 dark:bg-slate-900 md:pt-12">
+                <div className="relative z-10 min-w-0 bg-white px-3 py-3 dark:bg-slate-900 md:rounded-b-[14px] md:px-4 md:pb-4 md:pt-12">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 sm:text-base">
@@ -106,7 +106,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
                     </div>
                     <ArrowRight className="mt-1 size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600" />
                   </div>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 transition md:group-hover:text-blue-700 dark:text-blue-300 md:dark:group-hover:text-blue-200">
+                  <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-600 transition md:mt-4 md:group-hover:text-blue-700 dark:text-blue-300 md:dark:group-hover:text-blue-200">
                     {home("viewStore")}
                     <ArrowRight className="size-4" aria-hidden="true" />
                   </span>

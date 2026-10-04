@@ -1447,6 +1447,10 @@ export async function updateUserRoleAction(
       await ensureSellerStore({
         userId,
         name: fullName,
+        logoUrl:
+          typeof existingMeta.avatar_url === "string" ? existingMeta.avatar_url : null,
+        coverUrl:
+          typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
       });
     } catch (storeError) {
       return {

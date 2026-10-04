@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
+import { ensureSellerStore } from "@/lib/auth/profiles";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import {
   getAdminSessionStatus,
@@ -234,6 +235,81 @@ function getCallbackContext(callback: TelegramCallbackQuery | undefined): Telegr
     messageId: callback.message.message_id,
     callbackQueryId: callback.id,
   };
+}
+
+async function decideSellerApplication(input: {
+  userId: string;
+  action: "approve" | "reject";
+  ctx: TelegramContext;
+}) {
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(input.userId);
+  const user = existingUser.user;
+
+  if (!user) {
+    return "İstifadəçi tapılmadı.";
+  }
+
+  const existingMeta = user.user_metadata ?? {};
+  const isSellerApplication =
+    existingMeta.requested_role === "seller" &&
+    existingMeta.seller_application_status === "pending";
+
+  if (!isSellerApplication) {
+    return "Gözləyən seller müraciəti tapılmadı və ya artıq cavablanıb.";
+  }
+
+  const role = input.action === "approve" ? "seller" : "customer";
+  const { role: _ignoredMetadataRole, ...safeExistingMeta } = existingMeta as Record<string, unknown>;
+  void _ignoredMetadataRole;
+  const mergedMetadata = {
+    ...safeExistingMeta,
+    seller_application_status: input.action === "approve" ? "approved" : "rejected",
+    requested_role: "seller",
+  };
+
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .update({ role })
+    .eq("id", input.userId);
+
+  if (profileError) {
+    return `Profil yenilənmədi: ${escapeHtml(profileError.message)}`;
+  }
+
+  const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(input.userId, {
+    user_metadata: mergedMetadata,
+  });
+
+  if (authError) {
+    return `Auth metadata yenilənmədi: ${escapeHtml(authError.message)}`;
+  }
+
+  if (input.action === "approve") {
+    await ensureSellerStore({
+      userId: input.userId,
+      name:
+        typeof existingMeta.full_name === "string" && existingMeta.full_name.trim()
+          ? existingMeta.full_name
+          : user.email ?? "Yeni mağaza",
+      logoUrl:
+        typeof existingMeta.avatar_url === "string" ? existingMeta.avatar_url : null,
+      coverUrl:
+        typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
+    });
+  }
+
+  await recordAdminAudit({
+    action: input.action === "approve" ? "TELEGRAM_SELLER_APPROVED" : "TELEGRAM_SELLER_REJECTED",
+    entityType: "user",
+    entityId: input.userId,
+    telegramUserId: input.ctx.userId,
+    telegramChatId: input.ctx.chatId,
+  });
+
+  return input.action === "approve"
+    ? "✅ Seller müraciəti təsdiqləndi."
+    : "❌ Seller müraciəti rədd edildi.";
 }
 
 function parseCommand(text: string): ParsedCommand | null {
@@ -2063,6 +2139,31 @@ async function handleCallback(update: TelegramUpdate) {
   }
 
   await configureCommandMenu();
+
+  const sellerApplicationMatch = callback.data.match(
+    /^sellerapp:(approve|reject):([0-9a-f-]{36})$/i,
+  );
+
+  if (sellerApplicationMatch) {
+    await answerTelegramCallback({ callbackQueryId: ctx.callbackQueryId });
+    const [, action, userId] = sellerApplicationMatch;
+    const result = await decideSellerApplication({
+      userId,
+      action: action === "approve" ? "approve" : "reject",
+      ctx,
+    });
+
+    if (ctx.messageId) {
+      await editTelegramMessage({
+        chatId: ctx.chatId,
+        messageId: ctx.messageId,
+        text: result,
+      });
+    } else {
+      await sendTelegramMessage({ chatId: ctx.chatId, text: result });
+    }
+    return;
+  }
 
   const match = callback.data.match(/^tgadmin:(confirm|cancel):([a-f0-9]+)$/);
 

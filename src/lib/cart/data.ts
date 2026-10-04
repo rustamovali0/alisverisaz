@@ -257,6 +257,10 @@ function readSetting(settings: Record<string, unknown> | null | undefined, key: 
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function readBooleanSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  return settings?.[key] === true;
+}
+
 function normalizeSearchValue(value: string) {
   return value
     .slice(0, MAX_SEARCH_LENGTH)
@@ -783,6 +787,7 @@ async function getMarketplaceStoresUncached(
               .filter((value): value is string => Boolean(value)),
           ),
         ),
+        customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
       };
     })
     .filter((store) => {
@@ -907,6 +912,7 @@ export async function getMarketplaceStoreCards(input: {
             productCount: productCounts.get(store.id) ?? 0,
             sampleProducts: [],
             categoryIds: [],
+            customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
           })),
           promotedStoreIds,
           promotedProductIds,
@@ -1024,6 +1030,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
       ),
     ),
     isPromoted: promotedStoreIds.has(store.id),
+    customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
   } satisfies MarketplaceStore;
 }
 
@@ -1151,6 +1158,7 @@ async function getMarketplaceProductByIdUncached(input: {
       productCount: storeProductCount ?? 0,
       sampleProducts: [],
       categoryIds: row.category_id ? [row.category_id] : [],
+      customStorefrontEnabled: readBooleanSetting(row.stores.settings, "customStorefrontEnabled"),
     },
   };
 }

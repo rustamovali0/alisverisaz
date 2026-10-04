@@ -24,7 +24,7 @@ import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
-import { getStorePath } from "@/lib/config/domains";
+import { getStorePath, getStorePrettyPath } from "@/lib/config/domains";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 
@@ -253,7 +253,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
   return (
     <article className="group h-full min-w-0 overflow-visible rounded-xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-emerald-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
       <Link
-        href={getStorePath(store.slug)}
+        href={store.customStorefrontEnabled ? getStorePrettyPath(store.slug) : getStorePath(store.slug)}
         className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       >
         <div className="relative">

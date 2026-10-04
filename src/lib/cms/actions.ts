@@ -974,6 +974,7 @@ export async function updateStoreManagementAction(
     ...parsedStoreSettings,
     orderMethod,
     whatsappPhone,
+    customStorefrontEnabled: formData.get("customStorefrontEnabled") === "on",
   };
   const previousOrderMethod = normalizeOrderMethod(
     (existingSettings as Record<string, unknown>).orderMethod,

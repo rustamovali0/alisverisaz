@@ -2108,7 +2108,7 @@ export function Storefront({
             <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="-mx-3 flex min-w-0 snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
           {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
@@ -2122,9 +2122,9 @@ export function Storefront({
                 className={cn(
                   "group min-w-0 rounded-[14px] border border-slate-200 bg-white text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
                   isCustomStorefront
-                    ? "flex min-h-[84px] items-center gap-2.5 p-3 sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
-                    : "flex min-h-[104px] flex-col items-start justify-between gap-3 p-4",
-                  isCustomStorefront && !showAllMobileCategories && index >= 6 && "hidden",
+                    ? "flex min-h-[58px] w-[74vw] max-w-[260px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
+                    : "flex min-h-[58px] w-[74vw] max-w-[260px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4",
+                  isCustomStorefront && !showAllMobileCategories && index >= 12 && "hidden sm:flex",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
@@ -2132,11 +2132,11 @@ export function Storefront({
                   selectCategory(category, { scrollToProducts: !isCustomStorefront })
                 }
               >
-                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-11 sm:size-12" : "size-11", iconStyle)}>
-                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-6 sm:size-6" : "size-5")} aria-hidden="true" />
+                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-10 sm:size-12" : "size-10 sm:size-11", iconStyle)}>
+                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-5 sm:size-6" : "size-5")} aria-hidden="true" />
                 </span>
                 <span className={cn("flex min-w-0 gap-2", isCustomStorefront ? "flex-1 items-center justify-between sm:w-full sm:items-end" : "w-full items-end justify-between")}>
-                  <span className="line-clamp-2 min-w-0 break-words text-[14px] font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:text-sm">
+                  <span className="line-clamp-2 min-w-0 break-words text-[13px] font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:text-sm">
                     {category.name}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600 dark:md:group-hover:text-blue-300" />
@@ -2356,9 +2356,16 @@ export function Storefront({
           <StoreBrandingQuickEdit store={store} />
         ) : (
           <section className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:gap-6 sm:rounded-[20px] sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
+            <div className="relative -mx-1 -mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:hidden">
+              <div className="aspect-[16/9] w-full">
+                <StoreHeroCover store={store} />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 via-slate-950/8 to-transparent" aria-hidden="true" />
+              <StoreLogo store={store} className="absolute bottom-3 left-3 size-16 rounded-2xl border-2 border-white bg-white shadow-[0_12px_28px_rgba(2,6,23,0.24)]" />
+            </div>
             <div className="min-w-0">
               <div className="mb-4 flex min-w-0 items-center gap-3 sm:mb-5">
-                <StoreLogo store={store} className="size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:size-20" />
+                <StoreLogo store={store} className="hidden size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:grid sm:size-20" />
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
                     {storefront("onlineStore")}

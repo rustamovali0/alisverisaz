@@ -1,5 +1,6 @@
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { setRequestLocale } from "next-intl/server";
 
 import { ProductMessageForm } from "@/components/messages/product-message-form";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
+import { getStorePath, getStoreSubdomainSlug } from "@/lib/config/domains";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
 
 type ProductQuestionsPageProps = {
@@ -33,8 +35,25 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
     notFound();
   }
 
+  const requestHeaders = await headers();
+  const currentPath = requestHeaders.get("x-current-path") ?? "";
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const isLegacyProductRoute = currentPath.startsWith(`/store/${detail.store.slug}/products/`);
+
+  if (!isLegacyProductRoute && storeSubdomainSlug !== detail.store.slug && detail.store.customStorefrontEnabled !== true) {
+    notFound();
+  }
+
+  if (storeSubdomainSlug === detail.store.slug && detail.store.customStorefrontEnabled !== true) {
+    notFound();
+  }
+
   const messages = await getProductMessagesForProduct(detail.product.id);
-  const productHref = `/${detail.store.slug}/products/${detail.product.slug}`;
+  const productHref = storeSubdomainSlug === detail.store.slug
+    ? `/products/${detail.product.slug}`
+    : isLegacyProductRoute
+      ? `${getStorePath(detail.store.slug)}/products/${detail.product.slug}`
+      : `/${detail.store.slug}/products/${detail.product.slug}`;
   const isStoreOwner = current?.role === "seller" && current.user.id === detail.store.ownerId;
 
   return (

@@ -5,6 +5,10 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import {
+  isReservedStoreSubdomain,
+  isValidStoreSlug,
+} from "@/lib/config/domains";
+import {
   deleteR2MediaAssetsByUrls,
   recordImageMediaAsset,
 } from "@/lib/storage/media-assets";
@@ -42,6 +46,23 @@ function readSettings(value: unknown) {
     : {};
 }
 
+function slugify(value: string) {
+  return value
+    .toLocaleLowerCase("az-AZ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ğ/g, "g")
+    .replace(/ç/g, "c")
+    .replace(/ş/g, "s")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
 async function uploadStoreMedia(input: {
   file: File;
   userId: string;
@@ -76,6 +97,7 @@ export async function updateSellerStoreSettingsAction(
   const current = await requireRole(["seller"], "/store/dashboard/settings");
   const storeId = readString(formData, "storeId");
   const name = readString(formData, "name");
+  const requestedSlug = slugify(readString(formData, "slug"));
   const heroTitle = readString(formData, "heroTitle");
   const heroSubtitle = readString(formData, "heroSubtitle");
   const aboutContent = readString(formData, "aboutContent");
@@ -107,9 +129,33 @@ export async function updateSellerStoreSettingsAction(
   }
 
   const replacedUrls: string[] = [];
+  const nextSlug = requestedSlug || store.slug;
+
+  if (!isValidStoreSlug(nextSlug) || isReservedStoreSubdomain(nextSlug)) {
+    return {
+      ok: false,
+      message: "Mağaza URL-i yalnız hərf, rəqəm və tire ola bilər; bu ad rezerv olunub.",
+    };
+  }
+
+  if (nextSlug !== store.slug) {
+    const { data: slugOwner } = await (supabaseAdmin as any)
+      .from("stores")
+      .select("id")
+      .eq("slug", nextSlug)
+      .neq("id", storeId)
+      .maybeSingle();
+
+    if (slugOwner) {
+      return {
+        ok: false,
+        message: "Bu mağaza URL-i artıq istifadə olunur.",
+      };
+    }
+  }
 
   try {
-    const payload: Record<string, unknown> = { name };
+    const payload: Record<string, unknown> = { name, slug: nextSlug };
 
     if (
       formData.has("heroTitle") ||
@@ -198,6 +244,12 @@ export async function updateSellerStoreSettingsAction(
     storeId,
     storeSlug: store.slug,
   });
+  if (nextSlug !== store.slug) {
+    invalidateStorePublicData({
+      storeId,
+      storeSlug: nextSlug,
+    });
+  }
   await deleteR2MediaAssetsByUrls(replacedUrls);
 
   return {

@@ -107,6 +107,24 @@ async function sendIfEnabled(flag: Parameters<typeof getSystemFlag>[0], text: st
   await sendTelegramMessage({ text });
 }
 
+async function sendSellerApplicationIfEnabled(text: string, userId: string) {
+  if (!(await getSystemFlag("seller_notifications_enabled"))) {
+    return;
+  }
+
+  await sendTelegramMessage({
+    text,
+    replyMarkup: {
+      inline_keyboard: [
+        [
+          { text: "✅ Təsdiqlə", callback_data: `sellerapp:approve:${userId}` },
+          { text: "❌ Rədd et", callback_data: `sellerapp:reject:${userId}` },
+        ],
+      ],
+    },
+  });
+}
+
 export async function notifyOrderCreated(orderIds: string[]) {
   if (!orderIds.length) {
     return;
@@ -209,8 +227,7 @@ export async function notifySellerRegistered(input: {
   createdAt?: string | null;
   status?: string | null;
 }) {
-  await sendIfEnabled(
-    "seller_notifications_enabled",
+  await sendSellerApplicationIfEnabled(
     [
       "🏪 <b>Yeni seller müraciəti</b>",
       `ID: ${escapeHtml(input.id)}`,
@@ -219,6 +236,7 @@ export async function notifySellerRegistered(input: {
       `Status: ${escapeHtml(input.status || "pending")}`,
       `Tarix: ${escapeHtml(formatDate(input.createdAt))}`,
     ].join("\n"),
+    input.id,
   );
 }
 
