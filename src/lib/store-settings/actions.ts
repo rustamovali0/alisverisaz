@@ -46,6 +46,10 @@ function readSettings(value: unknown) {
     : {};
 }
 
+function readBooleanSetting(settings: Record<string, unknown>, key: string) {
+  return settings[key] === true;
+}
+
 function slugify(value: string) {
   return value
     .toLocaleLowerCase("az-AZ")
@@ -130,6 +134,11 @@ export async function updateSellerStoreSettingsAction(
 
   const replacedUrls: string[] = [];
   const nextSlug = requestedSlug || store.slug;
+  const currentSettings = readSettings(store.settings);
+  const canManageCustomStorefront = readBooleanSetting(
+    currentSettings,
+    "customStorefrontEnabled",
+  );
 
   if (!isValidStoreSlug(nextSlug) || isReservedStoreSubdomain(nextSlug)) {
     return {
@@ -139,6 +148,13 @@ export async function updateSellerStoreSettingsAction(
   }
 
   if (nextSlug !== store.slug) {
+    if (!canManageCustomStorefront) {
+      return {
+        ok: false,
+        message: "Subdomain və /mağaza-adı dəyişmək üçün RAdmin icazəsi lazımdır.",
+      };
+    }
+
     const { data: slugOwner } = await (supabaseAdmin as any)
       .from("stores")
       .select("id")
@@ -164,7 +180,7 @@ export async function updateSellerStoreSettingsAction(
       formData.has("socialInstagram") ||
       formData.has("socialTiktok")
     ) {
-      const settings = readSettings(store.settings);
+      const settings = currentSettings;
 
       if (formData.has("heroTitle") && heroTitle) {
         settings.heroTitle = heroTitle;

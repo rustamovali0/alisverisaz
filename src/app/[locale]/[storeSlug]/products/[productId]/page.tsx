@@ -1,6 +1,6 @@
 import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Pencil, Star } from "lucide-react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { ViewTracker } from "@/components/analytics/view-tracker";
@@ -259,11 +259,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const isCustomStorefrontAllowed = detail.store.customStorefrontEnabled === true;
 
   if (!isLegacyProductRoute && storeSubdomainSlug !== detail.store.slug && !isCustomStorefrontAllowed) {
-    notFound();
+    redirect("/");
   }
 
   if (storeSubdomainSlug === detail.store.slug && !isCustomStorefrontAllowed) {
-    notFound();
+    redirect("/");
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;

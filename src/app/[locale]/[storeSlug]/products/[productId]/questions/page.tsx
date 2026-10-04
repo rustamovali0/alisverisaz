@@ -1,5 +1,5 @@
 import { ArrowLeft, MessageCircle } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { setRequestLocale } from "next-intl/server";
 
@@ -41,11 +41,11 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
   const isLegacyProductRoute = currentPath.startsWith(`/store/${detail.store.slug}/products/`);
 
   if (!isLegacyProductRoute && storeSubdomainSlug !== detail.store.slug && detail.store.customStorefrontEnabled !== true) {
-    notFound();
+    redirect("/");
   }
 
   if (storeSubdomainSlug === detail.store.slug && detail.store.customStorefrontEnabled !== true) {
-    notFound();
+    redirect("/");
   }
 
   const messages = await getProductMessagesForProduct(detail.product.id);

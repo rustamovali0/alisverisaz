@@ -251,10 +251,13 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             defaultValue={store.slug}
             placeholder="magazaadi"
             className="premium-input h-11"
+            readOnly={!customStorefrontEnabled}
             required
           />
           <span className="text-xs text-muted-foreground">
-            RAdmin icazə veribsə /{store.slug} və subdomain işləyəcək; əks halda mağaza /store/{store.slug} ilə açılır.
+            {customStorefrontEnabled
+              ? `RAdmin icazəsi aktivdir: /${store.slug} və subdomain işləyir, bu adı dəyişə bilərsiniz.`
+              : `RAdmin icazəsi yoxdur: bu ad dəyişmir və mağaza yalnız /store/${store.slug} ilə açılır.`}
           </span>
         </label>
         <label className="grid gap-2 text-sm font-medium">

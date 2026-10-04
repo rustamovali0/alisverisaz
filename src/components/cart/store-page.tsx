@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
@@ -167,11 +167,11 @@ export async function renderStorePage(
   const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
 
   if (!isLegacyStoreRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
-    notFound();
+    redirect("/");
   }
 
   if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
-    notFound();
+    redirect("/");
   }
 
   const storeBaseHref = storeSubdomainSlug === store.slug

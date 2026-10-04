@@ -38,6 +38,15 @@ function readDate(value: string | null | undefined, fallback: Date) {
   return Number.isNaN(date.getTime()) ? fallback : date;
 }
 
+function readBooleanSetting(settings: unknown, key: string) {
+  return Boolean(
+    settings &&
+      typeof settings === "object" &&
+      !Array.isArray(settings) &&
+      (settings as Record<string, unknown>)[key] === true,
+  );
+}
+
 function readJoinedStore(value: unknown) {
   const store = Array.isArray(value) ? value[0] : value;
 
@@ -115,7 +124,7 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
   try {
     const { data, error } = await (supabase as any)
       .from("stores")
-      .select("slug,updated_at")
+      .select("slug,updated_at,settings")
       .eq("status", "active")
       .order("updated_at", { ascending: false })
       .limit(5000);
@@ -124,32 +133,42 @@ async function getStoreUrls(now: Date): Promise<MetadataRoute.Sitemap> {
       return [];
     }
 
-    return ((data ?? []) as Array<{ slug: string | null; updated_at: string | null }>)
+    return ((data ?? []) as Array<{
+      slug: string | null;
+      updated_at: string | null;
+      settings?: Record<string, unknown> | null;
+    }>)
       .filter((store) => store.slug)
       .flatMap((store) => {
         const lastModified = store.updated_at ? new Date(store.updated_at) : now;
         const slug = store.slug as string;
-
-        return [
+        const urls: MetadataRoute.Sitemap = [
           {
             url: absoluteUrl(`/store/${slug}`),
             lastModified,
             changeFrequency: "daily" as const,
             priority: 0.75,
           },
-          {
-            url: absoluteUrl(`/${slug}`),
-            lastModified,
-            changeFrequency: "daily" as const,
-            priority: 0.74,
-          },
-          {
-            url: getStorefrontUrl(slug),
-            lastModified,
-            changeFrequency: "daily" as const,
-            priority: 0.72,
-          },
         ];
+
+        if (readBooleanSetting(store.settings, "customStorefrontEnabled")) {
+          urls.push(
+            {
+              url: absoluteUrl(`/${slug}`),
+              lastModified,
+              changeFrequency: "daily" as const,
+              priority: 0.74,
+            },
+            {
+              url: getStorefrontUrl(slug),
+              lastModified,
+              changeFrequency: "daily" as const,
+              priority: 0.72,
+            },
+          );
+        }
+
+        return urls;
       });
   } catch {
     return [];
