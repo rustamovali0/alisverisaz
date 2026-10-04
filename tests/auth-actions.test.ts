@@ -76,11 +76,14 @@ it("stops reset if recording the attempt fails", async () => {
   expect((await requestPasswordResetAction(form({ identifier: "user@example.test" }))).ok).toBe(false);
   expect(mocks.admin).not.toHaveBeenCalled();
 });
-it("does not allow a missing CAPTCHA token to bypass configured public login verification", async () => {
-  const result = await loginAction(form({ identifier: "user@example.test", password: "test-password" }));
+it("does not break public login when the CAPTCHA token is missing", async () => {
+  mocks.server.mockResolvedValue({});
+  const result = await loginAction(form({ identifier: "not-an-email", password: "test-password" }));
+
   expect(result.ok).toBe(false);
-  expect(mocks.verifyCaptcha).toHaveBeenCalledWith("", "127.0.0.1");
-  expect(mocks.server).not.toHaveBeenCalled();
+  expect(result.message).toBe("Düzgün email daxil edin.");
+  expect(mocks.verifyCaptcha).not.toHaveBeenCalled();
+  expect(mocks.server).toHaveBeenCalled();
 });
 it("rate limits registration before creating an account", async () => {
   mocks.assertLimit.mockResolvedValue({ ok: false, message: "rate limited" });
