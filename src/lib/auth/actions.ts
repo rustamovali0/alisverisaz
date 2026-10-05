@@ -1400,8 +1400,17 @@ export async function updateUserRoleAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userId);
-  const existingMeta = existingUser.user?.user_metadata ?? {};
+  const { data: existingUser, error: existingUserError } =
+    await supabaseAdmin.auth.admin.getUserById(userId);
+
+  if (existingUserError || !existingUser.user) {
+    return {
+      ok: false,
+      message: readErrorMessage(existingUserError, "İstifadəçi tapılmadı."),
+    };
+  }
+
+  const existingMeta = existingUser.user.user_metadata ?? {};
   const isSellerApplication =
     existingMeta.requested_role === "seller" &&
     existingMeta.seller_application_status === "pending";
@@ -1462,7 +1471,7 @@ export async function updateUserRoleAction(
       const fullName =
         typeof existingMeta.full_name === "string" && existingMeta.full_name.trim()
           ? existingMeta.full_name
-          : existingUser?.user?.email ?? "Yeni mağaza";
+          : existingUser.user.email ?? "Yeni mağaza";
 
       await ensureSellerStore({
         userId,

@@ -1,6 +1,25 @@
 import { isAuthRole, type AuthRole } from "@/lib/auth/types";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+function slugifyStoreName(value: string) {
+  const slug = value
+    .toLocaleLowerCase("az-AZ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ğ/g, "g")
+    .replace(/ç/g, "c")
+    .replace(/ş/g, "s")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+
+  return slug || "magaza";
+}
+
 export async function ensureAuthProfile(input: {
   id: string;
   email: string | null;
@@ -90,11 +109,13 @@ export async function ensureSellerStore(input: {
   }
 
   const storeName = (input.name ?? "").trim() || "Yeni mağaza";
+  const storeSlug = `${slugifyStoreName(storeName)}-${input.userId.slice(0, 8)}`;
   const { data: store, error } = await (supabaseAdmin as any)
     .from("stores")
     .insert({
       owner_id: input.userId,
       name: storeName,
+      slug: storeSlug,
       description: input.description ?? "Satıcı mağazası",
       logo_url: input.logoUrl ?? null,
       cover_url: input.coverUrl ?? null,

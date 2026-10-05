@@ -137,6 +137,7 @@ const COMMANDS: Record<string, CommandConfig> = {
   "/orders": { description: "Son sifarişlər", risk: "read" },
   "/users": { description: "İstifadəçilər", risk: "read" },
   "/sales": { description: "Satıcılar", risk: "read" },
+  "/sellerapps": { description: "Yeni satıcı sorğuları", risk: "read" },
   "/notificationstatus": { description: "Bildiriş statusları", risk: "read" },
   "/adminstatus": { description: "Admin panel statusu", risk: "read" },
   "/systemstatus": { description: "Sistem statusu", risk: "read" },
@@ -286,17 +287,23 @@ async function decideSellerApplication(input: {
   }
 
   if (input.action === "approve") {
-    await ensureSellerStore({
-      userId: input.userId,
-      name:
-        typeof existingMeta.full_name === "string" && existingMeta.full_name.trim()
-          ? existingMeta.full_name
-          : user.email ?? "Yeni mağaza",
-      logoUrl:
-        typeof existingMeta.avatar_url === "string" ? existingMeta.avatar_url : null,
-      coverUrl:
-        typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
-    });
+    try {
+      await ensureSellerStore({
+        userId: input.userId,
+        name:
+          typeof existingMeta.full_name === "string" && existingMeta.full_name.trim()
+            ? existingMeta.full_name
+            : user.email ?? "Yeni mağaza",
+        logoUrl:
+          typeof existingMeta.avatar_url === "string" ? existingMeta.avatar_url : null,
+        coverUrl:
+          typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
+      });
+    } catch (storeError) {
+      return `Mağaza yaradılmadı: ${escapeHtml(
+        storeError instanceof Error ? storeError.message : "Naməlum xəta",
+      )}`;
+    }
   }
 
   await recordAdminAudit({
@@ -1671,6 +1678,71 @@ async function listSellers(args: string) {
   ].join("\n");
 }
 
+async function listSellerApplications(args: string, ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  const page = parsePage(args);
+  const limit = 5;
+  const from = (page - 1) * limit;
+  const { data } = await supabase.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
+  });
+  const pendingUsers = (data.users ?? []).filter((user) => {
+    const metadata = user.user_metadata ?? {};
+
+    return (
+      metadata.requested_role === "seller" &&
+      metadata.seller_application_status === "pending"
+    );
+  });
+  const rows = pendingUsers.slice(from, from + limit);
+
+  if (rows.length === 0) {
+    return "✅ Yeni satıcı sorğusu yoxdur.";
+  }
+
+  const text = [
+    `🏪 <b>Yeni satıcı sorğuları</b> (${escapeHtml(page)}. səhifə)`,
+    "",
+    rows
+      .map((user, index) => {
+        const metadata = user.user_metadata ?? {};
+        const name =
+          typeof metadata.full_name === "string" && metadata.full_name.trim()
+            ? metadata.full_name
+            : user.email ?? "-";
+        const storeName =
+          typeof metadata.store_name === "string" && metadata.store_name.trim()
+            ? metadata.store_name
+            : name;
+        const phone = typeof metadata.phone === "string" ? metadata.phone : "-";
+
+        return `<b>${from + index + 1}. ${escapeHtml(storeName)}</b>\nAd: ${escapeHtml(
+          name,
+        )}\nEmail: ${escapeHtml(user.email ?? "-")}\nTelefon: ${escapeHtml(
+          phone,
+        )}\nID: <code>${escapeHtml(user.id)}</code>\nTarix: ${escapeHtml(
+          formatDate(user.created_at),
+        )}`;
+      })
+      .join("\n\n"),
+    pendingUsers.length > from + limit ? `\nDavamı: /sellerapps ${page + 1}` : "",
+  ].join("\n");
+
+  await sendTelegramMessage({
+    chatId: ctx.chatId,
+    text,
+    replyMarkup: {
+      inline_keyboard: rows.map((user) => [
+        { text: "✅ Təsdiqlə", callback_data: `sellerapp:approve:${user.id}` },
+        { text: "❌ Rədd et", callback_data: `sellerapp:reject:${user.id}` },
+      ]),
+    },
+  });
+
+  return null;
+}
+
 async function notificationStatus() {
   const flags = await getSystemFlags();
 
@@ -1737,6 +1809,8 @@ async function executeCommand(command: ParsedCommand, ctx: TelegramContext) {
       return listUsers(command.args);
     case "/sales":
       return listSellers(command.args);
+    case "/sellerapps":
+      return listSellerApplications(command.args, ctx);
     case "/notificationstatus":
       return notificationStatus();
     case "/adminstatus":
@@ -1961,7 +2035,9 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
   }
 
   const result = await executeCommand(command, ctx);
-  await sendTelegramMessage({ chatId: ctx.chatId, text: await result });
+  if (result) {
+    await sendTelegramMessage({ chatId: ctx.chatId, text: result });
+  }
 }
 
 async function handleUnlockCodeMessage(message: TelegramMessage, ctx: TelegramContext) {
@@ -2212,14 +2288,18 @@ async function handleCallback(update: TelegramUpdate) {
     ctx,
   );
 
+  if (!result) {
+    return;
+  }
+
   if (ctx.messageId) {
     await editTelegramMessage({
       chatId: ctx.chatId,
       messageId: ctx.messageId,
-      text: await result,
+      text: result,
     });
   } else {
-    await sendTelegramMessage({ chatId: ctx.chatId, text: await result });
+    await sendTelegramMessage({ chatId: ctx.chatId, text: result });
   }
 }
 
