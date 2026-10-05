@@ -20,6 +20,8 @@ type PublicNavigationShellProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   initialRole?: AuthRole | null;
+  instagramUrl?: string;
+  whatsappUrl?: string;
 };
 
 const hiddenPrefixes = [
@@ -81,6 +83,8 @@ export function PublicNavigationShell({
   mobileNavbarVariant,
   storeSubdomainSlug,
   initialRole,
+  instagramUrl,
+  whatsappUrl,
 }: PublicNavigationShellProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -141,6 +145,8 @@ export function PublicNavigationShell({
           searchStoreSlug={searchStoreSlug}
           initialRole={initialRole}
           sticky={!isProductDetailPath(pathname)}
+          instagramUrl={instagramUrl}
+          whatsappUrl={whatsappUrl}
         />
       ) : null}
       {children}

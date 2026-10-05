@@ -1,15 +1,24 @@
 "use client";
 
 import {
+  BriefcaseBusiness,
   Heart,
+  HelpCircle,
+  Info,
+  Instagram,
+  Menu,
+  MessageCircle,
+  Plus,
   Search,
   ShoppingCart,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { WhatsAppIcon } from "@/components/icons/social-icons";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
@@ -41,6 +50,8 @@ type MarketplaceHeaderProps = {
   searchStoreSlug?: string | null;
   initialRole?: AuthRole | null;
   sticky?: boolean;
+  instagramUrl?: string;
+  whatsappUrl?: string;
 };
 
 const CART_KEY = "alisveris_cart";
@@ -69,6 +80,36 @@ function readCartCount() {
   }
 }
 
+function normalizeInstagramHref(value?: string) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://instagram.com/${trimmed.replace(/^@/, "")}`;
+}
+
+function normalizeWhatsappHref(value?: string) {
+  const trimmed = value?.trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  const phone = trimmed.replace(/[^\d]/g, "");
+
+  return phone ? `https://wa.me/${phone}` : "";
+}
+
 export function MarketplaceHeader({
   siteName = "Alışveriş",
   logoUrl,
@@ -87,6 +128,8 @@ export function MarketplaceHeader({
   searchStoreSlug,
   initialRole,
   sticky = true,
+  instagramUrl,
+  whatsappUrl,
 }: MarketplaceHeaderProps) {
   const nav = useTranslations("nav");
   const common = useTranslations("common");
@@ -121,7 +164,10 @@ export function MarketplaceHeader({
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(hasInlinePrimarySearch);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const instagramHref = normalizeInstagramHref(instagramUrl);
+  const whatsappHref = normalizeWhatsappHref(whatsappUrl);
   const commerceUtilityButtonClass =
     "group inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-8";
   const mobileUtilityButtonClass =
@@ -207,7 +253,34 @@ export function MarketplaceHeader({
 
   useEffect(() => {
     setIsMobileSearchOpen(false);
+    setIsMobileMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileMenuOpen]);
+
+  const addListingHref = isSeller
+    ? "/store/dashboard/products/new"
+    : isGuest
+      ? "/register?role=seller&next=/store/dashboard"
+      : "";
+  const shouldShowAddListing = Boolean(addListingHref);
+  const mobileMenuItems = [
+    { href: "/help", label: "Yardım", icon: HelpCircle },
+    { href: "/about", label: "Tətbiq haqqında", icon: Info },
+    { href: "/contact", label: "Bizimlə əlaqə", icon: MessageCircle },
+    { href: "/guide/seller", label: "Biznes üçün", icon: BriefcaseBusiness, badge: "Yeni" },
+  ];
 
   return (
     <>
@@ -253,7 +326,17 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-0.5 md:hidden">
-            <LanguageSwitcher />
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className={mobileUtilityButtonClass}
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Menyunu aç"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <Menu className={mobileCommerceIconClass} aria-hidden="true" />
+            </Button>
             {shouldShowMobileSearchToggle ? (
               <Button
                 type="button"
@@ -268,6 +351,32 @@ export function MarketplaceHeader({
                   className={mobileCommerceIconClass}
                   aria-hidden="true"
                 />
+              </Button>
+            ) : null}
+            {instagramHref ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className={mobileUtilityButtonClass}
+                aria-label="Instagram"
+              >
+                <a href={instagramHref} target="_blank" rel="noreferrer">
+                  <Instagram className={mobileCommerceIconClass} aria-hidden="true" />
+                </a>
+              </Button>
+            ) : null}
+            {whatsappHref ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className={mobileUtilityButtonClass}
+                aria-label="WhatsApp"
+              >
+                <a href={whatsappHref} target="_blank" rel="noreferrer">
+                  <WhatsAppIcon className={mobileCommerceIconClass} />
+                </a>
               </Button>
             ) : null}
             {!isGuest ? (
@@ -312,10 +421,6 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            <ThemeToggle
-              className={mobileUtilityButtonClass}
-              iconClassName={mobileCommerceIconClass}
-            />
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             <Button
@@ -439,6 +544,98 @@ export function MarketplaceHeader({
             className="w-full"
             inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[15px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
           />
+        </div>
+      ) : null}
+      {isMobileMenuOpen ? (
+        <div className="fixed inset-0 z-[90] md:hidden" role="dialog" aria-modal="true" aria-label="Mobil menyu">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/45"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Menyunu bağla"
+          />
+          <aside className="relative flex h-full w-[min(82vw,340px)] flex-col overflow-y-auto bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50">
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <Link
+                href={brandHomeHref}
+                prefetch
+                className="flex min-w-0 items-center gap-3"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {logoUrl ? (
+                  <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                    <img src={logoUrl} alt={displaySiteName} className="h-full w-full object-contain p-2" />
+                  </span>
+                ) : (
+                  <span className="grid size-14 shrink-0 place-items-center rounded-full bg-slate-100 text-xl font-black text-slate-500 dark:bg-slate-900 dark:text-slate-300">
+                    {displaySiteName.slice(0, 1)}
+                  </span>
+                )}
+                <span className="min-w-0 truncate text-2xl font-black tracking-normal">
+                  {displaySiteName}
+                </span>
+              </Link>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className="size-10 shrink-0 rounded-full"
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-label="Menyunu bağla"
+              >
+                <X className="size-6" aria-hidden="true" />
+              </Button>
+            </div>
+
+            {shouldShowAddListing ? (
+              <Link
+                href={addListingHref}
+                prefetch
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="mb-5 inline-flex min-h-14 items-center gap-4 border-b border-slate-200 pb-5 text-[22px] font-medium tracking-normal text-slate-800 dark:border-slate-800 dark:text-slate-100"
+              >
+                <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-slate-800 dark:border-slate-100">
+                  <Plus className="size-6" aria-hidden="true" />
+                </span>
+                <span>Elan yerləşdir</span>
+              </Link>
+            ) : null}
+
+            <div className="grid border-b border-slate-200 dark:border-slate-800">
+              {mobileMenuItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    prefetch
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex min-h-16 items-center gap-4 border-t border-slate-200 text-[21px] font-medium tracking-normal text-slate-800 first:border-t-0 dark:border-slate-800 dark:text-slate-100"
+                  >
+                    <Icon className="size-7 shrink-0 stroke-[1.9]" aria-hidden="true" />
+                    <span className="min-w-0 truncate">{item.label}</span>
+                    {item.badge ? (
+                      <span className="ml-auto rounded-full bg-orange-600 px-2.5 py-1 text-sm font-black text-white">
+                        {item.badge}
+                      </span>
+                    ) : null}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 grid gap-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+                <span className="text-sm font-black text-slate-600 dark:text-slate-300">Dil</span>
+                <LanguageSwitcher />
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+                <span className="text-sm font-black text-slate-600 dark:text-slate-300">Görünüş</span>
+                <ThemeToggle className="size-10 rounded-full" iconClassName="size-6" />
+              </div>
+            </div>
+          </aside>
         </div>
       ) : null}
       {showBottomNav ? (

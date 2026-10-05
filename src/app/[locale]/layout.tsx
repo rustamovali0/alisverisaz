@@ -251,6 +251,8 @@ export default async function LocaleLayout({
             mobileNavbarVariant={siteSettings.mobileNavbarVariant}
             storeSubdomainSlug={storeSubdomainSlug}
             initialRole={currentUser?.role ?? null}
+            instagramUrl={siteSettings.socialLinks.instagram}
+            whatsappUrl={siteSettings.socialLinks.whatsapp || siteSettings.whatsapp}
           >
             {children}
           </PublicNavigationShell>

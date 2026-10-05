@@ -409,7 +409,6 @@ export function HomeExperience({
       ? "Mağazalar, elanlar və gündəlik fürsətlər bir yerdə. Mobildən sürətli bax, müqayisə et və satıcı ilə əlaqə saxla."
       : hero?.description || description;
   const heroBackgroundImage = mobileHeroImageUrl || heroImageUrl;
-  const featuredStorePreview = featuredStores.slice(0, 2);
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
 
@@ -618,35 +617,6 @@ export function HomeExperience({
                 </div>
               ))}
             </div>
-          </section>
-        ) : null}
-
-        {featuredStorePreview.length > 0 ? (
-          <section className="grid gap-3 md:hidden" aria-label="Seçilmiş mağazalar">
-            {featuredStorePreview.map((store) => (
-              <Link
-                key={store.id}
-                href={getStorePath(store.slug)}
-                className="flex min-w-0 items-center gap-3 rounded-xl border border-stone-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900"
-              >
-                <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-emerald-50 text-lg font-black text-emerald-700">
-                  {store.logoUrl ? (
-                    <img src={store.logoUrl} alt={store.name} className="h-full w-full object-cover" />
-                  ) : (
-                    store.name.slice(0, 1).toLocaleUpperCase("az-AZ")
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-black text-slate-950 dark:text-slate-50">
-                    {store.name}
-                  </span>
-                  <span className="mt-1 block text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {marketplace("productCount", { count: store.productCount })}
-                  </span>
-                </span>
-                <ArrowRight className="ml-auto size-4 shrink-0 text-slate-400" aria-hidden="true" />
-              </Link>
-            ))}
           </section>
         ) : null}
 

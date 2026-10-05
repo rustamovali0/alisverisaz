@@ -251,7 +251,7 @@ export function MobileBottomNav({
             icon: Store,
           },
           {
-            href: "/sell",
+            href: "/store/dashboard/products/new",
             label: nav("addProduct"),
             icon: Plus,
           },
