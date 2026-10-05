@@ -127,6 +127,8 @@ type ProductWizardAction = {
   } | null;
 };
 
+const TELEGRAM_PASSWORD_SESSION_MS = 15 * 60 * 1000;
+
 type CommandConfig = {
   description: string;
   risk: "read" | "write" | "danger";
@@ -474,10 +476,49 @@ async function cancelPendingActions(ctx: TelegramContext) {
     .update({ used_at: new Date().toISOString() })
     .eq("telegram_user_id", ctx.userId)
     .eq("telegram_chat_id", ctx.chatId)
+    .neq("phase", "password_session")
     .is("used_at", null);
   await sendTelegramMessage({
     chatId: ctx.chatId,
     text: "✅ Əməliyyat ləğv edildi.",
+  });
+}
+
+async function hasActivePasswordSession(ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  await clearExpiredPendingActions();
+  const { data } = await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .select("id")
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "password_session")
+    .is("used_at", null)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data);
+}
+
+async function rememberPasswordSession(ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .update({ used_at: new Date().toISOString() })
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "password_session")
+    .is("used_at", null);
+  await (supabase as any).from("telegram_pending_admin_actions").insert({
+    telegram_user_id: ctx.userId,
+    telegram_chat_id: ctx.chatId,
+    command: "/password_session",
+    command_args: null,
+    phase: "password_session",
+    message_id: ctx.messageId ?? null,
+    expires_at: new Date(Date.now() + TELEGRAM_PASSWORD_SESSION_MS).toISOString(),
   });
 }
 
@@ -2023,6 +2064,7 @@ async function handlePasswordMessage(message: TelegramMessage, ctx: TelegramCont
     telegramChatId: ctx.chatId,
   });
   await markPendingUsed(pending.id);
+  await rememberPasswordSession(ctx);
 
   const command = {
     command: pending.command,
@@ -2200,6 +2242,19 @@ async function handleMessage(update: TelegramUpdate) {
   }
 
   if (!(await enforceRateLimit(command.command, ctx))) {
+    return;
+  }
+
+  if (await hasActivePasswordSession(ctx)) {
+    if (COMMANDS[command.command]?.confirm) {
+      await createConfirmation(ctx, command);
+      return;
+    }
+
+    const result = await executeCommand(command, ctx);
+    if (result) {
+      await sendTelegramMessage({ chatId: ctx.chatId, text: result });
+    }
     return;
   }
 
