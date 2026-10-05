@@ -300,6 +300,17 @@ export function MarketplaceHeader({
             isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
           )}
         >
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className={cn("md:hidden", mobileUtilityButtonClass)}
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Menyunu aç"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <Menu className={mobileCommerceIconClass} aria-hidden="true" />
+          </Button>
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3 md:flex-none">
             {logoUrl ? (
               <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
@@ -326,17 +337,6 @@ export function MarketplaceHeader({
             </span>
           </Link>
           <div className="ml-auto flex shrink-0 items-center gap-0.5 md:hidden">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className={mobileUtilityButtonClass}
-              onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Menyunu aç"
-              aria-expanded={isMobileMenuOpen}
-            >
-              <Menu className={mobileCommerceIconClass} aria-hidden="true" />
-            </Button>
             {shouldShowMobileSearchToggle ? (
               <Button
                 type="button"
