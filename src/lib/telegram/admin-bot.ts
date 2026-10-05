@@ -140,6 +140,7 @@ const COMMANDS: Record<string, CommandConfig> = {
   "/users": { description: "İstifadəçilər", risk: "read" },
   "/sales": { description: "Satıcılar", risk: "read" },
   "/sellerapps": { description: "Yeni satıcı sorğuları", risk: "read" },
+  "/can": { description: "Şifrə sessiyasını sil", risk: "read" },
   "/notificationstatus": { description: "Bildiriş statusları", risk: "read" },
   "/adminstatus": { description: "Admin panel statusu", risk: "read" },
   "/systemstatus": { description: "Sistem statusu", risk: "read" },
@@ -520,6 +521,19 @@ async function rememberPasswordSession(ctx: TelegramContext) {
     message_id: ctx.messageId ?? null,
     expires_at: new Date(Date.now() + TELEGRAM_PASSWORD_SESSION_MS).toISOString(),
   });
+}
+
+async function clearPasswordSession(ctx: TelegramContext) {
+  const supabase = createSupabaseAdminClient();
+  await (supabase as any)
+    .from("telegram_pending_admin_actions")
+    .update({ used_at: new Date().toISOString() })
+    .eq("telegram_user_id", ctx.userId)
+    .eq("telegram_chat_id", ctx.chatId)
+    .eq("phase", "password_session")
+    .is("used_at", null);
+
+  return "✅ Şifrə sessiyası silindi. Növbəti əməliyyatda yenidən şifrə tələb olunacaq.";
 }
 
 async function createUnlockChallenge(ctx: TelegramContext, reason: string) {
@@ -1852,6 +1866,8 @@ async function executeCommand(command: ParsedCommand, ctx: TelegramContext) {
       return listSellers(command.args);
     case "/sellerapps":
       return listSellerApplications(command.args, ctx);
+    case "/can":
+      return clearPasswordSession(ctx);
     case "/notificationstatus":
       return notificationStatus();
     case "/adminstatus":
@@ -2149,6 +2165,14 @@ async function handleMessage(update: TelegramUpdate) {
   await configureCommandMenu();
 
   const messageText = typeof message.text === "string" ? message.text.trim() : "";
+
+  if (messageText === "/can") {
+    await sendTelegramMessage({
+      chatId: ctx.chatId,
+      text: await clearPasswordSession(ctx),
+    });
+    return;
+  }
 
   if (messageText === "/cancel") {
     await cancelPendingActions(ctx);
