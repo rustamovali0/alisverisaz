@@ -1,4 +1,6 @@
-import type { SVGProps } from "react";
+"use client";
+
+import { useId, type SVGProps } from "react";
 
 export function TikTokIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -9,10 +11,11 @@ export function TikTokIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 export function InstagramBrandIcon(props: SVGProps<SVGSVGElement>) {
+  const gradientId = `instagram-${useId().replaceAll(":", "")}`;
   return (
     <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet" aria-hidden="true" {...props}>
       <defs>
-        <radialGradient id="instagram-brand-glow" cx="30%" cy="107%" r="130%">
+        <radialGradient id={gradientId} cx="30%" cy="107%" r="130%">
           <stop offset="0" stopColor="#fdf497" />
           <stop offset="0.05" stopColor="#fdf497" />
           <stop offset="0.45" stopColor="#fd5949" />
@@ -20,7 +23,7 @@ export function InstagramBrandIcon(props: SVGProps<SVGSVGElement>) {
           <stop offset="0.9" stopColor="#285AEB" />
         </radialGradient>
       </defs>
-      <rect width="24" height="24" rx="6.2" fill="url(#instagram-brand-glow)" />
+      <rect width="24" height="24" rx="6.2" fill={`url(#${gradientId})`} />
       <path
         fill="#fff"
         d="M12 7.35c1.52 0 1.7.01 2.3.04.56.02.86.12 1.06.2.27.1.46.23.66.43.2.2.33.39.43.66.08.2.18.5.2 1.06.03.6.04.78.04 2.3s-.01 1.7-.04 2.3c-.02.56-.12.86-.2 1.06-.1.27-.23.46-.43.66-.2.2-.39.33-.66.43-.2.08-.5.18-1.06.2-.6.03-.78.04-2.3.04s-1.7-.01-2.3-.04c-.56-.02-.86-.12-1.06-.2a1.78 1.78 0 0 1-.66-.43 1.78 1.78 0 0 1-.43-.66c-.08-.2-.18-.5-.2-1.06-.03-.6-.04-.78-.04-2.3s.01-1.7.04-2.3c.02-.56.12-.86.2-1.06.1-.27.23-.46.43-.66.2-.2.39-.33.66-.43.2-.08.5-.18 1.06-.2.6-.03.78-.04 2.3-.04Zm0-1.03c-1.55 0-1.74.01-2.35.04-.61.03-1.03.13-1.39.27-.38.15-.7.35-1.02.67-.32.32-.52.64-.67 1.02-.14.36-.24.78-.27 1.39-.03.61-.04.8-.04 2.35s.01 1.74.04 2.35c.03.61.13 1.03.27 1.39.15.38.35.7.67 1.02.32.32.64.52 1.02.67.36.14.78.24 1.39.27.61.03.8.04 2.35.04s1.74-.01 2.35-.04c.61-.03 1.03-.13 1.39-.27.38-.15.7-.35 1.02-.67.32-.32.52-.64.67-1.02.14-.36.24-.78.27-1.39.03-.61.04-.8.04-2.35s-.01-1.74-.04-2.35c-.03-.61-.13-1.03-.27-1.39-.15-.38-.35-.7-.67-1.02a2.8 2.8 0 0 0-1.02-.67c-.36-.14-.78-.24-1.39-.27-.61-.03-.8-.04-2.35-.04Zm0 2.78a2.9 2.9 0 1 0 0 5.8 2.9 2.9 0 0 0 0-5.8Zm0 4.78a1.88 1.88 0 1 1 0-3.76 1.88 1.88 0 0 1 0 3.76Zm3.7-4.9a.68.68 0 1 1-1.36 0 .68.68 0 0 1 1.36 0Z"
