@@ -4,7 +4,6 @@ import {
   Heart,
   HelpCircle,
   Info,
-  Instagram,
   Menu,
   MessageCircle,
   Plus,
@@ -17,7 +16,7 @@ import { useEffect, useState } from "react";
 
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { WhatsAppIcon } from "@/components/icons/social-icons";
+import { InstagramBrandIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
@@ -372,14 +371,11 @@ export function MarketplaceHeader({
                 asChild
                 size="icon"
                 variant="ghost"
-                className={cn(
-                  mobileUtilityButtonClass,
-                  "text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300",
-                )}
+                className={mobileUtilityButtonClass}
                 aria-label="Instagram"
               >
                 <a href={instagramHref} target="_blank" rel="noreferrer">
-                  <Instagram className={mobileCommerceIconClass} aria-hidden="true" />
+                  <InstagramBrandIcon className={mobileCommerceIconClass} />
                 </a>
               </Button>
             ) : null}
@@ -388,10 +384,7 @@ export function MarketplaceHeader({
                 asChild
                 size="icon"
                 variant="ghost"
-                className={cn(
-                  mobileUtilityButtonClass,
-                  "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300",
-                )}
+                className={mobileUtilityButtonClass}
                 aria-label="WhatsApp"
               >
                 <a href={whatsappHref} target="_blank" rel="noreferrer">
