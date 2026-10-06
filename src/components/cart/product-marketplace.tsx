@@ -2246,7 +2246,7 @@ export function Storefront({
           ) : (
             <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
               <div className="relative overflow-hidden rounded-2xl bg-slate-950">
-                <div className="relative h-[210px] sm:h-[280px] lg:h-[340px]">
+                <div className="relative h-[380px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
                   <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
