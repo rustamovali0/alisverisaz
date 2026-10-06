@@ -11,6 +11,7 @@ import { getStorefrontUrl, getStorePath } from "@/lib/config/domains";
 import { updateSellerOrderMethodAction } from "@/lib/whatsapp-orders/actions";
 import { normalizeOrderMethod } from "@/lib/whatsapp-orders/template";
 import { cn } from "@/lib/utils";
+import { clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
 
 type StoreSettingsFormProps = {
   store: {
@@ -38,15 +39,24 @@ function MediaPicker({
   label,
   currentUrl,
   ratio,
+  positionX = 50,
+  positionY = 50,
 }: {
   name: string;
   label: string;
   currentUrl: string | null;
   ratio: string;
+  positionX?: number;
+  positionY?: number;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [preview, setPreview] = useState(currentUrl ?? "");
+  const [x, setX] = useState(positionX);
+  const [y, setY] = useState(positionY);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const drag = useRef<{ x: number; y: number; px: number; py: number; overflowX: number; overflowY: number } | null>(null);
+  const isBanner = name === "banner";
 
   useEffect(() => {
     return () => {
@@ -62,6 +72,14 @@ function MediaPicker({
       return;
     }
 
+    if (inputRef.current && inputRef.current.files !== files) {
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      inputRef.current.files = transfer.files;
+    }
+    setX(50);
+    setY(50);
+
     const nextPreview = URL.createObjectURL(file);
     setPreview((previous) => {
       if (previous.startsWith("blob:")) {
@@ -75,9 +93,24 @@ function MediaPicker({
   return (
     <div className="grid gap-2">
       <span className="text-sm font-medium">{label}</span>
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
+      <div
+        onPointerDown={(event) => {
+          const image = imageRef.current;
+          if (!isBanner || !image?.naturalWidth) return;
+          const { width, height } = event.currentTarget.getBoundingClientRect();
+          const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+          drag.current = { x: event.clientX, y: event.clientY, px: x, py: y,
+            overflowX: image.naturalWidth * scale - width, overflowY: image.naturalHeight * scale - height };
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }}
+        onPointerMove={(event) => {
+          const start = drag.current;
+          if (!start) return;
+          if (start.overflowX > 1) setX(Math.max(0, Math.min(100, start.px - (event.clientX - start.x) / start.overflowX * 100)));
+          if (start.overflowY > 1) setY(Math.max(0, Math.min(100, start.py - (event.clientY - start.y) / start.overflowY * 100)));
+        }}
+        onPointerUp={() => { drag.current = null; }}
+        onPointerCancel={() => { drag.current = null; }}
         onDragOver={(event) => {
           event.preventDefault();
           setIsDragging(true);
@@ -89,13 +122,14 @@ function MediaPicker({
           handleFiles(event.dataTransfer.files);
         }}
         className={cn(
-          "relative grid w-full place-items-center overflow-hidden rounded-md border border-dashed bg-background p-3 text-center transition",
+          "relative grid w-full place-items-center overflow-hidden rounded-md border border-dashed bg-background text-center transition",
           ratio,
+          isBanner && preview && "touch-none cursor-move",
           isDragging ? "border-primary bg-primary/5" : "border-input",
         )}
       >
         {preview ? (
-          <img src={preview} alt={label} className="h-full w-full rounded object-cover" />
+          <img ref={imageRef} src={preview} alt={label} draggable={false} style={{ objectPosition: `${x}% ${y}%` }} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="grid place-items-center gap-2 text-sm text-muted-foreground">
             <ImagePlus className="size-7" aria-hidden="true" />
@@ -103,7 +137,21 @@ function MediaPicker({
             <span className="hidden sm:inline">Şəkli seç və ya buraya sürüklə</span>
           </div>
         )}
-      </button>
+      </div>
+      <Button type="button" variant="outline" size="sm" className="w-fit" onClick={() => inputRef.current?.click()}>
+        <ImagePlus className="mr-2 size-4" aria-hidden="true" />Şəkil seç
+      </Button>
+      {isBanner && preview ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-1 text-xs">Üfüqi
+            <input type="range" min="0" max="100" value={x} onChange={(event) => setX(Number(event.target.value))} />
+          </label>
+          <label className="grid gap-1 text-xs">Şaquli
+            <input type="range" min="0" max="100" value={y} onChange={(event) => setY(Number(event.target.value))} />
+          </label>
+        </div>
+      ) : null}
+      {isBanner ? <><input type="hidden" name="bannerPositionX" value={x} /><input type="hidden" name="bannerPositionY" value={y} /></> : null}
       <input
         ref={inputRef}
         type="file"
@@ -137,6 +185,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
       }
 
       void appAlert.success("Ayarlar yeniləndi", result.message);
+      clearClientAuthProfileCache();
     });
   }
 
@@ -197,7 +246,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
         </Button>
       </form>
 
-      <form action={handleSubmit} encType="multipart/form-data" className="premium-card grid gap-5 p-5">
+      <form action={handleSubmit} className="premium-card grid gap-5 p-5">
         <input type="hidden" name="storeId" value={store.id} />
         <div>
           <h2 className="text-xl font-black tracking-normal">Əsas ayarlar</h2>
@@ -303,6 +352,8 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             label="Banner şəkli"
             currentUrl={store.cover_url}
             ratio="aspect-[16/6]"
+            positionX={typeof store.settings?.bannerPositionX === "number" ? store.settings.bannerPositionX : 50}
+            positionY={typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50}
           />
         </div>
         <Button type="submit" disabled={isPending} className="w-fit">

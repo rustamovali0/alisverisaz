@@ -144,6 +144,14 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
     >()
     .maybeSingle();
 
+  let storeLogo: string | null = null;
+  if (profile?.role === "seller") {
+    const { data: store } = await supabase.from("stores")
+      .select("logo_url").eq("owner_id", user.id).limit(1)
+      .returns<{ logo_url: string | null }[]>().maybeSingle();
+    storeLogo = store?.logo_url ?? null;
+  }
+
   return {
     status: "authenticated",
     userId: user.id,
@@ -155,7 +163,7 @@ async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
         ? user.user_metadata.full_name
         : null),
     avatarUrl:
-      profile?.avatar_url ??
+      storeLogo ?? profile?.avatar_url ??
       (typeof user.user_metadata?.avatar_url === "string"
         ? user.user_metadata.avatar_url
         : null),

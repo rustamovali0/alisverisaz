@@ -12,6 +12,7 @@ import {
   type PromotionTargetType,
 } from "@/lib/promotions/types";
 import type { ManagedProduct } from "@/lib/products/types";
+import { useRouter } from "@/i18n/navigation";
 
 type StoreOption = {
   id: string;
@@ -56,6 +57,7 @@ export function SellerPromotionManager({
   products,
   requests,
 }: SellerPromotionManagerProps) {
+  const router = useRouter();
   const [targetType, setTargetType] = useState<PromotionTargetType>("store");
   const [days, setDays] = useState(3);
   const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.id ?? "");
@@ -75,11 +77,12 @@ export function SellerPromotionManager({
       const result = await createPromotionRequestAction(formData);
 
       if (!result.ok) {
-        void appAlert.error(result.message, "Sorğu göndərilmədi");
+        void appAlert.error("Sorğu göndərilmədi", result.message);
         return;
       }
 
       void appAlert.success("Sorğu göndərildi", result.message);
+      router.refresh();
     });
   }
 
@@ -119,7 +122,7 @@ export function SellerPromotionManager({
           </div>
         </div>
 
-        <label className="grid gap-2 text-sm font-bold">
+        {stores.length === 1 ? <input type="hidden" name="storeId" value={stores[0].id} /> : <label className="grid gap-2 text-sm font-bold">
           Mağaza
           <select
             name="storeId"
@@ -134,7 +137,7 @@ export function SellerPromotionManager({
               </option>
             ))}
           </select>
-        </label>
+        </label>}
 
         {targetType === "product" ? (
           <label className="grid gap-2 text-sm font-bold">

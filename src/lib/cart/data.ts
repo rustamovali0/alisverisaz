@@ -1008,6 +1008,8 @@ async function getMarketplaceStoreBySlugUncached(input: {
     aboutContent: readSetting(store.settings, "aboutContent"),
     heroTitle: readSetting(store.settings, "heroTitle"),
     heroSubtitle: readSetting(store.settings, "heroSubtitle"),
+    bannerPositionX: typeof store.settings?.bannerPositionX === "number" ? store.settings.bannerPositionX : 50,
+    bannerPositionY: typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50,
     socialInstagram: readSetting(store.settings, "socialInstagram"),
     socialTiktok: readSetting(store.settings, "socialTiktok"),
     address: readSetting(store.settings, "address"),

@@ -3,6 +3,7 @@ import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { escapeHtml, sendTelegramMessage } from "@/lib/telegram/api";
 import type { PromotionRequest, PromotionTargetType } from "@/lib/promotions/types";
+import { clientEnv } from "@/lib/config/env.client";
 
 function targetLabel(type: PromotionTargetType) {
   return type === "store" ? "Mağaza" : "Məhsul";
@@ -12,7 +13,7 @@ function formatMoney(amount: number, currency = "AZN") {
   return `${amount.toFixed(2)} ${currency}`;
 }
 
-export async function notifyPromotionRequestSubmitted(request: PromotionRequest) {
+async function createAdminPromotionNotifications(request: PromotionRequest) {
   const supabase = createSupabaseAdminClient();
   const { data: admins } = await (supabase as any)
     .from("profiles")
@@ -39,8 +40,12 @@ export async function notifyPromotionRequestSubmitted(request: PromotionRequest)
   if (rows.length > 0) {
     await (supabase as any).from("notifications").insert(rows);
   }
+}
 
-  await sendTelegramMessage({
+export async function notifyPromotionRequestSubmitted(request: PromotionRequest) {
+  const [, telegram] = await Promise.allSettled([
+    createAdminPromotionNotifications(request),
+    sendTelegramMessage({
     text: [
       "📌 <b>Yeni önə çıxarma sorğusu</b>",
       `Tip: <b>${escapeHtml(targetLabel(request.targetType))}</b>`,
@@ -50,11 +55,13 @@ export async function notifyPromotionRequestSubmitted(request: PromotionRequest)
       `Qiymət: <b>${escapeHtml(formatMoney(request.totalAmount, request.currency))}</b>`,
       request.requesterEmail ? `Satıcı: ${escapeHtml(request.requesterEmail)}` : null,
       request.sellerNote ? `Qeyd: ${escapeHtml(request.sellerNote)}` : null,
-      `RAdmin: /radmin/promotions`,
+      `RAdmin: ${escapeHtml(new URL("/radmin/promotions", clientEnv.appUrl).toString())}`,
     ]
       .filter(Boolean)
       .join("\n"),
-  });
+    }),
+  ]);
+  return { telegramSent: telegram.status === "fulfilled" && telegram.value === true };
 }
 
 export async function notifyPromotionRequestResolved(request: PromotionRequest) {

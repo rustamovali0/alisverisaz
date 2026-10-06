@@ -109,6 +109,15 @@ export async function updateSellerStoreSettingsAction(
   const socialTiktok = readString(formData, "socialTiktok");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
+  const bannerPosition: Record<string, number> = {};
+  for (const key of ["bannerPositionX", "bannerPositionY"]) {
+    if (!formData.has(key)) continue;
+    const value = Number(readString(formData, key));
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      return { ok: false, message: "Banner mövqeyi 0–100 arasında olmalıdır." };
+    }
+    bannerPosition[key] = value;
+  }
 
   if (!storeId || !name) {
     return {
@@ -178,9 +187,10 @@ export async function updateSellerStoreSettingsAction(
       formData.has("heroSubtitle") ||
       formData.has("aboutContent") ||
       formData.has("socialInstagram") ||
-      formData.has("socialTiktok")
+      formData.has("socialTiktok") || Object.keys(bannerPosition).length > 0
     ) {
       const settings = currentSettings;
+      Object.assign(settings, bannerPosition);
 
       if (formData.has("heroTitle") && heroTitle) {
         settings.heroTitle = heroTitle;

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { updateSellerStoreSettingsAction } from "@/lib/store-settings/actions";
+import { clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
 
 type StoreBrandingQuickEditProps = {
   store: {
@@ -18,6 +19,8 @@ type StoreBrandingQuickEditProps = {
     socialTiktok?: string | null;
     logoUrl: string | null;
     coverUrl: string | null;
+    bannerPositionX?: number;
+    bannerPositionY?: number;
   };
 };
 
@@ -81,6 +84,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
       }
 
       void appAlert.success("Şəkil yeniləndi", result.message);
+      clearClientAuthProfileCache();
       router.refresh();
     });
   }
@@ -110,7 +114,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
       <input ref={bannerInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("banner", event.target.files?.[0] ?? null)} />
       <input ref={logoInputRef} type="file" accept={IMAGE_ACCEPT} className="sr-only" onChange={(event) => replaceImage("logo", event.target.files?.[0] ?? null)} />
       <button type="button" onClick={() => bannerInputRef.current?.click()} disabled={isPending} className="group relative block min-h-[170px] w-full overflow-hidden bg-primary/10 text-left disabled:cursor-wait sm:min-h-[240px] lg:min-h-[280px]" aria-label="Banneri dəyiş">
-        <img src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL} alt="" style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }} className="absolute inset-0 h-full w-full object-cover" />
         <span className="absolute inset-0 bg-slate-950/45" aria-hidden="true" />
         <span className="absolute inset-0 grid place-items-center bg-black/0 transition group-hover:bg-black/15 group-focus-visible:bg-black/15">
           <span className="inline-flex items-center gap-2 rounded-full bg-background/95 px-4 py-2 text-sm font-bold text-foreground shadow-sm transition">

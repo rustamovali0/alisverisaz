@@ -91,6 +91,7 @@ export function HeaderAccountActions({
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isMounted, setIsMounted] = useState(false);
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -213,13 +214,15 @@ export function HeaderAccountActions({
       <Button
         type="button"
         variant="outline"
-        className="h-11 gap-2 pl-2 pr-3"
+        className="h-11 gap-2 border-slate-200 bg-white pl-2 pr-3 text-slate-900 hover:!bg-slate-100 hover:!text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:!bg-slate-800 dark:hover:!text-slate-100"
         onClick={() => setIsOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        <span className="grid size-8 place-items-center rounded-md bg-primary/10 text-xs font-black text-primary">
-          {initials}
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          {profile.avatarUrl && failedAvatar !== profile.avatarUrl ? (
+            <img src={profile.avatarUrl} alt={profile.fullName ?? "Profil"} className="h-full w-full object-cover" onError={() => setFailedAvatar(profile.avatarUrl)} />
+          ) : initials}
         </span>
         <span className="hidden max-w-28 truncate text-left xl:inline">
           {profile.fullName ?? profile.email ?? roles(role)}

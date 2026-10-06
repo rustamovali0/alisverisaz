@@ -155,6 +155,7 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
     <img
       src={coverUrl}
       alt={store.name}
+      style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }}
       className={cn(
         "h-full w-full object-cover object-center",
         store.coverUrl ? "bg-slate-950" : "",

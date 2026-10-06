@@ -95,3 +95,7 @@ create policy "promotion_requests_manage_admin"
 on public.promotion_requests for all
 using (public.is_admin())
 with check (public.is_admin());
+
+grant select, insert, update, delete on public.promotion_requests to authenticated;
+grant all on public.promotion_requests to service_role;
+notify pgrst, 'reload schema';

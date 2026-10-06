@@ -136,10 +136,16 @@ export async function createPromotionRequestAction(
     .eq("store_id", storeId)
     .eq("status", "pending")
     .limit(1);
-  const { data: duplicate } =
+  const { data: duplicate, error: duplicateError } =
     targetType === "product"
       ? await duplicateQuery.eq("product_id", productId)
       : await duplicateQuery.is("product_id", null);
+
+  if (duplicateError) {
+    return { ok: false, message: ["42P01", "PGRST205"].includes(duplicateError.code)
+      ? "Önə çıxarma sistemi hazır deyil. Administrator promotion_requests SQL faylını tətbiq etməlidir."
+      : "Gözləyən sorğular yoxlanmadı. Yenidən cəhd edin." };
+  }
 
   if ((duplicate ?? []).length > 0) {
     return {
@@ -176,11 +182,14 @@ export async function createPromotionRequestAction(
     };
   }
 
-  const request = await getPromotionRequestById(data.id);
-
-  if (request) {
-    await notifyPromotionRequestSubmitted(request);
-  }
+  const notification = await notifyPromotionRequestSubmitted({
+    id: data.id, requesterId: current.user.id, targetType, storeId,
+    storeName: store.name, storeSlug: store.slug, productId: targetType === "product" ? productId : null,
+    productName, status: "pending", requestedDays, dailyPriceAmount: dailyPrice, totalAmount,
+    currency: "AZN", startsAt: null, endsAt: null, sellerNote, adminNote: null,
+    requesterName: current.profile?.full_name ?? null, requesterEmail: current.user.email ?? null,
+    createdAt: new Date().toISOString(),
+  });
 
   revalidatePromotionPaths({
     storeId,
@@ -190,7 +199,9 @@ export async function createPromotionRequestAction(
 
   return {
     ok: true,
-    message: "Sorğu göndərildi. Admin ödənişi təsdiqlədikdən sonra aktiv olacaq.",
+    message: notification.telegramSent
+      ? "Sorğu RAdminə və Telegrama göndərildi. Ödəniş təsdiqindən sonra aktiv olacaq."
+      : "Sorğu RAdminə göndərildi. Telegram bildirişi çatdırılmadı; sorğu admin panelində saxlanılıb.",
   };
 }
 
