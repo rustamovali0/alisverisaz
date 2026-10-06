@@ -317,7 +317,7 @@ export function MarketplaceHeader({
             type="button"
             size="icon"
             variant="ghost"
-            className={cn("md:hidden", mobileUtilityButtonClass)}
+            className={cn(mobileUtilityButtonClass, "md:size-11 md:[&_svg]:!size-7")}
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Menyunu aç"
             aria-expanded={isMobileMenuOpen}
@@ -560,14 +560,14 @@ export function MarketplaceHeader({
         </div>
       ) : null}
       {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-[90] md:hidden" role="dialog" aria-modal="true" aria-label="Mobil menyu">
+        <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-label="Menyu">
           <button
             type="button"
             className="absolute inset-0 bg-slate-950/45"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Menyunu bağla"
           />
-          <aside className="relative flex h-full w-[min(74vw,300px)] flex-col overflow-hidden bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50">
+          <aside className="relative flex h-full w-[min(74vw,300px)] flex-col overflow-hidden bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50 md:w-[340px] md:px-5 md:pt-5">
             <div className="mb-5 flex items-center justify-between gap-3">
               <Link
                 href={brandHomeHref}
