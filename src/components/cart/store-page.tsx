@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
@@ -131,9 +131,12 @@ export async function renderStorePage(
   const { locale, storeSlug } = await params;
   const search = await searchParams;
   setRequestLocale(locale);
+  const requestHeaders = await headers();
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const marketplaceHomeRedirect = storeSubdomainSlug ? siteConfig.url : "/";
 
   if (isReservedStoreSubdomain(storeSlug)) {
-    notFound();
+    redirect(marketplaceHomeRedirect);
   }
 
   const t = await getTranslations("marketplace");
@@ -153,14 +156,12 @@ export async function renderStorePage(
   });
 
   if (!store) {
-    notFound();
+    redirect(marketplaceHomeRedirect);
   }
 
   const isStoreOwner =
     current?.role === "seller" && current.user.id === store.ownerId;
 
-  const requestHeaders = await headers();
-  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const currentPath = requestHeaders.get("x-current-path") ?? "";
   const isLegacyStoreRoute =
     options.forceMarketplaceRoute ||
@@ -169,7 +170,6 @@ export async function renderStorePage(
     currentPath === `/${locale}/store/${store.slug}` ||
     currentPath.startsWith(`/${locale}/store/${store.slug}/`);
   const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
-  const marketplaceHomeRedirect = storeSubdomainSlug ? siteConfig.url : "/";
 
   if (!isLegacyStoreRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
     redirect(marketplaceHomeRedirect);
