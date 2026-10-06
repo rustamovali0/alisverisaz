@@ -10,6 +10,10 @@ import {
   invalidatePublicSiteSettings,
   invalidateStorePublicData,
 } from "@/lib/cache/public-cache";
+import {
+  isReservedStoreSubdomain,
+  isValidStoreSlug,
+} from "@/lib/config/domains";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { normalizeOrderMethod } from "@/lib/whatsapp-orders/template";
 import {
@@ -57,6 +61,23 @@ function readOptionalLimit(formData: FormData, key: string) {
 
 function readBoolean(formData: FormData, key: string) {
   return readString(formData, key) === "on";
+}
+
+function slugifyStoreSlug(value: string) {
+  return value
+    .toLocaleLowerCase("az-AZ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ə/g, "e")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .replace(/ğ/g, "g")
+    .replace(/ç/g, "c")
+    .replace(/ş/g, "s")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 }
 
 function readLoaderType(formData: FormData) {
@@ -1116,9 +1137,11 @@ export async function updateStorefrontAccessAction(
 ): Promise<CmsActionResult> {
   const storeId = readString(formData, "storeId");
   const enabled = readBoolean(formData, "customStorefrontEnabled");
+  const requestedSlug = slugifyStoreSlug(readString(formData, "slug"));
   const current = await audit("update_storefront_access", "stores", {
     storeId,
     enabled,
+    requestedSlug,
   });
 
   if (!storeId) {
@@ -1146,15 +1169,45 @@ export async function updateStorefrontAccessAction(
     store.settings && typeof store.settings === "object" && !Array.isArray(store.settings)
       ? { ...(store.settings as Record<string, unknown>) }
       : {};
+  const nextSlug = requestedSlug || store.slug;
+
+  if (!isValidStoreSlug(nextSlug) || isReservedStoreSubdomain(nextSlug)) {
+    return {
+      ok: false,
+      message: "Mağaza URL-i yalnız hərf, rəqəm və tire ola bilər; bu ad rezerv olunub.",
+    };
+  }
+
+  if (nextSlug !== store.slug) {
+    const { data: slugOwner } = await (supabaseAdmin as any)
+      .from("stores")
+      .select("id")
+      .eq("slug", nextSlug)
+      .neq("id", storeId)
+      .maybeSingle();
+
+    if (slugOwner) {
+      return {
+        ok: false,
+        message: "Bu mağaza URL-i artıq istifadə olunur.",
+      };
+    }
+  }
 
   settings.customStorefrontEnabled = enabled;
 
+  const payload: Record<string, unknown> = {
+    settings,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (nextSlug !== store.slug) {
+    payload.slug = nextSlug;
+  }
+
   const { error } = await (supabaseAdmin as any)
     .from("stores")
-    .update({
-      settings,
-      updated_at: new Date().toISOString(),
-    })
+    .update(payload)
     .eq("id", storeId);
 
   if (error) {
@@ -1172,22 +1225,37 @@ export async function updateStorefrontAccessAction(
     storeId,
     storeSlug: store.slug,
   });
+  if (nextSlug !== store.slug) {
+    invalidateStorePublicData({
+      storeId,
+      storeSlug: nextSlug,
+    });
+  }
   await recordAdminAudit({
     adminId: current.user.id,
-    action: enabled ? "RADMIN_STOREFRONT_ACCESS_ENABLED" : "RADMIN_STOREFRONT_ACCESS_DISABLED",
+    action:
+      nextSlug !== store.slug
+        ? "RADMIN_STOREFRONT_ACCESS_UPDATED"
+        : enabled
+          ? "RADMIN_STOREFRONT_ACCESS_ENABLED"
+          : "RADMIN_STOREFRONT_ACCESS_DISABLED",
     entityType: "stores",
     entityId: storeId,
     metadata: {
-      store_slug: store.slug,
+      previous_store_slug: store.slug,
+      store_slug: nextSlug,
       custom_storefront_enabled: enabled,
     },
   });
 
   return {
     ok: true,
-    message: enabled
-      ? "Subdomain və /mağaza yolu aktiv edildi."
-      : "Subdomain və /mağaza yolu deaktiv edildi.",
+    message:
+      nextSlug !== store.slug
+        ? `Mağaza URL-i /${nextSlug} olaraq yeniləndi.`
+        : enabled
+          ? "Subdomain və /mağaza yolu aktiv edildi."
+          : "Subdomain və /mağaza yolu deaktiv edildi.",
   };
 }
 

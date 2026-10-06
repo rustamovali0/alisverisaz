@@ -1,7 +1,8 @@
 "use client";
 
-import { ExternalLink, Globe2, PauseCircle, PlayCircle } from "lucide-react";
-import { useTransition } from "react";
+import { ExternalLink, Globe2, PauseCircle, PlayCircle, Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -22,12 +23,14 @@ type StorefrontAccessManagerProps = {
 };
 
 export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function updateAccess(store: StorefrontAccessRow, enabled: boolean) {
     startTransition(async () => {
       const formData = new FormData();
       formData.set("storeId", store.id);
+      formData.set("slug", store.slug);
 
       if (enabled) {
         formData.set("customStorefrontEnabled", "on");
@@ -41,6 +44,24 @@ export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps
       }
 
       void appAlert.success("Subdomain ayarı saxlandı", result.message);
+      router.refresh();
+    });
+  }
+
+  function saveStorefront(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const result = await updateStorefrontAccessAction(formData);
+
+      if (!result.ok) {
+        void appAlert.error(result.message, "Subdomain ayarı saxlanmadı");
+        return;
+      }
+
+      void appAlert.success("Subdomain ayarı saxlandı", result.message);
+      router.refresh();
     });
   }
 
@@ -64,10 +85,12 @@ export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps
           : getStorePath(store.slug);
 
         return (
-          <article
+          <form
             key={store.id}
+            onSubmit={saveStorefront}
             className="grid gap-3 rounded-xl border bg-background p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
           >
+            <input type="hidden" name="storeId" value={store.id} />
             <div className="min-w-0">
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h2 className="min-w-0 truncate text-lg font-black">{store.name}</h2>
@@ -85,6 +108,27 @@ export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps
                 </span>
               </div>
               <p className="mt-1 truncate text-sm text-muted-foreground">{store.ownerLabel}</p>
+              <label className="mt-3 block text-xs font-black uppercase tracking-wide text-muted-foreground">
+                Subdomain və /mağaza adı
+              </label>
+              <input
+                name="slug"
+                defaultValue={store.slug}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                className="mt-1 h-11 w-full rounded-lg border bg-background px-3 font-mono text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                placeholder="magaza-adi"
+              />
+              <label className="mt-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                <input
+                  type="checkbox"
+                  name="customStorefrontEnabled"
+                  defaultChecked={store.customStorefrontEnabled}
+                  className="size-4 rounded border"
+                />
+                Subdomain və qısa /mağaza yolu aktiv olsun
+              </label>
               <div className="mt-3 grid gap-1.5 text-sm">
                 <code className="min-w-0 truncate rounded-md bg-muted px-2 py-1">
                   /{store.slug}
@@ -95,6 +139,10 @@ export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row md:flex-col">
+              <Button type="submit" variant="secondary" size="sm" disabled={isPending}>
+                <Save className="mr-2 size-4" aria-hidden="true" />
+                Saxla
+              </Button>
               <Button asChild variant="outline" size="sm">
                 <a href={publicUrl} target="_blank" rel="noreferrer">
                   Aç
@@ -124,7 +172,7 @@ export function StorefrontAccessManager({ stores }: StorefrontAccessManagerProps
                 </Button>
               )}
             </div>
-          </article>
+          </form>
         );
       })}
     </div>

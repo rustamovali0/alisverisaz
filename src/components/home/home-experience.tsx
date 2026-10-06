@@ -327,16 +327,16 @@ function QuickActionTile({
   return (
     <Link
       href={href}
-      className="flex min-w-0 items-center gap-3 rounded-xl border border-stone-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-emerald-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900"
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-emerald-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 sm:gap-3 sm:p-3"
     >
-      <span className={cn("grid size-11 shrink-0 place-items-center rounded-lg", tone)}>
+      <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg sm:size-11", tone)}>
         <Icon className="size-5" aria-hidden="true" />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-sm font-black text-slate-950 dark:text-slate-50">
+        <span className="block truncate text-[13px] font-black leading-4 text-slate-950 dark:text-slate-50 sm:text-sm">
           {title}
         </span>
-        <span className="mt-0.5 block truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400 sm:text-xs">
           {description}
         </span>
       </span>
@@ -522,15 +522,15 @@ export function HomeExperience({
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <QuickActionTile
                       href="/store/dashboard/products/new"
-                      title="Elan yerləşdir"
-                      description="30 saniyəyə başla"
+                      title="Elan ver"
+                      description="30 saniyə"
                       icon={BadgePlus}
                       tone="bg-[#ffcf4a] text-slate-950"
                     />
                     <QuickActionTile
                       href="/store/dashboard/products/new"
-                      title="AI ilə doldur"
-                      description="Mətnə kömək"
+                      title="AI kömək"
+                      description="Mətn hazırla"
                       icon={Bot}
                       tone="bg-emerald-50 text-emerald-700"
                     />

@@ -155,7 +155,12 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
     <img
       src={coverUrl}
       alt={store.name}
-      className="h-full w-full object-cover"
+      className={cn(
+        "h-full w-full",
+        store.coverUrl
+          ? "bg-slate-100 object-contain dark:bg-slate-900"
+          : "object-cover",
+      )}
       onError={() => setHasError(true)}
     />
   );
@@ -2121,8 +2126,8 @@ export function Storefront({
                 className={cn(
                   "group min-w-0 rounded-[14px] border border-slate-200 bg-white text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
                   isCustomStorefront
-                    ? "flex min-h-[58px] w-[74vw] max-w-[260px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
-                    : "flex min-h-[58px] w-[74vw] max-w-[260px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4",
+                    ? "flex min-h-[58px] w-[52vw] min-w-[158px] max-w-[210px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
+                    : "flex min-h-[58px] w-[52vw] min-w-[158px] max-w-[210px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4",
                   isCustomStorefront && !showAllMobileCategories && index >= 12 && "hidden sm:flex",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
