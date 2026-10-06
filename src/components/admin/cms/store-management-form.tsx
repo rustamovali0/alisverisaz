@@ -61,6 +61,7 @@ export function StoreManagementForm({
       }
 
       void appAlert.success("Mağaza ayarı saxlandı", result.message);
+      router.refresh();
     });
   }
 
@@ -185,9 +186,11 @@ export function StoreManagementForm({
         <label className="grid gap-2 text-sm font-medium">
           Mağaza adı
           <input
-            value={store.name}
-            readOnly
-            className="h-10 rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground"
+            name="name"
+            defaultValue={store.name}
+            autoCapitalize="words"
+            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">

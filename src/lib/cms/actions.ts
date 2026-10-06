@@ -957,6 +957,7 @@ export async function updateStoreManagementAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
   const storeId = readString(formData, "storeId");
+  const storeName = readString(formData, "name");
   const orderMethod = normalizeOrderMethod(readString(formData, "orderMethod"));
   const whatsappPhone = normalizeAzerbaijanPhone(readString(formData, "whatsappPhone"));
   const current = await audit("update_store_management", "stores", {
@@ -980,9 +981,10 @@ export async function updateStoreManagementAction(
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: existingStore } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id,slug,settings")
+    .select("id,name,slug,settings")
     .eq("id", storeId)
     .maybeSingle();
+  const nextStoreName = storeName || existingStore?.name || "Mağaza";
   const parsedStoreSettings = parseJson(readString(formData, "storeSettings"), {});
   const existingSettings =
     existingStore?.settings &&
@@ -1003,6 +1005,7 @@ export async function updateStoreManagementAction(
   const { error: storeError } = await (supabaseAdmin as any)
     .from("stores")
     .update({
+      name: nextStoreName,
       status: readString(formData, "status") || "active",
       settings: storeSettings,
     })

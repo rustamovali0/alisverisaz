@@ -409,6 +409,7 @@ export function RegisterForm({
               name="storeName"
               label="Mağaza adı"
               autoComplete="organization"
+              autoCapitalize="words"
               value={storeName}
               onChange={(event) => {
                 setStoreName(event.target.value);

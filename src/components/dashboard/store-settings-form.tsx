@@ -240,6 +240,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
           <input
             name="name"
             defaultValue={store.name}
+            autoCapitalize="words"
             className="premium-input h-11"
             required
           />
