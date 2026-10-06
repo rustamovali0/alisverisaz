@@ -44,6 +44,11 @@ it("selects the isolated admin cookie on localized admin routes", async () => {
   expect(mocks.create.mock.calls[0][2].cookieOptions?.name).toBe("sb-alisveris-admin-auth-token");
 });
 
+it("uses the same public cookie namespace after seller login", async () => {
+  await updateSession(new NextRequest("https://alisveris.az/store/dashboard"));
+  expect(mocks.create.mock.calls.at(-1)?.[2].cookieOptions?.name).toBe("sb-alisveris-public-auth-token-v2");
+});
+
 it("keeps login accessible when a valid auth account has an unreadable profile", async () => {
   mocks.profileError = { code: "42501", message: "permission denied" };
   const response = await updateSession(new NextRequest("https://alisveris.az/login"));

@@ -4,6 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 
 import { clientEnv } from "@/lib/config/env.client";
 import { getSharedCookieDomain } from "@/lib/config/domains";
+import { getSupabaseCookieName } from "@/lib/supabase/auth-scope";
 import type { Database } from "@/types/database";
 
 let browserClient: ReturnType<typeof createBrowserClient<Database>> | undefined;
@@ -20,6 +21,7 @@ export function createSupabaseBrowserClient() {
       clientEnv.supabasePublishableKey,
       {
         cookieOptions: {
+          name: getSupabaseCookieName("public"),
           path: "/",
           sameSite: "lax",
           ...(typeof window !== "undefined" && window.location.protocol === "https:"
