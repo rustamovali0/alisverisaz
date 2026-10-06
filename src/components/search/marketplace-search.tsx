@@ -23,6 +23,7 @@ type MarketplaceSearchProps = {
   resultsAnchorId?: string;
   compactActions?: boolean;
   placeholder?: string;
+  enablePopularSearches?: boolean;
 };
 
 type SearchSuggestion = {
@@ -114,6 +115,7 @@ export function MarketplaceSearch({
   resultsAnchorId,
   compactActions = false,
   placeholder,
+  enablePopularSearches = true,
 }: MarketplaceSearchProps) {
   const common = useTranslations("common");
   const marketplace = useTranslations("marketplace");
@@ -133,6 +135,7 @@ export function MarketplaceSearch({
     [storeSlug, stores],
   );
   const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
+  const canShowPopularSearches = enablePopularSearches && !storeSlug;
 
   function syncSearchQuery(value: string) {
     if (typeof window === "undefined") {
@@ -237,7 +240,7 @@ export function MarketplaceSearch({
   }, [syncScope]);
 
   useEffect(() => {
-    if (!isFocused || query.trim() || loadedPopularSearches.current) {
+    if (!canShowPopularSearches || !isFocused || query.trim() || loadedPopularSearches.current) {
       return;
     }
 
@@ -260,7 +263,7 @@ export function MarketplaceSearch({
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, [isFocused, query]);
+  }, [canShowPopularSearches, isFocused, query]);
 
   useEffect(() => {
     if (!isFocused || normalizedQuery.length < 2) {
@@ -388,7 +391,8 @@ export function MarketplaceSearch({
     inputRef.current?.focus();
   }
 
-  const showPopularSearches = isFocused && !query.trim() && popularSearches.length > 0;
+  const showPopularSearches =
+    canShowPopularSearches && isFocused && !query.trim() && popularSearches.length > 0;
   const showSuggestions = isFocused && query.trim().length > 0 && suggestions.length > 0;
   const showNoResults =
     isFocused &&
