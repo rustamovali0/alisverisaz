@@ -21,6 +21,7 @@ import { PublicStoreLocationSection } from "@/components/locations/public-store-
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
+import { StoreWhatsAppButton } from "@/components/store/store-whatsapp-button";
 import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -2252,6 +2253,7 @@ export function Storefront({
               <div className="relative overflow-hidden rounded-2xl bg-slate-950">
                 <div className="relative h-[380px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
+                  <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
                   <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
                 </div>
@@ -2364,6 +2366,7 @@ export function Storefront({
             <div className="relative -mx-1 -mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:hidden">
               <div className="aspect-[16/9] w-full">
                 <StoreHeroCover store={store} />
+                <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 via-slate-950/8 to-transparent" aria-hidden="true" />
               <StoreLogo store={store} className="absolute bottom-3 left-3 size-16 rounded-2xl border-2 border-white bg-white shadow-[0_12px_28px_rgba(2,6,23,0.24)]" />
@@ -2447,6 +2450,7 @@ export function Storefront({
             <div className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:block">
               <div className="aspect-[4/3] w-full">
                 <StoreHeroCover store={store} />
+                <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
               <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">

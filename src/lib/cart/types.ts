@@ -54,6 +54,7 @@ export type MarketplaceStore = {
   socialTiktok?: string | null;
   address: string | null;
   phone: string | null;
+  whatsappPhone?: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
   updatedAt?: string | null;

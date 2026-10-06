@@ -245,7 +245,7 @@ export function PublicStoreLocationSection({
                   <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <Navigation className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                     <span className="min-w-0 break-words">
-                      {location.nearestMetro}
+                      <span className="font-semibold">{storefront("metroLabel")}:</span>{" "}{location.nearestMetro}
                       {location.metroWalkMinutes ? ` · ${location.metroWalkMinutes} dəq.` : ""}
                       {location.metroDistanceMeters ? ` · ${location.metroDistanceMeters} m` : ""}
                     </span>
@@ -256,8 +256,8 @@ export function PublicStoreLocationSection({
                   <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <Bus className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
                     <span className="min-w-0 break-words">
-                      {location.busStopName ?? "Avtobus"}
-                      {location.busRoutes.length ? ` · ${location.busRoutes.join(", ")}` : ""}
+                      {location.busStopName ? <><span className="font-semibold">{storefront("busStopLabel")}:</span>{" "}{location.busStopName}</> : null}
+                      {location.busRoutes.length ? <>{location.busStopName ? " · " : ""}<span className="font-semibold">{storefront("busRoutesLabel")}:</span>{" "}{location.busRoutes.join(", ")}</> : null}
                     </span>
                   </div>
                 ) : null}
@@ -265,7 +265,7 @@ export function PublicStoreLocationSection({
                 {location.workingHours ? (
                   <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <Clock className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-                    <span className="min-w-0 break-words">{location.workingHours}</span>
+                    <span className="min-w-0 break-words"><span className="font-semibold">{storefront("workingHoursLabel")}:</span>{" "}{location.workingHours}</span>
                   </div>
                 ) : null}
 
@@ -289,7 +289,7 @@ export function PublicStoreLocationSection({
                     className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition md:hover:border-blue-200 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:md:hover:text-blue-300"
                   >
                     <Phone className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
-                    <span className="min-w-0 break-words">{location.phone}</span>
+                    <span className="min-w-0 break-words"><span className="font-semibold">{storefront("phoneLabel")}:</span>{" "}{location.phone}</span>
                   </a>
                 ) : null}
                 <LocationDirectionsButton location={location} className="h-9 sm:hidden" />
