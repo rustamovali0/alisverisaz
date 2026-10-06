@@ -20,6 +20,7 @@ type CookiesToSet = Array<{
 
 export async function createSupabaseServerClient(options?: {
   authScope?: SupabaseAuthScope;
+  requireCookieWrite?: boolean;
 }) {
   const cookieStore = await cookies();
   const headerList = await headers();
@@ -45,7 +46,8 @@ export async function createSupabaseServerClient(options?: {
                 ...(sharedCookieDomain ? { domain: sharedCookieDomain } : {}),
               });
             });
-          } catch {
+          } catch (error) {
+            if (options?.requireCookieWrite) throw error;
             // Server Components cannot set cookies; middleware refreshes sessions.
           }
         },

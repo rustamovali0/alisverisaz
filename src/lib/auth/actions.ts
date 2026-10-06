@@ -603,6 +603,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const supabase = await createSupabaseServerClient({
     authScope: mode === "admin" ? "admin" : "public",
+    requireCookieWrite: true,
   });
   const email = identifier;
 

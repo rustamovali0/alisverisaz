@@ -101,6 +101,24 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         return;
       }
 
+      try {
+        const response = await fetch(`/api/auth/session?scope=${mode === "admin" ? "admin" : "public"}`, {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        const session = await response.json();
+        if (!response.ok || session.authenticated !== true) {
+          setCaptchaToken("");
+          clearClientAuthProfileCache();
+          showToast({ title: "Giriş alınmadı", description: "Sessiya təsdiqlənmədi. Sayt cookie-ləri və hesabın profil icazələri yoxlanmalıdır.", variant: "error" });
+          return;
+        }
+      } catch {
+        setCaptchaToken("");
+        showToast({ title: "Giriş alınmadı", description: "Giriş sessiyası yoxlanmadı. Bağlantını yoxlayıb yenidən cəhd edin.", variant: "error" });
+        return;
+      }
+
       void appAlert.success("Xoş gəldiniz", "Giriş uğurla tamamlandı.", {
         dedupeKey: "login-success",
       });
