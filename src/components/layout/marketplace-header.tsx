@@ -489,7 +489,6 @@ export function MarketplaceHeader({
             </div>
           ) : null}
           <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
-            <LanguageSwitcher className="hidden lg:flex" />
             {!isGuest ? (
               <>
                 <NotificationCenter
@@ -534,12 +533,6 @@ export function MarketplaceHeader({
             <div className="hidden min-w-0 shrink-0 lg:block">
               <HeaderAccountActions className="shrink-0" />
             </div>
-            <ThemeToggle
-              className={cn(
-                commerceUtilityButtonClass,
-              )}
-              iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
-            />
           </div>
         </div>
       </header>
@@ -592,7 +585,7 @@ export function MarketplaceHeader({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="size-12 shrink-0 rounded-full"
+                className="size-12 shrink-0 rounded-full hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                 onClick={() => setIsMobileMenuOpen(false)}
                 aria-label="Bağla"
               >
@@ -605,7 +598,7 @@ export function MarketplaceHeader({
                 href={addListingHref}
                 prefetch
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="mb-4 inline-flex min-h-12 items-center gap-3 border-b border-slate-200 pb-4 text-[18px] font-semibold tracking-normal text-slate-800 dark:border-slate-800 dark:text-slate-100"
+                className="mb-4 inline-flex min-h-12 items-center gap-3 border-b border-slate-200 pb-4 text-[18px] font-semibold tracking-normal text-slate-800 transition hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
               >
                 <span className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-slate-800 dark:border-slate-100">
                   <Plus className="size-8" aria-hidden="true" />
@@ -624,7 +617,7 @@ export function MarketplaceHeader({
                     href={item.href}
                     prefetch
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-14 items-center gap-3 border-t border-slate-200 text-[18px] font-semibold tracking-normal text-slate-800 first:border-t-0 dark:border-slate-800 dark:text-slate-100"
+                    className="flex min-h-14 items-center gap-3 border-t border-slate-200 text-[18px] font-semibold tracking-normal text-slate-800 transition first:border-t-0 hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
                   >
                     <Icon className="size-9 shrink-0 stroke-[1.9]" aria-hidden="true" />
                     <span className="min-w-0 truncate">{item.label}</span>

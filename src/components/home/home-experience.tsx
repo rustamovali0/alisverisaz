@@ -106,13 +106,13 @@ const homeDesignStyle: CSSProperties & Record<string, string> = {
   "--muted-foreground": "215 16% 43%",
   "--border": "35 23% 86%",
   "--input": "35 23% 86%",
-  "--primary": "153 58% 34%",
+  "--primary": "217 91% 60%",
   "--primary-foreground": "0 0% 100%",
-  "--ring": "153 58% 34%",
-  "--marketplace-primary": "153 58% 34%",
-  "--marketplace-primary-hover": "153 62% 28%",
+  "--ring": "217 91% 60%",
+  "--marketplace-primary": "217 91% 60%",
+  "--marketplace-primary-hover": "221 83% 53%",
   "--marketplace-primary-hover-foreground": "0 0% 100%",
-  "--marketplace-primary-soft": "146 48% 94%",
+  "--marketplace-primary-soft": "214 100% 97%",
   "--marketplace-navy": "221 39% 12%",
   "--marketplace-muted": "215 16% 43%",
 } as const;
@@ -216,7 +216,7 @@ function SectionHeader({
       <Link
         href={href}
         scroll
-        className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 text-sm font-bold text-emerald-700 transition hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-emerald-300 dark:hover:text-emerald-200"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 text-sm font-bold text-blue-700 transition hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-300 dark:hover:text-blue-200"
       >
         {action}
         <ArrowRight className="size-4" aria-hidden="true" />
@@ -231,16 +231,16 @@ function CategoryCard({ category }: { category: CategoryOption }) {
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[56px] sm:px-3 md:hover:-translate-y-0.5 md:hover:border-emerald-200 md:hover:shadow-[0_8px_22px_rgba(15,23,42,0.07)]"
+      className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[56px] sm:px-3 md:hover:-translate-y-0.5 md:hover:border-blue-200 md:hover:shadow-[0_8px_22px_rgba(15,23,42,0.07)]"
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 transition dark:bg-emerald-400/10 dark:text-emerald-300 sm:size-9">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 transition dark:bg-blue-400/10 dark:text-blue-300 sm:size-9">
         <CategoryIcon className="size-4 stroke-[2.1] sm:size-[18px]" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
         <span className="truncate text-[12px] font-bold leading-4 sm:text-[13px]">
           {category.name}
         </span>
-        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-emerald-700" />
+        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
       </span>
     </Link>
   );
@@ -251,10 +251,10 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
   return (
-    <article className="group h-full min-w-0 overflow-visible rounded-xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-emerald-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
+    <article className="group h-full min-w-0 overflow-visible rounded-xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-blue-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
       <Link
         href={store.customStorefrontEnabled ? getStorePrettyPath(store.slug) : getStorePath(store.slug)}
-        className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+        className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative">
           <div className={cn("overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
@@ -267,7 +267,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#ecfdf5)] dark:bg-[linear-gradient(135deg,#1e293b,#052e2b)]">
-                <span className="text-4xl font-black text-emerald-700/50 dark:text-emerald-300/50">
+                <span className="text-4xl font-black text-blue-700/50 dark:text-blue-300/50">
                   {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                 </span>
               </div>
@@ -280,7 +280,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               </span>
             ) : null}
           </div>
-          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-emerald-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-emerald-300 md:-bottom-7 md:left-4 md:size-14">
+          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
               <img
                 src={store.logoUrl}
@@ -303,7 +303,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
                 {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
-            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition sm:size-5 md:block md:group-hover:translate-x-0.5 md:group-hover:text-emerald-700" />
+            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition sm:size-5 md:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
           </div>
         </div>
       </Link>
@@ -327,7 +327,7 @@ function QuickActionTile({
   return (
     <Link
       href={href}
-      className="flex min-w-0 items-center gap-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-emerald-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 sm:gap-3 sm:p-3"
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-blue-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 sm:gap-3 sm:p-3"
     >
       <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg sm:size-11", tone)}>
         <Icon className="size-5" aria-hidden="true" />
@@ -428,7 +428,7 @@ export function HomeExperience({
               <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
                 Kateqoriyalar
               </h2>
-              <Link href="/categories" className="text-xs font-bold text-emerald-700">
+              <Link href="/categories" className="text-xs font-bold text-blue-700">
                 Hamısı
               </Link>
             </div>
@@ -440,7 +440,7 @@ export function HomeExperience({
                   <Link
                     key={category.id}
                     href={`/products?category=${category.slug}`}
-                    className="flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-bold text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-200 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200"
+                    className="flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-blue-400/10 dark:hover:text-blue-200"
                   >
                     <CategoryIcon className="size-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{category.name}</span>
@@ -468,7 +468,7 @@ export function HomeExperience({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm backdrop-blur">
-                      <MapPin className="size-3.5 text-emerald-700" aria-hidden="true" />
+                      <MapPin className="size-3.5 text-blue-700" aria-hidden="true" />
                       <span className="truncate">Azərbaycan üzrə elanlar</span>
                     </div>
                     <h1 className="mt-4 max-w-[11ch] text-[2.5rem] font-black leading-[0.96] tracking-normal min-[390px]:text-[2.8rem] sm:max-w-[12ch] sm:text-[3.4rem] md:text-[4.2rem]">
@@ -495,7 +495,7 @@ export function HomeExperience({
                       stores={stores}
                       className="rounded-xl border-0 bg-transparent p-0 shadow-none"
                       inputClassName="h-[52px] rounded-xl border-transparent bg-stone-50 pl-11 text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 dark:bg-slate-800 dark:text-slate-50 md:h-[54px]"
-                      buttonClassName="!size-[48px] !min-w-[48px] rounded-xl bg-emerald-700 p-0 text-white hover:bg-emerald-800"
+                      buttonClassName="!size-[48px] !min-w-[48px] rounded-xl bg-blue-700 p-0 text-white hover:bg-blue-800"
                       buttonSize="lg"
                       stackOnMobile
                       compactActions
@@ -509,7 +509,7 @@ export function HomeExperience({
                           <Link
                             key={item.label}
                             href={item.href}
-                            className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-black text-slate-600 transition first:bg-white first:text-emerald-800 first:shadow-sm hover:bg-white hover:text-emerald-800 dark:text-slate-300 dark:first:bg-slate-900 dark:first:text-emerald-200 dark:hover:bg-slate-900"
+                            className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-black text-slate-600 transition first:bg-white first:text-blue-800 first:shadow-sm hover:bg-white hover:text-blue-800 dark:text-slate-300 dark:first:bg-slate-900 dark:first:text-blue-200 dark:hover:bg-slate-900"
                           >
                             <Icon className="size-3.5 shrink-0" aria-hidden="true" />
                             <span className="truncate">{item.label}</span>
@@ -532,7 +532,7 @@ export function HomeExperience({
                       title="AI kömək"
                       description="Mətn hazırla"
                       icon={Bot}
-                      tone="bg-emerald-50 text-emerald-700"
+                      tone="bg-blue-50 text-blue-700"
                     />
                   </div>
 
@@ -565,7 +565,7 @@ export function HomeExperience({
                 key={item.title}
                 className="flex min-w-0 items-start gap-2.5 rounded-xl bg-white p-3 ring-1 ring-stone-200 dark:bg-slate-900 dark:ring-slate-800 md:rounded-none md:bg-transparent md:p-0 md:ring-0 lg:border-r lg:border-stone-200 lg:last:border-r-0 dark:lg:border-slate-800"
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/20 md:size-10">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20 md:size-10">
                   <Icon className="size-4 md:size-5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
