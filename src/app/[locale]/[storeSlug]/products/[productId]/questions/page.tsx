@@ -10,6 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getStorePath, getStoreSubdomainSlug } from "@/lib/config/domains";
+import { siteConfig } from "@/lib/config/site";
 import { getProductMessagesForProduct } from "@/lib/messages/data";
 
 type ProductQuestionsPageProps = {
@@ -39,13 +40,14 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
   const currentPath = requestHeaders.get("x-current-path") ?? "";
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const isLegacyProductRoute = currentPath.startsWith(`/store/${detail.store.slug}/products/`);
+  const marketplaceHomeRedirect = storeSubdomainSlug ? siteConfig.url : "/";
 
   if (!isLegacyProductRoute && storeSubdomainSlug !== detail.store.slug && detail.store.customStorefrontEnabled !== true) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   if (storeSubdomainSlug === detail.store.slug && detail.store.customStorefrontEnabled !== true) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   const messages = await getProductMessagesForProduct(detail.product.id);

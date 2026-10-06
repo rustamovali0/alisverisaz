@@ -169,13 +169,14 @@ export async function renderStorePage(
     currentPath === `/${locale}/store/${store.slug}` ||
     currentPath.startsWith(`/${locale}/store/${store.slug}/`);
   const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
+  const marketplaceHomeRedirect = storeSubdomainSlug ? siteConfig.url : "/";
 
   if (!isLegacyStoreRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   const storeBaseHref = storeSubdomainSlug === store.slug

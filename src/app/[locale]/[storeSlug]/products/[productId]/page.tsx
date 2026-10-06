@@ -252,13 +252,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     currentPath === `/store/${detail.store.slug}/products/${detail.product.id}` ||
     currentPath.startsWith(`/store/${detail.store.slug}/products/`);
   const isCustomStorefrontAllowed = detail.store.customStorefrontEnabled === true;
+  const marketplaceHomeRedirect = storeSubdomainSlug ? siteConfig.url : "/";
 
   if (!isLegacyProductRoute && storeSubdomainSlug !== detail.store.slug && !isCustomStorefrontAllowed) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   if (storeSubdomainSlug === detail.store.slug && !isCustomStorefrontAllowed) {
-    redirect("/");
+    redirect(marketplaceHomeRedirect);
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;
