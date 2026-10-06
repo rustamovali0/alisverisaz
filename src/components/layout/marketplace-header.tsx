@@ -594,7 +594,7 @@ export function MarketplaceHeader({
                 variant="ghost"
                 className="size-12 shrink-0 rounded-full"
                 onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Menyunu bağla"
+                aria-label="Bağla"
               >
                 <X className="size-8" aria-hidden="true" />
               </Button>

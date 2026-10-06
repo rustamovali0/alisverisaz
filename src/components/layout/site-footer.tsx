@@ -1,9 +1,8 @@
 "use client";
 
-import { Instagram } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
+import { InstagramBrandIcon, TikTokIcon, WhatsAppIcon } from "@/components/icons/social-icons";
 import { Link } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -76,7 +75,7 @@ export function SiteFooter({
       key: "instagram" as const,
       label: "Instagram",
       href: normalizeSocialHref("instagram", socialLinks?.instagram),
-      icon: Instagram,
+      icon: InstagramBrandIcon,
     },
     {
       key: "tiktok" as const,

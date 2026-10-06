@@ -21,7 +21,7 @@ import { PublicStoreLocationSection } from "@/components/locations/public-store-
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
-import { TikTokIcon } from "@/components/icons/social-icons";
+import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -49,7 +49,6 @@ import {
   Dumbbell,
   Heart,
   Home as HomeIcon,
-  Instagram,
   Laptop,
   PackageSearch,
   Pencil,
@@ -287,7 +286,7 @@ export function CustomStorefrontHeader({
       key: "instagram" as const,
       label: "Instagram",
       href: normalizeStoreSocialHref("instagram", store.socialInstagram),
-      icon: Instagram,
+      icon: InstagramBrandIcon,
     },
     {
       key: "tiktok" as const,

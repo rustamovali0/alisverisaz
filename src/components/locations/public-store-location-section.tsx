@@ -5,7 +5,6 @@ import {
   ChevronDown,
   Clock,
   ExternalLink,
-  Instagram,
   MapPin,
   Navigation,
   PackageCheck,
@@ -15,7 +14,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { TikTokIcon } from "@/components/icons/social-icons";
+import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import type { StoreLocation } from "@/lib/locations/types";
 import { cn } from "@/lib/utils";
@@ -143,7 +142,7 @@ export function PublicStoreLocationSection({
       key: "instagram" as const,
       label: "Instagram",
       href: normalizeSocialHref("instagram", socialLinks?.instagram),
-      icon: Instagram,
+      icon: InstagramBrandIcon,
     },
     {
       key: "tiktok" as const,
