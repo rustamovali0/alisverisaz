@@ -213,15 +213,14 @@ export function PublicStoreLocationSection({
                 key={location.id}
                 className={cn(
                   "min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-background sm:p-5",
-                  hasSingleLocation && "md:grid md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-6",
                 )}
               >
-                <div className="flex min-w-0 items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
+                <div className="flex min-w-0 flex-col items-start justify-between gap-3 xl:flex-row">
+                  <div className="flex w-full min-w-0 flex-1 items-start gap-3">
                   <span className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-blue-600 dark:bg-slate-900 dark:text-blue-300">
                     <MapPin className="size-4" aria-hidden="true" />
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <h3 className="line-clamp-2 break-words text-base font-semibold text-slate-950 dark:text-slate-100">
                       {location.name}
                     </h3>
@@ -234,13 +233,13 @@ export function PublicStoreLocationSection({
                     ) : null}
                   </div>
                 </div>
-                <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">
                   <LocationDirectionsButton location={location} />
                   <LocationMapButton location={location} label={storefront("showMap")} />
                 </div>
               </div>
 
-              <div className={cn("mt-4 flex max-w-full flex-wrap items-center gap-2", hasSingleLocation && "md:mt-0 md:justify-end")}>
+              <div className="mt-4 flex max-w-full flex-wrap items-center gap-2">
                 {location.showMetro && location.nearestMetro ? (
                   <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                     <Navigation className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
@@ -292,8 +291,6 @@ export function PublicStoreLocationSection({
                     <span className="min-w-0 break-words"><span className="font-semibold">{storefront("phoneLabel")}:</span>{" "}{location.phone}</span>
                   </a>
                 ) : null}
-                <LocationDirectionsButton location={location} className="h-9 sm:hidden" />
-                <LocationMapButton location={location} label={storefront("showMap")} className="h-9 sm:hidden" />
               </div>
                 <StoreLocationMap location={location} logoUrl={logoUrl} storeName={storeName} />
               </article>

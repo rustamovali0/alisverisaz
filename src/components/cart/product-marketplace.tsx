@@ -1922,6 +1922,8 @@ export function Storefront({
   );
   const heroCategories = sortedStoreCategories.slice(0, 5);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
+  const storeContactPhone = store.whatsappPhone || store.phone ||
+    locations.find((location) => location.isActive && location.phone)?.phone;
   const customHeroCategories = heroCategories.slice(0, 4);
   const customHeroDescription = getDisplayStoreDescription(store);
   const aboutContent = getStoreAboutContent(store);
@@ -2244,13 +2246,16 @@ export function Storefront({
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
         <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 md:gap-10">
           {isStoreOwner ? (
-            <StoreBrandingQuickEdit store={store} />
+            <div className="relative min-w-0">
+              <StoreBrandingQuickEdit store={store} />
+              <StoreWhatsAppButton phone={storeContactPhone} />
+            </div>
           ) : (
             <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
               <div className="relative overflow-hidden rounded-2xl bg-slate-950">
                 <div className="relative h-[380px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
-                  <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
+                  <StoreWhatsAppButton phone={storeContactPhone} />
                   <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
                 </div>
@@ -2357,13 +2362,16 @@ export function Storefront({
       />
       <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
         {isStoreOwner ? (
-          <StoreBrandingQuickEdit store={store} />
+          <div className="relative min-w-0">
+            <StoreBrandingQuickEdit store={store} />
+            <StoreWhatsAppButton phone={storeContactPhone} />
+          </div>
         ) : (
           <section className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:gap-6 sm:rounded-[20px] sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
             <div className="relative -mx-1 -mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:hidden">
               <div className="aspect-[16/9] w-full">
                 <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
+                <StoreWhatsAppButton phone={storeContactPhone} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 via-slate-950/8 to-transparent" aria-hidden="true" />
               <StoreLogo store={store} className="absolute bottom-3 left-3 size-16 rounded-2xl border-2 border-white bg-white shadow-[0_12px_28px_rgba(2,6,23,0.24)]" />
@@ -2447,7 +2455,7 @@ export function Storefront({
             <div className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:block">
               <div className="aspect-[4/3] w-full">
                 <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={store.whatsappPhone || store.phone} />
+                <StoreWhatsAppButton phone={storeContactPhone} />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
               <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
