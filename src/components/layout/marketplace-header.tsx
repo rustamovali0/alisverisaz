@@ -372,7 +372,10 @@ export function MarketplaceHeader({
                 asChild
                 size="icon"
                 variant="ghost"
-                className={mobileUtilityButtonClass}
+                className={cn(
+                  mobileUtilityButtonClass,
+                  "text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300",
+                )}
                 aria-label="Instagram"
               >
                 <a href={instagramHref} target="_blank" rel="noreferrer">
@@ -385,7 +388,10 @@ export function MarketplaceHeader({
                 asChild
                 size="icon"
                 variant="ghost"
-                className={mobileUtilityButtonClass}
+                className={cn(
+                  mobileUtilityButtonClass,
+                  "text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300",
+                )}
                 aria-label="WhatsApp"
               >
                 <a href={whatsappHref} target="_blank" rel="noreferrer">
