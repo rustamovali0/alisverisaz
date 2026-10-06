@@ -156,10 +156,8 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
       src={coverUrl}
       alt={store.name}
       className={cn(
-        "h-full w-full",
-        store.coverUrl
-          ? "bg-slate-100 object-contain dark:bg-slate-900"
-          : "object-cover",
+        "h-full w-full object-cover object-center",
+        store.coverUrl ? "bg-slate-950" : "",
       )}
       onError={() => setHasError(true)}
     />

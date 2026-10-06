@@ -673,7 +673,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     .returns<{ role: AuthRole; full_name: string | null }[]>()
     .maybeSingle();
 
-  const role: AuthRole = profile?.role ?? "customer";
+  let role: AuthRole = profile?.role ?? "customer";
   const requestedRole =
     typeof data.user.user_metadata?.requested_role === "string"
       ? data.user.user_metadata.requested_role
@@ -709,6 +709,30 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       ok: false,
       message: "Satıcı müraciətiniz hələ aktiv deyil.",
     };
+  }
+
+  if (
+    mode === "public" &&
+    requestedRole === "seller" &&
+    sellerApplicationStatus === "approved" &&
+    role !== "seller"
+  ) {
+    const supabaseAdmin = createSupabaseAdminClient();
+    const { error: roleSyncError } = await supabaseAdmin
+      .from("profiles")
+      .update({ role: "seller" })
+      .eq("id", data.user.id);
+
+    if (roleSyncError) {
+      await supabase.auth.signOut();
+
+      return {
+        ok: false,
+        message: "Satıcı hesabı təsdiqlənib, amma rol sinxronlaşdırıla bilmədi.",
+      };
+    }
+
+    role = "seller";
   }
 
   if (mode === "admin" && role !== "admin") {
@@ -813,6 +837,8 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     }
   }
 
+  let sellerStoreSyncError: string | null = null;
+
   if (role === "seller") {
     try {
       await ensureSellerStore({
@@ -828,13 +854,8 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
             : null,
       });
     } catch (storeError) {
-      return {
-        ok: false,
-        message:
-          storeError instanceof Error
-            ? storeError.message
-            : "Mağaza profili yaradıla bilmədi.",
-      };
+      sellerStoreSyncError =
+        storeError instanceof Error ? storeError.message : "Mağaza profili yaradıla bilmədi.";
     }
   }
 
@@ -846,6 +867,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       description: `${data.user.email ?? email} (${role})`,
       email: data.user.email ?? email,
       role,
+      seller_store_sync_error: sellerStoreSyncError,
     },
   });
 
@@ -881,10 +903,13 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     ip,
   });
 
+  const defaultRedirect =
+    mode === "admin" || role === "seller" ? getDashboardPath(role) : "/";
+
   return {
     ok: true,
     message: "Giriş uğurludur.",
-    redirectTo: nextPath || (mode === "admin" ? getDashboardPath(role) : "/"),
+    redirectTo: nextPath || defaultRedirect,
   };
 }
 
@@ -1482,13 +1507,18 @@ export async function updateUserRoleAction(
           typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
       });
     } catch (storeError) {
-      return {
-        ok: false,
-        message:
-          storeError instanceof Error
-            ? storeError.message
-            : "Satıcı mağazası yaradıla bilmədi.",
-      };
+      void recordAdminAudit({
+        action: "SELLER_STORE_SYNC_FAILED",
+        adminId: current.user.id,
+        success: false,
+        metadata: {
+          user_id: userId,
+          error:
+            storeError instanceof Error
+              ? storeError.message
+              : "Satıcı mağazası yaradıla bilmədi.",
+        },
+      });
     }
   }
 

@@ -85,6 +85,79 @@ it("does not break public login when the CAPTCHA token is missing", async () => 
   expect(mocks.verifyCaptcha).not.toHaveBeenCalled();
   expect(mocks.server).toHaveBeenCalled();
 });
+it("repairs an approved seller role during login and sends them to the seller dashboard", async () => {
+  const profileQuery = query({ data: { role: "customer", full_name: "QA Seller" } });
+  const profileUpdateQuery = query();
+  const storeQuery = query({ data: { id: "store-1", logo_url: null, cover_url: null } });
+  const signInWithPassword = vi.fn().mockResolvedValue({
+    data: {
+      user: {
+        id: "seller-1",
+        email: "seller@example.test",
+        user_metadata: {
+          requested_role: "seller",
+          seller_application_status: "approved",
+          full_name: "QA Seller",
+        },
+      },
+    },
+    error: null,
+  });
+
+  mocks.server.mockResolvedValue({
+    auth: { signInWithPassword, signOut: vi.fn() },
+    from: () => profileQuery,
+  });
+  mocks.from.mockImplementation((table: string) => {
+    if (table === "profiles") {
+      return profileUpdateQuery;
+    }
+
+    if (table === "stores") {
+      return storeQuery;
+    }
+
+    return query();
+  });
+
+  const result = await loginAction(
+    form({ identifier: "seller@example.test", password: "test-password" }),
+  );
+
+  expect(result).toMatchObject({ ok: true, redirectTo: "/store/dashboard" });
+  expect(profileUpdateQuery.update).toHaveBeenCalledWith({ role: "seller" });
+});
+it("does not block seller login when store synchronization fails", async () => {
+  const profileQuery = query({ data: { role: "seller", full_name: "QA Seller" } });
+  const signInWithPassword = vi.fn().mockResolvedValue({
+    data: {
+      user: {
+        id: "seller-1",
+        email: "seller@example.test",
+        user_metadata: {},
+      },
+    },
+    error: null,
+  });
+
+  mocks.server.mockResolvedValue({
+    auth: { signInWithPassword, signOut: vi.fn() },
+    from: () => profileQuery,
+  });
+  mocks.from.mockImplementation((table: string) => {
+    if (table === "stores") {
+      return query({ error: { message: "schema cache miss" } });
+    }
+
+    return query();
+  });
+
+  const result = await loginAction(
+    form({ identifier: "seller@example.test", password: "test-password" }),
+  );
+
+  expect(result).toMatchObject({ ok: true, redirectTo: "/store/dashboard" });
+});
 it("rate limits registration before creating an account", async () => {
   mocks.assertLimit.mockResolvedValue({ ok: false, message: "rate limited" });
   const result = await registerAction(form({ fullName: "QA User", email: "user@example.test", phone: "+994501234567", password: "test-password", confirmPassword: "test-password", role: "customer", terms: "on" }));
