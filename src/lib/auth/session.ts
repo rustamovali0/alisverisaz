@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import type { AuthRole } from "@/lib/auth/types";
+import { isSessionRevoked } from "@/lib/auth/session-revocation";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveAuthScopeFromPath, type SupabaseAuthScope } from "@/lib/supabase/auth-scope";
@@ -13,27 +14,6 @@ type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 type ProfileWithRevocation = ProfileRow & {
   session_revoked_at?: string | null;
 };
-
-function getJwtIssuedAt(accessToken?: string | null) {
-  if (!accessToken) {
-    return null;
-  }
-
-  try {
-    const [, payload] = accessToken.split(".");
-    if (!payload) {
-      return null;
-    }
-
-    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
-      iat?: unknown;
-    };
-
-    return typeof decoded.iat === "number" ? decoded.iat : null;
-  } catch {
-    return null;
-  }
-}
 
 export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
   authScope: SupabaseAuthScope = "public",
@@ -50,7 +30,7 @@ export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id,email,full_name,avatar_url,phone,role,created_at,updated_at,session_revoked_at")
+    .select("*")
     .eq("id", user.id)
     .returns<ProfileWithRevocation[]>()
     .maybeSingle();
@@ -66,10 +46,8 @@ export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    const issuedAt = getJwtIssuedAt(session?.access_token);
-
-    if (issuedAt === null || revokedAt > issuedAt * 1000) {
-      await supabase.auth.signOut().catch(() => undefined);
+    if (isSessionRevoked(profile.session_revoked_at, session?.access_token)) {
+      await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       return null;
     }
   }

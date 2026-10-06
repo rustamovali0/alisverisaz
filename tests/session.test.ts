@@ -57,6 +57,16 @@ describe("session and role boundaries", () => {
     mocks.createClient.mockResolvedValue(client("seller", null, undefined, { code: "42501" }));
     expect(await getCurrentUserProfile()).toBeNull();
   });
+  it("keeps legacy profiles readable before optional profile columns are migrated", async () => {
+    const profileQuery = query({ data: { id: "user-1", role: "seller" } });
+    profileQuery.select.mockImplementation((columns: string) =>
+      columns.includes("session_revoked_at")
+        ? query({ error: { code: "42703", message: "column session_revoked_at does not exist" } })
+        : profileQuery,
+    );
+    mocks.createClient.mockResolvedValue({ ...client("seller"), from: () => profileQuery });
+    expect((await getCurrentUserProfile())?.role).toBe("seller");
+  });
   it.each([undefined, "invalid", `a.${Buffer.from(JSON.stringify({ iat: 100 })).toString("base64url")}.b`])("rejects revoked sessions with missing, invalid, or old issue times (%s)", async (token) => {
     mocks.createClient.mockResolvedValue(client("seller", new Date(200_000).toISOString(), token));
     expect(await getCurrentUserProfile()).toBeNull();

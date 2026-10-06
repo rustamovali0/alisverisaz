@@ -3,7 +3,8 @@ import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
-import type { AuthRole } from "@/lib/auth/types";
+import { isAuthRole, type AuthRole } from "@/lib/auth/types";
+import { isSessionRevoked } from "@/lib/auth/session-revocation";
 import { clientEnv } from "@/lib/config/env.client";
 import { getSharedCookieDomain } from "@/lib/config/domains";
 import { getSupabaseCookieName, resolveAuthScopeFromPath } from "@/lib/supabase/auth-scope";
@@ -71,17 +72,22 @@ export async function updateSession(
       request,
     });
 
+  const pathname = request.nextUrl.pathname;
+  const segments = pathname.split("/");
+  const locale = routing.locales.includes(segments[1] as any)
+    ? segments[1]
+    : routing.defaultLocale;
+  const localizedPathname =
+    segments[1] === locale
+      ? `/${segments.slice(2).join("/")}`.replace(/\/$/, "") || "/"
+      : pathname;
+  const cookieName = getSupabaseCookieName(resolveAuthScopeFromPath(localizedPathname));
+
   const supabase = createServerClient<Database>(
     clientEnv.supabaseUrl,
     clientEnv.supabasePublishableKey,
     {
-      ...(getSupabaseCookieName(resolveAuthScopeFromPath(request.nextUrl.pathname))
-        ? {
-            cookieOptions: {
-              name: getSupabaseCookieName(resolveAuthScopeFromPath(request.nextUrl.pathname)),
-            },
-          }
-        : {}),
+      ...(cookieName ? { cookieOptions: { name: cookieName } } : {}),
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -90,6 +96,21 @@ export async function updateSession(
           const sharedDomain = getSharedCookieDomain(request.headers.get("host"));
           cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value);
+          });
+
+          // Preserve locale/route overrides while forwarding the refreshed session.
+          const forwardedHeaders = new Headers(request.headers);
+          const overrides = response.headers.get("x-middleware-override-headers")?.split(",") ?? [];
+          for (const name of overrides) {
+            if (name === "cookie") continue;
+            const value = response.headers.get(`x-middleware-request-${name}`);
+            if (value !== null) forwardedHeaders.set(name, value);
+          }
+          const forwarded = NextResponse.next({ request: { headers: forwardedHeaders } });
+          forwarded.headers.forEach((value, name) => {
+            if (name === "x-middleware-override-headers" || name.startsWith("x-middleware-request-")) {
+              response.headers.set(name, value);
+            }
           });
 
           cookiesToSet.forEach(({ name, value, options }) => {
@@ -107,15 +128,6 @@ export async function updateSession(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-  const segments = pathname.split("/");
-  const locale = routing.locales.includes(segments[1] as any)
-    ? segments[1]
-    : routing.defaultLocale;
-  const localizedPathname =
-    segments[1] === locale
-      ? `/${segments.slice(2).join("/")}`.replace(/\/$/, "") || "/"
-      : pathname;
   const isAdminLogin =
     matchesPath(pathname, "/radmin/login") ||
     matchesPath(localizedPathname, "/radmin/login");
@@ -143,14 +155,42 @@ export async function updateSession(
     return response;
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("*")
     .eq("id", user.id)
-    .returns<{ role: AuthRole }[]>()
+    .returns<{ role: AuthRole; session_revoked_at?: string | null }[]>()
     .maybeSingle();
 
-  const role: AuthRole = profile?.role ?? "customer";
+  if (profileError || !profile || !isAuthRole(profile.role)) {
+    if (route || localizedRoute) {
+      return createRedirectResponse(request, response, getLocalizedPath(
+        locale,
+        (route ?? localizedRoute)?.roles.includes("admin")
+          ? getAdminLoginPath(`${pathname}${request.nextUrl.search}`)
+          : getLoginPath(`${pathname}${request.nextUrl.search}`),
+      ));
+    }
+    return response;
+  }
+
+  const role: AuthRole = profile.role;
+
+  if (profile.session_revoked_at && Number.isFinite(Date.parse(profile.session_revoked_at))) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (isSessionRevoked(profile.session_revoked_at, session?.access_token)) {
+      await supabase.auth.signOut({ scope: "local" });
+      if (route || localizedRoute) {
+        return createRedirectResponse(request, response, getLocalizedPath(
+          locale,
+          (route ?? localizedRoute)?.roles.includes("admin")
+            ? getAdminLoginPath(`${pathname}${request.nextUrl.search}`)
+            : getLoginPath(`${pathname}${request.nextUrl.search}`),
+        ));
+      }
+      return response;
+    }
+  }
 
   const matchedAuthRoute = authRoutes.find(
     (path) => pathname === path || localizedPathname === path,

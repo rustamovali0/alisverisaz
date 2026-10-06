@@ -85,7 +85,7 @@ it("does not break public login when the CAPTCHA token is missing", async () => 
   expect(mocks.verifyCaptcha).not.toHaveBeenCalled();
   expect(mocks.server).toHaveBeenCalled();
 });
-it("repairs an approved seller role during login and sends them to the seller dashboard", async () => {
+it("never promotes a customer from user-editable seller approval metadata", async () => {
   const profileQuery = query({ data: { role: "customer", full_name: "QA Seller" } });
   const profileUpdateQuery = query();
   const storeQuery = query({ data: { id: "store-1", logo_url: null, cover_url: null } });
@@ -124,8 +124,21 @@ it("repairs an approved seller role during login and sends them to the seller da
     form({ identifier: "seller@example.test", password: "test-password" }),
   );
 
-  expect(result).toMatchObject({ ok: true, redirectTo: "/store/dashboard" });
-  expect(profileUpdateQuery.update).toHaveBeenCalledWith({ role: "seller" });
+  expect(result).toMatchObject({ ok: true, redirectTo: "/" });
+  expect(profileUpdateQuery.update).not.toHaveBeenCalled();
+});
+it("reports profile lookup failures instead of claiming success and entering a redirect loop", async () => {
+  const signOut = vi.fn();
+  mocks.server.mockResolvedValue({
+    auth: {
+      signInWithPassword: async () => ({ data: { user: { id: "seller-1", user_metadata: {} } }, error: null }),
+      signOut,
+    },
+    from: () => query({ error: { code: "42501", message: "permission denied" } }),
+  });
+  expect(await loginAction(form({ identifier: "seller@example.test", password: "test-password" })))
+    .toMatchObject({ ok: false });
+  expect(signOut).toHaveBeenCalled();
 });
 it("does not block seller login when store synchronization fails", async () => {
   const profileQuery = query({ data: { role: "seller", full_name: "QA Seller" } });

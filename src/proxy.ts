@@ -10,12 +10,6 @@ import {
 import { getSystemFlagsForProxy } from "@/lib/platform/system-settings-proxy";
 import { updateSession } from "@/lib/supabase/middleware";
 
-function copyCookies(from: NextResponse, to: NextResponse) {
-  from.cookies.getAll().forEach((cookie) => {
-    to.cookies.set(cookie);
-  });
-}
-
 function resolveCookieLocale(request: NextRequest) {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
   const hasValidCookie = routing.locales.includes(cookieLocale as any);
@@ -234,15 +228,7 @@ function resolveStorePath(pathname: string) {
 }
 
 async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: NextResponse) {
-  const sessionResponse = await updateSession(request);
-
-  if (sessionResponse.headers.get("location")) {
-    return sessionResponse;
-  }
-
-  copyCookies(sessionResponse, rewriteResponse);
-
-  return rewriteResponse;
+  return updateSession(request, rewriteResponse);
 }
 
 export async function proxy(request: NextRequest) {

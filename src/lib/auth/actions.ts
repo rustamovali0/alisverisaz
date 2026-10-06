@@ -666,14 +666,22 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileLookupError } = await supabase
     .from("profiles")
     .select("role,full_name")
     .eq("id", data.user.id)
     .returns<{ role: AuthRole; full_name: string | null }[]>()
     .maybeSingle();
 
-  let role: AuthRole = profile?.role ?? "customer";
+  if (profileLookupError || !profile || !isAuthRole(profile.role)) {
+    await supabase.auth.signOut();
+    return {
+      ok: false,
+      message: "Hesab profili oxunmadı. Administrator profil və giriş icazələrini yoxlamalıdır.",
+    };
+  }
+
+  const role: AuthRole = profile.role;
   const requestedRole =
     typeof data.user.user_metadata?.requested_role === "string"
       ? data.user.user_metadata.requested_role
@@ -709,30 +717,6 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       ok: false,
       message: "Satıcı müraciətiniz hələ aktiv deyil.",
     };
-  }
-
-  if (
-    mode === "public" &&
-    requestedRole === "seller" &&
-    sellerApplicationStatus === "approved" &&
-    role !== "seller"
-  ) {
-    const supabaseAdmin = createSupabaseAdminClient();
-    const { error: roleSyncError } = await supabaseAdmin
-      .from("profiles")
-      .update({ role: "seller" })
-      .eq("id", data.user.id);
-
-    if (roleSyncError) {
-      await supabase.auth.signOut();
-
-      return {
-        ok: false,
-        message: "Satıcı hesabı təsdiqlənib, amma rol sinxronlaşdırıla bilmədi.",
-      };
-    }
-
-    role = "seller";
   }
 
   if (mode === "admin" && role !== "admin") {
@@ -805,36 +789,6 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
       ok: false,
       message: "İstifadəçi girişləri hazırda bağlıdır.",
     };
-  }
-
-  if (!profile) {
-    try {
-      await ensureAuthProfile({
-        id: data.user.id,
-        email: data.user.email ?? email,
-        fullName:
-          typeof data.user.user_metadata?.full_name === "string"
-            ? data.user.user_metadata.full_name
-            : null,
-        phone:
-          typeof data.user.user_metadata?.phone === "string"
-            ? data.user.user_metadata.phone
-            : null,
-        avatarUrl:
-          typeof data.user.user_metadata?.avatar_url === "string"
-            ? data.user.user_metadata.avatar_url
-            : null,
-        role,
-      });
-    } catch (profileError) {
-      return {
-        ok: false,
-        message:
-          profileError instanceof Error
-            ? profileError.message
-            : "Profil bərpa edilə bilmədi.",
-      };
-    }
   }
 
   let sellerStoreSyncError: string | null = null;

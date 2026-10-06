@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { proxy } from "@/proxy";
 
 vi.mock("@/lib/platform/system-settings-proxy", () => ({ getSystemFlagsForProxy: async () => ({ site_enabled: true, admin_panel_enabled: true, seller_panel_enabled: true, user_access_enabled: true }) }));
-vi.mock("@/lib/supabase/middleware", () => ({ updateSession: async () => {
-  const response = NextResponse.next();
+vi.mock("@/lib/supabase/middleware", () => ({ updateSession: async (_request: NextRequest, initialResponse?: NextResponse) => {
+  const response = initialResponse ?? NextResponse.next();
   response.cookies.set("session", "refreshed", { httpOnly: true, secure: true, sameSite: "lax", path: "/", domain: ".alisveris.az", maxAge: 60 });
   return response;
 } }));
