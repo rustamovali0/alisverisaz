@@ -2264,7 +2264,7 @@ export function Storefront({
                         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
                           {storefront("marketplaceStore")}
                         </p>
-                        <h1 className="line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal sm:text-4xl lg:text-[44px]">
+                        <h1 className="line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal sm:text-4xl lg:text-[44px]">
                           {store.name}
                         </h1>
                         <p className="mt-2 break-words text-sm font-medium text-white/80 sm:text-base">
@@ -2374,7 +2374,7 @@ export function Storefront({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
                     {storefront("onlineStore")}
                   </p>
-                  <h1 className="mt-1 line-clamp-2 break-words text-[30px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
+                  <h1 className="mt-1 line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
                     {store.name}
                   </h1>
                 </div>
