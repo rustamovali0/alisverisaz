@@ -166,6 +166,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "building",
     },
     {
+      title: "Subdomainlər",
+      href: "/radmin/subdomains",
+      icon: "building",
+    },
+    {
       title: "Məhsullar",
       titleKey: "products",
       href: "/radmin/products",

@@ -813,6 +813,30 @@ export async function getAdminStoreDetail(storeId: string) {
   };
 }
 
+export async function getAdminStorefrontAccessRows() {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await (supabase as any)
+    .from("stores")
+    .select("id,name,slug,status,settings,profiles(email,full_name)")
+    .order("created_at", { ascending: false });
+
+  return ((data ?? []) as Array<{
+    id: string;
+    name: string;
+    slug: string;
+    status: string;
+    settings: Record<string, unknown> | null;
+    profiles?: { email?: string | null; full_name?: string | null } | null;
+  }>).map((store) => ({
+    id: store.id,
+    name: store.name,
+    slug: store.slug,
+    status: store.status,
+    ownerLabel: store.profiles?.full_name || store.profiles?.email || "Satıcı",
+    customStorefrontEnabled: store.settings?.customStorefrontEnabled === true,
+  }));
+}
+
 export async function getSellerFeatureAccess(userId: string, featureKey: string) {
   try {
     const supabase = await createSupabaseServerClient();

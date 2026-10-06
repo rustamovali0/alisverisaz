@@ -1111,6 +1111,86 @@ export async function updateStoreStatusAction(
   };
 }
 
+export async function updateStorefrontAccessAction(
+  formData: FormData,
+): Promise<CmsActionResult> {
+  const storeId = readString(formData, "storeId");
+  const enabled = readBoolean(formData, "customStorefrontEnabled");
+  const current = await audit("update_storefront_access", "stores", {
+    storeId,
+    enabled,
+  });
+
+  if (!storeId) {
+    return {
+      ok: false,
+      message: "Mağaza ID tapılmadı.",
+    };
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const { data: store } = await (supabaseAdmin as any)
+    .from("stores")
+    .select("id,slug,settings")
+    .eq("id", storeId)
+    .maybeSingle();
+
+  if (!store) {
+    return {
+      ok: false,
+      message: "Mağaza tapılmadı.",
+    };
+  }
+
+  const settings =
+    store.settings && typeof store.settings === "object" && !Array.isArray(store.settings)
+      ? { ...(store.settings as Record<string, unknown>) }
+      : {};
+
+  settings.customStorefrontEnabled = enabled;
+
+  const { error } = await (supabaseAdmin as any)
+    .from("stores")
+    .update({
+      settings,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", storeId);
+
+  if (error) {
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  revalidatePath("/radmin/subdomains");
+  revalidatePath("/radmin/stores");
+  revalidatePath(`/radmin/stores/${storeId}`);
+  revalidatePath("/stores");
+  invalidateStorePublicData({
+    storeId,
+    storeSlug: store.slug,
+  });
+  await recordAdminAudit({
+    adminId: current.user.id,
+    action: enabled ? "RADMIN_STOREFRONT_ACCESS_ENABLED" : "RADMIN_STOREFRONT_ACCESS_DISABLED",
+    entityType: "stores",
+    entityId: storeId,
+    metadata: {
+      store_slug: store.slug,
+      custom_storefront_enabled: enabled,
+    },
+  });
+
+  return {
+    ok: true,
+    message: enabled
+      ? "Subdomain və /mağaza yolu aktiv edildi."
+      : "Subdomain və /mağaza yolu deaktiv edildi.",
+  };
+}
+
 export async function createAnnouncementAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
