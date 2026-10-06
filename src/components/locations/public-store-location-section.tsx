@@ -18,9 +18,13 @@ import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons"
 import { Button } from "@/components/ui/button";
 import type { StoreLocation } from "@/lib/locations/types";
 import { cn } from "@/lib/utils";
+import { StoreLocationMap } from "@/components/locations/store-location-map";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 
 type PublicStoreLocationSectionProps = {
   locations: StoreLocation[];
+  logoUrl?: string | null;
+  storeName?: string;
   socialLinks?: {
     instagram?: string;
     tiktok?: string;
@@ -46,8 +50,9 @@ function normalizeSocialHref(kind: "instagram" | "tiktok", value = "") {
 }
 
 function getMapUrl(location: StoreLocation) {
-  if (location.mapLink) {
-    return location.mapLink;
+  const mapLink = normalizeGoogleMapLink(location.mapLink ?? "");
+  if (mapLink) {
+    return mapLink;
   }
 
   if (location.latitude !== null && location.longitude !== null) {
@@ -127,6 +132,8 @@ function LocationDirectionsButton({
 export function PublicStoreLocationSection({
   locations,
   socialLinks,
+  logoUrl,
+  storeName,
 }: PublicStoreLocationSectionProps) {
   const storefront = useTranslations("storefront");
   const activeLocations = locations.filter((location) => location.isActive);
@@ -288,6 +295,7 @@ export function PublicStoreLocationSection({
                 <LocationDirectionsButton location={location} className="h-9 sm:hidden" />
                 <LocationMapButton location={location} label={storefront("showMap")} className="h-9 sm:hidden" />
               </div>
+                <StoreLocationMap location={location} logoUrl={logoUrl} storeName={storeName} />
               </article>
             ))}
           </div>

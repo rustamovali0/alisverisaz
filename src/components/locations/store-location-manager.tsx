@@ -183,15 +183,14 @@ function LocationFields({
         </label>
       </div>
       <label className="grid gap-2 text-sm font-medium">
-        Google Maps linki
-        <input
+        Google Maps linki / iframe
+        <textarea
           name="mapLink"
-          type="url"
-          inputMode="url"
+          rows={3}
           defaultValue={location?.mapLink ?? ""}
-          placeholder="https://maps.google.com/..."
+          placeholder={'<iframe src="https://www.google.com/maps/embed?pb=..."></iframe>'}
           disabled={pending}
-          className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="min-h-24 resize-y rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </label>
       <div className="flex flex-wrap gap-4 text-sm font-medium">

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import type { LocationActionResult } from "@/lib/locations/types";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 function readString(formData: FormData, key: string) {
@@ -122,13 +123,19 @@ export async function saveStoreLocationAction(
     }
   }
 
+  const rawMapLink = readString(formData, "mapLink");
+  const mapLink = normalizeGoogleMapLink(rawMapLink);
+  if (rawMapLink && !mapLink) {
+    return { ok: false, message: "Etibarlı Google Maps linki və ya iframe kodu daxil edin." };
+  }
+
   const payload = {
     store_id: storeId,
     name,
     city: readString(formData, "city") || "Bakı",
     district: readString(formData, "district") || null,
     address,
-    map_link: readString(formData, "mapLink") || null,
+    map_link: mapLink,
     latitude: readOptionalNumber(formData, "latitude"),
     longitude: readOptionalNumber(formData, "longitude"),
     nearest_metro: readString(formData, "nearestMetro") || null,

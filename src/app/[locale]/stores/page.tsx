@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
-import { getStorePath, getStorePrettyPath } from "@/lib/config/domains";
+import { getStorePath } from "@/lib/config/domains";
 
 type StoresPageProps = {
   params: Promise<{
@@ -60,7 +60,7 @@ export default async function StoresPage({ params }: StoresPageProps) {
             return (
               <Link
                 key={store.id}
-                href={store.customStorefrontEnabled ? getStorePrettyPath(store.slug) : getStorePath(store.slug)}
+                href={getStorePath(store.slug)}
                 className="group relative grid min-w-0 grid-cols-[112px_minmax(0,1fr)] overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:block md:overflow-visible md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] md:dark:hover:border-slate-700"
               >
                 <div className="relative">

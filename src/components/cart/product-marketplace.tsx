@@ -2322,10 +2322,15 @@ export function Storefront({
             </section>
           )}
 
+          {modernCategoriesSection}
+          {aboutSection}
+          {modernProductsSection}
           {!isStoreOwner ? (
             <div id="store-info">
               <PublicStoreLocationSection
                 locations={locations}
+                logoUrl={store.logoUrl}
+                storeName={store.name}
                 socialLinks={{
                   instagram: store.socialInstagram ?? undefined,
                   tiktok: store.socialTiktok ?? undefined,
@@ -2333,9 +2338,6 @@ export function Storefront({
               />
             </div>
           ) : null}
-          {modernCategoriesSection}
-          {aboutSection}
-          {modernProductsSection}
         </div>
         <SiteFooter {...footer} />
       </main>
@@ -2476,6 +2478,8 @@ export function Storefront({
           <div id="contact" className="scroll-mt-28">
             <PublicStoreLocationSection
               locations={locations}
+              logoUrl={store.logoUrl}
+              storeName={store.name}
               socialLinks={{
                 instagram: store.socialInstagram ?? undefined,
                 tiktok: store.socialTiktok ?? undefined,

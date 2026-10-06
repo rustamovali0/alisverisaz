@@ -281,14 +281,18 @@ export function SiteSettingsForm({ settings, themes }: SiteSettingsFormProps) {
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      const result = await updateSiteSettingsAction(formData);
+      try {
+        const result = await updateSiteSettingsAction(formData);
 
-      if (!result.ok) {
-        void appAlert.error(result.message, "Ayarlar saxlanmadı");
-        return;
+        if (!result.ok) {
+          void appAlert.error("Ayarlar saxlanmadı", result.message);
+          return;
+        }
+
+        void appAlert.success("Ayarlar saxlandı", result.message);
+      } catch {
+        void appAlert.error("Ayarlar saxlanmadı", "Sorğu tamamlanmadı. Bağlantını yoxlayıb yenidən cəhd edin.");
       }
-
-      void appAlert.success("Ayarlar saxlandı", result.message);
     });
   }
 

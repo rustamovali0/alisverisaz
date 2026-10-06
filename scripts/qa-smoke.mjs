@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readdir } from "node:fs/promises";
 
 const base = new URL(process.argv[2] || "http://localhost:3000");
 const checks = [
@@ -17,6 +17,18 @@ const checks = [
   { path: "/api/marketplace/searches", status: 403, method: "POST", body: "{}", origin: "https://untrusted.example" },
 ];
 const results = [];
+async function protectedPages(directory, prefix, login) {
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith("[")) continue;
+    const child = `${directory}/${entry.name}`;
+    const route = `${prefix}/${entry.name}`;
+    if ((await readdir(child)).includes("page.tsx") && !checks.some((check) => check.path === route)) {
+      checks.push({ path: route, login });
+    }
+    await protectedPages(child, route, login);
+  }
+}
+await protectedPages("src/app/[locale]/admin", "/radmin", "/radmin/login");
 for (const check of checks) {
   try {
     const response = await fetch(new URL(check.path, base), {

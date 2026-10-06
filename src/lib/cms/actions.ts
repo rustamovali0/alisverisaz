@@ -277,12 +277,38 @@ export async function updateSiteSettingsAction(
     };
   }
 
-  const value = {
-    ...((await (supabaseAdmin as any)
+  let currentValue: Record<string, unknown> = {};
+
+  try {
+    const { data: siteSettingsRow, error: siteSettingsError } = await (supabaseAdmin as any)
       .from("platform_settings")
       .select("value")
       .eq("key", "site")
-      .maybeSingle()).data?.value ?? {}),
+      .maybeSingle();
+
+    if (siteSettingsError) {
+      return {
+        ok: false,
+        message: siteSettingsError.message,
+      };
+    }
+
+    currentValue =
+      siteSettingsRow?.value &&
+      typeof siteSettingsRow.value === "object" &&
+      !Array.isArray(siteSettingsRow.value)
+        ? siteSettingsRow.value
+        : {};
+  } catch (error) {
+    return {
+      ok: false,
+      message:
+        error instanceof Error ? error.message : "Sayt ayarları oxuna bilmədi.",
+    };
+  }
+
+  const value = {
+    ...currentValue,
     site_name: readString(formData, "siteName"),
     short_name: readString(formData, "shortName"),
     logo_url: logoUrl,
@@ -342,9 +368,26 @@ export async function updateSiteSettingsAction(
     };
   }
 
-  await deleteR2MediaAssetsByUrls(replacedUrls);
+  try {
+    await deleteR2MediaAssetsByUrls(replacedUrls);
+  } catch (cleanupError) {
+    void recordAdminAudit({
+      adminId: current.user.id,
+      action: "site_media_cleanup_failed",
+      entityType: "platform_settings",
+      success: false,
+      metadata: {
+        key: "site",
+        error:
+          cleanupError instanceof Error
+            ? cleanupError.message
+            : "Köhnə media faylı silinə bilmədi.",
+      },
+    });
+  }
+
   invalidatePublicSiteSettings();
-  revalidateLocalizedPath("/radmin/settings");
+  revalidateLocalizedPath("/radmin/site-management");
 
   return {
     ok: true,
