@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BriefcaseBusiness,
   Heart,
   HelpCircle,
   Info,
@@ -279,7 +278,6 @@ export function MarketplaceHeader({
     { href: "/help", label: "Yardım", icon: HelpCircle },
     { href: "/about", label: "Tətbiq haqqında", icon: Info },
     { href: "/contact", label: "Bizimlə əlaqə", icon: MessageCircle },
-    { href: "/guide/seller", label: "Biznes üçün", icon: BriefcaseBusiness, badge: "Yeni" },
   ];
 
   return (
@@ -554,8 +552,8 @@ export function MarketplaceHeader({
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Menyunu bağla"
           />
-          <aside className="relative flex h-full w-[min(82vw,340px)] flex-col overflow-y-auto bg-white px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50">
-            <div className="mb-6 flex items-center justify-between gap-3">
+          <aside className="relative flex h-full w-[min(74vw,300px)] flex-col overflow-hidden bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50">
+            <div className="mb-5 flex items-center justify-between gap-3">
               <Link
                 href={brandHomeHref}
                 prefetch
@@ -563,15 +561,15 @@ export function MarketplaceHeader({
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {logoUrl ? (
-                  <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                  <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
                     <img src={logoUrl} alt={displaySiteName} className="h-full w-full object-contain p-2" />
                   </span>
                 ) : (
-                  <span className="grid size-14 shrink-0 place-items-center rounded-full bg-slate-100 text-xl font-black text-slate-500 dark:bg-slate-900 dark:text-slate-300">
+                  <span className="grid size-12 shrink-0 place-items-center rounded-full bg-slate-100 text-xl font-black text-slate-500 dark:bg-slate-900 dark:text-slate-300">
                     {displaySiteName.slice(0, 1)}
                   </span>
                 )}
-                <span className="min-w-0 truncate text-2xl font-black tracking-normal">
+                <span className="min-w-0 truncate text-xl font-black tracking-normal">
                   {displaySiteName}
                 </span>
               </Link>
@@ -579,11 +577,11 @@ export function MarketplaceHeader({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="size-10 shrink-0 rounded-full"
+                className="size-12 shrink-0 rounded-full"
                 onClick={() => setIsMobileMenuOpen(false)}
                 aria-label="Menyunu bağla"
               >
-                <X className="size-6" aria-hidden="true" />
+                <X className="size-8" aria-hidden="true" />
               </Button>
             </div>
 
@@ -592,10 +590,10 @@ export function MarketplaceHeader({
                 href={addListingHref}
                 prefetch
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="mb-5 inline-flex min-h-14 items-center gap-4 border-b border-slate-200 pb-5 text-[22px] font-medium tracking-normal text-slate-800 dark:border-slate-800 dark:text-slate-100"
+                className="mb-4 inline-flex min-h-12 items-center gap-3 border-b border-slate-200 pb-4 text-[18px] font-semibold tracking-normal text-slate-800 dark:border-slate-800 dark:text-slate-100"
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-full border-2 border-slate-800 dark:border-slate-100">
-                  <Plus className="size-6" aria-hidden="true" />
+                <span className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-slate-800 dark:border-slate-100">
+                  <Plus className="size-8" aria-hidden="true" />
                 </span>
                 <span>Elan yerləşdir</span>
               </Link>
@@ -611,28 +609,23 @@ export function MarketplaceHeader({
                     href={item.href}
                     prefetch
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-16 items-center gap-4 border-t border-slate-200 text-[21px] font-medium tracking-normal text-slate-800 first:border-t-0 dark:border-slate-800 dark:text-slate-100"
+                    className="flex min-h-14 items-center gap-3 border-t border-slate-200 text-[18px] font-semibold tracking-normal text-slate-800 first:border-t-0 dark:border-slate-800 dark:text-slate-100"
                   >
-                    <Icon className="size-7 shrink-0 stroke-[1.9]" aria-hidden="true" />
+                    <Icon className="size-9 shrink-0 stroke-[1.9]" aria-hidden="true" />
                     <span className="min-w-0 truncate">{item.label}</span>
-                    {item.badge ? (
-                      <span className="ml-auto rounded-full bg-orange-600 px-2.5 py-1 text-sm font-black text-white">
-                        {item.badge}
-                      </span>
-                    ) : null}
                   </Link>
                 );
               })}
             </div>
 
-            <div className="mt-5 grid gap-3">
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
-                <span className="text-sm font-black text-slate-600 dark:text-slate-300">Dil</span>
+            <div className="mt-4 grid gap-2.5">
+              <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+                <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Dil</span>
                 <LanguageSwitcher />
               </div>
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
-                <span className="text-sm font-black text-slate-600 dark:text-slate-300">Görünüş</span>
-                <ThemeToggle className="size-10 rounded-full" iconClassName="size-6" />
+              <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+                <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Görünüş</span>
+                <ThemeToggle className="size-14 rounded-full" iconClassName="size-8" />
               </div>
             </div>
           </aside>
