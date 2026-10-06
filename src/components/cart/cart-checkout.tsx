@@ -257,6 +257,25 @@ export function CartCheckout({
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
 
+  function goBackFromCart() {
+    const referrer = document.referrer;
+
+    try {
+      const referrerUrl = referrer ? new URL(referrer) : null;
+      const isSameOrigin = referrerUrl?.origin === window.location.origin;
+      const isCartReferrer = referrerUrl?.pathname === "/cart";
+
+      if (isSameOrigin && !isCartReferrer && window.history.length > 1) {
+        router.back();
+        return;
+      }
+    } catch {
+      // Fall back to the home page when the browser does not expose a usable referrer.
+    }
+
+    router.push("/");
+  }
+
   useEffect(() => {
     setCheckoutRequestId(crypto.randomUUID());
   }, []);
@@ -714,11 +733,15 @@ export function CartCheckout({
         <section className="rounded-none border-0 bg-transparent p-0 text-slate-950 shadow-none dark:text-slate-100 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-5 md:shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:md:border-slate-800 dark:md:bg-card">
           <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild variant="outline" size="sm" className="hidden rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:inline-flex">
-                <Link href={returnHref}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="hidden rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:inline-flex"
+                onClick={goBackFromCart}
+              >
                   <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
                   {common("back")}
-                </Link>
               </Button>
               <h1 className="text-center text-3xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
                 {common("cart")}

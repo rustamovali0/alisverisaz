@@ -25,6 +25,7 @@ import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import { getStorePath, getStorePrettyPath } from "@/lib/config/domains";
+import type { AuthRole } from "@/lib/auth/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ type HomeExperienceProps = {
   title: string;
   description: string;
   productsLabel: string;
+  initialRole?: AuthRole | null;
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
@@ -359,6 +361,7 @@ export function HomeExperience({
   title,
   description,
   productsLabel,
+  initialRole = null,
 }: HomeExperienceProps) {
   const home = useTranslations("home");
   const marketplace = useTranslations("marketplace");
@@ -411,6 +414,7 @@ export function HomeExperience({
   const heroBackgroundImage = mobileHeroImageUrl || heroImageUrl;
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
+  const showSellerQuickActions = initialRole === null || initialRole === "seller";
 
   return (
     <main
@@ -475,13 +479,15 @@ export function HomeExperience({
                       {displayHeroTitle}
                     </h1>
                   </div>
-                  <Link
-                    href="/store/dashboard/products/new"
-                    className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#ffcf4a] text-slate-950 shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:bg-[#ffd866] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:hidden"
-                    aria-label="Elan yerləşdir"
-                  >
-                    <BadgePlus className="size-6" aria-hidden="true" />
-                  </Link>
+                  {showSellerQuickActions ? (
+                    <Link
+                      href="/store/dashboard/products/new"
+                      className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#ffcf4a] text-slate-950 shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:bg-[#ffd866] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:hidden"
+                      aria-label="Elan yerləşdir"
+                    >
+                      <BadgePlus className="size-6" aria-hidden="true" />
+                    </Link>
+                  ) : null}
                 </div>
 
                 <div className="min-w-0">
@@ -519,22 +525,24 @@ export function HomeExperience({
                     </div>
                   </div>
 
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <QuickActionTile
-                      href="/store/dashboard/products/new"
-                      title="Elan ver"
-                      description="30 saniyə"
-                      icon={BadgePlus}
-                      tone="bg-[#ffcf4a] text-slate-950"
-                    />
-                    <QuickActionTile
-                      href="/store/dashboard/products/new"
-                      title="AI kömək"
-                      description="Mətn hazırla"
-                      icon={Bot}
-                      tone="bg-blue-50 text-blue-700"
-                    />
-                  </div>
+                  {showSellerQuickActions ? (
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <QuickActionTile
+                        href="/store/dashboard/products/new"
+                        title="Elan ver"
+                        description="30 saniyə"
+                        icon={BadgePlus}
+                        tone="bg-[#ffcf4a] text-slate-950"
+                      />
+                      <QuickActionTile
+                        href="/store/dashboard/products/new"
+                        title="AI kömək"
+                        description="Mətn hazırla"
+                        icon={Bot}
+                        tone="bg-blue-50 text-blue-700"
+                      />
+                    </div>
+                  ) : null}
 
                   {popularSearchPills.length > 0 ? (
                     <div className="-mx-4 mt-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-5 sm:max-w-[calc(100%+2.5rem)] sm:px-5 md:mx-0 md:max-w-full md:flex-wrap md:overflow-visible md:px-0">
