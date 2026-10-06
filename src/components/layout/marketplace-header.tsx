@@ -158,7 +158,8 @@ export function MarketplaceHeader({
     pathname.startsWith("/admin") ||
     pathname.startsWith("/radmin") ||
     pathname.startsWith("/login") ||
-    pathname.startsWith("/register");
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot-password");
   const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
   const isAboutActive = pathname.startsWith("/about");
   const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(hasInlinePrimarySearch);

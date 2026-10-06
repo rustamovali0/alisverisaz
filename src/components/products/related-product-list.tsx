@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { ProductGrid } from "@/components/cart/product-marketplace";
@@ -35,8 +35,8 @@ export function RelatedProductList({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
 
-  async function loadMore() {
-    if (isLoading || !hasMore || !cursor) {
+  async function loadPage(cursorValue: string | null) {
+    if (isLoading || !hasMore) {
       return;
     }
 
@@ -47,9 +47,12 @@ export function RelatedProductList({
         productId,
         categoryId,
         locale,
-        cursor,
         limit: "20",
       });
+      if (cursorValue) {
+        params.set("cursor", cursorValue);
+      }
+
       const response = await fetch(`/api/marketplace/related-products?${params}`);
 
       if (!response.ok) {
@@ -71,7 +74,24 @@ export function RelatedProductList({
     }
   }
 
-  if (!products.length) {
+  useEffect(() => {
+    if (products.length || !hasMore) {
+      return;
+    }
+
+    void loadPage(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId, productId]);
+
+  async function loadMore() {
+    if (!cursor) {
+      return;
+    }
+
+    await loadPage(cursor);
+  }
+
+  if (!products.length && !isLoading) {
     return null;
   }
 
@@ -83,7 +103,18 @@ export function RelatedProductList({
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("sameCategoryProducts")}</p>
         </div>
       </div>
-      <ProductGrid products={products} labels={{ stock: t("stock") }} layout="related" />
+      {products.length ? (
+        <ProductGrid products={products} labels={{ stock: t("stock") }} layout="related" />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div
+              key={index}
+              className="h-48 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-800"
+            />
+          ))}
+        </div>
+      )}
       {hasMore ? (
         <div className="mt-4 flex justify-center md:hidden">
           <Button type="button" variant="outline" onClick={loadMore} disabled={isLoading}>

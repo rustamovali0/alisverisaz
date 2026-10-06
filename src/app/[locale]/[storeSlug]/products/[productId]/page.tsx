@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
-import { getMarketplaceProductById, getSimilarMarketplaceProductPage } from "@/lib/cart/data";
+import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getStorePath, getStorefrontUrl, getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
@@ -200,14 +200,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     getPublicProductLocations(detail.product.id),
     getLocationsForStores([detail.store.id]),
   ]);
-
-  const relatedProducts = detail.product.categoryId
-    ? await getSimilarMarketplaceProductPage(locale, {
-        productId: detail.product.id,
-        categoryId: detail.product.categoryId,
-        limit: 4,
-      })
-    : null;
 
   void trackActivityEvent({
     eventType: "product_view",
@@ -477,14 +469,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         </section>
 
-        {relatedProducts ? (
+        {detail.product.categoryId ? (
           <div className="mt-8 scroll-mt-28 md:mt-10">
             <RelatedProductList
-              initialProducts={relatedProducts.products}
-              initialCursor={relatedProducts.nextCursor}
-              initialHasMore={relatedProducts.hasMore}
+              initialProducts={[]}
+              initialCursor={null}
+              initialHasMore
               productId={detail.product.id}
-              categoryId={detail.product.categoryId!}
+              categoryId={detail.product.categoryId}
               locale={locale}
             />
           </div>
