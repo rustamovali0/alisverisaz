@@ -2086,12 +2086,12 @@ export function Storefront({
         data-home-categories
         className={cn(
           "min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
-          isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
+          "p-3 sm:p-4",
         )}
       >
-        <div className={cn("flex min-w-0 items-center justify-between gap-3", isCustomStorefront ? "mb-3.5 sm:mb-5" : "mb-5")}>
+        <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+            <h2 className="truncate text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-xl">
               {legacyLayout ? home("categories") : storefront("featuredCategories")}
             </h2>
           </div>
@@ -2112,7 +2112,7 @@ export function Storefront({
             <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div className="-mx-3 flex min-w-0 snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="-mx-3 flex min-w-0 snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
           {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
@@ -2124,10 +2124,7 @@ export function Storefront({
                 key={category.id}
                 type="button"
                 className={cn(
-                  "group min-w-0 rounded-[14px] border border-slate-200 bg-white text-left shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100",
-                  isCustomStorefront
-                    ? "flex min-h-[58px] w-[52vw] min-w-[158px] max-w-[210px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4"
-                    : "flex min-h-[58px] w-[52vw] min-w-[158px] max-w-[210px] shrink-0 snap-start items-center gap-2.5 p-2.5 sm:w-auto sm:max-w-none sm:min-h-[104px] sm:flex-col sm:items-start sm:justify-between sm:gap-3 sm:p-4",
+                  "group flex min-h-[52px] w-[164px] min-w-0 shrink-0 snap-start items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-none transition duration-200 md:hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100 sm:w-auto",
                   isCustomStorefront && !showAllMobileCategories && index >= 12 && "hidden sm:flex",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
@@ -2136,11 +2133,11 @@ export function Storefront({
                   selectCategory(category, { scrollToProducts: !isCustomStorefront })
                 }
               >
-                <span className={cn("grid shrink-0 place-items-center rounded-xl ring-1", isCustomStorefront ? "size-10 sm:size-12" : "size-10 sm:size-11", iconStyle)}>
-                  <Icon className={cn("stroke-[2.1]", isCustomStorefront ? "size-5 sm:size-6" : "size-5")} aria-hidden="true" />
+                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+                  <Icon className="size-4 stroke-[2.1]" aria-hidden="true" />
                 </span>
-                <span className={cn("flex min-w-0 gap-2", isCustomStorefront ? "flex-1 items-center justify-between sm:w-full sm:items-end" : "w-full items-end justify-between")}>
-                  <span className="line-clamp-2 min-w-0 break-words text-[13px] font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:text-sm">
+                <span className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
+                  <span className="line-clamp-2 min-w-0 break-words text-xs font-semibold leading-4 text-slate-950 dark:text-slate-100 sm:text-[13px]">
                     {category.name}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-slate-400 transition md:group-hover:translate-x-0.5 md:group-hover:text-blue-600 dark:md:group-hover:text-blue-300" />
