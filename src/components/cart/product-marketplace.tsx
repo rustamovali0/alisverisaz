@@ -2114,7 +2114,7 @@ export function Storefront({
             <ArrowRight className="size-4" aria-hidden="true" />
           </button>
         </div>
-        <div className="-mx-3 flex min-w-0 snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="-mx-3 grid min-w-0 grid-flow-col grid-rows-2 auto-cols-[164px] snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:grid-rows-none sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
           {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
