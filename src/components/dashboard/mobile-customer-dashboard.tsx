@@ -14,7 +14,7 @@ import { LogoutButton } from "@/components/auth/logout-button";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 type MobileCustomerDashboardProps = {
   userLabel: string;
@@ -76,9 +76,6 @@ export function MobileCustomerDashboard({
     [role],
   );
 
-  useEffect(() => {
-    visibleItems.forEach((item) => router.prefetch(item.href));
-  }, [router, visibleItems]);
 
   return (
     <section className="min-w-0 max-w-full overflow-x-clip bg-background px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 text-foreground md:hidden">
@@ -107,7 +104,9 @@ export function MobileCustomerDashboard({
             <Link
               key={item.href}
               href={item.href}
-              prefetch
+              prefetch={false}
+              onMouseEnter={() => router.prefetch(item.href)}
+              onFocus={() => router.prefetch(item.href)}
               onClick={() => {
                 resetDashboardScroll();
               }}

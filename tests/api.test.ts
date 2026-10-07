@@ -21,7 +21,7 @@ it("rejects malformed Telegram JSON even with the correct secret", async () => {
   const response = await webhook(new Request("https://shop.example.test/api/telegram/webhook", { method: "POST", body: "{", headers: { "x-telegram-bot-api-secret-token": "test-secret" } }));
   expect(response.status).toBe(400);
 });
-it.each([["999999999", 52], ["-100", 1], ["NaN", 52], ["2.5", 2]])("bounds public product limit %s", async (limit, expected) => {
+it.each([["999999999", 24], ["-100", 1], ["NaN", 24], ["2.5", 2]])("bounds public product limit %s", async (limit, expected) => {
   expect((await products(new NextRequest(`https://shop.example.test/api/marketplace/products?limit=${limit}`))).status).toBe(200);
   expect(mocks.products).toHaveBeenCalledWith("az", expect.objectContaining({ limit: expected }));
 });

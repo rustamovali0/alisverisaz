@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -443,6 +444,7 @@ export function ProductForm({
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
     productLocations.map((item) => [item.locationId, item]),
@@ -474,6 +476,9 @@ export function ProductForm({
       }
 
       void appAlert.success("Uğurludur", result.message);
+      void queryClient.invalidateQueries({ queryKey: ["marketplace-products"] });
+      void queryClient.invalidateQueries({ queryKey: ["marketplace-search"] });
+      void queryClient.invalidateQueries({ queryKey: ["related-products"] });
       setImageFiles([]);
 
       if (successRedirect) {

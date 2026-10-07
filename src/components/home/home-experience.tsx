@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { OptimizedImage } from "@/components/common/optimized-image";
 import {
   ArrowRight,
   BadgePlus,
@@ -15,7 +16,9 @@ import {
   Truck,
   type LucideIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
+import { productQueryOptions } from "@/lib/query/product-options";
 
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
@@ -203,6 +206,11 @@ function SectionHeader({
   href: string;
   action: string;
 }) {
+  const locale = useLocale();
+  const queryClient = useQueryClient();
+  const prefetch = () => {
+    if (href === "/products") void queryClient.prefetchInfiniteQuery(productQueryOptions({ locale }));
+  };
   return (
     <div className="mb-4 flex items-center justify-between gap-4 md:mb-6">
       <h2 className="text-xl font-black leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[26px]">
@@ -217,6 +225,8 @@ function SectionHeader({
       </h2>
       <Link
         href={href}
+        onMouseEnter={prefetch}
+        onFocus={prefetch}
         scroll
         className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 text-sm font-bold text-blue-700 transition hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-300 dark:hover:text-blue-200"
       >
@@ -259,11 +269,13 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
         className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative">
-          <div className={cn("overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
+          <div className={cn("relative overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
             {coverUrl ? (
-              <img
+              <OptimizedImage
                 src={coverUrl}
                 alt={store.name}
+                fill
+                sizes="(max-width: 767px) 270px, (max-width: 1023px) 50vw, 320px"
                 className="h-full w-full object-cover transition duration-200 md:group-hover:scale-[1.015]"
                 loading="lazy"
               />
@@ -284,9 +296,12 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
           </div>
           <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
-              <img
+              <OptimizedImage
                 src={store.logoUrl}
                 alt={store.name}
+                width={56}
+                height={56}
+                sizes="56px"
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
@@ -457,9 +472,11 @@ export function HomeExperience({
           <div className="min-w-0 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
             <div className="relative min-h-[560px] overflow-hidden md:min-h-[510px]">
               {heroBackgroundImage ? (
-                <img
+                <OptimizedImage
                   src={heroBackgroundImage}
                   alt={shouldUseDefaultHeroCopy ? "Alışveriş marketplace" : heroTitle}
+                  fill
+                  sizes="(max-width: 1023px) 100vw, 1024px"
                   className="absolute inset-0 h-full w-full object-cover"
                   loading="eager"
                   decoding="sync"

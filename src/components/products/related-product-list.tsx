@@ -1,11 +1,10 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import { ProductGrid } from "@/components/cart/product-marketplace";
 import { Button } from "@/components/ui/button";
-import type { CartProduct } from "@/lib/cart/types";
+import type { CartProduct, MarketplaceProductPage } from "@/lib/cart/types";
 
 type RelatedProductListProps = {
   initialProducts: CartProduct[];
@@ -30,66 +29,28 @@ export function RelatedProductList({
   locale,
 }: RelatedProductListProps) {
   const t = useTranslations("marketplace");
-  const [products, setProducts] = useState(initialProducts);
-  const [cursor, setCursor] = useState(initialCursor);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function loadPage(cursorValue: string | null) {
-    if (isLoading || !hasMore) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const params = new URLSearchParams({
-        productId,
-        categoryId,
-        locale,
-        limit: "20",
-      });
-      if (cursorValue) {
-        params.set("cursor", cursorValue);
-      }
-
-      const response = await fetch(`/api/marketplace/related-products?${params}`);
-
-      if (!response.ok) {
-        throw new Error("RELATED_PRODUCTS_FAILED");
-      }
-
-      const page = (await response.json()) as {
-        products: CartProduct[];
-        nextCursor: string | null;
-        hasMore: boolean;
-      };
-      setProducts((current) => mergeProducts(current, page.products));
-      setCursor(page.nextCursor);
-      setHasMore(page.hasMore);
-    } catch {
-      setHasMore(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (products.length || !hasMore) {
-      return;
-    }
-
-    void loadPage(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryId, productId]);
-
-  async function loadMore() {
-    if (!cursor) {
-      return;
-    }
-
-    await loadPage(cursor);
-  }
+  const query = useInfiniteQuery({
+    queryKey: ["related-products", locale, productId, categoryId],
+    initialPageParam: null as string | null,
+    initialData: {
+      pages: [{ products: initialProducts, nextCursor: initialCursor, hasMore: initialHasMore }],
+      pageParams: [null],
+    },
+    queryFn: async ({ pageParam, signal }): Promise<MarketplaceProductPage> => {
+      const params = new URLSearchParams({ productId, categoryId, locale, limit: "20" });
+      if (pageParam) params.set("cursor", pageParam);
+      const response = await fetch(`/api/marketplace/related-products?${params}`, { signal });
+      if (!response.ok) throw new Error("RELATED_PRODUCTS_FAILED");
+      return response.json();
+    },
+    getNextPageParam: page => page.hasMore ? page.nextCursor ?? undefined : undefined,
+  });
+  const products = (query.data?.pages ?? []).reduce<CartProduct[]>((all, page) => mergeProducts(all, page.products), []);
+  const hasMore = Boolean(query.hasNextPage);
+  const isLoading = query.isPending || query.isFetchingNextPage;
+  const loadMore = () => {
+    if (query.hasNextPage && !query.isFetching) void query.fetchNextPage();
+  };
 
   if (!products.length && !isLoading) {
     return null;

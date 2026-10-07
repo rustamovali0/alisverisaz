@@ -3,13 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getMarketplaceProductPage } from "@/lib/cart/data";
 
 function clampLimit(value: string | null) {
-  const limit = Number(value ?? "52");
+  const limit = Number(value ?? "24");
 
   if (!Number.isFinite(limit)) {
-    return 52;
+    return 24;
   }
 
-  return Math.min(Math.max(Math.floor(limit), 1), 52);
+  return Math.min(Math.max(Math.floor(limit), 1), 24);
 }
 
 function cleanParam(value: string | null, maxLength = 120) {

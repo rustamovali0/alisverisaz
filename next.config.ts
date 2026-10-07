@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["sharp"],
   images: {
+    minimumCacheTTL: 86400,
+    formats: ["image/webp"],
     remotePatterns: [
       {
         protocol: "https",

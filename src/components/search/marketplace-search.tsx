@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -123,11 +124,7 @@ export function MarketplaceSearch({
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
-  const [popularSearches, setPopularSearches] = useState<string[]>([]);
-  const [remoteProducts, setRemoteProducts] = useState<CartProduct[] | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const loadedPopularSearches = useRef(false);
   const resolvedButtonLabel = buttonLabel ?? common("search");
   const normalizedQuery = useMemo(() => normalize(query), [query]);
   const selectedStore = useMemo(
@@ -136,6 +133,38 @@ export function MarketplaceSearch({
   );
   const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
   const canShowPopularSearches = enablePopularSearches && !storeSlug;
+  const trimmedQuery = query.trim();
+  const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 180);
+    return () => window.clearTimeout(timeout);
+  }, [trimmedQuery]);
+  const popularQuery = useQuery({
+    queryKey: ["marketplace-popular-searches"],
+    enabled: canShowPopularSearches && isFocused && !trimmedQuery,
+    queryFn: async ({ signal }): Promise<{ searches: string[] }> => {
+      const response = await fetch("/api/marketplace/searches", { signal });
+      if (!response.ok) throw new Error("SEARCHES_FAILED");
+      return response.json();
+    },
+  });
+  const popularSearches = (popularQuery.data?.searches ?? []).filter(term => typeof term === "string").slice(0, 4);
+  const canSearch = isFocused && normalizedQuery.length >= 2 && (!storeSlug || Boolean(selectedStore));
+  const suggestionsQuery = useQuery({
+    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? ""],
+    enabled: canSearch && debouncedQuery === trimmedQuery,
+    queryFn: async ({ signal }): Promise<MarketplaceProductPage> => {
+      const params = new URLSearchParams({ q: debouncedQuery, locale, limit: "6" });
+      if (selectedStore?.id) params.set("storeId", selectedStore.id);
+      const response = await fetch(`/api/marketplace/products?${params}`, { signal });
+      if (!response.ok) throw new Error("SEARCH_FAILED");
+      return response.json();
+    },
+  });
+  const remoteProducts: CartProduct[] | null = storeSlug && !selectedStore
+    ? []
+    : debouncedQuery !== trimmedQuery ? null : suggestionsQuery.data?.products ?? (suggestionsQuery.isError ? [] : null);
+  const isSearching = canSearch && (debouncedQuery !== trimmedQuery || suggestionsQuery.isFetching);
 
   function syncSearchQuery(value: string) {
     if (typeof window === "undefined") {
@@ -201,8 +230,6 @@ export function MarketplaceSearch({
 
   useEffect(() => {
     setQuery(defaultValue);
-    setRemoteProducts(null);
-    setIsSearching(false);
   }, [defaultValue]);
 
   useEffect(() => {
@@ -239,87 +266,6 @@ export function MarketplaceSearch({
     return () => window.removeEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
   }, [syncScope]);
 
-  useEffect(() => {
-    if (!canShowPopularSearches || !isFocused || query.trim() || loadedPopularSearches.current) {
-      return;
-    }
-
-    const controller = new AbortController();
-
-    fetch("/api/marketplace/searches", { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((payload) => {
-        if (controller.signal.aborted || !Array.isArray(payload?.searches)) {
-          return;
-        }
-
-        setPopularSearches(
-          payload.searches
-            .filter((term: unknown): term is string => typeof term === "string")
-            .slice(0, 4),
-        );
-        loadedPopularSearches.current = true;
-      })
-      .catch(() => undefined);
-
-    return () => controller.abort();
-  }, [canShowPopularSearches, isFocused, query]);
-
-  useEffect(() => {
-    if (!isFocused || normalizedQuery.length < 2) {
-      setRemoteProducts(null);
-      setIsSearching(false);
-      return;
-    }
-
-    // A supplied store slug must never fall back to an unscoped marketplace search.
-    if (storeSlug && !selectedStore) {
-      setRemoteProducts([]);
-      setIsSearching(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    setRemoteProducts(null);
-    setIsSearching(true);
-
-    const timeout = window.setTimeout(() => {
-      const params = new URLSearchParams({
-        q: query.trim(),
-        locale,
-        limit: "6",
-      });
-
-      if (selectedStore?.id) {
-        params.set("storeId", selectedStore.id);
-      }
-
-      fetch(`/api/marketplace/products?${params.toString()}`, {
-        signal: controller.signal,
-      })
-        .then((response) => (response.ok ? response.json() as Promise<MarketplaceProductPage> : null))
-        .then((page) => {
-          if (!controller.signal.aborted) {
-            setRemoteProducts(page?.products ?? []);
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) {
-            setRemoteProducts([]);
-          }
-        })
-        .finally(() => {
-          if (!controller.signal.aborted) {
-            setIsSearching(false);
-          }
-        });
-    }, 180);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [isFocused, locale, normalizedQuery, query, selectedStore, storeSlug]);
 
   function recordSearch(value: string) {
     const term = value.trim();
@@ -358,8 +304,6 @@ export function MarketplaceSearch({
     setQuery(searchQuery);
     syncSearchQuery(searchQuery);
     setIsFocused(false);
-    setRemoteProducts(null);
-    setIsSearching(false);
     inputRef.current?.blur();
 
     if (searchQuery) {
@@ -386,8 +330,6 @@ export function MarketplaceSearch({
   function clearSearch() {
     setQuery("");
     syncSearchQuery("");
-    setRemoteProducts(null);
-    setIsSearching(false);
     inputRef.current?.focus();
   }
 

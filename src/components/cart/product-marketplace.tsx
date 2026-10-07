@@ -1,7 +1,10 @@
 "use client";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { productQueryOptions } from "@/lib/query/product-options";
+import dynamic from "next/dynamic";
+import { OptimizedImage } from "@/components/common/optimized-image";
 
 import {
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -20,15 +23,14 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { PublicStoreLocationSection } from "@/components/locations/public-store-location-section";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { StoreBrandingQuickEdit } from "@/components/store/store-branding-quick-edit";
 import { StoreWhatsAppButton } from "@/components/store/store-whatsapp-button";
+const StoreBrandingQuickEdit = dynamic(() => import("@/components/store/store-branding-quick-edit").then((module) => module.StoreBrandingQuickEdit));
 import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type {
   CartProduct,
-  MarketplaceProductPage,
   MarketplaceProductSort,
   MarketplaceStore,
 } from "@/lib/cart/types";
@@ -106,7 +108,6 @@ type StorefrontProps = {
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
-const PRODUCT_PAGE_SIZE = 52;
 const DEFAULT_STICKY_SCROLL_OFFSET = 96;
 
 type FooterProps = {
@@ -1054,9 +1055,11 @@ export function ProductGrid({
               )}
             >
               {product.imageUrl ? (
-                <img
+                <OptimizedImage
                   src={product.imageUrl}
                   alt={product.name}
+                  fill
+                  sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
                   loading="lazy"
                   decoding="async"
                   className={cn(
@@ -1196,15 +1199,8 @@ export function ProductGrid({
 }
 
 function useInfiniteProducts({
-  initialProducts,
-  initialCursor,
-  initialHasMore,
-  locale,
-  categoryId,
-  categoryIds,
-  storeId,
-  searchQuery,
-  sort,
+  initialProducts, initialCursor, initialHasMore, locale,
+  categoryId, categoryIds, storeId, searchQuery, sort,
 }: {
   initialProducts: CartProduct[];
   initialCursor?: string | null;
@@ -1216,164 +1212,24 @@ function useInfiniteProducts({
   searchQuery?: string;
   sort?: MarketplaceProductSort;
 }) {
-  const [products, setProducts] = useState(initialProducts);
-  const [cursor, setCursor] = useState(initialCursor ?? null);
-  const [hasMore, setHasMore] = useState(Boolean(initialHasMore));
-  const [isLoadingNext, setIsLoadingNext] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
-  const requestRef = useRef(0);
-  const mountedRef = useRef(false);
-  const queryKey = useMemo(
-    () => [locale, categoryId ?? "", categoryIds?.join(",") ?? "", storeId ?? "", searchQuery ?? "", sort ?? "newest"].join("|"),
-    [categoryId, categoryIds, locale, searchQuery, sort, storeId],
-  );
-
-  useEffect(() => {
-    abortRef.current?.abort();
-    const requestId = requestRef.current + 1;
-    requestRef.current = requestId;
-
-    if (!mountedRef.current && !searchQuery?.trim() && !categoryId) {
-      mountedRef.current = true;
-      setProducts(initialProducts);
-      setCursor(initialCursor ?? null);
-      setHasMore(Boolean(initialHasMore));
-      setIsLoadingNext(false);
-      return;
-    }
-
-    mountedRef.current = true;
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setIsLoadingNext(true);
-
-    const params = new URLSearchParams({
-      locale,
-      limit: String(PRODUCT_PAGE_SIZE),
-      sort: sort ?? "newest",
-    });
-
-    if (categoryId) {
-      params.set("categoryId", categoryId);
-    }
-
-    if (categoryIds?.length) {
-      params.set("categoryIds", categoryIds.join(","));
-    }
-
-    if (storeId) {
-      params.set("storeId", storeId);
-    }
-
-    if (searchQuery?.trim()) {
-      params.set("q", searchQuery.trim());
-    }
-
-    fetch(`/api/marketplace/products?${params.toString()}`, {
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("PRODUCT_PAGE_FAILED");
-        }
-
-        return response.json() as Promise<MarketplaceProductPage>;
-      })
-      .then((page) => {
-        if (requestRef.current !== requestId || controller.signal.aborted) {
-          return;
-        }
-
-        setProducts(page.products);
-        setCursor(page.nextCursor);
-        setHasMore(page.hasMore);
-      })
-      .catch((error) => {
-        if ((error as Error).name !== "AbortError") {
-          setProducts([]);
-          setCursor(null);
-          setHasMore(false);
-        }
-      })
-      .finally(() => {
-        if (requestRef.current === requestId) {
-          setIsLoadingNext(false);
-        }
-      });
-  }, [initialCursor, initialHasMore, initialProducts, queryKey, categoryId, categoryIds, searchQuery]);
-
-  const loadNext = useCallback(async () => {
-    if (isLoadingNext || !hasMore || !cursor) {
-      return;
-    }
-
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const requestId = requestRef.current + 1;
-    requestRef.current = requestId;
-    setIsLoadingNext(true);
-
-    const params = new URLSearchParams({
-      locale,
-      limit: String(PRODUCT_PAGE_SIZE),
-      cursor,
-      sort: sort ?? "newest",
-    });
-
-    if (categoryId) {
-      params.set("categoryId", categoryId);
-    }
-
-    if (categoryIds?.length) {
-      params.set("categoryIds", categoryIds.join(","));
-    }
-
-    if (storeId) {
-      params.set("storeId", storeId);
-    }
-
-    if (searchQuery?.trim()) {
-      params.set("q", searchQuery.trim());
-    }
-
-    try {
-      const response = await fetch(`/api/marketplace/products?${params.toString()}`, {
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        throw new Error("PRODUCT_PAGE_FAILED");
-      }
-
-      const page = (await response.json()) as MarketplaceProductPage;
-
-      if (requestRef.current !== requestId || controller.signal.aborted) {
-        return;
-      }
-
-      setProducts((current) => mergeProducts(current, page.products));
-      setCursor(page.nextCursor);
-      setHasMore(page.hasMore);
-    } catch (error) {
-      if ((error as Error).name !== "AbortError") {
-        setHasMore(false);
-      }
-    } finally {
-      if (requestRef.current === requestId) {
-        setIsLoadingNext(false);
-      }
-    }
-  }, [categoryId, categoryIds, cursor, hasMore, isLoadingNext, locale, searchQuery, sort, storeId]);
-
-  useEffect(() => () => abortRef.current?.abort(), []);
-
+  const options = productQueryOptions({ locale, categoryId, categoryIds, storeId, searchQuery, sort });
+  const key = JSON.stringify(options.queryKey);
+  // Server data belongs only to the filters active when this view first mounted.
+  const initialKey = useRef(key);
+  const query = useInfiniteQuery({
+    ...options,
+    initialData: key === initialKey.current ? {
+      pages: [{ products: initialProducts, nextCursor: initialCursor ?? null, hasMore: Boolean(initialHasMore) }],
+      pageParams: [null],
+    } : undefined,
+  });
   return {
-    products,
-    hasMore,
-    isLoadingNext,
-    loadNext,
+    products: (query.data?.pages ?? []).reduce<CartProduct[]>((all, page) => mergeProducts(all, page.products), []),
+    hasMore: Boolean(query.hasNextPage),
+    isLoadingNext: query.isPending || query.isFetchingNextPage,
+    loadNext: () => {
+      if (query.hasNextPage && !query.isFetching) void query.fetchNextPage();
+    },
   };
 }
 

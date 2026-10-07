@@ -78,13 +78,6 @@ export function AppDashboardShell({
 
   const activeHref = useMemo(() => getActiveNavHref(navItems, pathname, hash), [hash, navItems, pathname]);
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      navItems.forEach((item) => router.prefetch(getPathWithoutHash(item.href)));
-    }, 80);
-
-    return () => window.clearTimeout(timeout);
-  }, [navItems, router]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -179,7 +172,9 @@ export function AppDashboardShell({
           ) : null}
           <Link
             href={item.href}
-            prefetch
+            prefetch={false}
+            onMouseEnter={() => router.prefetch(getPathWithoutHash(item.href))}
+            onFocus={() => router.prefetch(getPathWithoutHash(item.href))}
             onClick={handleDashboardLinkClick}
             title={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
             aria-label={compact ? item.titleKey ? t(item.titleKey as any) : item.title : undefined}
@@ -214,7 +209,9 @@ export function AppDashboardShell({
             <Link
               key={item.href}
               href={item.href}
-              prefetch
+              prefetch={false}
+              onMouseEnter={() => router.prefetch(getPathWithoutHash(item.href))}
+              onFocus={() => router.prefetch(getPathWithoutHash(item.href))}
               onClick={handleDashboardLinkClick}
               className={cn(
                 "flex min-h-16 min-w-0 items-center gap-2 rounded-lg border bg-card px-3 py-2 text-[13px] font-bold leading-tight shadow-sm transition min-[390px]:text-sm",

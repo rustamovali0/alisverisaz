@@ -1,5 +1,30 @@
 import { GlobalLoader } from "@/components/common/global-loader";
 
+export function ProductListLoading() {
+  return (
+    <main className="min-h-screen bg-slate-50 px-3 py-4 dark:bg-background sm:px-5 md:py-8" role="status" aria-live="polite">
+      <span className="sr-only">Məhsullar yüklənir</span>
+      <div className="mx-auto max-w-[1280px] space-y-4">
+        <div className="h-8 w-40 animate-pulse rounded-lg bg-muted" />
+        <div className="h-12 w-full animate-pulse rounded-lg bg-muted" />
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={index} className="overflow-hidden rounded-lg border bg-card">
+              <div className="aspect-[4/3] animate-pulse bg-muted" />
+              <div className="space-y-3 p-3">
+                <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="h-5 w-1/2 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+                <div className="h-10 animate-pulse rounded-lg bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
 type RouteLoadingProps = {
   variant?: "marketplace" | "storefront" | "dashboard" | "account" | "favorites" | "cart";
 };

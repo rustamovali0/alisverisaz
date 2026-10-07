@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { getAuthProfile } from "@/lib/auth/profile-query";
 
 import { getAdminLoginPath, getDashboardPath, getLoginPath } from "@/lib/auth/redirects";
 import { isAuthRole, type AuthRole } from "@/lib/auth/types";
@@ -155,12 +156,7 @@ export async function updateSession(
     return response;
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .returns<{ role: AuthRole; session_revoked_at?: string | null }[]>()
-    .maybeSingle();
+  const { data: profile, error: profileError } = await getAuthProfile(supabase, user.id);
 
   if (profileError || !profile || !isAuthRole(profile.role)) {
     if (route || localizedRoute) {

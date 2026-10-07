@@ -100,8 +100,8 @@ type StoreRow = {
 };
 
 const MAX_PUBLIC_LIST_LIMIT = 120;
-const DEFAULT_PRODUCT_PAGE_LIMIT = 52;
-const MAX_PRODUCT_PAGE_LIMIT = 52;
+const DEFAULT_PRODUCT_PAGE_LIMIT = 24;
+const MAX_PRODUCT_PAGE_LIMIT = 24;
 const MAX_SEARCH_LENGTH = 120;
 
 type ProductCursor = {
@@ -691,6 +691,7 @@ async function getMarketplaceStoresUncached(
   categoryId: string,
   searchQuery: string,
   limit: number,
+  offset = 0,
 ) {
   const supabase = createSupabaseAdminClient();
   const { data: stores, error: storesError } = await (supabase as any)
@@ -700,7 +701,8 @@ async function getMarketplaceStoresUncached(
     .order("created_at", {
       ascending: false,
     })
-    .limit(limit);
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (storesError) {
     throw new Error(storesError.message);
@@ -826,19 +828,21 @@ export async function getMarketplaceStores(input: {
   categoryId?: string;
   searchQuery?: string;
   limit?: number;
+  offset?: number;
 } = {}) {
   const locale = normalizeCacheLocale(input.locale);
   const categoryId = input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
   const searchQuery = normalizeSearchValue(input.searchQuery ?? "");
-  const limit = Math.min(Math.max(Math.trunc(input.limit ?? 60), 1), MAX_PUBLIC_LIST_LIMIT);
+  const limit = Math.min(Math.max(Math.trunc(input.limit ?? 24), 1), MAX_PUBLIC_LIST_LIMIT);
+  const offset = Number.isFinite(input.offset) ? Math.max(0, Math.min(Math.trunc(input.offset!), 24000)) : 0;
 
   if (searchQuery) {
-    return getMarketplaceStoresUncached(locale, categoryId, searchQuery, limit);
+    return getMarketplaceStoresUncached(locale, categoryId, searchQuery, limit, offset);
   }
 
   return publicCache(
-    () => getMarketplaceStoresUncached(locale, categoryId, "", limit),
-    ["marketplace-stores", locale, categoryId || "all", String(limit)],
+    () => getMarketplaceStoresUncached(locale, categoryId, "", limit, offset),
+    ["marketplace-stores", locale, categoryId || "all", String(limit), String(offset)],
     {
       revalidate: CACHE_TTL.SHORT,
       tags: [

@@ -9,11 +9,9 @@ import { getSystemFlags } from "@/lib/platform/system-settings";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveAuthScopeFromPath, type SupabaseAuthScope } from "@/lib/supabase/auth-scope";
 import type { Database } from "@/types/database";
+import { getAuthProfile } from "@/lib/auth/profile-query";
 
 type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
-type ProfileWithRevocation = ProfileRow & {
-  session_revoked_at?: string | null;
-};
 
 export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
   authScope: SupabaseAuthScope = "public",
@@ -28,12 +26,7 @@ export const getCurrentUserProfile = cache(async function getCurrentUserProfile(
     return null;
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .returns<ProfileWithRevocation[]>()
-    .maybeSingle();
+  const { data: profile, error: profileError } = await getAuthProfile(supabase, user.id);
 
   if (profileError || !profile) return null;
 

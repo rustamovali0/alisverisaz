@@ -3,6 +3,7 @@ import { ArrowRight, Store } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ScrollToTopOnMount } from "@/components/common/scroll-to-top-on-mount";
+import { OptimizedImage } from "@/components/common/optimized-image";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getMarketplaceStores } from "@/lib/cart/data";
@@ -13,6 +14,7 @@ type StoresPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{ page?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -22,16 +24,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function StoresPage({ params }: StoresPageProps) {
+export default async function StoresPage({ params, searchParams }: StoresPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const requestedPage = Number((await searchParams).page ?? 1);
+  const page = Number.isFinite(requestedPage) ? Math.min(1000, Math.max(1, Math.floor(requestedPage))) : 1;
 
-  const [stores, siteSettings, home, marketplace] = await Promise.all([
-    getMarketplaceStores({ locale, limit: 120 }),
+  const [storeRows, siteSettings, home, marketplace] = await Promise.all([
+    getMarketplaceStores({ locale, limit: 25, offset: (page - 1) * 24 }),
     getSiteSettings(),
     getTranslations("home"),
     getTranslations("marketplace"),
   ]);
+  const stores = storeRows.slice(0, 24);
+  const hasNext = storeRows.length > 24;
 
   return (
     <main className="min-h-screen bg-slate-50 pb-[calc(90px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
@@ -66,9 +72,11 @@ export default async function StoresPage({ params }: StoresPageProps) {
                 <div className="relative">
                   <div className="relative h-full min-h-[124px] overflow-hidden rounded-l-[14px] bg-slate-100 dark:bg-slate-800 md:aspect-[16/10] md:h-auto md:min-h-0 md:rounded-l-none md:rounded-t-[14px]">
                     {coverUrl ? (
-                      <img
+                      <OptimizedImage
                         src={coverUrl}
                         alt={store.name}
+                        fill
+                        sizes="(max-width: 767px) 112px, (max-width: 1279px) 33vw, 320px"
                         className="h-full w-full object-cover object-center transition duration-200 md:group-hover:scale-[1.015]"
                         loading="lazy"
                       />
@@ -83,9 +91,12 @@ export default async function StoresPage({ params }: StoresPageProps) {
                   </div>
                   <span className="absolute bottom-3 left-3 z-30 grid size-11 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-base font-semibold text-blue-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-8 md:left-5 md:size-16 md:text-xl">
                     {store.logoUrl ? (
-                      <img
+                      <OptimizedImage
                         src={store.logoUrl}
                         alt={`${store.name} logo`}
+                        width={64}
+                        height={64}
+                        sizes="64px"
                         className="h-full w-full object-cover"
                         loading="lazy"
                       />
@@ -115,6 +126,10 @@ export default async function StoresPage({ params }: StoresPageProps) {
             );
           })}
         </div>
+        <nav aria-label="Mağaza səhifələri" className="mt-6 flex justify-between gap-4">
+          {page > 1 ? <Link href={`/stores?page=${page - 1}`} className="rounded-lg border px-4 py-2 text-sm">Əvvəlki</Link> : <span />}
+          {hasNext ? <Link href={`/stores?page=${page + 1}`} className="rounded-lg border px-4 py-2 text-sm">Növbəti</Link> : null}
+        </nav>
       </section>
       <SiteFooter
         siteName={siteSettings.shortName || siteSettings.siteName}

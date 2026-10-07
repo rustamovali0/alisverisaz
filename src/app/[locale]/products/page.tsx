@@ -74,7 +74,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     categoryIds: getDescendantCategoryIds(categories, selectedCategory?.id),
     searchQuery: search?.q,
     sort: search?.sort,
-    limit: 28,
+    limit: 24,
   });
 
   return (
