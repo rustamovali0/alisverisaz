@@ -4,6 +4,11 @@ import createNextIntlPlugin from "next-intl/plugin";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  output: "standalone",
+  ...(process.env.REDIS_URL ? {
+    cacheHandler: require.resolve("./deploy/redis-cache-handler.cjs"),
+    cacheMaxMemorySize: 0,
+  } : {}),
   async headers() {
     return [{
       source: "/:path*",
