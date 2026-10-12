@@ -487,8 +487,10 @@ export function ProductForm({
       setImageFiles([]);
 
       if (standalone) {
-        if (mode === "store-create" && result.productId) {
-          router.replace(`/sell/product/${result.productId}/edit`);
+        if (mode === "store-create") {
+          router.replace("/store/dashboard/products");
+          router.refresh();
+          return;
         }
         router.refresh();
       } else if (successRedirect) {
@@ -537,32 +539,50 @@ export function ProductForm({
         </label>
       </div>
 
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="grid gap-2 text-sm font-medium">
-          <span className="flex items-center gap-2">
-            <input type="checkbox" name="stockTrackingEnabled" checked={trackStock}
-              onChange={(event) => setTrackStock(event.target.checked)} disabled={disabled} />
-            Stok sayını izləmək
-          </span>
-          <input type="hidden" name="stockTrackingPresent" value="1" />
-          <span className="text-xs font-normal text-muted-foreground">
-            Söndürüləndə stok sayı görünmür və sifarişlər stokla məhdudlaşmır.
-          </span>
+      <section className="grid min-w-0 gap-3 rounded-md border border-border/80 bg-muted/20 p-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <label className="flex min-w-0 items-start gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="stockTrackingEnabled"
+              checked={trackStock}
+              onChange={(event) => setTrackStock(event.target.checked)}
+              disabled={disabled}
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+            />
+            <span className="grid gap-1">
+              <span>Stok sayını izləmək</span>
+              <span className="text-xs font-normal leading-5 text-muted-foreground">
+                Aktiv olduqda sifarişlər stok sayı ilə məhdudlaşır.
+              </span>
+            </span>
+          </label>
           {trackStock ? (
-          <input
-            name="stockQuantity"
-            type="number"
-            min="0"
-            step="1"
-            defaultValue={product?.stockQuantity ?? undefined}
-            placeholder="Stok sayı"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-            disabled={disabled}
-          />
-          ) : null}
-        </label>
-        {profitTrackingEnabled ? <label className="grid gap-2 text-sm font-medium">
+            <label className="grid w-full gap-1.5 text-sm font-medium sm:w-44">
+              Stok sayı
+              <input
+                name="stockQuantity"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={product?.stockQuantity ?? undefined}
+                placeholder="Məsələn, 25"
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+                disabled={disabled}
+              />
+            </label>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground sm:pr-1">
+              Limitsiz sifariş
+            </span>
+          )}
+        </div>
+        <input type="hidden" name="stockTrackingPresent" value="1" />
+      </section>
+
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {profitTrackingEnabled ? <label className="grid min-w-0 gap-2 text-sm font-medium">
           Maya dəyəri
           <input
             name="costAmount"
@@ -576,7 +596,7 @@ export function ProductForm({
             disabled={disabled}
           />
         </label> : null}
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Satış qiyməti
           <input
             name="priceAmount"
@@ -590,7 +610,7 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Endirimli qiymət
           <input
             name="discountedPriceAmount"
@@ -606,7 +626,7 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Status
           <select
             name="status"
