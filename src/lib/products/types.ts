@@ -43,6 +43,7 @@ export type ProductVariantCombinationInput = {
 export type ProductActionResult =
   | {
       ok: true;
+      productId?: string;
       message: string;
     }
   | {
@@ -51,6 +52,7 @@ export type ProductActionResult =
     };
 
 export type ManagedProduct = {
+  stockTrackingEnabled?: boolean;
   id: string;
   storeId: string;
   name: string;

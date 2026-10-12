@@ -284,7 +284,7 @@ export function MarketplaceHeader({
   }, [isMobileMenuOpen]);
 
   const addListingHref = isSeller
-    ? "/store/dashboard/products/new"
+    ? "/sell/product/new"
     : isGuest
       ? "/register?role=seller&next=/store/dashboard"
       : "";

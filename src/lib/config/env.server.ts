@@ -5,7 +5,8 @@ function readOptionalServerEnv(name: string) {
     throw new Error("Server environment variables cannot be read in the browser.");
   }
 
-  return process.env[name] || "";
+  const value = process.env[name] || "";
+  return value.trim() === "[SENSITIVE]" ? "" : value;
 }
 
 export const serverEnv = {

@@ -44,6 +44,8 @@ type ProductFormProps = {
   disabled?: boolean;
   imageLimit?: number | null;
   successRedirect?: string;
+  standalone?: boolean;
+  profitTrackingEnabled?: boolean;
 };
 
 function variantsToText(product?: ManagedProduct) {
@@ -415,7 +417,7 @@ function ExistingProductImages({
               type="button"
               variant="secondary"
               size="icon"
-              className="absolute right-1 top-1 size-7 rounded-md border border-white/80 bg-destructive text-destructive-foreground opacity-100 shadow-sm hover:bg-destructive/90"
+              className="absolute right-1 top-1 z-10 size-9 rounded-md border border-white bg-red-600 text-white shadow-sm hover:bg-red-700 hover:text-white"
               onClick={() => runImageAction("delete", image.id)}
               disabled={disabled || isPending}
               aria-label="Şəkli sil"
@@ -441,9 +443,12 @@ export function ProductForm({
   disabled = false,
   imageLimit = 5,
   successRedirect,
+  standalone = false,
+  profitTrackingEnabled = false,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [trackStock, setTrackStock] = useState(product?.stockTrackingEnabled ?? false);
   const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
@@ -481,7 +486,12 @@ export function ProductForm({
       void queryClient.invalidateQueries({ queryKey: ["related-products"] });
       setImageFiles([]);
 
-      if (successRedirect) {
+      if (standalone) {
+        if (mode === "store-create" && result.productId) {
+          router.replace(`/sell/product/${result.productId}/edit`);
+        }
+        router.refresh();
+      } else if (successRedirect) {
         router.replace(successRedirect);
         router.refresh();
       }
@@ -495,21 +505,7 @@ export function ProductForm({
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       {mode === "store-create" ? (
-        <label className="grid gap-2 text-sm font-medium">
-          Mağaza
-          <select
-            name="storeId"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-            disabled={disabled || stores.length === 0}
-          >
-            {stores.map((store) => (
-              <option key={store.id} value={store.id}>
-                {store.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <input type="hidden" name="storeId" value={stores[0]?.id ?? ""} />
       ) : null}
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-2">
@@ -543,7 +539,16 @@ export function ProductForm({
 
       <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <label className="grid gap-2 text-sm font-medium">
-          Stok sayı
+          <span className="flex items-center gap-2">
+            <input type="checkbox" name="stockTrackingEnabled" checked={trackStock}
+              onChange={(event) => setTrackStock(event.target.checked)} disabled={disabled} />
+            Stok sayını izləmək
+          </span>
+          <input type="hidden" name="stockTrackingPresent" value="1" />
+          <span className="text-xs font-normal text-muted-foreground">
+            Söndürüləndə stok sayı görünmür və sifarişlər stokla məhdudlaşmır.
+          </span>
+          {trackStock ? (
           <input
             name="stockQuantity"
             type="number"
@@ -555,8 +560,9 @@ export function ProductForm({
             required
             disabled={disabled}
           />
+          ) : null}
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        {profitTrackingEnabled ? <label className="grid gap-2 text-sm font-medium">
           Maya dəyəri
           <input
             name="costAmount"
@@ -565,12 +571,13 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.costAmount ?? undefined}
             placeholder="Maya dəyəri"
+            required
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           />
-        </label>
+        </label> : null}
         <label className="grid gap-2 text-sm font-medium">
-          Əsas qiymət
+          Satış qiyməti
           <input
             name="priceAmount"
             type="number"
@@ -635,7 +642,7 @@ export function ProductForm({
           <div>
             <p className="text-sm font-medium">Satış nöqtələri və mövcudluq</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Məhsulun göründüyü filialları və həmin filialdakı stoku seçin.
+              Məhsulun mövcud olduğu satış nöqtələri
             </p>
           </div>
           <div className="grid gap-3">
@@ -652,7 +659,7 @@ export function ProductForm({
                       name="productLocationIds"
                       type="checkbox"
                       value={location.id}
-                      defaultChecked={Boolean(selected)}
+                      defaultChecked={locations.length === 1 || Boolean(selected)}
                       disabled={disabled}
                       className="mt-1 size-4 rounded border-input"
                     />
@@ -664,19 +671,6 @@ export function ProductForm({
                         {location.district ? `, ${location.district}` : ""}
                       </span>
                     </span>
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Bu nöqtədə stok
-                    <input
-                      name={`locationStock:${location.id}`}
-                      type="number"
-                      min="0"
-                      step="1"
-                      defaultValue={selected?.stockQuantity ?? undefined}
-                      placeholder="Stok"
-                      disabled={disabled}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
                   </label>
                 </div>
               );

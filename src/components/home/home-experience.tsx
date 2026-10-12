@@ -498,7 +498,7 @@ export function HomeExperience({
                   </div>
                   {showSellerQuickActions ? (
                     <Link
-                      href="/store/dashboard/products/new"
+                      href="/sell/product/new"
                       className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#ffcf4a] text-slate-950 shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:bg-[#ffd866] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:hidden"
                       aria-label="Elan yerləşdir"
                     >
@@ -545,14 +545,14 @@ export function HomeExperience({
                   {showSellerQuickActions ? (
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       <QuickActionTile
-                        href="/store/dashboard/products/new"
+                        href="/sell/product/new"
                         title="Elan ver"
                         description="30 saniyə"
                         icon={BadgePlus}
                         tone="bg-[#ffcf4a] text-slate-950"
                       />
                       <QuickActionTile
-                        href="/store/dashboard/products/new"
+                        href="/sell/product/new"
                         title="AI kömək"
                         description="Mətn hazırla"
                         icon={Bot}
