@@ -269,19 +269,24 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
         className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative">
-          <div className={cn("relative overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
+          <div
+            className={cn(
+              "relative aspect-[16/6] overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800 sm:aspect-[16/8]",
+              compact && "sm:aspect-[16/7]",
+            )}
+          >
             {coverUrl ? (
               <OptimizedImage
                 src={coverUrl}
                 alt={store.name}
                 fill
-                sizes="(max-width: 767px) 270px, (max-width: 1023px) 50vw, 320px"
+                sizes="(max-width: 767px) 224px, (max-width: 1023px) 50vw, 320px"
                 className="h-full w-full object-cover transition duration-200 md:group-hover:scale-[1.015]"
                 loading="lazy"
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#ecfdf5)] dark:bg-[linear-gradient(135deg,#1e293b,#052e2b)]">
-                <span className="text-4xl font-black text-blue-700/50 dark:text-blue-300/50">
+                <span className="text-3xl font-black text-blue-700/50 dark:text-blue-300/50 sm:text-4xl">
                   {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                 </span>
               </div>
@@ -294,7 +299,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               </span>
             ) : null}
           </div>
-          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
+          <div className="absolute -bottom-5 left-3 z-30 grid size-10 place-items-center overflow-hidden rounded-lg border-2 border-white bg-white text-base font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 sm:-bottom-6 sm:size-12 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
               <OptimizedImage
                 src={store.logoUrl}
@@ -310,13 +315,13 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
             )}
           </div>
         </div>
-        <div className="relative z-10 flex min-h-[94px] flex-col justify-between rounded-b-xl bg-white px-3 pb-3 pt-8 dark:bg-slate-900 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
+        <div className="relative z-10 flex min-h-[76px] flex-col justify-between rounded-b-xl bg-white px-3 pb-2.5 pt-7 dark:bg-slate-900 sm:min-h-[94px] sm:pb-3 sm:pt-8 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-2 break-words text-[15px] font-black leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:text-base">
+              <h3 className="line-clamp-1 break-words text-sm font-bold leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:line-clamp-2 sm:text-base sm:font-black">
                 {store.name}
               </h3>
-              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 sm:mt-1.5 sm:text-sm">
                 {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
@@ -634,7 +639,7 @@ export function HomeExperience({
                 <div
                   key={store.id}
                   className={cn(
-                    "w-[70vw] max-w-[270px] shrink-0 snap-start md:w-auto md:max-w-none",
+                    "w-[61vw] max-w-[224px] shrink-0 snap-start sm:w-[70vw] sm:max-w-[270px] md:w-auto md:max-w-none",
                     index >= 4 && "hidden lg:block",
                   )}
                 >
