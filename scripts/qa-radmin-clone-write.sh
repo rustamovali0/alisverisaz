@@ -93,9 +93,12 @@ BEGIN
     RAISE EXCEPTION 'ANNOUNCEMENT_WRITE_FAILED';
   END IF;
 
-  SELECT id INTO menu_id FROM public.navigation_menus ORDER BY created_at NULLS LAST, id LIMIT 1;
+  IF to_regclass('public.navigation_menus') IS NOT NULL
+    AND to_regclass('public.navigation_items') IS NOT NULL THEN
+    SELECT id INTO menu_id FROM public.navigation_menus ORDER BY created_at NULLS LAST, id LIMIT 1;
+  END IF;
 
-  IF menu_id IS NOT NULL THEN
+  IF menu_id IS NOT NULL AND to_regclass('public.navigation_items') IS NOT NULL THEN
     INSERT INTO public.navigation_items (
       menu_id, title, href, icon_name, sort_order, is_active, is_system
     ) VALUES (
@@ -112,6 +115,8 @@ BEGIN
     END IF;
 
     DELETE FROM public.navigation_items WHERE id = item_id;
+  ELSE
+    RAISE NOTICE 'NAVIGATION_WRITE_SKIPPED: navigation CMS tables are not installed';
   END IF;
 END $$;
 
