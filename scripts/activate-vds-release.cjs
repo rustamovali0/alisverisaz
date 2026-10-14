@@ -10,11 +10,11 @@ if (!base || !fs.existsSync(`${base}/app/server.js`)) {
 const old = JSON.parse(execFileSync("pm2", ["jlist"], { encoding: "utf8" }))
   .find((process) => process.name === name)?.pm2_env;
 
-if (!old?.pm_exec_path || !old.pm_cwd) {
-  throw new Error("Live PM2 process is missing");
-}
+const hasPreviousProcess = Boolean(old?.pm_exec_path && old.pm_cwd);
 
-fs.writeFileSync(`${base}/previous-process.json`, JSON.stringify(old), { mode: 0o600 });
+if (hasPreviousProcess) {
+  fs.writeFileSync(`${base}/previous-process.json`, JSON.stringify(old), { mode: 0o600 });
+}
 process.loadEnvFile(`${base}/app.env`);
 
 const env = {
@@ -63,15 +63,24 @@ async function healthy() {
     console.log("NEW APPLICATION HEALTH: OK");
   } catch (error) {
     spawnSync("pm2", ["delete", name], { stdio: "inherit" });
-    pm2(["start", old.pm_exec_path, "--name", name, "--cwd", old.pm_cwd, "--time"], {
-      ...process.env,
-      ...old.env,
-      HOSTNAME: "localhost",
-      PORT: old.env?.PORT ?? port,
-      NODE_ENV: "production",
-    });
+
+    if (hasPreviousProcess) {
+      pm2(["start", old.pm_exec_path, "--name", name, "--cwd", old.pm_cwd, "--time"], {
+        ...process.env,
+        ...old.env,
+        HOSTNAME: "localhost",
+        PORT: old.env?.PORT ?? port,
+        NODE_ENV: "production",
+      });
+    }
+
     pm2(["save"]);
-    console.error("Application restored; database migration was not rolled back.", error.message);
+    console.error(
+      hasPreviousProcess
+        ? "Application restored; database migration was not rolled back."
+        : "New application was removed; database migration was not rolled back.",
+      error.message,
+    );
     process.exitCode = 1;
   }
 })();
