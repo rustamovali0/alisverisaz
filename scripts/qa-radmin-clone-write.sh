@@ -16,9 +16,10 @@ cleanup() {
 }
 trap cleanup EXIT
 
-runuser -u postgres -- psql -X -d postgres -v ON_ERROR_STOP=1 \
-  -c "SELECT 1 FROM pg_database WHERE datname = :'db'" \
-  -v db="$SOURCE_DB" >/dev/null
+# A successful connection also confirms the source database exists. Avoid psql
+# variable substitution here because -c statements do not expand it reliably.
+runuser -u postgres -- psql -X -d "$SOURCE_DB" -v ON_ERROR_STOP=1 \
+  -c "SELECT 1" >/dev/null
 
 runuser -u postgres -- pg_dump --format=custom --dbname="$SOURCE_DB" > "$TMP_DUMP"
 runuser -u postgres -- createdb --template=template0 "$QA_DB"
