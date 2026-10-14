@@ -6,6 +6,7 @@ umask 077
 test "$(id -u)" -eq 0
 
 SOURCE_DB="${1:-alisveris_candidate_20261010}"
+NAVIGATION_REPAIR_MIGRATION="${NAVIGATION_REPAIR_MIGRATION:-/home/deploy/20261014010000_repair_navigation_cms.sql}"
 STAMP="$(date +%Y%m%d%H%M%S)"
 QA_DB="alisveris_radmin_qa_${STAMP}"
 TMP_DUMP="$(mktemp /root/alisveris-radmin-qa.XXXXXX.dump)"
@@ -25,6 +26,11 @@ runuser -u postgres -- pg_dump --format=custom --dbname="$SOURCE_DB" > "$TMP_DUM
 runuser -u postgres -- createdb --template=template0 "$QA_DB"
 runuser -u postgres -- pg_restore --no-owner --no-privileges --single-transaction \
   --exit-on-error --dbname="$QA_DB" < "$TMP_DUMP"
+
+if [[ -f "$NAVIGATION_REPAIR_MIGRATION" ]]; then
+  runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -d "$QA_DB" \
+    < "$NAVIGATION_REPAIR_MIGRATION"
+fi
 
 runuser -u postgres -- psql -X -d "$QA_DB" -v ON_ERROR_STOP=1 <<'SQL'
 BEGIN;
@@ -96,6 +102,12 @@ BEGIN
   IF to_regclass('public.navigation_menus') IS NOT NULL
     AND to_regclass('public.navigation_items') IS NOT NULL THEN
     SELECT id INTO menu_id FROM public.navigation_menus ORDER BY created_at NULLS LAST, id LIMIT 1;
+
+    IF menu_id IS NULL THEN
+      INSERT INTO public.navigation_menus (key, title, location)
+      VALUES ('qa-menu-' || suffix, 'QA menu ' || suffix, 'header')
+      RETURNING id INTO menu_id;
+    END IF;
   END IF;
 
   IF menu_id IS NOT NULL AND to_regclass('public.navigation_items') IS NOT NULL THEN
@@ -125,4 +137,9 @@ SQL
 
 echo "RADMIN CLONE WRITE QA: OK"
 echo "Source database: $SOURCE_DB"
+if [[ -f "$NAVIGATION_REPAIR_MIGRATION" ]]; then
+  echo "Navigation repair migration: TESTED ON CLONE"
+else
+  echo "Navigation repair migration: NOT PROVIDED; navigation CMS write was skipped if absent"
+fi
 echo "The temporary clone and dump are being removed."
