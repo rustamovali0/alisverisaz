@@ -1,7 +1,6 @@
 import {
   CACHE_TAGS,
   CACHE_TTL,
-  invalidateNavigationPublicData,
   publicCache,
 } from "@/lib/cache/public-cache";
 import {
@@ -619,8 +618,10 @@ export async function getNavigationMenus(options?: { ensureDefaults?: boolean })
   }
 
   await ensureDefaultNavigationMenus();
-  invalidateNavigationPublicData();
 
+  // Cache invalidation is restricted to Server Actions and Route Handlers.
+  // This read path is rendered by the admin page, so return the fresh query
+  // after seeding rather than attempting to revalidate during render.
   return fetchNavigationMenus();
 }
 
