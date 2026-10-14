@@ -111,13 +111,13 @@ const homeDesignStyle: CSSProperties & Record<string, string> = {
   "--muted-foreground": "215 16% 43%",
   "--border": "35 23% 86%",
   "--input": "35 23% 86%",
-  "--primary": "217 91% 60%",
+  "--primary": "24 94% 54%",
   "--primary-foreground": "0 0% 100%",
-  "--ring": "217 91% 60%",
-  "--marketplace-primary": "217 91% 60%",
-  "--marketplace-primary-hover": "221 83% 53%",
+  "--ring": "24 94% 54%",
+  "--marketplace-primary": "24 94% 54%",
+  "--marketplace-primary-hover": "22 90% 45%",
   "--marketplace-primary-hover-foreground": "0 0% 100%",
-  "--marketplace-primary-soft": "214 100% 97%",
+  "--marketplace-primary-soft": "25 100% 96%",
   "--marketplace-navy": "221 39% 12%",
   "--marketplace-muted": "215 16% 43%",
 } as const;
@@ -252,7 +252,7 @@ function CategoryCard({ category }: { category: CategoryOption }) {
         <span className="truncate text-[12px] font-bold leading-4 sm:text-[13px]">
           {category.name}
         </span>
-        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
+        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-orange-600" />
       </span>
     </Link>
   );
@@ -263,13 +263,13 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
   return (
-    <article className="group h-full min-w-0 overflow-visible rounded-xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-blue-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
+    <article className="group h-full min-w-0 overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_4px_18px_rgba(15,23,42,0.045)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-orange-200 md:hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
       <Link
         href={getStorePath(store.slug)}
         className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative">
-          <div className={cn("relative overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
+          <div className={cn("relative overflow-hidden rounded-t-2xl bg-slate-50 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
             {coverUrl ? (
               <OptimizedImage
                 src={coverUrl}
@@ -281,7 +281,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#ecfdf5)] dark:bg-[linear-gradient(135deg,#1e293b,#052e2b)]">
-                <span className="text-4xl font-black text-blue-700/50 dark:text-blue-300/50">
+                <span className="text-4xl font-black text-orange-600/50 dark:text-blue-300/50">
                   {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                 </span>
               </div>
@@ -294,7 +294,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               </span>
             ) : null}
           </div>
-          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
+          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-orange-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
               <OptimizedImage
                 src={store.logoUrl}
@@ -310,7 +310,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
             )}
           </div>
         </div>
-        <div className="relative z-10 flex min-h-[94px] flex-col justify-between rounded-b-xl bg-white px-3 pb-3 pt-8 dark:bg-slate-900 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
+        <div className="relative z-10 flex min-h-[94px] flex-col justify-between rounded-b-2xl bg-white px-3 pb-3 pt-8 dark:bg-slate-900 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="line-clamp-2 break-words text-[15px] font-black leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:text-base">
@@ -420,11 +420,11 @@ export function HomeExperience({
   const heroTitle = normalizeHeroTitle(hero?.title || title);
   const shouldUseDefaultHeroCopy = isDefaultHeroTitle(heroTitle);
   const displayHeroTitle = shouldUseDefaultHeroCopy
-    ? "Axtar. Tap. Al."
+    ? "Axtar. Seç. Rahat al."
     : heroTitle;
   const displayHeroDescription =
     shouldUseDefaultHeroCopy
-      ? "Mağazalar, elanlar və gündəlik fürsətlər bir yerdə. Mobildən sürətli bax, müqayisə et və satıcı ilə əlaqə saxla."
+      ? "Azərbaycanın mağazalarını və sevilən məhsullarını bir məkanda kəşf et. Qiymətləri müqayisə et, bəyəndiklərini seç və rahat alış-veriş et."
       : hero?.description || description;
   const heroBackgroundImage = mobileHeroImageUrl || heroImageUrl;
   const themeAccent =
@@ -518,7 +518,7 @@ export function HomeExperience({
                       stores={stores}
                       className="rounded-xl border-0 bg-transparent p-0 shadow-none"
                       inputClassName="h-[52px] rounded-xl border-transparent bg-stone-50 pl-11 text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 dark:bg-slate-800 dark:text-slate-50 md:h-[54px]"
-                      buttonClassName="!size-[48px] !min-w-[48px] rounded-xl bg-blue-700 p-0 text-white hover:bg-blue-800"
+                      buttonClassName="!size-[48px] !min-w-[48px] rounded-xl bg-orange-500 p-0 text-white hover:bg-orange-600"
                       buttonSize="lg"
                       stackOnMobile
                       compactActions
