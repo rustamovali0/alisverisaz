@@ -16,6 +16,11 @@ export function productQueryOptions(filters: ProductQueryFilters) {
   return infiniteQueryOptions({
     queryKey: ["marketplace-products", filters.locale, filters.categoryId ?? "", categories.join(","), filters.storeId ?? "", search, filters.sort ?? "newest"],
     initialPageParam: null as string | null,
+    // Initial store-page products are rendered on the server. Keep that payload
+    // fresh briefly so hydration does not immediately duplicate the first-page
+    // request, while prices and stock still refresh promptly.
+    staleTime: 30_000,
+    refetchOnWindowFocus: false,
     queryFn: async ({ pageParam, signal }): Promise<MarketplaceProductPage> => {
       const params = new URLSearchParams({ locale: filters.locale, limit: "24", sort: filters.sort ?? "newest" });
       if (filters.categoryId) params.set("categoryId", filters.categoryId);

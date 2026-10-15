@@ -29,7 +29,7 @@ export type ClientAuthProfileState = {
   isResolved: boolean;
 };
 
-const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v2";
+const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v3";
 let inMemoryProfile: ClientAuthProfile | null = null;
 let didReadInitialCache = false;
 let currentProfile: ClientAuthProfile | null = null;
@@ -111,63 +111,20 @@ function cacheProfile(profile: ClientAuthProfile) {
   }
 }
 
-function normalizeRole(role: unknown): AuthRole {
-  return isAuthRole(role) ? role : "customer";
-}
-
 async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
-  const supabase = createSupabaseBrowserClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error && (error.name === "AuthRetryableFetchError" || !error.status || error.status >= 500)) {
-    throw error;
+  const response = await fetch("/api/auth/session?scope=public&profile=1", {
+    credentials: "same-origin",
+    cache: "no-store",
+    signal: AbortSignal.timeout(15000),
+  });
+  if (response.status === 401) return guestProfile;
+  if (!response.ok) throw new Error("Session verification failed");
+  const data = await response.json();
+  if (!data.authenticated || !isCachedProfile(data.profile) ||
+      data.profile.status !== "authenticated") {
+    throw new Error("Invalid session profile");
   }
-
-  if (!user) {
-    return guestProfile;
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role,email,full_name,avatar_url")
-    .eq("id", user.id)
-    .returns<
-      Array<{
-        role: AuthRole | null;
-        email: string | null;
-        full_name: string | null;
-        avatar_url: string | null;
-      }>
-    >()
-    .maybeSingle();
-
-  let storeLogo: string | null = null;
-  if (profile?.role === "seller") {
-    const { data: store } = await supabase.from("stores")
-      .select("logo_url").eq("owner_id", user.id).limit(1)
-      .returns<{ logo_url: string | null }[]>().maybeSingle();
-    storeLogo = store?.logo_url ?? null;
-  }
-
-  return {
-    status: "authenticated",
-    userId: user.id,
-    role: normalizeRole(profile?.role),
-    email: profile?.email ?? user.email ?? null,
-    fullName:
-      profile?.full_name ??
-      (typeof user.user_metadata?.full_name === "string"
-        ? user.user_metadata.full_name
-        : null),
-    avatarUrl:
-      storeLogo ?? profile?.avatar_url ??
-      (typeof user.user_metadata?.avatar_url === "string"
-        ? user.user_metadata.avatar_url
-        : null),
-  };
+  return data.profile;
 }
 
 function getCurrentProfile() {
@@ -255,12 +212,6 @@ function clearPersistedAuthProfile() {
   }
 }
 
-function setGuestProfile() {
-  authProfileVersion += 1;
-  authProfilePromise = null;
-  cacheAndPublishAuthProfile(guestProfile, true);
-}
-
 export function refreshCachedClientAuthProfile() {
   clearPersistedAuthProfile();
   publishAuthProfile(emptyProfile, false);
@@ -300,14 +251,11 @@ function ensureAuthProfileWatcher() {
   authWatcherStarted = true;
   const supabase = createSupabaseBrowserClient();
 
-  supabase.auth.onAuthStateChange((_event, session) => {
-    if (!session) {
-      setGuestProfile();
-      return;
-    }
-
-    refreshProfileAfterSessionChange();
+  supabase.auth.onAuthStateChange(() => {
+    // Browser auth events are hints; server cookies determine the actual session.
+    setTimeout(refreshProfileAfterSessionChange, 0);
   });
+  window.addEventListener("focus", refreshProfileAfterSessionChange);
 }
 
 function ensureAuthProfileLoaded() {

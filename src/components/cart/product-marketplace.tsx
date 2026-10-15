@@ -60,7 +60,6 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
-  Star,
   Store,
   Truck,
   Utensils,
@@ -1034,7 +1033,7 @@ export function ProductGrid({
             }
           }}
           className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[10px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff4b2b]/30 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-[#ff4b2b]/35 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
             compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
@@ -1086,7 +1085,7 @@ export function ProductGrid({
                   </span>
                 ) : null}
                 {isNewProduct ? (
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
+                  <span className="rounded-full border border-[#ffb09e] bg-[#fff0ec] px-2 py-1 text-[11px] font-bold text-[#e83e22]">
                     {t("newLabel")}
                   </span>
                 ) : null}
@@ -1109,19 +1108,13 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-blue-700 md:dark:group-hover:text-blue-300",
+                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-[#e83e22] md:dark:group-hover:text-[#ff9a85]",
                 isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
               )}
             >
               {product.name}
             </h2>
-            <div className="mt-1.5 flex items-center gap-0.5 text-amber-400 sm:gap-1" aria-label="Rəy yoxdur">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <Star key={value} className="size-3 sm:size-3.5" aria-hidden="true" />
-              ))}
-              <span className="ml-1 text-xs text-muted-foreground">(0)</span>
-            </div>
-            <div className="mt-1.5 min-w-0 sm:mt-2">
+            <div className="mt-2 min-w-0">
               <p className="truncate text-base font-bold text-slate-950 dark:text-slate-100 sm:text-lg">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
@@ -1134,6 +1127,7 @@ export function ProductGrid({
             <p
               className={cn(
                 "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
+                product.stockTrackingEnabled === false && "hidden",
                 isOutOfStock
                   ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
                   : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
@@ -1156,7 +1150,7 @@ export function ProductGrid({
               >
                 {isStoreOwner ? (
                   <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
-                    <Link href={`/store/dashboard/products/${product.id}/edit`}>
+                    <Link href={`/sell/product/${product.id}/edit`}>
                       <Pencil className="mr-2 size-4" aria-hidden="true" />
                       Redaktə et
                     </Link>
@@ -1165,7 +1159,7 @@ export function ProductGrid({
                   <Button
                     asChild
                     className={cn(
-                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-[10px] border-0 bg-[#ff4b2b] px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-[#e83e22] md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(255,75,43,0.2)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
@@ -1181,7 +1175,7 @@ export function ProductGrid({
                     product={product}
                     disabled={isOutOfStock}
                     className={cn(
-                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      "!h-11 min-h-11 w-full rounded-[10px] border-0 bg-[#ff4b2b] px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-[#e83e22] md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(255,75,43,0.2)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",

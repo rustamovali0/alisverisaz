@@ -1,4 +1,5 @@
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { getSellerProfit } from "@/lib/seller-dashboard/profit";
 import { getStoreEntitlements } from "@/lib/subscriptions/data";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ManagedOrder, OrderStatus } from "@/lib/orders/types";
@@ -74,6 +75,7 @@ export async function getSellerDashboardOverview(userId: string) {
 
   return {
     stores,
+    profit: await getSellerProfit(stores),
     currency,
     products: {
       total: products.length,

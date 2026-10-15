@@ -16,7 +16,7 @@ import {
   isReservedStoreSubdomain,
 } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
-import { getLocationsForStores } from "@/lib/locations/data";
+import { getPublicLocationsForStore } from "@/lib/locations/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -141,20 +141,22 @@ export async function renderStorePage(
 
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const [categories, siteSettings, activeTheme, current] = await Promise.all([
+  // The store query includes the first product page. Start it alongside the
+  // shell queries so the product grid never waits for theme/account data.
+  const storePromise = getMarketplaceStoreBySlug({
+    slug: storeSlug,
+    locale,
+  });
+  const [categories, siteSettings, activeTheme, current, store] = await Promise.all([
     getCategoryOptions({ rootOnly: true }),
     getSiteSettings(),
     getActiveHomeThemeSetting(),
     getCurrentUserProfile(),
+    storePromise,
   ]);
   const selectedCategory = categories.find(
     (category) => category.slug === search?.category || category.id === search?.category,
   );
-  const store = await getMarketplaceStoreBySlug({
-    slug: storeSlug,
-    locale,
-  });
-
   if (!store) {
     redirect(marketplaceHomeRedirect);
   }
@@ -188,7 +190,7 @@ export async function renderStorePage(
     ? getStorefrontUrl(store.slug)
     : `${siteConfig.url}/store/${store.slug}`;
 
-  const storeLocations = await getLocationsForStores([store.id]);
+  const storeLocations = await getPublicLocationsForStore(store.id);
 
   void trackActivityEvent({
     eventType: "store_view",

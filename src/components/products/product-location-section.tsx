@@ -69,9 +69,6 @@ export function ProductLocationSection({
                   </p>
                 ) : null}
               </div>
-              <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
-                Stok: {item.stockQuantity}
-              </span>
             </div>
 
             <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">

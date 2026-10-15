@@ -4,6 +4,7 @@ import type {
 } from "@/lib/products/types";
 
 export type CartProduct = {
+  stockTrackingEnabled?: boolean;
   id: string;
   slug: string;
   storeId: string;

@@ -65,7 +65,7 @@ export default async function StorePendingProductsPage() {
         categories={categories}
         locations={locations}
         imageLimit={entitlements?.imagesPerProductLimit ?? 5}
-        editHrefBase="/store/dashboard/products"
+        editHrefBase="/sell/product"
         deleteAction={deleteProductAction}
         emptyTitle="Təsdiq gözləyən məhsul yoxdur"
         emptyDescription="Təsdiqə göndərilən məhsullar burada görünəcək."

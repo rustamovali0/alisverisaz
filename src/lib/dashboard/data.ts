@@ -14,6 +14,7 @@ type Filter =
     };
 
 type StoreSummary = {
+  settings?: Record<string, unknown> | null;
   id: string;
   name: string;
   slug: string;
@@ -97,9 +98,9 @@ async function getRows<T>(
 }
 
 export async function getOwnedStores(userId: string) {
-  return getRows<StoreSummary>(
+  const stores = await getRows<StoreSummary>(
     "stores",
-    "id,name,slug,status,created_at",
+    "id,name,slug,status,created_at,settings",
     [
       {
         column: "owner_id",
@@ -108,6 +109,7 @@ export async function getOwnedStores(userId: string) {
     ],
     20,
   );
+  return stores.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
 }
 
 async function getCustomerIds(userId: string) {

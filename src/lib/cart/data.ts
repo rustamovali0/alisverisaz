@@ -23,6 +23,7 @@ import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/va
 import { getActivePromotionMaps } from "@/lib/promotions/data";
 
 type ProductRow = {
+  metadata?: { stockTrackingEnabled?: boolean } | null;
   id: string;
   store_id: string;
   slug: string | null;
@@ -75,17 +76,17 @@ type ProductRow = {
 };
 
 const PUBLIC_PRODUCT_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 const PRODUCT_DETAIL_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 const PRODUCT_DETAIL_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
@@ -176,7 +177,7 @@ function toCartProduct(row: ProductRow): CartProduct {
           variant.price_override_amount === undefined
             ? null
             : Number(variant.price_override_amount),
-        stockQuantity: Number(variant.stock_quantity ?? 0),
+        stockQuantity: row.metadata?.stockTrackingEnabled === false ? Number.MAX_SAFE_INTEGER : Number(variant.stock_quantity ?? 0),
         isEnabled: variant.is_enabled !== false,
       }),
     );
@@ -193,7 +194,8 @@ function toCartProduct(row: ProductRow): CartProduct {
     description: readOriginalContentText(row.description),
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
-    stockQuantity: row.stock_quantity,
+    stockQuantity: row.metadata?.stockTrackingEnabled === false ? Number.MAX_SAFE_INTEGER : row.stock_quantity,
+    stockTrackingEnabled: row.metadata?.stockTrackingEnabled !== false,
     imageUrl: primary?.url ?? first?.url ?? null,
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,
@@ -1219,7 +1221,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   let { data, error } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
     )
     .eq("status", "active")
     .eq("stores.status", "active")
@@ -1229,7 +1231,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
     const fallback = await (supabase as any)
       .from("products")
       .select(
-        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
+        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
       )
       .eq("status", "active")
       .eq("stores.status", "active")
