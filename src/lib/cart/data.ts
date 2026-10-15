@@ -99,6 +99,12 @@ type StoreRow = {
   settings?: Record<string, unknown> | null;
 };
 
+type StoreProductCountRow = {
+  store_id: string;
+  product_count: number | string;
+  category_ids: string[] | null;
+};
+
 const MAX_PUBLIC_LIST_LIMIT = 120;
 const DEFAULT_PRODUCT_PAGE_LIMIT = 24;
 const MAX_PRODUCT_PAGE_LIMIT = 24;
@@ -715,6 +721,57 @@ async function getMarketplaceStoresUncached(
     return [];
   }
 
+  const { data: countRows, error: countError } = await (supabase as any).rpc(
+    "get_public_store_product_counts",
+    {
+      p_store_ids: storeIds,
+      p_category_id: categoryId || null,
+    },
+  );
+
+  let exactCounts = new Map(
+    ((countRows ?? []) as StoreProductCountRow[]).map((row) => [
+      row.store_id,
+      {
+        productCount: Number(row.product_count),
+        categoryIds: row.category_ids ?? [],
+      },
+    ]),
+  );
+
+  if (countError) {
+    const missingRpc = countError.code === "42883" || countError.code === "PGRST202";
+
+    if (!missingRpc) {
+      throw new Error(countError.message);
+    }
+
+    // Keep mixed-version deployments working until the migration is applied.
+    // This fallback is deliberately small (only the current store page) and
+    // preserves exact counts without loading product rows into application memory.
+    const fallbackCounts = await Promise.all(
+      storeIds.map(async (storeId) => {
+        let query = (supabase as any)
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("store_id", storeId)
+          .eq("status", "active");
+
+        if (categoryId) {
+          query = query.eq("category_id", categoryId);
+        }
+
+        const { count, error } = await query;
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        return [storeId, { productCount: count ?? 0, categoryIds: [] as string[] }] as const;
+      }),
+    );
+    exactCounts = new Map(fallbackCounts);
+  }
+
   const productLimit = Math.min(
     Math.max(storeRows.length * (categoryId || searchQuery ? 8 : 4), 24),
     categoryId || searchQuery ? 120 : 80,
@@ -765,6 +822,7 @@ async function getMarketplaceStoresUncached(
   const marketplaceStores = storeRows
     .map((store): MarketplaceStore => {
       const storeProducts = productsByStore.get(store.id) ?? [];
+      const exactCount = exactCounts.get(store.id);
 
       return {
         id: store.id,
@@ -779,17 +837,11 @@ async function getMarketplaceStoresUncached(
         socialTiktok: readSetting(store.settings, "socialTiktok"),
         logoUrl: store.logo_url,
         coverUrl: store.cover_url,
-        productCount: storeProducts.length,
+        productCount: exactCount?.productCount ?? 0,
         sampleProducts: storeProducts
           .slice(0, 4)
           .map((product) => toCartProduct(product)),
-        categoryIds: Array.from(
-          new Set(
-            storeProducts
-              .map((product) => product.category_id)
-              .filter((value): value is string => Boolean(value)),
-          ),
-        ),
+        categoryIds: exactCount?.categoryIds ?? [],
         customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
       };
     })
