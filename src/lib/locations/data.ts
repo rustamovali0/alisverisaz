@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 import type {
   ProductLocationAvailability,
   StoreLocation,
@@ -104,7 +105,7 @@ function toStoreLocation(row: StoreLocationRow): StoreLocation {
   };
 }
 
-export async function getLocationsForStores(storeIds: string[]) {
+async function getLocationsForStoresUncached(storeIds: string[]) {
   if (storeIds.length === 0) {
     return [];
   }
@@ -143,6 +144,21 @@ export async function getLocationsForStores(storeIds: string[]) {
   }
 
   return ((data ?? []) as StoreLocationRow[]).map(toStoreLocation);
+}
+
+export async function getLocationsForStores(storeIds: string[]) {
+  return getLocationsForStoresUncached(storeIds);
+}
+
+export async function getPublicLocationsForStore(storeId: string) {
+  return publicCache(
+    () => getLocationsForStoresUncached([storeId]),
+    ["public-store-locations", storeId],
+    {
+      revalidate: CACHE_TTL.MEDIUM,
+      tags: [CACHE_TAGS.store(storeId)],
+    },
+  )();
 }
 
 export async function getAllStoreLocations() {

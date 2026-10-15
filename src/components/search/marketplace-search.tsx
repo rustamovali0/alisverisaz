@@ -146,7 +146,7 @@ export function MarketplaceSearch({
   const storeResult = matchingStores[0];
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 180);
+    const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 250);
     return () => window.clearTimeout(timeout);
   }, [trimmedQuery]);
   const popularQuery = useQuery({
@@ -163,6 +163,8 @@ export function MarketplaceSearch({
   const suggestionsQuery = useQuery({
     queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? storeResult?.id ?? ""],
     enabled: canSearch && debouncedQuery === trimmedQuery,
+    staleTime: 10_000,
+    retry: false,
     queryFn: async ({ signal }): Promise<MarketplaceProductPage> => {
       const params = new URLSearchParams({ locale, limit: "6" });
       const productStoreId = selectedStore?.id ?? storeResult?.id;
