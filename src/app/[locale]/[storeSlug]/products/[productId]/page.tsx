@@ -276,7 +276,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     ? getStorefrontUrl(detail.store.slug)
     : `${siteConfig.url}/store/${detail.store.slug}`;
   const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
-  const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
+  const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/stores";
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">

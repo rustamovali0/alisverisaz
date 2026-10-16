@@ -8,6 +8,7 @@ const checks = [
   { path: "/cart", status: 200 },
   { path: "/login", status: 200 },
   { path: "/forgot-password", status: 200 },
+  ...["/register", "/categories", "/favorites", "/help", "/faq", "/contact", "/about", "/terms", "/privacy", "/rules", "/robots.txt", "/sitemap.xml"].map(path => ({ path, status: 200 })),
   { path: "/store/dashboard/products", login: "/login" },
   { path: "/store/dashboard/products/new", login: "/login" },
   { path: "/store/dashboard/orders", login: "/login" },
