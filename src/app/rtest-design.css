@@ -363,3 +363,28 @@
   .atelier-product-description nav { gap:20px; font-size:12px; }
   .atelier-product-description > div { grid-template-columns:1fr; gap:12px; padding:20px 0; }
 }
+
+.atelier-banner-refresh { position:relative; isolation:isolate; height:288px; background:#e9eae6; color:#202824; overflow:hidden; }
+.atelier-banner-refresh > picture { position:absolute; inset:0; z-index:-1; }
+.atelier-banner-refresh img { width:100%; height:100%; object-fit:cover; object-position:center; }
+.atelier-banner-content { display:flex; height:100%; align-items:center; }
+.atelier-banner-content > div { max-width:46%; padding-block:20px; }
+.atelier-banner-label { display:inline-block; padding:5px 9px; background:#ecec71; color:#293329; font-size:10px; line-height:1.4; border-radius:3px; }
+.atelier-banner-content h1 { font-size:44px; line-height:1.15; font-weight:650; margin-top:13px; }
+.atelier-banner-content p { font-size:17px; line-height:1.5; margin-top:8px; }
+.atelier-banner-links { display:flex; align-items:center; gap:22px; margin-top:22px; }
+.atelier-banner-links a { display:inline-flex; align-items:center; justify-content:center; gap:9px; font-size:12px; min-height:42px; }
+.atelier-banner-links .atelier-banner-cta { background:#202824; color:white; border-radius:4px; padding:0 16px; }
+.atelier-banner-links .atelier-banner-cta:hover { background:#1d503d; }
+.atelier-banner-links a:focus-visible { outline:2px solid #1d503d; outline-offset:4px; }
+@media (max-width:767px) {
+  .atelier-banner-refresh { height:235px; }
+  .atelier-banner-refresh img { object-position:42% center; }
+  .atelier-banner-content > div { max-width:59%; }
+  .atelier-banner-content h1 { font-size:30px; margin-top:12px; }
+  .atelier-banner-content p { font-size:13px; max-width:155px; }
+  .atelier-banner-label { font-size:8px; padding:4px 6px; }
+  .atelier-banner-links { align-items:start; flex-direction:column; gap:0; margin-top:14px; }
+  .atelier-banner-links a { min-height:30px; font-size:10px; gap:6px; }
+  .atelier-banner-links .atelier-banner-cta { min-height:38px; padding-inline:10px; }
+}

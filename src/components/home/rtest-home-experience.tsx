@@ -25,9 +25,11 @@ export function RtestHomeExperience({
   const rootCategories = categories.filter(category => !category.parentId).slice(0, categorySection?.itemLimit || 10);
   const displayCategories = rootCategories.length ? rootCategories : categories.slice(0, 10);
   return <main className="atelier-marketplace atelier-home-v2">
-    <section className="atelier-container atelier-discovery-heading" aria-labelledby="atelier-home-title">
-      <div><span className="atelier-eyebrow">Alışveriş.az</span><h1 id="atelier-home-title">Mağazalar və məhsullar</h1></div>
-      <Link href={initialRole === "seller" ? "/sell/product/new" : "/stores"} className="atelier-text-link">{initialRole === "seller" ? "Məhsul əlavə et" : "Mağazaları kəşf et"}<ArrowUpRight size={17} aria-hidden="true" /></Link>
+    <section className="atelier-banner-refresh" aria-labelledby="atelier-home-title">
+      <picture><source media="(max-width: 639px)" srcSet={mobileImage} /><img src={heroImage} alt="Texnologiya, geyim və gündəlik aksesuarlar" width={2000} height={667} loading="eager" fetchPriority="high" /></picture>
+      <div className="atelier-container atelier-banner-content">
+        <div><span className="atelier-banner-label">Kəşf et. Seç. Sifariş et.</span><h1 id="atelier-home-title">Alışveriş.az</h1><p>Bir yerdə daha çox seçim.</p><div className="atelier-banner-links"><Link href="/products" className="atelier-banner-cta">Məhsullara bax<ArrowRight size={17} aria-hidden="true" /></Link><Link href={initialRole === "seller" ? "/sell/product/new" : "/stores"}>{initialRole === "seller" ? "Məhsul əlavə et" : "Mağazalar"}<ArrowUpRight size={16} aria-hidden="true" /></Link></div></div>
+      </div>
     </section>
 
     {displayCategories.length ? <section className="atelier-category-band" aria-label="Kateqoriyalar"><div className="atelier-container atelier-categories">{displayCategories.map(category => { const Icon = getCategoryIcon(category); return <Link href={`/products?category=${category.slug}`} className="atelier-category" key={category.id}><span><Icon size={25} strokeWidth={1.45} aria-hidden="true" /></span><span>{category.name}</span></Link>; })}<Link href="/categories" className="atelier-category atelier-category-all"><span><ArrowUpRight size={24} strokeWidth={1.5} aria-hidden="true" /></span><span>Hamısına bax</span></Link></div></section> : null}
@@ -37,7 +39,6 @@ export function RtestHomeExperience({
 
       {featuredStores.length ? <section className="atelier-stores-section" aria-labelledby="atelier-stores-title"><div className="atelier-section-heading"><div><span className="atelier-eyebrow">Birbaşa mağazalardan</span><h2 id="atelier-stores-title">Öz mağazanı kəşf et</h2></div><Link href="/stores" className="atelier-text-link">Hamısına bax<ArrowUpRight size={17} aria-hidden="true" /></Link></div><div className="atelier-store-grid">{featuredStores.map(store => <Link href={getStorePath(store.slug)} className="atelier-store-item" key={store.id}><span className="atelier-store-avatar">{store.logoUrl ? <OptimizedImage src={store.logoUrl} alt="" width={52} height={52} sizes="52px" className="h-full w-full object-contain" /> : store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}</span><span className="atelier-store-copy"><strong>{store.name}</strong><span>{marketplace("productCount", { count: store.productCount })}</span></span><ArrowUpRight size={18} aria-hidden="true" /></Link>)}</div></section> : null}
 
-      <section className="atelier-discovery-banner"><picture><source media="(max-width: 639px)" srcSet={mobileImage} /><img src={heroImage} alt="Geyim, texnologiya və gündəlik aksesuarlar" width={2172} height={724} loading="lazy" /></picture><div><span className="atelier-eyebrow">Yeni seçimlər</span><h2>Gündəlik alışverişin.</h2><Link href="/products" className="atelier-primary-link">Kataloqa keç<ArrowRight size={17} aria-hidden="true" /></Link></div></section>
     </div>
     <SiteFooter siteName={siteSettings.shortName || siteSettings.siteName} logoUrl={siteSettings.logoUrl} darkLogoUrl={siteSettings.darkLogoUrl} socialLinks={{ instagram: siteSettings.socialLinks.instagram, tiktok: siteSettings.socialLinks.tiktok, whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp }} />
   </main>;

@@ -18,6 +18,10 @@ The redesign is gated by `NEXT_PUBLIC_RTEST_DESIGN=atelier`. The rtest builder s
 - Product detail now has an unframed gallery/purchase composition, separated seller block, description section and anchor navigation to reviews. Existing variant, cart, WhatsApp and review components remain in place.
 - All new styling remains restricted to the rtest design flag.
 
+## Banner Revision
+
+Restored the photographic banner above categories at the user's request, replacing the compact catalogue heading. The new composition uses a small yellow label, a graphite CTA, 288px desktop / 235px mobile height and a secondary store/seller link. Removed the duplicated lower banner. Compact product cards and the updated detail layout remain unchanged. CMS desktop/mobile image sources are preserved, with high fetch priority only on the first banner.
+
 ## Asset
 
 `public/design/atelier-shopping.webp` was generated with the built-in image generation tool and optimized with Sharp to 2000 x 667, 83,656 bytes. The prompt requested a continuous light studio photograph with headphones, a speaker, shopping bag, sneakers and folded clothing on the right, clear copy space on the left, and no logos or text. Original generation: `/Users/alirustamov/.codex/generated_images/01a0fd1e-9ece-77f0-871a-f1df9a88f5ac/exec-34c67e21-a1d6-42d3-8533-1c5fa88e7b53.png`.
