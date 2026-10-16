@@ -981,6 +981,7 @@ export function ProductGrid({
 
   return (
     <div
+      data-marketplace-product-grid
       className={cn(
         layout === "related"
           ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"

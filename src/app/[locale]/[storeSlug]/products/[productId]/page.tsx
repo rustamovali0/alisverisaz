@@ -31,6 +31,7 @@ import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getStorePath, getStorefrontUrl, getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
+import { rtestDesignEnabled } from "@/lib/config/rtest-design";
 import { formatAznDiscountedPrice } from "@/lib/format";
 import {
   getLocationsForStores,
@@ -279,7 +280,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">
+    <main data-rtest-product-detail={rtestDesignEnabled ? "true" : undefined} className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
@@ -334,7 +335,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             productName={detail.product.name}
             viewerRole={viewerRole}
           />
-          <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-6">
+          <div data-detail-purchase className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-6">
             <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">{detail.store.name}</p>
             <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
               <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[34px]">
@@ -381,7 +382,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p> : null}
-            {detail.product.description ? (
+            {!rtestDesignEnabled && detail.product.description ? (
               <p className="mt-5 break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                 {detail.product.description}
               </p>
@@ -412,7 +413,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </Link>
             </Button>
             {!isStoreOwner ? (
-              <div className="mt-5 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+              <div data-detail-seller className="mt-5 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
                 <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
@@ -470,6 +471,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         </section>
 
+        {rtestDesignEnabled ? <section className="atelier-product-description" aria-labelledby="product-about-title"><nav aria-label="Məhsul bölmələri"><a href="#product-about-title">Məhsul haqqında</a><a href="#product-reviews">Rəylər ({reviewSummary.count})</a><Link href={storeBaseHref}>Mağaza</Link></nav><div><h2 id="product-about-title">Məhsul haqqında</h2><p>{detail.product.description || "Bu məhsul üçün əlavə açıqlama daxil edilməyib."}</p></div></section> : null}
+
         {detail.product.categoryId ? (
           <div className="mt-8 scroll-mt-28 md:mt-10">
             <RelatedProductList
@@ -483,7 +486,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         ) : null}
 
-        <section className="mt-8 min-w-0 md:mt-10">
+        <section id="product-reviews" className="mt-8 min-w-0 md:mt-10">
           <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-5">
             <div className="mb-4 flex items-center gap-2">
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />

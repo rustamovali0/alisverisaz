@@ -152,7 +152,7 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
+      <div data-detail-gallery className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
         <button
           type="button"
           disabled={!activeImage}
