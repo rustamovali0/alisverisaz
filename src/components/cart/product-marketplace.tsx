@@ -2207,7 +2207,7 @@ export function Storefront({
   }
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(88px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
       <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
         {isStoreOwner ? (
           <div className="relative min-w-0">
