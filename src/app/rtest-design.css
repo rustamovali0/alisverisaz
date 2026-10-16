@@ -78,7 +78,7 @@
 [data-rtest-design="atelier"] :where(.rounded-2xl,.rounded-3xl) { border-radius: 8px; }
 [data-rtest-design="atelier"] .atelier-container { width: min(100% - 64px, 1320px); margin-inline: auto; min-width: 0; }
 [data-rtest-design="atelier"] .atelier-header { background: hsl(var(--background)); border-bottom: 1px solid var(--atelier-line); color: var(--atelier-ink); z-index: 50; backdrop-filter: none; }
-.atelier-header-sticky { position: sticky; top: 0; }
+.atelier-header-sticky { position: sticky; top: -29px; }
 .atelier-topline { background: #f2f4ef; font-size: 11px; color: #56625a; }
 .atelier-topline > div { display: flex; align-items: center; justify-content: space-between; min-height: 29px; }
 .atelier-topline > div > div { display: flex; gap: 24px; }
@@ -222,6 +222,7 @@
 }
 @media (max-width: 767px) {
   [data-rtest-design="atelier"] .atelier-container { width: calc(100% - 32px); }
+  .atelier-header-sticky { top: 0; }
   .atelier-topline,.atelier-desktop-search,.atelier-account,.atelier-navigation-border { display: none; }
   .atelier-header-main { min-height: 57px; gap: 9px; }
   .atelier-brand { font-size: 21px; gap: 4px; }
