@@ -36,6 +36,7 @@ type ProductRow = {
   deposit_type: "fixed" | "percent";
   deposit_value: string | number;
   metadata: {
+    stockTrackingEnabled?: boolean;
     approval_status?: string;
     approval_note?: string;
     rejection_note?: string;
@@ -177,6 +178,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.stock_quantity,
+    stockTrackingEnabled: row.metadata?.stockTrackingEnabled !== false,
     status: row.status,
     approvalStatus: readProductApprovalStatus(row.metadata?.approval_status),
     approvalNote: readProductApprovalNote(row.metadata),

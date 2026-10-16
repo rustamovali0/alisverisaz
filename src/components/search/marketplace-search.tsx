@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
+import { getStorePath } from "@/lib/config/domains";
 import { cn } from "@/lib/utils";
 
 type MarketplaceSearchProps = {
@@ -32,6 +33,7 @@ type SearchSuggestion = {
   label: string;
   description: string;
   type: "store" | "product";
+  href?: string;
 };
 
 const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
@@ -134,6 +136,14 @@ export function MarketplaceSearch({
   const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
   const canShowPopularSearches = enablePopularSearches && !storeSlug;
   const trimmedQuery = query.trim();
+  const matchingStores = useMemo(
+    () =>
+      storeSlug || !normalizedQuery
+        ? []
+        : stores.filter((store) => normalize(store.name).includes(normalizedQuery)).slice(0, 4),
+    [normalizedQuery, storeSlug, stores],
+  );
+  const storeResult = matchingStores[0];
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 180);
@@ -151,11 +161,16 @@ export function MarketplaceSearch({
   const popularSearches = (popularQuery.data?.searches ?? []).filter(term => typeof term === "string").slice(0, 4);
   const canSearch = isFocused && normalizedQuery.length >= 2 && (!storeSlug || Boolean(selectedStore));
   const suggestionsQuery = useQuery({
-    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? ""],
+    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? storeResult?.id ?? ""],
     enabled: canSearch && debouncedQuery === trimmedQuery,
     queryFn: async ({ signal }): Promise<MarketplaceProductPage> => {
-      const params = new URLSearchParams({ q: debouncedQuery, locale, limit: "6" });
-      if (selectedStore?.id) params.set("storeId", selectedStore.id);
+      const params = new URLSearchParams({ locale, limit: "6" });
+      const productStoreId = selectedStore?.id ?? storeResult?.id;
+      if (productStoreId) {
+        params.set("storeId", productStoreId);
+      } else {
+        params.set("q", debouncedQuery);
+      }
       const response = await fetch(`/api/marketplace/products?${params}`, { signal });
       if (!response.ok) throw new Error("SEARCH_FAILED");
       return response.json();
@@ -193,14 +208,12 @@ export function MarketplaceSearch({
 
     const storeSuggestions: SearchSuggestion[] = storeSlug
       ? []
-      : scopedStores
-          .filter((store) => normalize(store.name).includes(normalizedQuery))
-          .slice(0, 4)
-          .map((store) => ({
+      : matchingStores.map((store) => ({
             key: `store-${store.id}`,
             type: "store",
             label: store.name,
             description: marketplace("productCount", { count: store.productCount }),
+            href: getStorePath(store.slug),
           }));
     const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
     const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
@@ -218,10 +231,10 @@ export function MarketplaceSearch({
     return {
       stores: storeSuggestions,
       products: productSuggestions
-        .filter((suggestion) => normalize(suggestion.label).includes(normalizedQuery))
+        .filter((suggestion) => Boolean(storeResult) || normalize(suggestion.label).includes(normalizedQuery))
         .slice(0, 6),
     };
-  }, [marketplace, normalizedQuery, remoteProducts, storeSlug, stores]);
+  }, [marketplace, matchingStores, normalizedQuery, remoteProducts, storeResult, storeSlug, stores]);
 
   const suggestions = useMemo(
     () => [...suggestionGroups.stores, ...suggestionGroups.products],
@@ -324,6 +337,12 @@ export function MarketplaceSearch({
   }
 
   function selectSuggestion(suggestion: SearchSuggestion) {
+    if (suggestion.href) {
+      setIsFocused(false);
+      router.push(suggestion.href);
+      return;
+    }
+
     submitSearch(suggestion.label);
   }
 

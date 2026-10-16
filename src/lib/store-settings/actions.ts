@@ -187,9 +187,13 @@ export async function updateSellerStoreSettingsAction(
       formData.has("heroSubtitle") ||
       formData.has("aboutContent") ||
       formData.has("socialInstagram") ||
-      formData.has("socialTiktok") || Object.keys(bannerPosition).length > 0
+      formData.has("socialTiktok") || formData.has("profitTrackingPresent") ||
+      Object.keys(bannerPosition).length > 0
     ) {
       const settings = currentSettings;
+      if (formData.has("profitTrackingPresent")) {
+        settings.profitTrackingEnabled = formData.get("profitTrackingEnabled") === "on";
+      }
       Object.assign(settings, bannerPosition);
 
       if (formData.has("heroTitle") && heroTitle) {
@@ -265,6 +269,8 @@ export async function updateSellerStoreSettingsAction(
   }
 
   revalidatePath("/store/dashboard/settings");
+  revalidatePath("/store/dashboard", "layout");
+  revalidatePath("/sell/product", "layout");
   revalidatePath("/admin/settings");
   invalidateStorePublicData({
     storeId,

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 type SellerDashboardOverviewProps = {
   overview: {
     currency: string;
+    profit: Array<{ currency: string; amount: number }> | null;
     products: {
       total: number;
       active: number;
@@ -143,6 +144,12 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
         <Stat label="Arxiv məhsullar" value={overview.products.archived} href="/store/dashboard/products" />
       </section>
 
+      {overview.profit ? <section className="grid gap-3 sm:grid-cols-2">
+        {overview.profit.map((profit) => <Stat key={profit.currency}
+          label="Xalis qazanc" value={formatMoney(profit.amount, profit.currency)}
+          description="Aktivləşmədən sonrakı çatdırılmış satışlar: satış − maya dəyəri"
+          href="/store/dashboard/earnings" />)}
+      </section> : null}
       <section className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="rounded-lg border bg-card p-4 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
@@ -189,7 +196,7 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
       </section>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        <Link href="/store/dashboard/products/new" className="rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
+        <Link href="/sell/product/new" className="rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
           <Box className="size-5 text-primary" aria-hidden="true" />
           <p className="mt-2 font-black">Yeni məhsul əlavə et</p>
         </Link>

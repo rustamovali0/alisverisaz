@@ -1134,6 +1134,7 @@ export function ProductGrid({
             <p
               className={cn(
                 "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
+                product.stockTrackingEnabled === false && "hidden",
                 isOutOfStock
                   ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
                   : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
@@ -1156,7 +1157,7 @@ export function ProductGrid({
               >
                 {isStoreOwner ? (
                   <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
-                    <Link href={`/store/dashboard/products/${product.id}/edit`}>
+                    <Link href={`/sell/product/${product.id}/edit`}>
                       <Pencil className="mr-2 size-4" aria-hidden="true" />
                       Redaktə et
                     </Link>

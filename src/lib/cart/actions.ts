@@ -374,7 +374,7 @@ async function applyOrderVariantSnapshots(input: {
       }
 
       for (const item of desiredItems) {
-        if (!item.selectedVariant?.id) {
+        if (!item.selectedVariant?.id || item.product.stockTrackingEnabled === false) {
           continue;
         }
 

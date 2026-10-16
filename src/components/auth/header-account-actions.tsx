@@ -210,7 +210,19 @@ export function HeaderAccountActions({
       .toLocaleUpperCase("az-AZ") || "A";
 
   return (
-    <div ref={menuRef} className={cn("relative", className)}>
+    <div ref={menuRef} className={cn("relative flex items-center gap-2", className)}>
+      {role === "seller" ? (
+        <Button
+          asChild
+          variant="outline"
+          className="h-11 shrink-0 gap-1.5 rounded-full border-primary/30 bg-primary/10 px-3 text-sm font-semibold text-slate-900 hover:!bg-primary/15 hover:!text-slate-900 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:!text-white"
+        >
+          <Link href="/store/dashboard/products/new">
+            <Plus className="size-5" aria-hidden="true" />
+            <span className="hidden sm:inline">Məhsul əlavə et</span>
+          </Link>
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="outline"

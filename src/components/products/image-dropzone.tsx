@@ -122,11 +122,13 @@ export function ImageDropzone({
                 type="button"
                 variant="secondary"
                 size="icon"
-                className="absolute right-2 top-2 size-8 rounded-lg border border-white/80 bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 sm:size-9"
+                className="absolute right-2 top-2 z-10 size-10 rounded-md border border-white bg-red-600 text-white shadow-md hover:bg-red-700 hover:text-white"
+                disabled={disabled}
+                title="Əsas şəkli sil"
                 onClick={() => onFilesChange(files.slice(1))}
                 aria-label="Əsas şəkli sil"
               >
-                <X className="size-4 stroke-[2.8]" aria-hidden="true" />
+                <X className="size-5 shrink-0 stroke-[2.8]" aria-hidden="true" />
               </Button>
             </div>
             <p className="truncate px-3 py-2 text-sm text-muted-foreground">
@@ -156,7 +158,9 @@ export function ImageDropzone({
                       type="button"
                       variant="secondary"
                       size="icon"
-                      className="absolute right-1 top-1 size-7 rounded-md border border-white/80 bg-destructive text-destructive-foreground opacity-100 shadow-sm hover:bg-destructive/90"
+                      className="absolute right-1 top-1 z-10 size-9 rounded-md border border-white bg-red-600 text-white shadow-sm hover:bg-red-700 hover:text-white"
+                      disabled={disabled}
+                      title="Şəkli sil"
                       onClick={() => {
                         onFilesChange(
                           files.filter((_, fileIndex) => fileIndex !== realIndex),
@@ -164,7 +168,7 @@ export function ImageDropzone({
                       }}
                       aria-label="Şəkli sil"
                     >
-                      <X className="size-3.5 stroke-[2.8]" aria-hidden="true" />
+                      <X className="size-5 shrink-0 stroke-[2.8]" aria-hidden="true" />
                     </Button>
                   </div>
                 );

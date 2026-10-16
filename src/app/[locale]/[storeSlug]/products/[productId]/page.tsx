@@ -378,9 +378,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 detail.product.discountAmount,
               )}
             </p>
-            <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
+            {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
-            </p>
+            </p> : null}
             {detail.product.description ? (
               <p className="mt-5 break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300">
                 {detail.product.description}
@@ -388,7 +388,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             ) : null}
             {isStoreOwner ? (
               <Button asChild className="mt-6 h-[52px] w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                <Link href={`/store/dashboard/products/${detail.product.id}/edit`}>
+                <Link href={`/sell/product/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
                 </Link>

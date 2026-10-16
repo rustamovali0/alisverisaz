@@ -248,6 +248,13 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
 
       <form action={handleSubmit} className="premium-card grid gap-5 p-5">
         <input type="hidden" name="storeId" value={store.id} />
+        <input type="hidden" name="profitTrackingPresent" value="1" />
+        <label className="flex items-center gap-3 text-sm font-medium">
+          <input type="checkbox" name="profitTrackingEnabled" className="size-4"
+            defaultChecked={readBooleanSetting(store.settings, "profitTrackingEnabled")}
+            disabled={isPending} />
+          Qazanc hesablaması
+        </label>
         <div>
           <h2 className="text-xl font-black tracking-normal">Əsas ayarlar</h2>
           <p className="mt-1 text-sm text-muted-foreground">
