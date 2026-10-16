@@ -104,17 +104,6 @@ export function PublicNavigationShell({
       (pathname === `/store/${pathStoreSlug}` ||
         pathname.startsWith(`/store/${pathStoreSlug}/`)),
   );
-  const isStoreSubdomainStorefrontPath = Boolean(
-    storeSubdomainSlug &&
-      (pathname === "/" ||
-        pathname === "/products" ||
-        pathname.startsWith("/products/") ||
-        pathname === `/${storeSubdomainSlug}` ||
-        pathname.startsWith(`/${storeSubdomainSlug}/products/`)),
-  );
-  const isCustomStorefrontPath = Boolean(
-    isStoreSubdomainStorefrontPath || (pathStoreSlug && !isLegacyStorePath),
-  );
   const storeHomeHref = storeSubdomainSlug
     ? "/"
     : pathStoreSlug
@@ -127,7 +116,7 @@ export function PublicNavigationShell({
 
   return (
     <>
-      {showNavigation && !isCustomStorefrontPath ? (
+      {showNavigation ? (
         <MarketplaceHeader
           siteName={siteName}
           logoUrl={logoUrl}
