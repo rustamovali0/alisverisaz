@@ -1,7 +1,7 @@
 {
   "seo": {
     "title": "alisveris.az",
-    "description": "Marketplace SaaS platform"
+    "description": "Browse products from local stores, compare prices and place an order."
   },
   "common": {
     "brand": "alisveris.az",
@@ -39,10 +39,10 @@
     "maxPrice": "Max price",
     "inStockOnly": "In stock only",
     "clearFilters": "Clear filters",
-    "heroEyebrow": "The new address for shopping",
-    "defaultHeroTitle": "Everything you need,\nin one place.",
-    "defaultHeroDescription": "Search, compare, and shop easily across thousands of products and trusted stores.",
-    "heroSearchPlaceholder": "Search products, brands, or stores...",
+    "heroEyebrow": "Shopping in Azerbaijan",
+    "defaultHeroTitle": "Find what you need.",
+    "defaultHeroDescription": "Browse products, compare prices and order from local stores.",
+    "heroSearchPlaceholder": "Search products",
     "marketplaceImageCaption": "Discover stores and products in one place",
     "exploreCategories": "Explore categories",
     "featuredStores": "Featured stores",
@@ -53,15 +53,16 @@
     "recentlyListed": "Listed recently",
     "secureStructure": "Secure structure",
     "storePanel": "Store panel",
-    "quickShopping": "Fast shopping"
+    "quickShopping": "Fast shopping",
+    "createListing": "Post a listing"
   },
   "marketplace": {
     "title": "Products",
-    "description": "Real Supabase products",
+    "description": "Browse products from local stores, compare prices and place an order.",
     "emptyTitle": "No active products",
     "emptyDescription": "Products will appear here as sellers add them.",
     "loadMore": "Show more",
-    "loadingMore": "Loading",
+    "loadingMore": "Loading more products",
     "searchPlaceholder": "Search products, stores, or categories",
     "category": "Category",
     "productCount": "{count} products",
@@ -101,7 +102,6 @@
     "buyNow": "Buy now",
     "sendDeposit": "Send deposit",
     "allProductsShown": "All products are shown",
-    "loadingMore": "Loading more products",
     "sortNewest": "Newest",
     "sortOldest": "Oldest",
     "sortPriceAsc": "Price: low to high",

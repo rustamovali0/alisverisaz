@@ -5,16 +5,7 @@ import { OptimizedImage } from "@/components/common/optimized-image";
 import {
   ArrowRight,
   BadgePlus,
-  Bot,
-  Building2,
   Crown,
-  MapPin,
-  Package,
-  Search,
-  ShieldCheck,
-  Store,
-  Truck,
-  type LucideIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
@@ -122,35 +113,6 @@ const homeDesignStyle: CSSProperties & Record<string, string> = {
   "--marketplace-muted": "215 16% 43%",
 } as const;
 
-const trustItems = [
-  {
-    icon: Package,
-    title: "Geniş seçim",
-    description: "Yeni elanlar",
-  },
-  {
-    icon: Store,
-    title: "Mağazalar",
-    description: "Satıcı vitrinləri",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Yoxlanış",
-    description: "Admin nəzarəti",
-  },
-  {
-    icon: Truck,
-    title: "Çatdırılma",
-    description: "Mağaza şərtləri",
-  },
-];
-
-const modeTabs = [
-  { label: "Elanlar", href: "/products", icon: Search },
-  { label: "Mağazalar", href: "/stores", icon: Building2 },
-  { label: "Məhsullar", href: "/products?sort=newest", icon: Package },
-];
-
 const TAP_AZ_CATEGORY_ORDER = [
   "ev-ve-bag-ucun",
   "ev-ve-bag",
@@ -213,7 +175,7 @@ function SectionHeader({
   };
   return (
     <div className="mb-4 flex items-center justify-between gap-4 md:mb-6">
-      <h2 className="text-xl font-black leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[26px]">
+      <h2 className="text-xl font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[26px]">
         {mobileTitle ? (
           <>
             <span className="md:hidden">{mobileTitle}</span>
@@ -249,7 +211,7 @@ function CategoryCard({ category }: { category: CategoryOption }) {
         <CategoryIcon className="size-4 stroke-[2.1] sm:size-[18px]" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-        <span className="truncate text-[12px] font-bold leading-4 sm:text-[13px]">
+        <span className="truncate text-[12px] font-medium leading-4 sm:text-[13px]">
           {category.name}
         </span>
         <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
@@ -269,24 +231,19 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
         className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative">
-          <div
-            className={cn(
-              "relative aspect-[16/6] overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800 sm:aspect-[16/8]",
-              compact && "sm:aspect-[16/7]",
-            )}
-          >
+          <div className={cn("relative overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
             {coverUrl ? (
               <OptimizedImage
                 src={coverUrl}
                 alt={store.name}
                 fill
-                sizes="(max-width: 767px) 224px, (max-width: 1023px) 50vw, 320px"
+                sizes="(max-width: 767px) 270px, (max-width: 1023px) 50vw, 320px"
                 className="h-full w-full object-cover transition duration-200 md:group-hover:scale-[1.015]"
                 loading="lazy"
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#ecfdf5)] dark:bg-[linear-gradient(135deg,#1e293b,#052e2b)]">
-                <span className="text-3xl font-black text-blue-700/50 dark:text-blue-300/50 sm:text-4xl">
+                <span className="text-4xl font-black text-blue-700/50 dark:text-blue-300/50">
                   {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                 </span>
               </div>
@@ -299,7 +256,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               </span>
             ) : null}
           </div>
-          <div className="absolute -bottom-5 left-3 z-30 grid size-10 place-items-center overflow-hidden rounded-lg border-2 border-white bg-white text-base font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 sm:-bottom-6 sm:size-12 md:-bottom-7 md:left-4 md:size-14">
+          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
               <OptimizedImage
                 src={store.logoUrl}
@@ -315,13 +272,13 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
             )}
           </div>
         </div>
-        <div className="relative z-10 flex min-h-[76px] flex-col justify-between rounded-b-xl bg-white px-3 pb-2.5 pt-7 dark:bg-slate-900 sm:min-h-[94px] sm:pb-3 sm:pt-8 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
+        <div className="relative z-10 flex min-h-[94px] flex-col justify-between rounded-b-xl bg-white px-3 pb-3 pt-8 dark:bg-slate-900 md:min-h-[112px] md:px-4 md:pb-4 md:pt-10">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="line-clamp-1 break-words text-sm font-bold leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:line-clamp-2 sm:text-base sm:font-black">
+              <h3 className="line-clamp-2 break-words text-[15px] font-semibold leading-5 tracking-normal text-slate-950 dark:text-slate-50 sm:text-base">
                 {store.name}
               </h3>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400 sm:mt-1.5 sm:text-sm">
+              <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
                 {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
@@ -330,39 +287,6 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
         </div>
       </Link>
     </article>
-  );
-}
-
-function QuickActionTile({
-  href,
-  title,
-  description,
-  icon: Icon,
-  tone,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  tone: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex min-w-0 items-center gap-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition hover:border-blue-200 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 sm:gap-3 sm:p-3"
-    >
-      <span className={cn("grid size-10 shrink-0 place-items-center rounded-lg sm:size-11", tone)}>
-        <Icon className="size-5" aria-hidden="true" />
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-[13px] font-black leading-4 text-slate-950 dark:text-slate-50 sm:text-sm">
-          {title}
-        </span>
-        <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-500 dark:text-slate-400 sm:text-xs">
-          {description}
-        </span>
-      </span>
-    </Link>
   );
 }
 
@@ -392,7 +316,7 @@ export function HomeExperience({
   const mobileHeroImageUrl = stringSetting(hero, "mobileImageUrl");
   const productCardVariant =
     activeTheme === "liquid-glass" ? "liquid-glass" : undefined;
-  const alphabeticalStores = [...stores].sort((a, b) =>
+  const alphabeticalStores = [...stores].filter((store) => store.productCount > 0).sort((a, b) =>
     a.name.localeCompare(b.name, "az"),
   );
   const selectedFeaturedStoreIds = stringArraySetting(featuredSection, "storeIds");
@@ -425,13 +349,13 @@ export function HomeExperience({
   const heroTitle = normalizeHeroTitle(hero?.title || title);
   const shouldUseDefaultHeroCopy = isDefaultHeroTitle(heroTitle);
   const displayHeroTitle = shouldUseDefaultHeroCopy
-    ? "Axtar. Tap. Al."
+    ? home("defaultHeroTitle")
     : heroTitle;
   const displayHeroDescription =
     shouldUseDefaultHeroCopy
-      ? "Mağazalar, elanlar və gündəlik fürsətlər bir yerdə. Mobildən sürətli bax, müqayisə et və satıcı ilə əlaqə saxla."
+      ? home("defaultHeroDescription")
       : hero?.description || description;
-  const heroBackgroundImage = mobileHeroImageUrl || heroImageUrl;
+
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
   const showSellerQuickActions = initialRole === null || initialRole === "seller";
@@ -446,169 +370,54 @@ export function HomeExperience({
       }}
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-8 md:space-y-14">
-        <section className="grid min-w-0 gap-4 lg:grid-cols-[248px_minmax(0,1fr)] lg:items-stretch">
-          <aside className="hidden rounded-2xl border border-stone-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 lg:block">
-            <div className="mb-3 flex items-center justify-between px-1">
-              <h2 className="text-sm font-black text-slate-950 dark:text-slate-50">
-                Kateqoriyalar
-              </h2>
-              <Link href="/categories" className="text-xs font-bold text-blue-700">
-                Hamısı
+        <section className="relative grid min-w-0 gap-6 rounded-2xl bg-slate-50 p-5 dark:bg-slate-900 sm:p-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:p-10">
+          <div className="relative z-10 min-w-0">
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{home("heroEyebrow")}</p>
+            <h1 className="mt-3 max-w-[18ch] whitespace-pre-line text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl lg:text-5xl">
+              {displayHeroTitle}
+            </h1>
+            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
+              {displayHeroDescription}
+            </p>
+            <div data-home-search-sentinel className="mt-5 h-px w-full" aria-hidden="true" />
+            <MarketplaceSearch
+              stores={stores}
+              className="rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950"
+              inputClassName="h-12 rounded-lg border-0 bg-transparent pl-11 text-base shadow-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              buttonClassName="rounded-lg bg-blue-700 text-white hover:bg-blue-800"
+              compactActions
+              placeholder={home("heroSearchPlaceholder")}
+            />
+            {popularSearchPills.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                {popularSearchPills.map((item) => (
+                  <Link key={item.key} href={item.href} className="text-xs text-slate-500 underline-offset-4 hover:text-blue-700 hover:underline focus-visible:underline dark:text-slate-400 dark:hover:text-blue-300">
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              {showSellerQuickActions ? (
+                <Link href="/sell/product/new" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
+                  <BadgePlus className="size-4" aria-hidden="true" />
+                  {home("createListing")}
+                </Link>
+              ) : null}
+              <Link href="/stores" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 hover:text-blue-700 dark:text-slate-200 dark:hover:text-blue-300">
+                {home("allStores")}
+                <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
-            <div className="grid gap-1.5">
-              {activeCategories.slice(0, 22).map((category) => {
-                const CategoryIcon = getCategoryIcon(category);
-
-                return (
-                  <Link
-                    key={category.id}
-                    href={`/products?category=${category.slug}`}
-                    className="flex min-w-0 items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-blue-400/10 dark:hover:text-blue-200"
-                  >
-                    <CategoryIcon className="size-4 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{category.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
-
-          <div className="min-w-0 overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
-            <div className="relative min-h-[560px] overflow-hidden md:min-h-[510px]">
-              {heroBackgroundImage ? (
-                <OptimizedImage
-                  src={heroBackgroundImage}
-                  alt={shouldUseDefaultHeroCopy ? "Alışveriş marketplace" : heroTitle}
-                  fill
-                  sizes="(max-width: 1023px) 100vw, 1024px"
-                  className="absolute inset-0 h-full w-full object-cover"
-                  loading="eager"
-                  decoding="sync"
-                  fetchPriority="high"
-                />
-              ) : null}
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.72)_0%,rgba(15,23,42,0.42)_38%,rgba(255,255,255,0.96)_100%)] dark:bg-[linear-gradient(180deg,rgba(2,6,23,0.74)_0%,rgba(2,6,23,0.54)_38%,rgba(2,6,23,0.98)_100%)]" />
-
-              <div className="relative z-10 flex min-h-[560px] flex-col justify-between p-4 text-white sm:p-5 md:min-h-[510px] md:p-7">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm backdrop-blur">
-                      <MapPin className="size-3.5 text-blue-700" aria-hidden="true" />
-                      <span className="truncate">Azərbaycan üzrə elanlar</span>
-                    </div>
-                    <h1 className="mt-4 max-w-[11ch] text-[2.5rem] font-black leading-[0.96] tracking-normal min-[390px]:text-[2.8rem] sm:max-w-[12ch] sm:text-[3.4rem] md:text-[4.2rem]">
-                      {displayHeroTitle}
-                    </h1>
-                  </div>
-                  {showSellerQuickActions ? (
-                    <Link
-                      href="/sell/product/new"
-                      className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-[#ffcf4a] text-slate-950 shadow-[0_10px_28px_rgba(0,0,0,0.22)] transition hover:bg-[#ffd866] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 md:hidden"
-                      aria-label="Elan yerləşdir"
-                    >
-                      <BadgePlus className="size-6" aria-hidden="true" />
-                    </Link>
-                  ) : null}
-                </div>
-
-                <div className="min-w-0">
-                  <p className="mb-4 max-w-xl text-[15px] font-medium leading-6 text-white/88 sm:text-base md:text-lg">
-                    {displayHeroDescription}
-                  </p>
-
-                  <div data-home-search-sentinel className="h-px w-full" aria-hidden="true" />
-                  <div className="rounded-2xl border border-white/62 bg-white p-2 text-slate-950 shadow-[0_18px_48px_rgba(15,23,42,0.22)] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50">
-                    <MarketplaceSearch
-                      stores={stores}
-                      className="rounded-xl border-0 bg-transparent p-0 shadow-none"
-                      inputClassName="h-[52px] rounded-xl border-transparent bg-stone-50 pl-11 text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:ring-0 dark:bg-slate-800 dark:text-slate-50 md:h-[54px]"
-                      buttonClassName="!size-[48px] !min-w-[48px] rounded-xl bg-blue-700 p-0 text-white hover:bg-blue-800"
-                      buttonSize="lg"
-                      stackOnMobile
-                      compactActions
-                      placeholder={home("heroSearchPlaceholder")}
-                    />
-                    <div className="mt-2 grid grid-cols-3 gap-1 rounded-xl bg-stone-100 p-1 dark:bg-slate-800">
-                      {modeTabs.map((item) => {
-                        const Icon = item.icon;
-
-                        return (
-                          <Link
-                            key={item.label}
-                            href={item.href}
-                            className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-black text-slate-600 transition first:bg-white first:text-blue-800 first:shadow-sm hover:bg-white hover:text-blue-800 dark:text-slate-300 dark:first:bg-slate-900 dark:first:text-blue-200 dark:hover:bg-slate-900"
-                          >
-                            <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {showSellerQuickActions ? (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <QuickActionTile
-                        href="/sell/product/new"
-                        title="Elan ver"
-                        description="30 saniyə"
-                        icon={BadgePlus}
-                        tone="bg-[#ffcf4a] text-slate-950"
-                      />
-                      <QuickActionTile
-                        href="/sell/product/new"
-                        title="AI kömək"
-                        description="Mətn hazırla"
-                        icon={Bot}
-                        tone="bg-blue-50 text-blue-700"
-                      />
-                    </div>
-                  ) : null}
-
-                  {popularSearchPills.length > 0 ? (
-                    <div className="-mx-4 mt-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-5 sm:max-w-[calc(100%+2.5rem)] sm:px-5 md:mx-0 md:max-w-full md:flex-wrap md:overflow-visible md:px-0">
-                      {popularSearchPills.map((item) => (
-                        <Link
-                          key={item.key}
-                          href={item.href}
-                          className="inline-flex h-9 shrink-0 items-center rounded-full border border-white/72 bg-white/88 px-3 text-[13px] font-black text-slate-800 shadow-sm backdrop-blur transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
           </div>
-
-        </section>
-
-        <section className="grid grid-cols-2 gap-2 dark:border-slate-800 md:border-y md:border-stone-200 md:py-5 lg:grid-cols-4 lg:gap-4">
-          {trustItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <div
-                key={item.title}
-                className="flex min-w-0 items-start gap-2.5 rounded-xl bg-white p-3 ring-1 ring-stone-200 dark:bg-slate-900 dark:ring-slate-800 md:rounded-none md:bg-transparent md:p-0 md:ring-0 lg:border-r lg:border-stone-200 lg:last:border-r-0 dark:lg:border-slate-800"
-              >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20 md:size-10">
-                  <Icon className="size-4 md:size-5" aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-black leading-5 text-slate-950 dark:text-slate-50 md:text-[15px]">
-                    {item.title}
-                  </span>
-                  <span className="mt-0.5 block text-xs leading-4 text-slate-500 dark:text-slate-400 md:text-sm">
-                    {item.description}
-                  </span>
-                </span>
-              </div>
-            );
-          })}
+          <div className="relative hidden min-h-[280px] overflow-hidden rounded-xl lg:block" aria-hidden="true">
+            <OptimizedImage src={heroImageUrl} alt="" fill sizes="300px" className="object-cover" loading="lazy" />
+          </div>
+          {mobileHeroImageUrl ? (
+            <div className="relative h-36 overflow-hidden rounded-xl lg:hidden" aria-hidden="true">
+              <OptimizedImage src={mobileHeroImageUrl} alt="" fill sizes="100vw" className="object-cover" loading="lazy" />
+            </div>
+          ) : null}
         </section>
 
         {activeCategories.length > 0 ? (
@@ -619,32 +428,9 @@ export function HomeExperience({
               href="/categories"
               action={home("viewAll")}
             />
-            <div className="grid grid-flow-col grid-rows-2 auto-cols-[164px] gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:auto-cols-auto sm:grid-flow-row sm:grid-rows-none sm:grid-cols-3 sm:gap-2.5 sm:overflow-visible md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {activeCategories.map((category) => (
                 <CategoryCard key={category.id} category={category} />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        {featuredStores.length > 0 ? (
-          <section id="featured-stores">
-            <SectionHeader
-              title={featuredSection?.title || home("featuredStores")}
-              href="/stores"
-              action={home("viewAll")}
-            />
-            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-5 sm:px-5 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
-              {featuredStores.map((store, index) => (
-                <div
-                  key={store.id}
-                  className={cn(
-                    "w-[61vw] max-w-[224px] shrink-0 snap-start sm:w-[70vw] sm:max-w-[270px] md:w-auto md:max-w-none",
-                    index >= 4 && "hidden lg:block",
-                  )}
-                >
-                  <HomeStoreCard store={store} compact={index > 1} />
-                </div>
               ))}
             </div>
           </section>
@@ -666,6 +452,28 @@ export function HomeExperience({
               productCardVariant={productCardVariant}
               labels={{ stock: marketplace("stock") }}
             />
+          </section>
+        ) : null}
+        {featuredStores.length > 0 ? (
+          <section id="featured-stores">
+            <SectionHeader
+              title={featuredSection?.title || home("featuredStores")}
+              href="/stores"
+              action={home("viewAll")}
+            />
+            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-5 sm:px-5 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
+              {featuredStores.map((store, index) => (
+                <div
+                  key={store.id}
+                  className={cn(
+                    "w-[70vw] max-w-[270px] shrink-0 snap-start md:w-auto md:max-w-none",
+                    index >= 4 && "hidden lg:block",
+                  )}
+                >
+                  <HomeStoreCard store={store} compact={index > 1} />
+                </div>
+              ))}
+            </div>
           </section>
         ) : null}
       </div>

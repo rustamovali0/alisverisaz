@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -8,8 +8,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
-import { getStorePath } from "@/lib/config/domains";
 import { cn } from "@/lib/utils";
+import { getStorePath } from "@/lib/config/domains";
+import { buildMarketplaceSearchHref } from "@/lib/search/navigation";
 
 type MarketplaceSearchProps = {
   stores: MarketplaceStore[];
@@ -127,6 +128,7 @@ export function MarketplaceSearch({
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputId = useId();
   const resolvedButtonLabel = buttonLabel ?? common("search");
   const normalizedQuery = useMemo(() => normalize(query), [query]);
   const selectedStore = useMemo(
@@ -136,14 +138,6 @@ export function MarketplaceSearch({
   const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
   const canShowPopularSearches = enablePopularSearches && !storeSlug;
   const trimmedQuery = query.trim();
-  const matchingStores = useMemo(
-    () =>
-      storeSlug || !normalizedQuery
-        ? []
-        : stores.filter((store) => normalize(store.name).includes(normalizedQuery)).slice(0, 4),
-    [normalizedQuery, storeSlug, stores],
-  );
-  const storeResult = matchingStores[0];
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 180);
@@ -161,16 +155,11 @@ export function MarketplaceSearch({
   const popularSearches = (popularQuery.data?.searches ?? []).filter(term => typeof term === "string").slice(0, 4);
   const canSearch = isFocused && normalizedQuery.length >= 2 && (!storeSlug || Boolean(selectedStore));
   const suggestionsQuery = useQuery({
-    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? storeResult?.id ?? ""],
+    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? ""],
     enabled: canSearch && debouncedQuery === trimmedQuery,
     queryFn: async ({ signal }): Promise<MarketplaceProductPage> => {
-      const params = new URLSearchParams({ locale, limit: "6" });
-      const productStoreId = selectedStore?.id ?? storeResult?.id;
-      if (productStoreId) {
-        params.set("storeId", productStoreId);
-      } else {
-        params.set("q", debouncedQuery);
-      }
+      const params = new URLSearchParams({ q: debouncedQuery, locale, limit: "6" });
+      if (selectedStore?.id) params.set("storeId", selectedStore.id);
       const response = await fetch(`/api/marketplace/products?${params}`, { signal });
       if (!response.ok) throw new Error("SEARCH_FAILED");
       return response.json();
@@ -208,12 +197,15 @@ export function MarketplaceSearch({
 
     const storeSuggestions: SearchSuggestion[] = storeSlug
       ? []
-      : matchingStores.map((store) => ({
+      : scopedStores
+          .filter((store) => normalize(store.name).includes(normalizedQuery))
+          .slice(0, 4)
+          .map((store) => ({
             key: `store-${store.id}`,
+            href: getStorePath(store.slug),
             type: "store",
             label: store.name,
             description: marketplace("productCount", { count: store.productCount }),
-            href: getStorePath(store.slug),
           }));
     const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
     const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
@@ -231,10 +223,10 @@ export function MarketplaceSearch({
     return {
       stores: storeSuggestions,
       products: productSuggestions
-        .filter((suggestion) => Boolean(storeResult) || normalize(suggestion.label).includes(normalizedQuery))
+        .filter((suggestion) => normalize(suggestion.label).includes(normalizedQuery))
         .slice(0, 6),
     };
-  }, [marketplace, matchingStores, normalizedQuery, remoteProducts, storeResult, storeSlug, stores]);
+  }, [marketplace, normalizedQuery, remoteProducts, storeSlug, stores]);
 
   const suggestions = useMemo(
     () => [...suggestionGroups.stores, ...suggestionGroups.products],
@@ -295,24 +287,10 @@ export function MarketplaceSearch({
     }).catch(() => undefined);
   }
 
-  function buildSearchHref(baseHref: string, searchQuery: string) {
-    const [baseWithoutHash, existingHash = ""] = baseHref.split("#");
-    const hash = resultsAnchorId || existingHash;
-
-    if (!searchQuery) {
-      return hash ? `${baseWithoutHash}#${hash}` : baseWithoutHash;
-    }
-
-    const separator = baseWithoutHash.includes("?") ? "&" : "?";
-    const encodedQuery = encodeURIComponent(searchQuery);
-
-    return `${baseWithoutHash}${separator}q=${encodedQuery}${hash ? `#${hash}` : ""}`;
-  }
-
   function submitSearch(value: string) {
     const searchQuery = value.trim();
     const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
-    const nextHref = buildSearchHref(baseHref, searchQuery);
+    const nextHref = buildMarketplaceSearchHref(baseHref, searchQuery, resultsAnchorId);
 
     setQuery(searchQuery);
     syncSearchQuery(searchQuery);
@@ -339,10 +317,10 @@ export function MarketplaceSearch({
   function selectSuggestion(suggestion: SearchSuggestion) {
     if (suggestion.href) {
       setIsFocused(false);
+      inputRef.current?.blur();
       router.push(suggestion.href);
       return;
     }
-
     submitSearch(suggestion.label);
   }
 
@@ -381,10 +359,11 @@ export function MarketplaceSearch({
         }
       }}
     >
-      <label className="relative min-w-0 flex-1">
-        <span className="sr-only">{common("search")}</span>
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative min-w-0 flex-1">
+        <label className="sr-only" htmlFor={searchInputId}>{common("search")}</label>
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <input
+          id={searchInputId}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
@@ -402,10 +381,17 @@ export function MarketplaceSearch({
           type="text"
           value={query}
           onChange={(event) => {
+            setIsFocused(true);
             setQuery(event.target.value);
             syncSearchQuery(event.target.value);
           }}
           onFocus={() => setIsFocused(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setIsFocused(false);
+              event.stopPropagation();
+            }
+          }}
         />
         {query.trim() ? (
           <button
@@ -418,7 +404,7 @@ export function MarketplaceSearch({
             <X className="size-4 stroke-[2.2]" aria-hidden="true" />
           </button>
         ) : null}
-      </label>
+      </div>
       <Button
         type="submit"
         size={buttonSize}
@@ -441,7 +427,7 @@ export function MarketplaceSearch({
         ) : null}
       </Button>
       {showPopularSearches || showSuggestions || showNoResults ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] max-h-[min(24rem,55dvh)] w-full max-w-full overflow-y-auto overscroll-contain rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
             <div className="border-b px-3 py-3 last:border-b-0">
               <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">

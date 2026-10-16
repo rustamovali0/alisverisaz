@@ -1028,6 +1028,7 @@ export function ProductGrid({
           tabIndex={0}
           onClick={openDetail}
           onKeyDown={(event) => {
+            if (event.target !== event.currentTarget) return;
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
               router.push(detailHref, { scroll: true });
