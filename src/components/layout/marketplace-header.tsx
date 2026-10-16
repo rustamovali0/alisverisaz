@@ -477,14 +477,15 @@ export function MarketplaceHeader({
             </Button>
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[220px] max-w-[300px] flex-[1_1_240px] items-center gap-2 xl:flex 2xl:max-w-[380px]">
+            <div className="ml-auto hidden min-w-[300px] max-w-[440px] flex-[1_1_360px] items-center gap-2 xl:flex 2xl:max-w-[520px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
                 className="min-w-0 flex-1 rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900"
-                inputClassName="h-10 rounded-xl border-0 bg-slate-50 pl-11 pr-4 text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
-                buttonClassName="rounded-[10px] bg-blue-600 px-5 text-white hover:bg-blue-700"
+                inputClassName="h-12 rounded-xl border-0 bg-slate-50 pl-11 pr-4 text-[16px] text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
+                buttonSize="lg"
+                buttonClassName="h-12 rounded-[10px] bg-blue-600 px-6 text-white hover:bg-blue-700"
               />
             </div>
           ) : null}
@@ -541,14 +542,16 @@ export function MarketplaceHeader({
       shouldShowCompactMobileSearch &&
       hasSearchData &&
       (!shouldGateMobileSearch || isMobileSearchOpen) ? (
-        <div className="mobile-performance-surface sticky top-16 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+        <div className="mobile-performance-surface sticky top-16 z-40 border-b bg-white px-3 py-2.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}
             storeSlug={searchStoreSlug ?? undefined}
             stackOnMobile
+            compactActions
             className="w-full"
-            inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[15px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            inputClassName="h-12 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[16px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            buttonClassName="!size-12 !min-w-12 !max-w-12 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
           />
         </div>
       ) : null}
