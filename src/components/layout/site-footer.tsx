@@ -209,7 +209,7 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
-        <div className="flex flex-col gap-2 px-4 py-2 pb-[calc(4.6rem+env(safe-area-inset-bottom))] text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-4 md:pb-4 md:text-sm">
+        <div className="flex flex-col gap-2 px-4 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-4 md:pb-4 md:text-sm">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
         </div>
       </div>

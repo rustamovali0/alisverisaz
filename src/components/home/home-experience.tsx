@@ -362,7 +362,7 @@ export function HomeExperience({
 
   return (
     <main
-      className="min-h-screen w-full max-w-full overflow-x-clip bg-white px-3 pb-[calc(92px+env(safe-area-inset-bottom))] pt-3 text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-5 md:pb-10 md:pt-6 lg:px-8"
+      className="min-h-screen w-full max-w-full overflow-x-clip bg-white px-3 pb-0 pt-3 text-slate-950 dark:bg-slate-950 dark:text-slate-50 sm:px-5 md:pb-10 md:pt-6 lg:px-8"
       data-homepage-preset={siteSettings.design.homepagePreset}
       style={{
         ...homeDesignStyle,

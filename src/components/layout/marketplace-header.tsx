@@ -542,7 +542,7 @@ export function MarketplaceHeader({
       shouldShowCompactMobileSearch &&
       hasSearchData &&
       (!shouldGateMobileSearch || isMobileSearchOpen) ? (
-        <div className="mobile-performance-surface sticky top-16 z-40 border-b bg-white px-3 py-2.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+        <div className="mobile-performance-surface fixed inset-x-0 top-14 z-40 border-b bg-white px-3 py-2.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}

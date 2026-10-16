@@ -621,6 +621,14 @@
     }
   }
 
+  @media (max-width: 767px) {
+    .marketplace-header,
+    .mobile-performance-surface {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
