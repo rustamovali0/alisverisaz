@@ -32,8 +32,10 @@ import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
+import { rtestDesignEnabled } from "@/lib/config/rtest-design";
+import { RtestMarketplaceHeader } from "@/components/layout/rtest-marketplace-header";
 
-type MarketplaceHeaderProps = {
+export type MarketplaceHeaderProps = {
   siteName?: string;
   logoUrl?: string;
   darkLogoUrl?: string;
@@ -111,7 +113,7 @@ function normalizeWhatsappHref(value?: string) {
   return phone ? `https://wa.me/${phone}` : "";
 }
 
-export function MarketplaceHeader({
+function LegacyMarketplaceHeader({
   siteName = "Alışveriş",
   logoUrl,
   darkLogoUrl,
@@ -648,6 +650,10 @@ export function MarketplaceHeader({
       ) : null}
     </>
   );
+}
+
+export function MarketplaceHeader(props: MarketplaceHeaderProps) {
+  return rtestDesignEnabled ? <RtestMarketplaceHeader {...props} /> : <LegacyMarketplaceHeader {...props} />;
 }
 
 export { MarketplaceHeader as PublicHeader };

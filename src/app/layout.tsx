@@ -5,6 +5,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import { siteConfig } from "@/lib/config/site";
 
 import "./globals.css";
+import "./rtest-design.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),

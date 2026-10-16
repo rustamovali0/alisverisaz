@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { rtestDesignEnabled } from "@/lib/config/rtest-design";
 
 type AuthCardProps = {
   title: string;
@@ -25,6 +26,7 @@ export function AuthCard({
     <section
       className={cn(
         "w-full rounded-xl border border-border/80 bg-card p-3.5 text-card-foreground shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 sm:p-4",
+        rtestDesignEnabled && "atelier-auth-card",
         className,
       )}
     >

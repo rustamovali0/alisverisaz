@@ -207,6 +207,7 @@ export default async function LocaleLayout({
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
       <div
         className="global-loader-root min-h-screen"
+        data-rtest-design={process.env.NEXT_PUBLIC_RTEST_DESIGN === "atelier" ? "atelier" : undefined}
         data-loader-type={siteSettings.globalLoader.type}
         data-loader-palette={siteSettings.globalLoader.palette}
         data-loading-preset={siteSettings.design.loadingPreset}

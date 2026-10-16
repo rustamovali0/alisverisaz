@@ -6,8 +6,10 @@ import { InstagramBrandIcon, TikTokIcon, WhatsAppIcon } from "@/components/icons
 import { Link } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
+import { rtestDesignEnabled } from "@/lib/config/rtest-design";
+import { RtestSiteFooter } from "@/components/layout/rtest-site-footer";
 
-type SiteFooterProps = {
+export type SiteFooterProps = {
   siteName?: string;
   logoUrl?: string;
   darkLogoUrl?: string;
@@ -57,7 +59,7 @@ function formatBrandName(value?: string) {
   return value;
 }
 
-export function SiteFooter({
+function LegacySiteFooter({
   siteName = "Alışveriş",
   logoUrl,
   darkLogoUrl,
@@ -216,4 +218,8 @@ export function SiteFooter({
       </div>
     </footer>
   );
+}
+
+export function SiteFooter(props: SiteFooterProps) {
+  return rtestDesignEnabled ? <RtestSiteFooter {...props} /> : <LegacySiteFooter {...props} />;
 }

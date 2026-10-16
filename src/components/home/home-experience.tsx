@@ -27,8 +27,10 @@ import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import { productQueryOptions } from "@/lib/query/product-options";
 import { cn } from "@/lib/utils";
+import { rtestDesignEnabled } from "@/lib/config/rtest-design";
+import { RtestHomeExperience } from "@/components/home/rtest-home-experience";
 
-type HomeExperienceProps = {
+export type HomeExperienceProps = {
   locale: string;
   siteSettings: SiteSettings;
   sections: HomepageSection[];
@@ -376,7 +378,7 @@ function CampaignCard({ product, index }: { product: CartProduct; index: number 
   );
 }
 
-export function HomeExperience({
+function LegacyHomeExperience({
   locale,
   siteSettings,
   sections,
@@ -597,4 +599,8 @@ export function HomeExperience({
       />
     </main>
   );
+}
+
+export function HomeExperience(props: HomeExperienceProps) {
+  return rtestDesignEnabled ? <RtestHomeExperience {...props} /> : <LegacyHomeExperience {...props} />;
 }
