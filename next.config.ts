@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
         { key: "X-Frame-Options", value: "SAMEORIGIN" },
         { key: "Content-Security-Policy", value: "frame-ancestors 'self'; object-src 'none'; base-uri 'self'" },
         { key: "Referrer-Policy", value: "same-origin" },
+        { key: "Strict-Transport-Security", value: "max-age=31536000" },
+        { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
       ],
     }];
   },
