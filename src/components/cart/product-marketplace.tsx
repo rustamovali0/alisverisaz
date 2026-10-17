@@ -1784,7 +1784,11 @@ export function Storefront({
           return aHasProducts ? -1 : 1;
         }
 
-        return a.name.localeCompare(b.name, "az");
+        if (a.name === b.name) {
+          return 0;
+        }
+
+        return a.name < b.name ? -1 : 1;
       }),
     [categories, storeProductCategoryIds],
   );
