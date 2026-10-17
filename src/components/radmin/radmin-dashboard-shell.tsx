@@ -228,7 +228,7 @@ export function RadminDashboardShell({
             >
               <span className="grid size-12 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-base font-black text-[#061323] shadow-lg shadow-amber-500/20">
                 {sidebarLogoUrl ? (
-                  <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                  <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-0.5" />
                 ) : (
                   "a"
                 )}
@@ -348,7 +348,7 @@ export function RadminDashboardShell({
               <Link href="/radmin" className="flex items-center gap-3">
                 <span className="grid size-11 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-sm font-black text-[#061323]">
                   {sidebarLogoUrl ? (
-                    <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                    <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-0.5" />
                   ) : (
                     "a"
                   )}

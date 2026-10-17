@@ -102,13 +102,13 @@ export function SiteFooter({
                 <img
                   src={logoUrl}
                   alt={displaySiteName}
-                  className={darkLogoUrl ? "h-full w-full object-contain p-1.5 dark:hidden" : "h-full w-full object-contain p-1.5"}
+                  className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                 />
                 {darkLogoUrl ? (
                   <img
                     src={darkLogoUrl}
                     alt={displaySiteName}
-                    className="hidden h-full w-full object-contain p-1.5 dark:block"
+                    className="hidden h-full w-full object-contain p-0.5 dark:block"
                   />
                 ) : null}
               </span>
