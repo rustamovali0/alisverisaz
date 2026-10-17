@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       {
         productId: cleanParam(searchParams.get("productId"), 80),
         categoryId: cleanParam(searchParams.get("categoryId"), 80),
+        storeId: cleanParam(searchParams.get("storeId"), 80) || undefined,
         cursor: cleanParam(searchParams.get("cursor"), 200) || null,
         limit,
       },

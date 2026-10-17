@@ -267,13 +267,20 @@ export function CustomStorefrontHeader({
   storeHomeHref,
   searchQuery,
   onNavigateSection,
+  storeSubdomainSlug,
+  isolatedStorefront = false,
 }: {
   store: MarketplaceStore;
   storeHomeHref: string;
   searchQuery?: string;
   onNavigateSection?: (sectionId: string) => void;
+  storeSubdomainSlug?: string | null;
+  isolatedStorefront?: boolean;
 }) {
   const storefront = useTranslations("storefront");
+  const cartHref = isolatedStorefront
+    ? `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`
+    : "/cart";
   const { profile } = useClientAuthProfileState();
   const isAuthenticated = profile.status === "authenticated";
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
@@ -370,7 +377,7 @@ export function CustomStorefrontHeader({
           })}
         </nav>
         <div className="hidden shrink-0 lg:block">
-          <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
+          {!isolatedStorefront ? <HeaderAccountActions showSellerCta={false} customerOnlyRegister /> : null}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 2xl:ml-0">
           {socialLinks.length > 0 ? (
@@ -395,7 +402,7 @@ export function CustomStorefrontHeader({
               })}
             </div>
           ) : null}
-          {isAuthenticated ? (
+          {isAuthenticated && !isolatedStorefront ? (
             <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("favorites")}>
               <Link href="/favorites" prefetch>
                 <Heart className={storefrontIconClass} aria-hidden="true" />
@@ -403,7 +410,7 @@ export function CustomStorefrontHeader({
             </Button>
           ) : null}
           <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("cart")}>
-            <Link href="/cart" prefetch>
+            <Link href={cartHref} prefetch>
               <ShoppingCart className={storefrontIconClass} aria-hidden="true" />
             </Link>
           </Button>
@@ -949,6 +956,7 @@ export function ProductGrid({
   isStoreOwner = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
+  isolatedStoreSlug,
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -960,6 +968,7 @@ export function ProductGrid({
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
+  isolatedStoreSlug?: string;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -1094,12 +1103,12 @@ export function ProductGrid({
               </div>
             </div>
           </Link>
-          <FavoriteToggleButton
+          {!isolatedStoreSlug ? <FavoriteToggleButton
             productId={product.id}
             productName={product.name}
             compact
             className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
-          />
+          /> : null}
           <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
             <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
               {displayStoreName ? (
@@ -1181,6 +1190,7 @@ export function ProductGrid({
                 ) : (
                   <AddToCartButton
                     product={product}
+                    isolatedStoreSlug={isolatedStoreSlug}
                     disabled={isOutOfStock}
                     className={cn(
                       "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
@@ -1248,6 +1258,7 @@ export function ProductInfiniteGrid({
   isStoreOwner = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
+  isolatedStoreSlug,
 }: {
   products: CartProduct[];
   hasMore: boolean;
@@ -1261,6 +1272,7 @@ export function ProductInfiniteGrid({
   isStoreOwner?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
+  isolatedStoreSlug?: string;
 }) {
   const t = useTranslations("marketplace");
 
@@ -1276,6 +1288,7 @@ export function ProductInfiniteGrid({
         isStoreOwner={isStoreOwner}
         forceMobileTwoColumns={forceMobileTwoColumns}
         compactMobileCards={compactMobileCards}
+        isolatedStoreSlug={isolatedStoreSlug}
       />
       {hasMore ? (
         <div className="mb-10 mt-7 flex justify-center md:mb-0">
@@ -2073,6 +2086,7 @@ export function Storefront({
         isStoreOwner={isStoreOwner}
         forceMobileTwoColumns
         compactMobileCards={isCustomStorefront}
+        isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
       />
     </section>
   );
@@ -2227,14 +2241,14 @@ export function Storefront({
             <div className="min-w-0">
               <div className="mb-4 flex min-w-0 items-center gap-3 sm:mb-5">
                 <StoreLogo store={store} className="hidden size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:grid sm:size-20" />
-                <div className="min-w-0">
+                {!isCustomStorefront ? <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
                     {storefront("onlineStore")}
                   </p>
                   <h1 className="mt-1 line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
                     {store.name}
                   </h1>
-                </div>
+                </div> : null}
               </div>
               {customHeroDescription ? (
                 <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
@@ -2346,7 +2360,7 @@ export function Storefront({
         ) : null}
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} />
+      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront={isCustomStorefront} />
     </main>
   );
 }

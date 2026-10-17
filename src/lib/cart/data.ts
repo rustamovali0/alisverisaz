@@ -506,12 +506,14 @@ export async function getSimilarMarketplaceProductPage(
   input: {
     productId: string;
     categoryId: string;
+    storeId?: string;
     limit?: number;
     cursor?: string | null;
   },
 ): Promise<MarketplaceProductPage> {
   const productId = isUuid(input.productId) ? input.productId : "";
   const categoryId = isUuid(input.categoryId) ? input.categoryId : "";
+  const storeId = input.storeId && isUuid(input.storeId) ? input.storeId : "";
 
   if (!productId || !categoryId) {
     return { products: [], nextCursor: null, hasMore: false };
@@ -522,13 +524,15 @@ export async function getSimilarMarketplaceProductPage(
   const supabase = createSupabasePublicClient();
 
   async function runQuery(selectColumns: string) {
-    const query = (supabase as any)
+    let query = (supabase as any)
       .from("products")
       .select(selectColumns)
       .eq("status", "active")
       .eq("stores.status", "active")
       .eq("category_id", categoryId)
       .neq("id", productId);
+
+    if (storeId) query = query.eq("store_id", storeId);
 
     return applyProductSort(
       applyProductCursor(query, cursor, "newest"),

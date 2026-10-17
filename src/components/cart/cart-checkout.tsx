@@ -52,6 +52,9 @@ type CartCheckoutProps = {
   checkoutOnly?: boolean;
   deliverySettings: DeliverySettings;
   deliveryStoreOverrides: DeliveryStoreOverride[];
+  isolatedStoreId?: string;
+  isolatedStoreSlug?: string;
+  isolatedStoreBaseHref?: string;
 };
 
 type DeliveryMethod = "pickup" | "courier" | "region";
@@ -63,9 +66,10 @@ type CheckoutResultState = {
   isGuest?: boolean;
 };
 
-function readCart() {
+function readCart(isolatedStoreId?: string) {
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+    const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+    return isolatedStoreId ? items.filter((item) => item.storeId === isolatedStoreId) : items;
   } catch {
     return [];
   }
@@ -87,8 +91,11 @@ function isBuyNowCheckout() {
   return new URLSearchParams(window.location.search).get("mode") === "buy-now";
 }
 
-function writeCart(items: CartItem[]) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+function writeCart(items: CartItem[], isolatedStoreId?: string) {
+  const nextItems = isolatedStoreId
+    ? [...readCart().filter((item) => item.storeId !== isolatedStoreId), ...items]
+    : items;
+  localStorage.setItem(CART_KEY, JSON.stringify(nextItems));
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
@@ -109,6 +116,9 @@ export function CartCheckout({
   checkoutOnly = false,
   deliverySettings,
   deliveryStoreOverrides,
+  isolatedStoreId,
+  isolatedStoreSlug,
+  isolatedStoreBaseHref,
 }: CartCheckoutProps) {
   const common = useTranslations("common");
   const cartUi = useTranslations("cartUi");
@@ -137,7 +147,7 @@ export function CartCheckout({
       product: productMap.get(item.productId),
     }))
     .filter((entry): entry is { item: CartItem; product: CartProduct } =>
-      Boolean(entry.product),
+      Boolean(entry.product) && (!isolatedStoreId || entry.product?.storeId === isolatedStoreId),
     );
   const total = visibleItems.reduce((sum, entry) => {
     const unit = getProductVariantUnitPrice({
@@ -250,7 +260,10 @@ export function CartCheckout({
     };
   }, [deliveryMethod, deliverySettings, deliveryStoreOverrides, visibleItems]);
   const firstProduct = visibleItems[0]?.product;
-  const returnHref =
+  const isolatedProductsHref = isolatedStoreSlug
+    ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}#products`
+    : "/products";
+  const returnHref = isolatedStoreSlug ? isolatedProductsHref :
     firstProduct?.storeSlug && firstProduct?.slug
       ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
       : "/products";
@@ -292,7 +305,9 @@ export function CartCheckout({
   useEffect(() => {
     let isMounted = true;
     const nextUsesBuyNowCart = checkoutOnly && isBuyNowCheckout();
-    const cartItems = nextUsesBuyNowCart ? readBuyNowCart() : readCart();
+    const cartItems = nextUsesBuyNowCart
+      ? readBuyNowCart().filter((item) => !isolatedStoreId || item.storeId === isolatedStoreId)
+      : readCart(isolatedStoreId);
     const productIds = cartItems.map((item) => item.productId);
 
     setUsesBuyNowCart(nextUsesBuyNowCart);
@@ -319,7 +334,7 @@ export function CartCheckout({
             if (nextUsesBuyNowCart) {
               writeBuyNowCart(nextItems);
             } else {
-              writeCart(nextItems);
+              writeCart(nextItems, isolatedStoreId);
             }
           }
         }
@@ -384,7 +399,7 @@ export function CartCheckout({
     if (usesBuyNowCart) {
       writeBuyNowCart(nextItems);
     } else {
-      writeCart(nextItems);
+      writeCart(nextItems, isolatedStoreId);
     }
   }
 
@@ -460,7 +475,7 @@ export function CartCheckout({
     }
 
     const keySet = new Set(itemKeys);
-    const sourceItems = usesBuyNowCart ? readBuyNowCart() : readCart();
+    const sourceItems = usesBuyNowCart ? readBuyNowCart() : readCart(isolatedStoreId);
     const nextItems = sourceItems.filter(
       (item) => !keySet.has(getProductVariantKey(item.productId, item.selectedOptions)),
     );
@@ -575,7 +590,7 @@ export function CartCheckout({
       }
 
       updateItems([]);
-      router.replace(result.isGuest ? (usesBuyNowCart ? "/" : "/products") : "/dashboard");
+      router.replace(isolatedStoreSlug ? (isolatedStoreBaseHref || "/") : result.isGuest ? (usesBuyNowCart ? "/" : "/products") : "/dashboard");
       router.refresh();
     });
   }
@@ -704,9 +719,9 @@ export function CartCheckout({
 
             <div className="mt-5 grid gap-2 sm:flex sm:justify-end">
               <Button asChild variant="outline">
-                <Link href="/products">Məhsullara qayıt</Link>
+                <Link href={isolatedProductsHref}>Məhsullara qayıt</Link>
               </Button>
-              {!checkoutResult.isGuest ? (
+              {!checkoutResult.isGuest && !isolatedStoreSlug ? (
                 <Button asChild>
                   <Link href="/dashboard">Hesabıma keç</Link>
                 </Button>
@@ -749,7 +764,7 @@ export function CartCheckout({
             </div>
             <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <Button asChild variant="outline" size="sm" className="rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
-                <Link href="/products">Bütün məhsullar</Link>
+                <Link href={isolatedProductsHref}>Bütün məhsullar</Link>
               </Button>
             </div>
           </div>
@@ -908,7 +923,7 @@ export function CartCheckout({
               {cartUi("addProductFirst")}
             </p>
             <Button asChild className="mt-5">
-              <Link href="/products">{cartUi("browseProducts")}</Link>
+              <Link href={isolatedProductsHref}>{cartUi("browseProducts")}</Link>
             </Button>
           </section>
         ) : null}

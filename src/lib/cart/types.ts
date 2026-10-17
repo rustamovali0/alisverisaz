@@ -78,6 +78,8 @@ export type MarketplaceProductDetail = {
 
 export type CartItem = {
   productId: string;
+  storeId?: string;
+  storeSlug?: string | null;
   quantity: number;
   selectedOptions?: Record<string, string>;
   variantKey?: string;

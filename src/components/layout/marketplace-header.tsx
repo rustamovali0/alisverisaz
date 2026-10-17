@@ -43,6 +43,8 @@ type MarketplaceHeaderProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  storeId?: string;
+  isolatedStorefront?: boolean;
   brandHomeHref?: string;
   productsHref?: string;
   searchStoreSlug?: string | null;
@@ -62,7 +64,7 @@ function formatBrandName(value?: string) {
   return value;
 }
 
-function readCartCount() {
+function readCartCount(storeId?: string) {
   if (typeof window === "undefined") {
     return 0;
   }
@@ -70,9 +72,12 @@ function readCartCount() {
   try {
     const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
       quantity?: number;
+      storeId?: string;
     }>;
 
-    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+    return items
+      .filter((item) => !storeId || item.storeId === storeId)
+      .reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
   } catch {
     return 0;
   }
@@ -121,6 +126,8 @@ export function MarketplaceHeader({
   mobileNavbarVariant,
   storeSubdomainSlug,
   storeHomeHref = "/",
+  storeId,
+  isolatedStorefront = false,
   brandHomeHref = storeHomeHref,
   productsHref = "/products",
   searchStoreSlug,
@@ -131,7 +138,10 @@ export function MarketplaceHeader({
 }: MarketplaceHeaderProps) {
   const nav = useTranslations("nav");
   const common = useTranslations("common");
-  const displaySiteName = formatBrandName(siteName);
+  const isIsolatedStorefront = isolatedStorefront || Boolean(storeSubdomainSlug);
+  const displaySiteName = isIsolatedStorefront ? siteName : formatBrandName(siteName);
+  const isolatedBaseHref = storeHomeHref === "/" ? "" : storeHomeHref;
+  const cartHref = isIsolatedStorefront ? `${isolatedBaseHref}/cart` : "/cart";
   const pathname = usePathname();
   const { profile, isResolved } = useClientAuthProfileState();
   const isMarketplaceStoreLanding =
@@ -214,7 +224,7 @@ export function MarketplaceHeader({
 
   useEffect(() => {
     function syncCartCount() {
-      setCartCount(readCartCount());
+      setCartCount(readCartCount(isIsolatedStorefront ? storeId : undefined));
     }
 
     syncCartCount();
@@ -225,7 +235,7 @@ export function MarketplaceHeader({
       window.removeEventListener("storage", syncCartCount);
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
-  }, []);
+  }, [isIsolatedStorefront, storeId]);
 
   const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
@@ -295,8 +305,13 @@ export function MarketplaceHeader({
     : isGuest
       ? "/register?role=seller&next=/store/dashboard"
       : "";
-  const shouldShowAddListing = Boolean(addListingHref);
-  const mobileMenuItems = [
+  const shouldShowAddListing = !isIsolatedStorefront && Boolean(addListingHref);
+  const mobileMenuItems = isIsolatedStorefront ? [
+    { href: storeHomeHref, label: "Əsas", icon: Info },
+    { href: `${isolatedBaseHref}#products`, label: nav("products"), icon: Search },
+    { href: cartHref, label: common("cart"), icon: ShoppingCart },
+    { href: `${isolatedBaseHref}#contact`, label: "Əlaqə", icon: MessageCircle },
+  ] : [
     { href: "/help", label: "Yardım", icon: HelpCircle },
     { href: "/about", label: "Tətbiq haqqında", icon: Info },
     { href: "/contact", label: "Bizimlə əlaqə", icon: MessageCircle },
@@ -399,7 +414,7 @@ export function MarketplaceHeader({
                 </a>
               </Button>
             ) : null}
-            {!isGuest ? (
+            {!isGuest && !isIsolatedStorefront ? (
               <>
                 <NotificationCenter
                   buttonClassName={mobileUtilityButtonClass}
@@ -421,7 +436,7 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            {isSeller && !isHomePage ? (
+            {isSeller && !isHomePage && !isIsolatedStorefront ? (
               <>
                 <Button
                   asChild
@@ -443,7 +458,11 @@ export function MarketplaceHeader({
             ) : null}
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
-            <Button
+            {isIsolatedStorefront ? <>
+              <Link href={`${isolatedBaseHref}#products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">{nav("products")}</Link>
+              <Link href={`${isolatedBaseHref}#contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
+            </> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
@@ -456,8 +475,8 @@ export function MarketplaceHeader({
                   {nav("products")}
                 </span>
               </Link>
-            </Button>
-            <Button
+            </Button> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant="ghost"
               className="group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
@@ -467,8 +486,8 @@ export function MarketplaceHeader({
                   Mağazalar
                 </span>
               </Link>
-            </Button>
-            <Button
+            </Button> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
@@ -481,7 +500,7 @@ export function MarketplaceHeader({
                   {nav("about")}
                 </span>
               </Link>
-            </Button>
+            </Button> : null}
           </nav>
           {shouldShowDesktopSearch ? (
             <div className="ml-auto hidden min-w-[300px] max-w-[440px] flex-[1_1_360px] items-center gap-2 xl:flex 2xl:max-w-[520px]">
@@ -497,7 +516,7 @@ export function MarketplaceHeader({
             </div>
           ) : null}
           <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
-            {!isGuest ? (
+            {!isGuest && !isIsolatedStorefront ? (
               <>
                 <NotificationCenter
                   buttonClassName={cn(
@@ -529,7 +548,7 @@ export function MarketplaceHeader({
               )}
               aria-label={common("cart")}
             >
-              <Link href="/cart" prefetch className="relative grid place-items-center">
+              <Link href={cartHref} prefetch className="relative grid place-items-center">
                 <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
                 {cartCount > 0 ? (
                   <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
@@ -538,7 +557,7 @@ export function MarketplaceHeader({
                 ) : null}
               </Link>
             </Button>
-            <div className="hidden min-w-0 shrink-0 lg:block">
+            <div className={cn("hidden min-w-0 shrink-0 lg:block", isIsolatedStorefront && "!hidden")}>
               <HeaderAccountActions className="shrink-0" />
             </div>
           </div>
@@ -665,6 +684,8 @@ export function MarketplaceHeader({
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
+          storeId={storeId}
+          isolatedStorefront={isIsolatedStorefront}
           initialRole={initialRole}
         />
       ) : null}

@@ -217,7 +217,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
   const isStoreOwner = current?.role === "seller" && current.user.id === detail.store.ownerId;
-  const canWriteReview = !isStoreOwner && (current?.role === "customer" || current?.role === "seller");
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
   const visibleProductLocations: ProductLocationAvailability[] =
@@ -263,6 +262,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;
+  const canWriteReview = !isStoreOwner && (current?.role === "customer" || current?.role === "seller" || isCustomStorefrontProduct);
   const storeBaseHref =
     storeSubdomainSlug === detail.store.slug
       ? "/"
@@ -304,6 +304,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         <CustomStorefrontHeader
           store={detail.store}
           storeHomeHref={storeBaseHref}
+          storeSubdomainSlug={storeSubdomainSlug}
+          isolatedStorefront={isCustomStorefrontProduct}
         />
       ) : null}
       <div className="mx-auto w-full max-w-[1280px] px-4 py-3 sm:px-6 md:py-6 lg:px-8">
@@ -340,7 +342,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[34px]">
                 {detail.product.name}
               </h1>
-              {!isStoreOwner ? (
+              {!isStoreOwner && !isCustomStorefrontProduct ? (
                 <FavoriteToggleButton
                   productId={detail.product.id}
                   productName={detail.product.name}
@@ -403,6 +405,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
                 buyerPhone={current?.profile?.phone ?? ""}
                 disabled={!canBuy}
+                isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : null}
+                isolatedStoreBaseHref={isCustomStorefrontProduct ? storeBaseHref : null}
               />
             )}
             <Button asChild variant="outline" className="mt-3 h-[52px] w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200">
@@ -478,6 +482,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               initialHasMore
               productId={detail.product.id}
               categoryId={detail.product.categoryId}
+              storeId={isCustomStorefrontProduct ? detail.store.id : undefined}
+              isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : undefined}
               locale={locale}
             />
           </div>
@@ -497,6 +503,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 reviewId={currentReview?.id ?? null}
                 initialRating={currentReview?.rating ?? 0}
                 initialComment={currentReview?.comment ?? ""}
+                allowGuest={isCustomStorefrontProduct}
               />
             ) : null}
             <ProductReviewList reviews={reviews} />
@@ -509,6 +516,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <MobileBottomNav
             storeHomeHref={storeBaseHref}
             storeSubdomainSlug={storeSubdomainSlug}
+            storeId={detail.store.id}
+            isolatedStorefront={isCustomStorefrontProduct}
           />
         </>
       ) : (

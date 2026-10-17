@@ -25,6 +25,8 @@ type ProductPurchaseOptionsProps = {
   buyerName?: string;
   buyerPhone?: string;
   disabled?: boolean;
+  isolatedStoreSlug?: string | null;
+  isolatedStoreBaseHref?: string | null;
 };
 
 function isSelectionReady(product: CartProduct, selection: Record<string, string>) {
@@ -77,6 +79,8 @@ export function ProductPurchaseOptions({
   buyerName = "",
   buyerPhone = "",
   disabled = false,
+  isolatedStoreSlug,
+  isolatedStoreBaseHref,
 }: ProductPurchaseOptionsProps) {
   const initialSelection = useMemo(
     () => getAutoProductVariantSelection(product.options ?? []),
@@ -174,6 +178,8 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
+          isolatedStoreSlug={isolatedStoreSlug}
+          isolatedStoreBaseHref={isolatedStoreBaseHref}
           className="h-[52px] w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700"
         />
         <AddToCartButton
@@ -182,6 +188,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
+          isolatedStoreSlug={isolatedStoreSlug}
           className="h-[52px] w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
         />
       </div>

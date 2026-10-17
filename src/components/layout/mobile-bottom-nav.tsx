@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Store,
   UserRound,
+  MessageCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -27,6 +28,8 @@ type MobileBottomNavProps = {
   variant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  storeId?: string;
+  isolatedStorefront?: boolean;
   initialRole?: AuthRole | null;
 };
 
@@ -68,7 +71,7 @@ const itemVariantClass: Record<MobileNavbarVariant, string> = {
   rail: "rounded-lg",
 };
 
-function readCartCount() {
+function readCartCount(storeId?: string) {
   if (typeof window === "undefined") {
     return 0;
   }
@@ -76,9 +79,12 @@ function readCartCount() {
   try {
     const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
       quantity?: number;
+      storeId?: string;
     }>;
 
-    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+    return items
+      .filter((item) => !storeId || item.storeId === storeId)
+      .reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
   } catch {
     return 0;
   }
@@ -152,6 +158,8 @@ export function MobileBottomNav({
   storeSubdomainSlug,
   storeHomeHref = "/",
   initialRole,
+  storeId,
+  isolatedStorefront = false,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
   const nav = useTranslations("nav");
@@ -237,8 +245,15 @@ export function MobileBottomNav({
     };
   }, [profile.status, profile.role, profile.userId, role]);
 
-  const items =
-    role === "seller"
+  const isolatedItems = isolatedStorefront || storeSubdomainSlug
+    ? [
+        { href: storeHomeHref, label: nav("home"), icon: Home },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: nav("products"), icon: Package },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingCart, badge: cartCount },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə", icon: MessageCircle },
+      ]
+    : null;
+  const items = isolatedItems ?? (role === "seller"
       ? [
           {
             href: "/",
@@ -264,8 +279,8 @@ export function MobileBottomNav({
             ? [{ href: "/favorites", label: nav("favorites"), icon: Heart }]
             : [{ href: sellerRegisterPath(pathname), label: "Satıcı ol", icon: Store }]),
           { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
-        ];
-  const totalNavItems = items.length + 1;
+        ]);
+  const totalNavItems = items.length + (isolatedItems ? 0 : 1);
   const navGridClass = totalNavItems >= 5 ? "grid-cols-5" : "grid-cols-4";
 
   const isCurrentRoute = useCallback(
@@ -333,7 +348,7 @@ export function MobileBottomNav({
 
   useEffect(() => {
     function syncCartCount() {
-      setCartCount(readCartCount());
+      setCartCount(readCartCount(isolatedStorefront || storeSubdomainSlug ? storeId : undefined));
     }
 
     syncCartCount();
@@ -344,7 +359,7 @@ export function MobileBottomNav({
       window.removeEventListener("storage", syncCartCount);
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
-  }, []);
+  }, [isolatedStorefront, storeId, storeSubdomainSlug]);
 
   if (isAuthLoading) {
     return (
@@ -419,7 +434,7 @@ export function MobileBottomNav({
             </button>
           );
         })}
-        <button
+        {!isolatedItems ? <button
           type="button"
           onClick={() => {
             if (accountHref) {
@@ -446,7 +461,7 @@ export function MobileBottomNav({
             <AccountIcon role={role} />
           </span>
           <span className="max-w-full whitespace-normal leading-[1.05]">{accountText}</span>
-        </button>
+        </button> : null}
       </div>
     </nav>
   );

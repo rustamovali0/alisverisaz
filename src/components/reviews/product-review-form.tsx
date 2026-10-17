@@ -1,7 +1,7 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
@@ -20,6 +20,7 @@ type ProductReviewFormProps = {
   reviewId?: string | null;
   initialRating?: number;
   initialComment?: string | null;
+  allowGuest?: boolean;
 };
 
 export function ProductReviewForm({
@@ -29,14 +30,24 @@ export function ProductReviewForm({
   reviewId = null,
   initialRating = 0,
   initialComment = null,
+  allowGuest = false,
 }: ProductReviewFormProps) {
   const router = useRouter();
   const [rating, setRating] = useState(initialRating);
   const [comment, setComment] = useState(initialComment ?? "");
   const [isPending, startTransition] = useTransition();
+  const [guestToken, setGuestToken] = useState("");
+
+  useEffect(() => {
+    if (!allowGuest || viewerRole) return;
+    const key = "alisveris_storefront_guest_id";
+    const token = localStorage.getItem(key) || crypto.randomUUID();
+    localStorage.setItem(key, token);
+    setGuestToken(token);
+  }, [allowGuest, viewerRole]);
 
   function handleSubmit(formData: FormData) {
-    if (viewerRole !== "customer" && viewerRole !== "seller") {
+    if (viewerRole !== "customer" && viewerRole !== "seller" && !allowGuest) {
       void appAlert.info(
         "Rəy yazmaq üçün giriş edin",
         "Rəy yazmaq üçün alıcı və ya satıcı hesabı ilə daxil olun.",
@@ -83,6 +94,8 @@ export function ProductReviewForm({
       <input type="hidden" name="storeSlug" value={storeSlug} />
       {reviewId ? <input type="hidden" name="reviewId" value={reviewId} /> : null}
       <input type="hidden" name="rating" value={rating} />
+      <input type="hidden" name="guestToken" value={guestToken} />
+      {allowGuest && !viewerRole ? <label className="grid gap-1 text-sm font-medium">Adınız<input className="premium-input h-11" name="guestName" minLength={2} maxLength={80} required /></label> : null}
       <div className="flex items-center gap-2">
         {[1, 2, 3, 4, 5].map((value) => (
           <button
@@ -121,7 +134,7 @@ export function ProductReviewForm({
         />
       </label>
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={isPending || rating === 0} className="w-fit">
+        <Button type="submit" disabled={isPending || rating === 0 || (allowGuest && !viewerRole && !guestToken)} className="w-fit">
           {isPending ? "Saxlanılır" : reviewId ? "Rəyi yenilə" : "Dəyərləndirmə yaz"}
         </Button>
         {reviewId ? (
