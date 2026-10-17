@@ -2221,116 +2221,61 @@ export function Storefront({
   }
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
-      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-[#f6f8fc] pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+      <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-5 px-3 py-3 sm:px-6 sm:py-6 md:gap-7 lg:px-8 lg:py-8">
         {isStoreOwner ? (
           <div className="relative min-w-0">
             <StoreBrandingQuickEdit store={store} />
             <StoreWhatsAppButton phone={storeContactPhone} />
           </div>
         ) : (
-          <section className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:gap-6 sm:rounded-[20px] sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
-            <div className="relative -mx-1 -mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:hidden">
-              <div className="aspect-[16/9] w-full">
+          <section data-store-search-sentinel className="relative min-w-0 pb-[116px] sm:pb-[104px] lg:pb-[92px]">
+            <div className="relative min-h-[330px] overflow-hidden rounded-[24px] bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:min-h-[390px] sm:rounded-[30px] lg:min-h-[430px]">
+              <div className="absolute inset-0">
                 <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={storeContactPhone} />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 via-slate-950/8 to-transparent" aria-hidden="true" />
-              <StoreLogo store={store} className="absolute bottom-3 left-3 size-16 rounded-2xl border-2 border-white bg-white shadow-[0_12px_28px_rgba(2,6,23,0.24)]" />
-            </div>
-            <div className="min-w-0">
-              <div className="mb-4 flex min-w-0 items-center gap-3 sm:mb-5">
-                <StoreLogo store={store} className="hidden size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:grid sm:size-20" />
-                {!isCustomStorefront ? <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
-                    {storefront("onlineStore")}
-                  </p>
-                  <h1 className="mt-1 line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
-                    {store.name}
-                  </h1>
-                </div> : null}
-              </div>
-              {customHeroDescription ? (
-                <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
-                  {customHeroDescription}
-                </p>
-              ) : null}
-              <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
-                <Button
-                  type="button"
-                  className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700"
-                  onClick={() => scrollToSection("products")}
-                >
-                  {storefront("browseProducts")}
-                </Button>
-                {locations.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    onClick={() => scrollToSection("contact")}
-                  >
-                    {storefront("contact")}
-                  </Button>
-                ) : null}
-                {aboutContent ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    onClick={() => scrollToSection("about")}
-                  >
-                    {storefront("learnAboutStore")}
-                  </Button>
-                ) : null}
-              </div>
-              <MarketplaceSearch
-                stores={[store]}
-                defaultValue={searchQuery}
-                storeSlug={store.slug}
-                searchBaseHref={storeHomeHref}
-                resultsAnchorId="products"
-                className="mt-4 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950 sm:mt-6 sm:p-1.5"
-                inputClassName="h-11 rounded-[12px] border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
-                buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
-                buttonSize="lg"
-                stackOnMobile
-                compactActions
-              />
-              {customHeroCategories.length > 0 ? (
-                <div className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-4 sm:flex-wrap sm:overflow-visible">
-                  {customHeroCategories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      className="flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 sm:h-auto sm:px-3.5 sm:py-2 sm:text-xs"
-                      onClick={() =>
-                        selectCategory(category, { scrollToProducts: !isCustomStorefront })
-                      }
-                    >
-                      {category.name}
-                    </button>
-                  ))}
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.92)_0%,rgba(2,6,23,0.72)_38%,rgba(2,6,23,0.12)_78%)] max-sm:bg-[linear-gradient(0deg,rgba(2,6,23,0.95)_0%,rgba(2,6,23,0.28)_72%)]" aria-hidden="true" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-slate-950/10" aria-hidden="true" />
+              <StoreWhatsAppButton phone={storeContactPhone} />
+
+              <div className="relative z-10 flex min-h-[330px] max-w-2xl flex-col justify-end p-5 pb-7 text-white sm:min-h-[390px] sm:justify-center sm:p-9 lg:min-h-[430px] lg:p-12">
+                <div className="flex min-w-0 items-center gap-4">
+                  <StoreLogo store={store} className="size-[72px] shrink-0 rounded-[20px] border-2 border-white/90 bg-white shadow-[0_16px_36px_rgba(2,6,23,0.35)] sm:size-24 sm:rounded-[24px]" />
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 text-base font-bold leading-snug text-white sm:text-xl">
+                      {heroSubtitle}
+                    </p>
+                    {customHeroDescription ? (
+                      <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-white/72 sm:text-[15px]">
+                        {customHeroDescription}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              ) : null}
-            </div>
-            <div className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:block">
-              <div className="aspect-[4/3] w-full">
-                <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={storeContactPhone} />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
-              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
-                <p className="text-xs font-semibold text-slate-200">{storefront("store")}</p>
-                <div className="mt-1 flex min-w-0 items-end justify-between gap-3">
-                  <p className="line-clamp-2 min-w-0 break-words text-lg font-bold text-white drop-shadow-sm">
-                    {heroSubtitle}
-                  </p>
+                <div className="mt-5 flex min-w-0 flex-wrap items-center gap-2.5">
+                  <Button
+                    type="button"
+                    className="h-11 rounded-full bg-white px-5 text-sm font-bold text-slate-950 shadow-lg md:hover:bg-blue-50 md:hover:text-blue-700"
+                    onClick={() => scrollToSection("products")}
+                  >
+                    {storefront("browseProducts")}
+                    <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                  </Button>
+                  {locations.length > 0 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-11 rounded-full border-white/35 bg-white/10 px-5 text-sm font-semibold text-white shadow-none backdrop-blur-md md:hover:bg-white md:hover:text-slate-950"
+                      onClick={() => scrollToSection("contact")}
+                    >
+                      {storefront("contact")}
+                    </Button>
+                  ) : null}
                   {aboutContent ? (
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-9 shrink-0 rounded-full border-white/25 bg-white/95 px-3 text-xs font-semibold text-slate-950 shadow-none md:hover:bg-white md:hover:text-blue-700"
+                      className="hidden h-11 rounded-full border-white/35 bg-white/10 px-5 text-sm font-semibold text-white shadow-none backdrop-blur-md md:hover:bg-white md:hover:text-slate-950 sm:inline-flex"
                       onClick={() => scrollToSection("about")}
                     >
                       {storefront("learnAboutStore")}
@@ -2339,12 +2284,42 @@ export function Storefront({
                 </div>
               </div>
             </div>
+
+            <div className="absolute inset-x-2 bottom-0 z-20 rounded-[20px] border border-slate-200/80 bg-white p-3 shadow-[0_18px_50px_rgba(15,23,42,0.14)] dark:border-slate-800 dark:bg-slate-900 sm:inset-x-8 sm:p-4 lg:inset-x-14 lg:flex lg:items-center lg:gap-5 lg:p-5">
+              <MarketplaceSearch
+                stores={[store]}
+                defaultValue={searchQuery}
+                storeSlug={store.slug}
+                searchBaseHref={storeHomeHref}
+                resultsAnchorId="products"
+                className="min-w-0 flex-1 rounded-[14px] border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-950 sm:p-1.5"
+                inputClassName="h-11 rounded-[12px] border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
+                buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+                buttonSize="lg"
+                stackOnMobile
+                compactActions
+              />
+              {customHeroCategories.length > 0 ? (
+                <div className="mt-3 flex max-w-full shrink-0 gap-2 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:mt-0 lg:max-w-[48%]">
+                  {customHeroCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className="flex h-9 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                      onClick={() => selectCategory(category, { scrollToProducts: true })}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </section>
         )}
 
+        {modernProductsSection}
         {modernCategoriesSection}
         {aboutSection}
-        {modernProductsSection}
         {!isStoreOwner ? (
           <div id="contact" className="scroll-mt-28">
             <PublicStoreLocationSection
