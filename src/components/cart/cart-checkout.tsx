@@ -1047,15 +1047,19 @@ export function CartCheckout({
             ) : (
               <input type="hidden" name="deliveryRegion" value="" />
             )}
-            <label className="grid gap-2 text-sm font-medium">
-              Ünvan
-              <textarea
-                name="address"
-                defaultValue={defaultAddress}
-                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required={deliveryMethod !== "pickup"}
-              />
-            </label>
+            {deliveryMethod === "pickup" ? (
+              <input type="hidden" name="address" value="" />
+            ) : (
+              <label className="grid gap-2 text-sm font-medium">
+                Ünvan
+                <textarea
+                  name="address"
+                  defaultValue={defaultAddress}
+                  className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  required
+                />
+              </label>
+            )}
             <label className="grid gap-2 text-sm font-medium">
               Qeyd
               <textarea

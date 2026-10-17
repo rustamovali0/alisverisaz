@@ -242,7 +242,14 @@ export function MarketplaceHeader({
       !pathname.startsWith("/seller") &&
       !pathname.startsWith("/admin") &&
       !pathname.startsWith("/radmin"));
-  const shouldGateMobileSearch = isProductDetailPage;
+  const shouldUseCompactSearchButton =
+    pathname === "/cart" ||
+    pathname.startsWith("/cart/") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/") ||
+    pathname === "/favorites" ||
+    pathname.startsWith("/favorites/");
+  const shouldGateMobileSearch = isProductDetailPage || shouldUseCompactSearchButton;
   const shouldShowMobileSearchToggle =
     showMobileSearch &&
     !shouldSuppressSearch &&
