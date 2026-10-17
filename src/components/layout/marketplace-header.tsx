@@ -580,7 +580,18 @@ export function MarketplaceHeader({
               >
                 {logoUrl ? (
                   <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                    <img src={logoUrl} alt={displaySiteName} className="h-full w-full object-contain p-0.5" />
+                    <img
+                      src={logoUrl}
+                      alt={displaySiteName}
+                      className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
+                    />
+                    {darkLogoUrl ? (
+                      <img
+                        src={darkLogoUrl}
+                        alt={displaySiteName}
+                        className="hidden h-full w-full object-contain p-0.5 dark:block"
+                      />
+                    ) : null}
                   </span>
                 ) : (
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-300">
