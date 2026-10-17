@@ -2292,17 +2292,13 @@ export function Storefront({
               <div className="relative z-10 flex min-w-0 flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-14 xl:px-20">
                 <StoreLogo store={store} className="mb-7 size-20 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:size-24" />
                 <p className="max-w-xl text-3xl font-black leading-[1.12] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-5xl lg:text-[54px]">
-                  {primaryStoreCategory?.name ?? heroSubtitle}
+                  {store.heroSubtitle?.trim() || storefront("heroTitle")}
                 </p>
                 {customHeroDescription ? (
                   <p className="mt-5 max-w-lg text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8">
                     {customHeroDescription}
                   </p>
-                ) : (
-                  <p className="mt-4 text-base font-semibold text-slate-600 dark:text-slate-300">
-                    {store.productCount} {storefront("products")}
-                  </p>
-                )}
+                ) : null}
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <Button
                     type="button"
@@ -2322,16 +2318,6 @@ export function Storefront({
                       {storefront("contact")}
                     </Button>
                   ) : null}
-                </div>
-                <div className="mt-9 grid grid-cols-2 gap-5 border-t border-slate-300/80 pt-5 dark:border-slate-700 sm:max-w-md">
-                  <div>
-                    <p className="text-2xl font-black text-slate-950 dark:text-white">{store.productCount}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{storefront("products")}</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-black text-slate-950 dark:text-white">{storeProductCategoryIds.size}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{storefront("categories")}</p>
-                  </div>
                 </div>
               </div>
 

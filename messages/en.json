@@ -238,6 +238,7 @@
     "total": "Total",
     "addProductFirst": "Add a product before confirming the order.",
     "browseProducts": "Browse products",
+    "heroTitle": "Discover selected products",
     "confirmOrder": "Confirm order"
   },
   "checkout": {
