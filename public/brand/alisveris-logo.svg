@@ -1,0 +1,192 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%">
+  <defs>
+    <!-- Arka Plan Geçişi -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f7f9fc" />
+    </radialGradient>
+
+    <!-- Alt Taban Gölgesi Filtresi ve Geçişi -->
+    <radialGradient id="shadowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a90e2" stop-opacity="0.24" />
+      <stop offset="55%" stop-color="#6ba8f0" stop-opacity="0.10" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- 1. Üst Sağ İç Kanat Geçişleri -->
+    <linearGradient id="upperRightWingGrad" x1="25%" y1="5%" x2="75%" y2="95%">
+      <stop offset="0%" stop-color="#0997f3" />
+      <stop offset="35%" stop-color="#0070d8" />
+      <stop offset="75%" stop-color="#004bb5" />
+      <stop offset="100%" stop-color="#003594" />
+    </linearGradient>
+
+    <linearGradient id="topFoldInnerShadow" x1="15%" y1="30%" x2="85%" y2="75%">
+      <stop offset="0%" stop-color="#031e5e" stop-opacity="0.95" />
+      <stop offset="55%" stop-color="#00338a" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#0052bd" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- 2. Sağ Bacak (Koyu Lacivert Sütun) Geçişi -->
+    <linearGradient id="rightLegGrad" x1="20%" y1="5%" x2="75%" y2="95%">
+      <stop offset="0%" stop-color="#0147b3" />
+      <stop offset="45%" stop-color="#01338c" />
+      <stop offset="85%" stop-color="#012166" />
+      <stop offset="100%" stop-color="#01184f" />
+    </linearGradient>
+
+    <!-- 3. Alt Şerit Üst Turkuaz Bölge Geçişi -->
+    <linearGradient id="bottomRibbonCyanGrad" x1="5%" y1="35%" x2="90%" y2="75%">
+      <stop offset="0%" stop-color="#48c9fd" />
+      <stop offset="45%" stop-color="#1eb6fb" />
+      <stop offset="100%" stop-color="#12a4fa" />
+    </linearGradient>
+
+    <!-- 4. Alt Şerit Dalgalı Gövde Geçişi -->
+    <linearGradient id="bottomRibbonWaveGrad" x1="5%" y1="25%" x2="95%" y2="85%">
+      <stop offset="0%" stop-color="#0261c4" />
+      <stop offset="28%" stop-color="#0377e3" />
+      <stop offset="60%" stop-color="#0d92f6" />
+      <stop offset="85%" stop-color="#22b8fd" />
+      <stop offset="100%" stop-color="#35c8ff" />
+    </linearGradient>
+
+    <!-- 5. Sol Bacak Alt Koyu Mavi Sütun Geçişi -->
+    <linearGradient id="leftLegLowerGrad" x1="75%" y1="10%" x2="20%" y2="95%">
+      <stop offset="0%" stop-color="#014ec2" />
+      <stop offset="45%" stop-color="#0040ad" />
+      <stop offset="100%" stop-color="#02429c" />
+    </linearGradient>
+
+    <!-- 6. Üst Sol Ana Kıvrımlı Şerit Geçişi -->
+    <linearGradient id="upperLeftRibbonGrad" x1="15%" y1="92%" x2="82%" y2="8%">
+      <stop offset="0%" stop-color="#1cbcfb" />
+      <stop offset="28%" stop-color="#0ea2f6" />
+      <stop offset="62%" stop-color="#027ce8" />
+      <stop offset="88%" stop-color="#004fc4" />
+      <stop offset="100%" stop-color="#003ba3" />
+    </linearGradient>
+
+    <!-- 7. Çanta Sapı ve Halka Geçişi -->
+    <linearGradient id="handleGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#012163" />
+      <stop offset="50%" stop-color="#01266e" />
+      <stop offset="100%" stop-color="#002f7a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Arka Plan -->
+  <rect width="1000" height="1000" fill="url(#bgGrad)" />
+
+  <!-- Taban Gölgesi -->
+  <ellipse cx="515" cy="782" rx="345" ry="26" fill="url(#shadowGrad)" />
+
+  <!-- 1. ÜST SAĞ İÇ KANAT (Çanta Üstü ve Tepe Kıvrımı Arkası) -->
+  <g id="upper-right-wing">
+    <path d="M 484 201
+             C 525 201, 555 203, 574 208
+             C 596 214, 612 230, 622 248
+             L 718 438
+             L 688 432
+             C 688 405, 681 382, 667 364
+             C 648 340, 616 328, 584 330
+             C 556 332, 534 346, 520 366
+             C 506 360, 488 362, 473 376
+             L 555 235
+             Z" fill="url(#upperRightWingGrad)" />
+
+    <!-- Tepe Kıvrımının Altına Düşen Koyu Lacivert İç Gölge -->
+    <path d="M 532 205
+             C 555 215, 563 230, 554 250
+             L 473 376
+             C 488 362, 506 360, 520 366
+             C 533 348, 552 335, 575 331
+             C 562 290, 552 240, 532 205 Z" fill="url(#topFoldInnerShadow)" />
+  </g>
+
+  <!-- 2. SAĞ BACAK (Sağdaki Koyu Lacivert Üçgen Sütun) -->
+  <path id="right-leg" d="M 735 462
+           C 737 454, 746 453, 749 460
+           L 828 692
+           C 839 726, 840 745, 830 761
+           C 827 766, 824 769, 821 770
+           C 805 739, 765 702, 695 671
+           Z" fill="url(#rightLegGrad)" />
+
+  <!-- 3. ALT DALGALI ŞERİT (Sol Bacaktan Sağ Alt Köşeye Uzanan Şerit) -->
+  <g id="bottom-ribbon">
+    <!-- 3A. Üst Parlak Turkuaz/Camgöbeği Bölge -->
+    <path d="M 390 526
+             C 455 572, 525 610, 605 639
+             L 535 642
+             C 465 620, 385 622, 310 679
+             Z" fill="url(#bottomRibbonCyanGrad)" />
+
+    <!-- 3B. Alt Mavi-Turkuaz Dalgalı Gövde -->
+    <path d="M 310 679
+             C 365 628, 435 618, 515 630
+             C 575 630, 635 648, 695 671
+             C 765 702, 808 738, 821 770
+             C 818 773, 812 774, 800 774
+             L 585 779
+             C 535 779, 490 764, 435 732
+             L 358 685
+             C 340 675, 324 673, 310 679
+             Z" fill="url(#bottomRibbonWaveGrad)" />
+  </g>
+
+  <!-- 4. SOL BACAK ALT KISIM (Koyu Mavi Sütun) -->
+  <path id="left-leg-lower" d="M 302 405
+           L 390 526
+           L 310 679
+           L 273 749
+           C 256 775, 218 782, 188 763
+           C 162 746, 155 715, 168 690
+           L 285 440
+           C 292 425, 297 415, 302 405
+           Z" fill="url(#leftLegLowerGrad)" />
+
+  <!-- 5. ÜST SOL KIVRIMLI ŞERİT (Sol Ortadan Tepeye Çıkan Parlak Mavi Şerit) -->
+  <path id="upper-left-ribbon" d="M 305 398
+           C 296 420, 304 450, 326 473
+           C 346 493, 368 510, 390 526
+           L 473 376
+           L 554 248
+           C 564 230, 558 210, 532 204
+           C 512 200, 468 200, 441 203
+           C 418 206, 402 218, 390 239
+           L 305 398
+           Z" fill="url(#upperLeftRibbonGrad)" />
+
+  <!-- 6. ALIŞVERİŞ ÇANTASI SAPI VE HALKALARI -->
+  <g id="bag-handle" fill="url(#handleGrad)">
+    <!-- "U" Biçimli Çanta Sapı -->
+    <path d="M 500 440
+             C 510 392, 535 352, 578 345
+             C 622 338, 658 365, 670 408
+             C 674 424, 673 446, 669 470
+             C 667 479, 660 483, 653 482
+             C 646 480, 645 473, 647 464
+             C 651 442, 651 422, 647 406
+             C 638 376, 610 361, 582 366
+             C 550 371, 531 402, 523 442
+             C 521 450, 514 454, 507 453
+             C 500 451, 498 446, 500 440 Z" />
+
+    <!-- Sol Delik Halkası (Crommet) -->
+    <path d="M 495 438
+             C 493 448, 498 458, 507 460
+             C 516 462, 524 455, 525 444
+             C 530 450, 530 460, 524 467
+             C 517 476, 503 477, 494 470
+             C 486 463, 486 448, 495 438 Z" />
+
+    <!-- Sağ Delik Halkası (Grommet) -->
+    <path d="M 642 466
+             C 639 476, 644 486, 654 489
+             C 663 491, 670 484, 671 472
+             C 677 478, 677 489, 670 497
+             C 663 505, 649 506, 640 499
+             C 632 491, 633 476, 642 466 Z" />
+  </g>
+</svg>

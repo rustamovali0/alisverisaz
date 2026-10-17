@@ -134,9 +134,9 @@ export const homeThemeColorPresets = {
 export const defaultSiteSettings: SiteSettings = {
   siteName: "Alışveriş",
   shortName: "Alışveriş",
-  logoUrl: "",
-  darkLogoUrl: "",
-  faviconUrl: "",
+  logoUrl: "/brand/alisveris-logo.svg",
+  darkLogoUrl: "/brand/alisveris-logo-dark.svg",
+  faviconUrl: "/brand/alisveris-logo.svg",
   defaultSeoTitle: "Alışveriş - Marketplace, mağaza və elan platforması",
   defaultMetaDescription:
     "Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə və sifarişlər üçün marketplace platforması.",
