@@ -300,24 +300,26 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
       <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-4 py-3 sm:px-6 md:py-6 lg:px-8"}`}>
-        <nav className={`${isCustomStorefrontProduct ? "mb-3 text-xs sm:mb-4 sm:text-sm" : "mb-5 text-sm md:mb-6"} min-w-0 text-slate-500 dark:text-slate-400`}>
-          <div className={`flex min-w-0 ${isCustomStorefrontProduct ? "items-center gap-2" : "flex-col gap-3 sm:flex-row sm:items-center"}`}>
-            <ProductBackButton />
-            <div className={`${isCustomStorefrontProduct ? "hidden sm:flex" : "flex"} min-w-0 items-center overflow-hidden`}>
-              <Link href={breadcrumbHomeHref} className="hover:text-blue-600 dark:hover:text-blue-300">
-                {breadcrumbHomeLabel}
-              </Link>
-              <span className="mx-2">·</span>
-              <Link href={storeBaseHref} className="min-w-0 truncate hover:text-blue-600 dark:hover:text-blue-300">
-                {detail.store.name}
-              </Link>
-              <span className="mx-2">·</span>
-              <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
-                {detail.product.name}
-              </span>
+        {!isCustomStorefrontProduct ? (
+          <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+              <ProductBackButton />
+              <div className="flex min-w-0 items-center overflow-hidden">
+                <Link href={breadcrumbHomeHref} className="hover:text-blue-600 dark:hover:text-blue-300">
+                  {breadcrumbHomeLabel}
+                </Link>
+                <span className="mx-2">·</span>
+                <Link href={storeBaseHref} className="min-w-0 truncate hover:text-blue-600 dark:hover:text-blue-300">
+                  {detail.store.name}
+                </Link>
+                <span className="mx-2">·</span>
+                <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
+                  {detail.product.name}
+                </span>
+              </div>
             </div>
-          </div>
-        </nav>
+          </nav>
+        ) : null}
 
         <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-3 sm:gap-4" : "gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start`}>
           <ProductDetailGallery
