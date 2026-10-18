@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import {
   CustomStoreFooter,
-  CustomStorefrontHeader,
 } from "@/components/cart/product-marketplace";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -300,14 +299,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ]}
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
-      {isCustomStorefrontProduct ? (
-        <CustomStorefrontHeader
-          store={detail.store}
-          storeHomeHref={storeBaseHref}
-          storeSubdomainSlug={storeSubdomainSlug}
-          isolatedStorefront={isCustomStorefrontProduct}
-        />
-      ) : null}
       <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-4 py-3 sm:px-6 md:py-6 lg:px-8"}`}>
         <nav className={`${isCustomStorefrontProduct ? "mb-3 text-xs sm:mb-4 sm:text-sm" : "mb-5 text-sm md:mb-6"} min-w-0 text-slate-500 dark:text-slate-400`}>
           <div className={`flex min-w-0 ${isCustomStorefrontProduct ? "items-center gap-2" : "flex-col gap-3 sm:flex-row sm:items-center"}`}>
