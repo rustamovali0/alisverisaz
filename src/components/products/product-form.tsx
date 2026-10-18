@@ -619,9 +619,10 @@ export function ProductForm({
             step="0.01"
             defaultValue={
               product
-                ? Math.max(product.priceAmount - product.discountAmount, 0)
-                : undefined
+                ? Math.max(product.priceAmount - product.discountAmount, 0) || ""
+                : ""
             }
+            placeholder="Endirim yoxdursa boş saxlayın"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           />

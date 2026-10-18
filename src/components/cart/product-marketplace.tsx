@@ -853,8 +853,8 @@ function MarketplaceFilterBar({
             type="number"
             min="0"
             inputMode="decimal"
-            value={minPrice}
-            onChange={(event) => onMinPrice(event.target.value)}
+            value={minPrice === "0" ? "" : minPrice}
+            onChange={(event) => onMinPrice(event.target.value === "0" ? "" : event.target.value)}
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
             className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
@@ -863,8 +863,8 @@ function MarketplaceFilterBar({
             type="number"
             min="0"
             inputMode="decimal"
-            value={maxPrice}
-            onChange={(event) => onMaxPrice(event.target.value)}
+            value={maxPrice === "0" ? "" : maxPrice}
+            onChange={(event) => onMaxPrice(event.target.value === "0" ? "" : event.target.value)}
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
             className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
