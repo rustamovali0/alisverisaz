@@ -27,6 +27,7 @@ type ProductPurchaseOptionsProps = {
   disabled?: boolean;
   isolatedStoreSlug?: string | null;
   isolatedStoreBaseHref?: string | null;
+  compact?: boolean;
 };
 
 function isSelectionReady(product: CartProduct, selection: Record<string, string>) {
@@ -81,6 +82,7 @@ export function ProductPurchaseOptions({
   disabled = false,
   isolatedStoreSlug,
   isolatedStoreBaseHref,
+  compact = false,
 }: ProductPurchaseOptionsProps) {
   const initialSelection = useMemo(
     () => getAutoProductVariantSelection(product.options ?? []),
@@ -106,7 +108,7 @@ export function ProductPurchaseOptions({
   const isUnavailable = disabled || stockLimit <= 0;
 
   return (
-    <div className="mt-6 grid min-w-0 gap-4">
+    <div className={cn("grid min-w-0", compact ? "mt-4 gap-2.5 sm:mt-5 sm:gap-3" : "mt-6 gap-4")}>
       {visibleOptions.length > 0 ? (
         <div className="grid gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45">
           <div className="flex min-w-0 items-center justify-between gap-3">
@@ -180,7 +182,7 @@ export function ProductPurchaseOptions({
           disabled={isUnavailable}
           isolatedStoreSlug={isolatedStoreSlug}
           isolatedStoreBaseHref={isolatedStoreBaseHref}
-          className="h-[52px] w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700"
+          className={cn("w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700", compact ? "h-11 sm:h-12" : "h-[52px]")}
         />
         <AddToCartButton
           product={product}
@@ -189,7 +191,7 @@ export function ProductPurchaseOptions({
           selectionReady={selectionReady}
           disabled={isUnavailable}
           isolatedStoreSlug={isolatedStoreSlug}
-          className="h-[52px] w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          className={cn("w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200", compact ? "h-11 sm:h-12" : "h-[52px]")}
         />
       </div>
       {showWhatsappOrderButton ? (
@@ -203,7 +205,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-[52px] w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300"
+          className={cn("w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300", compact ? "h-11 sm:h-12" : "h-[52px]")}
         />
       ) : null}
     </div>

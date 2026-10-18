@@ -18,6 +18,7 @@ type ProductDetailGalleryProps = {
   product: CartProduct;
   productName: string;
   viewerRole?: AuthRole | null;
+  compact?: boolean;
 };
 
 export function ProductBackButton() {
@@ -42,6 +43,7 @@ export function ProductDetailGallery({
   product,
   productName,
   viewerRole,
+  compact = false,
 }: ProductDetailGalleryProps) {
   const galleryImages = useMemo(() => {
     if (images.length > 0) {
@@ -152,19 +154,19 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
+      <div className={cn("min-w-0 overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900", compact ? "rounded-xl" : "rounded-2xl")}>
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-square w-full bg-slate-50 text-left dark:bg-slate-950/45"
+          className={cn("group relative block w-full bg-slate-50 text-left dark:bg-slate-950/45", compact ? "aspect-[4/3] sm:aspect-square" : "aspect-square")}
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
             <img
               src={activeImage.url}
               alt={productName}
-              className="h-full w-full object-contain p-4 transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none sm:p-6"
+              className={cn("h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none", compact ? "p-2.5 sm:p-5" : "p-4 sm:p-6")}
             />
           ) : (
             <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
