@@ -141,24 +141,27 @@ export function CartCheckout({
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
-  const visibleItems = items
-    .map((item) => ({
-      item,
-      product: productMap.get(item.productId),
-    }))
-    .filter((entry): entry is { item: CartItem; product: CartProduct } =>
-      Boolean(entry.product) && (!isolatedStoreId || entry.product?.storeId === isolatedStoreId),
-    );
-  const total = visibleItems.reduce((sum, entry) => {
-    const unit = getProductVariantUnitPrice({
-      priceAmount: entry.product.priceAmount,
-      discountAmount: entry.product.discountAmount,
-      variants: entry.product.variantCombinations,
-      selection: entry.item.selectedOptions,
-    });
-
-    return sum + unit * entry.item.quantity;
-  }, 0);
+  const visibleItems = useMemo(
+    () =>
+      items
+        .map((item) => ({ item, product: productMap.get(item.productId) }))
+        .filter((entry): entry is { item: CartItem; product: CartProduct } =>
+          Boolean(entry.product) && (!isolatedStoreId || entry.product?.storeId === isolatedStoreId),
+        ),
+    [isolatedStoreId, items, productMap],
+  );
+  const total = useMemo(
+    () => visibleItems.reduce((sum, entry) => {
+      const unit = getProductVariantUnitPrice({
+        priceAmount: entry.product.priceAmount,
+        discountAmount: entry.product.discountAmount,
+        variants: entry.product.variantCombinations,
+        selection: entry.item.selectedOptions,
+      });
+      return sum + unit * entry.item.quantity;
+    }, 0),
+    [visibleItems],
+  );
   const storeGroups = useMemo(() => {
     const groups = new Map<
       string,
@@ -298,11 +301,6 @@ export function CartCheckout({
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const frame = window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -737,7 +735,9 @@ export function CartCheckout({
   }
 
   return (
-      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
+      <main className={isEmptyCart
+        ? "h-[calc(100dvh-7.5rem)] min-h-0 overflow-hidden bg-slate-50 pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-background md:h-auto md:min-h-[60vh] md:overflow-visible md:pb-0"
+        : "min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0"}>
       <div
         className={
           checkoutOnly
@@ -810,6 +810,8 @@ export function CartCheckout({
                       <img
                         src={product.imageUrl}
                         alt={product.name}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-contain"
                       />
                     ) : null}
