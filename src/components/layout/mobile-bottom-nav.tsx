@@ -296,11 +296,14 @@ export function MobileBottomNav({
 
   const navigate = useCallback(
     (href: string) => {
-      const [, hash] = href.split("#");
+      const [targetHref, hash] = href.split("#");
+      const targetPath = targetHref.split("?")[0] || "/";
 
-      if (isCurrentRoute(href)) {
+      if (pathname === targetPath) {
         if (hash) {
           scrollToHash(hash);
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
         return;
       }
@@ -310,7 +313,7 @@ export function MobileBottomNav({
         window.setTimeout(() => scrollToHash(hash), 80);
       }
     },
-    [isCurrentRoute, router],
+    [pathname, router],
   );
 
   const handleItemNavigation = useCallback(

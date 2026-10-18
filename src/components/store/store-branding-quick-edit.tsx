@@ -35,13 +35,13 @@ const editableFields: Array<{
 }> = [
   {
     key: "heroTitle",
-    label: "Başlıq",
-    placeholder: (storeName) => `${storeName} mağazası`,
+    label: "Vitrin başlığı",
+    placeholder: () => "Seçilmiş məhsulları kəşf edin",
   },
   {
     key: "heroSubtitle",
-    label: "Alt mətn",
-    placeholder: () => "390 məhsul • Elektronika və daha çox",
+    label: "Vitrin alt mətni",
+    placeholder: () => "Məhsullarınız haqqında qısa təqdimat",
   },
   {
     key: "socialInstagram",

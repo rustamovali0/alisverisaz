@@ -318,20 +318,20 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
           </span>
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Mağaza səhifəsində title
+          Vitrin başlığı
           <input
             name="heroTitle"
             defaultValue={heroTitle}
-            placeholder={`${store.name} mağazası`}
+            placeholder="Seçilmiş məhsulları kəşf edin"
             className="premium-input h-11"
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Mağaza səhifəsində alt mətn
+          Vitrin alt mətni
           <input
             name="heroSubtitle"
             defaultValue={heroSubtitle}
-            placeholder="390 məhsul • Elektronika və daha çox"
+            placeholder="Məhsullarınız haqqında qısa təqdimat"
             className="premium-input h-11"
           />
         </label>

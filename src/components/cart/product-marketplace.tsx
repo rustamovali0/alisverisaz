@@ -2296,11 +2296,11 @@ export function Storefront({
               <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
                 <StoreLogo store={store} className="mb-4 hidden size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
                 <p className="max-w-xl text-2xl font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
-                  {store.heroSubtitle?.trim() || storefront("heroTitle")}
+                  {store.heroTitle?.trim() || storefront("heroTitle")}
                 </p>
-                {customHeroDescription ? (
+                {store.heroSubtitle?.trim() || customHeroDescription ? (
                   <p className="mt-3 hidden line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:block sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
-                    {customHeroDescription}
+                    {store.heroSubtitle?.trim() || customHeroDescription}
                   </p>
                 ) : null}
                 <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-7 sm:gap-3">

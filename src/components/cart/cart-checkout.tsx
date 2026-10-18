@@ -263,6 +263,9 @@ export function CartCheckout({
   const isolatedProductsHref = isolatedStoreSlug
     ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}#products`
     : "/products";
+  const isolatedHomeHref = isolatedStoreSlug
+    ? isolatedStoreBaseHref || `/${isolatedStoreSlug}`
+    : "/";
   const returnHref = isolatedStoreSlug ? isolatedProductsHref :
     firstProduct?.storeSlug && firstProduct?.slug
       ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
@@ -276,7 +279,7 @@ export function CartCheckout({
     try {
       const referrerUrl = referrer ? new URL(referrer) : null;
       const isSameOrigin = referrerUrl?.origin === window.location.origin;
-      const isCartReferrer = referrerUrl?.pathname === "/cart";
+      const isCartReferrer = referrerUrl?.pathname.endsWith("/cart");
 
       if (isSameOrigin && !isCartReferrer && window.history.length > 1) {
         router.back();
@@ -286,7 +289,7 @@ export function CartCheckout({
       // Fall back to the home page when the browser does not expose a usable referrer.
     }
 
-    router.push("/");
+    router.push(isolatedHomeHref);
   }
 
   useEffect(() => {
@@ -752,11 +755,12 @@ export function CartCheckout({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="hidden rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:inline-flex"
+                className="inline-flex size-9 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-none hover:bg-slate-50 md:h-9 md:w-auto md:rounded-[10px] md:px-3"
                 onClick={goBackFromCart}
+                aria-label={common("back")}
               >
-                  <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
-                  {common("back")}
+                  <ArrowLeft className="size-4 md:mr-2" aria-hidden="true" />
+                  <span className="hidden md:inline">{common("back")}</span>
               </Button>
               <h1 className="text-center text-3xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
                 {common("cart")}
