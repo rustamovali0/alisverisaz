@@ -141,9 +141,18 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
   );
 }
 
-function StoreHeroCover({ store }: { store: MarketplaceStore }) {
+function StoreHeroCover({
+  store,
+  isolated = false,
+}: {
+  store: MarketplaceStore;
+  isolated?: boolean;
+}) {
   const [hasError, setHasError] = useState(false);
-  const coverUrl = store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL;
+  const coverUrl =
+    (isolated ? store.storefrontHeroUrl : null) ||
+    store.coverUrl ||
+    DEFAULT_MARKETPLACE_BANNER_URL;
 
   if (hasError) {
     return (
@@ -160,7 +169,7 @@ function StoreHeroCover({ store }: { store: MarketplaceStore }) {
       style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }}
       className={cn(
         "h-full w-full object-cover object-center",
-        store.coverUrl ? "bg-slate-950" : "",
+        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL ? "bg-slate-950" : "",
       )}
       onError={() => setHasError(true)}
     />
@@ -2338,7 +2347,7 @@ export function Storefront({
               </div>
 
               <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[520px]">
-                <StoreHeroCover store={store} />
+                <StoreHeroCover store={store} isolated />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
                 <StoreWhatsAppButton phone={storeContactPhone} />
                 {customHeroCategories.length > 0 ? (

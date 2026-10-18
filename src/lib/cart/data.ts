@@ -785,6 +785,7 @@ async function getMarketplaceStoresUncached(
         socialTiktok: readSetting(store.settings, "socialTiktok"),
         logoUrl: store.logo_url,
         coverUrl: store.cover_url,
+        storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
@@ -920,6 +921,7 @@ export async function getMarketplaceStoreCards(input: {
             socialTiktok: readSetting(store.settings, "socialTiktok"),
             logoUrl: store.logo_url,
             coverUrl: store.cover_url,
+            storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
             updatedAt: store.updated_at ?? null,
             productCount: productCounts.get(store.id) ?? 0,
             sampleProducts: [],
@@ -1029,6 +1031,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     whatsappPhone: readSetting(store.settings, "whatsappPhone"),
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
+    storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
     updatedAt: store.updated_at ?? null,
     productCount: count ?? promotedPageProducts.length,
     sampleProducts: promotedPageProducts,
@@ -1170,6 +1173,7 @@ async function getMarketplaceProductByIdUncached(input: {
       whatsappPhone: readSetting(row.stores.settings, "whatsappPhone"),
       logoUrl: row.stores.logo_url,
       coverUrl: row.stores.cover_url,
+      storefrontHeroUrl: readSetting(row.stores.settings, "storefrontHeroUrl"),
       updatedAt: row.stores.updated_at ?? null,
       productCount: storeProductCount ?? 0,
       sampleProducts: [],

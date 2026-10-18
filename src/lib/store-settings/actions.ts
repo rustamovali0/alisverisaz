@@ -73,7 +73,7 @@ async function uploadStoreMedia(input: {
   file: File;
   userId: string;
   storeId: string;
-  kind: "logo" | "banner";
+  kind: "logo" | "banner" | "storefront-hero";
 }) {
   const uploaded = await uploadImageToR2({
     file: input.file,
@@ -85,7 +85,12 @@ async function uploadStoreMedia(input: {
   await recordImageMediaAsset({
     uploaded,
     originalFileName: input.file.name,
-    altText: input.kind === "logo" ? "Mağaza logosu" : "Mağaza banneri",
+    altText:
+      input.kind === "logo"
+        ? "Mağaza logosu"
+        : input.kind === "storefront-hero"
+          ? "Şəxsi mağaza vitrin şəkli"
+          : "Mağaza banneri",
     userId: input.userId,
     metadata: {
       source: "store-settings",
@@ -112,6 +117,7 @@ export async function updateSellerStoreSettingsAction(
   const socialTiktok = readString(formData, "socialTiktok");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
+  const storefrontHeroFile = readFile(formData, "storefrontHero");
   const bannerPosition: Record<string, number> = {};
   for (const key of ["bannerPositionX", "bannerPositionY"]) {
     if (!formData.has(key)) continue;
@@ -280,6 +286,22 @@ export async function updateSellerStoreSettingsAction(
         storeId,
         kind: "banner",
       });
+    }
+
+    if (storefrontHeroFile && canManageCustomStorefront) {
+      const previousHeroUrl =
+        typeof currentSettings.storefrontHeroUrl === "string"
+          ? currentSettings.storefrontHeroUrl
+          : "";
+      if (previousHeroUrl) replacedUrls.push(previousHeroUrl);
+      const settings = readSettings(payload.settings ?? currentSettings);
+      settings.storefrontHeroUrl = await uploadStoreMedia({
+        file: storefrontHeroFile,
+        userId: current.user.id,
+        storeId,
+        kind: "storefront-hero",
+      });
+      payload.settings = settings;
     }
 
     const { error } = await (supabaseAdmin as any)

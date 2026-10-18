@@ -175,6 +175,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const aboutContent = readSetting(store.settings, "aboutContent");
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
   const whatsappPhone = readSetting(store.settings, "whatsappPhone");
+  const storefrontHeroUrl = readSetting(store.settings, "storefrontHeroUrl");
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -380,6 +381,22 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             positionY={typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50}
           />
         </div>
+        {customStorefrontEnabled ? (
+          <div className="grid gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <div>
+              <h3 className="font-bold text-slate-950 dark:text-slate-100">Subdomain vitrin şəkli</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Bu şəkil yalnız /{store.slug} və subdomain mağaza səhifəsində görünür. Seçilməyibsə banner, banner də yoxdursa standart şəkil göstərilir.
+              </p>
+            </div>
+            <MediaPicker
+              name="storefrontHero"
+              label="Şəxsi mağaza vitrin şəkli"
+              currentUrl={storefrontHeroUrl || store.cover_url || "/auth/auth-banner.webp"}
+              ratio="aspect-[16/9] max-w-2xl"
+            />
+          </div>
+        ) : null}
         <Button type="submit" disabled={isPending} className="w-fit">
           {isPending ? "Saxlanılır" : "Yadda saxla"}
         </Button>

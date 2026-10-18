@@ -58,6 +58,7 @@ export type MarketplaceStore = {
   whatsappPhone?: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  storefrontHeroUrl?: string | null;
   updatedAt?: string | null;
   productCount: number;
   sampleProducts: CartProduct[];
