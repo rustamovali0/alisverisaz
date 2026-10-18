@@ -263,6 +263,11 @@ function readBooleanSetting(settings: Record<string, unknown> | null | undefined
   return settings?.[key] === true;
 }
 
+function readStringArraySetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  const value = settings?.[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 function normalizeSearchValue(value: string) {
   return value
     .slice(0, MAX_SEARCH_LENGTH)
@@ -786,6 +791,7 @@ async function getMarketplaceStoresUncached(
         logoUrl: store.logo_url,
         coverUrl: store.cover_url,
         storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+        featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
@@ -922,6 +928,7 @@ export async function getMarketplaceStoreCards(input: {
             logoUrl: store.logo_url,
             coverUrl: store.cover_url,
             storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+            featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
             updatedAt: store.updated_at ?? null,
             productCount: productCounts.get(store.id) ?? 0,
             sampleProducts: [],
@@ -1032,6 +1039,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
     storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+    featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
     updatedAt: store.updated_at ?? null,
     productCount: count ?? promotedPageProducts.length,
     sampleProducts: promotedPageProducts,
@@ -1174,6 +1182,7 @@ async function getMarketplaceProductByIdUncached(input: {
       logoUrl: row.stores.logo_url,
       coverUrl: row.stores.cover_url,
       storefrontHeroUrl: readSetting(row.stores.settings, "storefrontHeroUrl"),
+      featuredCategoryIds: readStringArraySetting(row.stores.settings, "featuredCategoryIds"),
       updatedAt: row.stores.updated_at ?? null,
       productCount: storeProductCount ?? 0,
       sampleProducts: [],

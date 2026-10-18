@@ -118,6 +118,9 @@ export async function updateSellerStoreSettingsAction(
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
   const storefrontHeroFile = readFile(formData, "storefrontHero");
+  const featuredCategoryIds = formData
+    .getAll("featuredCategoryIds")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
   const bannerPosition: Record<string, number> = {};
   for (const key of ["bannerPositionX", "bannerPositionY"]) {
     if (!formData.has(key)) continue;
@@ -221,11 +224,15 @@ export async function updateSellerStoreSettingsAction(
       formData.has("aboutContent") ||
       formData.has("socialInstagram") ||
       formData.has("socialTiktok") || formData.has("profitTrackingPresent") ||
+      formData.has("featuredCategoriesPresent") ||
       Object.keys(bannerPosition).length > 0
     ) {
       const settings = currentSettings;
       if (formData.has("profitTrackingPresent")) {
         settings.profitTrackingEnabled = formData.get("profitTrackingEnabled") === "on";
+      }
+      if (formData.has("featuredCategoriesPresent")) {
+        settings.featuredCategoryIds = [...new Set(featuredCategoryIds)].slice(0, 4);
       }
       Object.assign(settings, bannerPosition);
 

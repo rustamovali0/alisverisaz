@@ -22,6 +22,7 @@ type StoreSettingsFormProps = {
     cover_url: string | null;
     settings: Record<string, unknown> | null;
   };
+  availableCategories?: Array<{ id: string; name: string }>;
 };
 
 function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
@@ -164,7 +165,7 @@ function MediaPicker({
   );
 }
 
-export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
+export function StoreSettingsForm({ store, availableCategories = [] }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isOrderMethodPending, startOrderMethodTransition] = useTransition();
   const customStorefrontEnabled = readBooleanSetting(store.settings, "customStorefrontEnabled");
@@ -176,6 +177,9 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
   const whatsappPhone = readSetting(store.settings, "whatsappPhone");
   const storefrontHeroUrl = readSetting(store.settings, "storefrontHeroUrl");
+  const featuredCategoryIds = Array.isArray(store.settings?.featuredCategoryIds)
+    ? store.settings.featuredCategoryIds.filter((item): item is string => typeof item === "string")
+    : [];
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -352,6 +356,23 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
               Protokol yazmadan domaini daxil edin. Domainin DNS A qeydini 178.208.187.209 ünvanına yönəldin. SSL aktivləşməsi üçün domain saxlandıqdan sonra administrator yoxlaması tələb olunur.
             </span>
           </label>
+        ) : null}
+        {customStorefrontEnabled && availableCategories.length > 0 ? (
+          <fieldset className="grid gap-3 rounded-xl border bg-background p-4">
+            <input type="hidden" name="featuredCategoriesPresent" value="1" />
+            <div>
+              <legend className="font-bold">Önə çıxan kateqoriyalar</legend>
+              <p className="mt-1 text-xs text-muted-foreground">Yalnız aktiv məhsulu olan kateqoriyalar göstərilir. Ən çox 4 seçim edin.</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {availableCategories.map((category) => (
+                <label key={category.id} className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium">
+                  <input type="checkbox" name="featuredCategoryIds" value={category.id} defaultChecked={featuredCategoryIds.includes(category.id)} className="size-4" />
+                  {category.name}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         ) : null}
         <label className="grid gap-2 text-sm font-medium">
           Haqqında məlumatı

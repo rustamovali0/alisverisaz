@@ -1795,24 +1795,15 @@ export function Storefront({
     () => categories.filter((category) => storeProductCategoryIds.has(category.id)),
     [categories, storeProductCategoryIds],
   );
-  const sortedStoreCategories = useMemo(
-    () =>
-      [...categories].sort((a, b) => {
-        const aHasProducts = storeProductCategoryIds.has(a.id);
-        const bHasProducts = storeProductCategoryIds.has(b.id);
-
-        if (aHasProducts !== bHasProducts) {
-          return aHasProducts ? -1 : 1;
-        }
-
-        if (a.name === b.name) {
-          return 0;
-        }
-
-        return a.name < b.name ? -1 : 1;
-      }),
-    [categories, storeProductCategoryIds],
-  );
+  const sortedStoreCategories = useMemo(() => {
+    const available = categories.filter((category) => storeProductCategoryIds.has(category.id));
+    const featuredOrder = new Map((store.featuredCategoryIds ?? []).map((id, index) => [id, index]));
+    return available.sort((a, b) => {
+      const aOrder = featuredOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = featuredOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder || a.name.localeCompare(b.name, "az");
+    });
+  }, [categories, store.featuredCategoryIds, storeProductCategoryIds]);
   const primaryStoreCategory = sortedStoreCategories.find((category) =>
     storeProductCategoryIds.has(category.id),
   );
@@ -1820,7 +1811,10 @@ export function Storefront({
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
   const storeContactPhone = store.whatsappPhone || store.phone ||
     locations.find((location) => location.isActive && location.phone)?.phone;
-  const customHeroCategories = heroCategories.slice(0, 4);
+  const selectedFeaturedCategories = (store.featuredCategoryIds?.length ?? 0) > 0
+    ? sortedStoreCategories.filter((category) => store.featuredCategoryIds?.includes(category.id))
+    : sortedStoreCategories;
+  const customHeroCategories = selectedFeaturedCategories.slice(0, 4);
   const customHeroDescription = getDisplayStoreDescription(store);
   const aboutContent = getStoreAboutContent(store);
 

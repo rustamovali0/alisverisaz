@@ -59,6 +59,7 @@ export type MarketplaceStore = {
   logoUrl: string | null;
   coverUrl: string | null;
   storefrontHeroUrl?: string | null;
+  featuredCategoryIds?: string[];
   updatedAt?: string | null;
   productCount: number;
   sampleProducts: CartProduct[];
