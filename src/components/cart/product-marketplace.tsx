@@ -2138,7 +2138,10 @@ export function Storefront({
           {showAllMobileCategories ? storefront("showLess") : storefront("viewAll")}
         </button>
       </div>
-      <div className="grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className={cn(
+        "-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6",
+        showAllMobileCategories && "grid grid-cols-2 overflow-visible",
+      )}>
         {sortedStoreCategories.map((category, index) => {
           const Icon = getCategoryIcon(category);
           const hasProducts = storeProductCategoryIds.has(category.id);
@@ -2148,17 +2151,18 @@ export function Storefront({
               key={category.id}
               type="button"
               className={cn(
-                "group relative min-h-[132px] overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900",
-                !showAllMobileCategories && index >= 6 && "hidden lg:block",
+                "group relative min-h-[116px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[18px] border border-slate-200 bg-white p-3.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900 sm:min-h-[132px] sm:w-auto sm:p-4",
+                showAllMobileCategories && "w-auto",
+                !showAllMobileCategories && index >= 6 && "sm:hidden lg:block",
                 !hasProducts && "opacity-65",
                 activeCategoryId === category.id && "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30",
               )}
               onClick={() => selectCategory(category, { scrollToProducts: true })}
             >
-              <span className={cn("grid size-11 place-items-center rounded-2xl ring-1", CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length])}>
+              <span className={cn("grid size-10 place-items-center rounded-xl ring-1 sm:size-11 sm:rounded-2xl", CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length])}>
                 <Icon className="size-5" aria-hidden="true" />
               </span>
-              <span className="mt-5 flex items-end justify-between gap-2">
+              <span className="mt-4 flex items-end justify-between gap-2 sm:mt-5">
                 <span className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 dark:text-white">
                   {category.name}
                 </span>
@@ -2287,22 +2291,22 @@ export function Storefront({
             <StoreWhatsAppButton phone={storeContactPhone} />
           </div>
         ) : (
-          <section data-store-search-sentinel className="min-w-0">
-            <div className="grid min-h-[520px] overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative z-10 flex min-w-0 flex-col justify-center px-6 py-10 sm:px-10 sm:py-14 lg:px-14 xl:px-20">
-                <StoreLogo store={store} className="mb-7 size-20 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:size-24" />
-                <p className="max-w-xl text-3xl font-black leading-[1.12] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-5xl lg:text-[54px]">
+          <section data-store-search-sentinel className="-mx-4 min-w-0 sm:mx-0">
+            <div className="grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:min-h-[520px] lg:grid-cols-[0.88fr_1.12fr]">
+              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-7 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
+                <StoreLogo store={store} className="mb-4 size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
+                <p className="max-w-xl text-[30px] font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
                   {store.heroSubtitle?.trim() || storefront("heroTitle")}
                 </p>
                 {customHeroDescription ? (
-                  <p className="mt-5 max-w-lg text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg sm:leading-8">
+                  <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
                     {customHeroDescription}
                   </p>
                 ) : null}
-                <div className="mt-8 flex flex-wrap items-center gap-3">
+                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:mt-7 sm:gap-3">
                   <Button
                     type="button"
-                    className="h-12 rounded-none bg-slate-950 px-7 text-sm font-bold text-white shadow-none md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-100"
+                    className="h-11 rounded-none bg-slate-950 px-5 text-sm font-bold text-white shadow-none md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-100 sm:h-12 sm:px-7"
                     onClick={() => scrollToSection("products")}
                   >
                     {storefront("browseProducts")}
@@ -2312,7 +2316,7 @@ export function Storefront({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-12 rounded-none border-slate-400 bg-transparent px-7 text-sm font-bold text-slate-900 shadow-none md:hover:border-slate-950 md:hover:bg-white dark:border-slate-600 dark:text-white dark:md:hover:bg-slate-800"
+                      className="h-11 rounded-none border-slate-400 bg-transparent px-5 text-sm font-bold text-slate-900 shadow-none md:hover:border-slate-950 md:hover:bg-white dark:border-slate-600 dark:text-white dark:md:hover:bg-slate-800 sm:h-12 sm:px-7"
                       onClick={() => scrollToSection("contact")}
                     >
                       {storefront("contact")}
@@ -2321,17 +2325,17 @@ export function Storefront({
                 </div>
               </div>
 
-              <div className="relative min-h-[340px] overflow-hidden lg:min-h-[520px]">
+              <div className="relative order-1 min-h-[230px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[520px]">
                 <StoreHeroCover store={store} />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
                 <StoreWhatsAppButton phone={storeContactPhone} />
                 {customHeroCategories.length > 0 ? (
-                  <div className="absolute inset-x-5 bottom-5 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inset-x-7 sm:bottom-7">
+                  <div className="absolute inset-x-4 bottom-4 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inset-x-7 sm:bottom-7">
                     {customHeroCategories.map((category) => (
                       <button
                         key={category.id}
                         type="button"
-                        className="h-10 shrink-0 bg-white px-4 text-xs font-bold text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition md:hover:bg-blue-600 md:hover:text-white"
+                        className="h-9 shrink-0 bg-white px-3.5 text-[11px] font-bold text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition md:hover:bg-blue-600 md:hover:text-white sm:h-10 sm:px-4 sm:text-xs"
                         onClick={() => selectCategory(category, { scrollToProducts: true })}
                       >
                         {category.name}
