@@ -171,6 +171,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
   const publicUrl = customStorefrontEnabled ? getStorefrontUrl(store.slug) : getStorePath(store.slug);
   const heroTitle = readSetting(store.settings, "heroTitle");
   const heroSubtitle = readSetting(store.settings, "heroSubtitle");
+  const customDomain = readSetting(store.settings, "customDomain");
   const aboutContent = readSetting(store.settings, "aboutContent");
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
   const whatsappPhone = readSetting(store.settings, "whatsappPhone");
@@ -335,6 +336,22 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             className="premium-input h-11"
           />
         </label>
+        {customStorefrontEnabled ? (
+          <label className="grid gap-2 text-sm font-medium">
+            Şəxsi domain
+            <input
+              name="customDomain"
+              defaultValue={customDomain}
+              placeholder="shop.example.com"
+              inputMode="url"
+              autoCapitalize="none"
+              className="premium-input h-11"
+            />
+            <span className="text-xs leading-5 text-muted-foreground">
+              Protokol yazmadan domaini daxil edin. Domainin DNS A qeydini 178.208.187.209 ünvanına yönəldin. SSL aktivləşməsi üçün domain saxlandıqdan sonra administrator yoxlaması tələb olunur.
+            </span>
+          </label>
+        ) : null}
         <label className="grid gap-2 text-sm font-medium">
           Haqqında məlumatı
           <textarea

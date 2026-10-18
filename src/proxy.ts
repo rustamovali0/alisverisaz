@@ -3,10 +3,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
 import {
   getSharedCookieDomain,
+  getStoreRootDomain,
   getStoreSubdomainSlug,
+  isValidCustomDomain,
   isReservedStoreSubdomain,
   isValidStoreSlug,
+  normalizeHostname,
 } from "@/lib/config/domains";
+import { clientEnv } from "@/lib/config/env.client";
+import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlagsForProxy } from "@/lib/platform/system-settings-proxy";
 import { updateSession } from "@/lib/supabase/middleware";
 
@@ -151,6 +156,7 @@ function createLocalizedRewrite(
   locale: string,
   shouldSetLocaleCookie: boolean,
   currentPathHeader = pathname,
+  virtualStoreSlug?: string | null,
 ) {
   const url = request.nextUrl.clone();
 
@@ -171,6 +177,12 @@ function createLocalizedRewrite(
   requestHeaders.set("X-NEXT-INTL-LOCALE", locale);
   requestHeaders.set("x-current-path", currentPathHeader);
   requestHeaders.set("x-current-url", `${currentPathHeader}${request.nextUrl.search}`);
+  if (virtualStoreSlug) {
+    const virtualHost = `${virtualStoreSlug}.${getStoreRootDomain()}`;
+    requestHeaders.set("host", virtualHost);
+    requestHeaders.set("x-forwarded-host", virtualHost);
+    requestHeaders.set("x-custom-domain", normalizeHostname(request.headers.get("host")));
+  }
 
   const response = NextResponse.rewrite(url, {
     request: {
@@ -209,6 +221,45 @@ function resolveSubdomainPath(pathname: string, storeSlug: string) {
   return pathname;
 }
 
+const customDomainCache = new Map<string, { slug: string | null; expiresAt: number }>();
+
+async function getCustomDomainStoreSlug(hostname: string | null | undefined) {
+  const host = normalizeHostname(hostname);
+
+  if (!isValidCustomDomain(host) || !serverEnv.supabaseSecretKey) {
+    return null;
+  }
+
+  const cached = customDomainCache.get(host);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.slug;
+  }
+
+  const url = new URL("/rest/v1/stores", clientEnv.supabaseUrl);
+  url.searchParams.set("select", "slug");
+  url.searchParams.set("settings->>customDomain", `eq.${host}`);
+  url.searchParams.set("settings->>customStorefrontEnabled", "eq.true");
+  url.searchParams.set("limit", "1");
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        apikey: serverEnv.supabaseSecretKey,
+        authorization: `Bearer ${serverEnv.supabaseSecretKey}`,
+      },
+      cache: "no-store",
+    });
+    const rows = response.ok ? await response.json() as Array<{ slug?: string }> : [];
+    const slug = rows[0]?.slug && isValidStoreSlug(rows[0].slug) ? rows[0].slug : null;
+    customDomainCache.set(host, { slug, expiresAt: Date.now() + 60_000 });
+
+    return slug;
+  } catch {
+    customDomainCache.set(host, { slug: null, expiresAt: Date.now() + 10_000 });
+    return null;
+  }
+}
+
 function resolveStorePath(pathname: string) {
   const match = pathname.match(
     /^\/store\/([^/]+)(\/products\/[^/]+(?:\/questions)?)?\/?$/,
@@ -239,7 +290,11 @@ export async function proxy(request: NextRequest) {
     return createCleanLocaleRedirect(request, visiblePathname, safeLocale);
   }
 
-  const storeSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
+  const nativeStoreSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
+  const customDomainStoreSlug = nativeStoreSubdomainSlug
+    ? null
+    : await getCustomDomainStoreSlug(request.headers.get("host"));
+  const storeSubdomainSlug = nativeStoreSubdomainSlug ?? customDomainStoreSlug;
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
     : resolveStorePath(visiblePathname);
@@ -255,6 +310,7 @@ export async function proxy(request: NextRequest) {
     safeLocale,
     shouldSetLocaleCookie,
     visiblePathname,
+    customDomainStoreSlug,
   );
 
   if (!needsSessionCheck(effectivePathname)) {

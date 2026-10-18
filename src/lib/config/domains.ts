@@ -54,6 +54,28 @@ export function normalizeHostname(hostname: string | null | undefined) {
   return host.replace(/\.$/, "");
 }
 
+export function isValidCustomDomain(hostname: string | null | undefined) {
+  const host = normalizeHostname(hostname);
+  const rootDomain = getStoreRootDomain();
+
+  if (
+    !host ||
+    host.length > 253 ||
+    host === rootDomain ||
+    host.endsWith(`.${rootDomain}`) ||
+    host === "localhost" ||
+    /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+  ) {
+    return false;
+  }
+
+  const labels = host.split(".");
+
+  return labels.length >= 2 && labels.every(
+    (label) => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label),
+  );
+}
+
 export function getStoreRootDomain() {
   const explicitDomain = normalizeHostname(clientEnv.storeRootDomain);
   const appUrlDomain = normalizeHostname(readHostnameFromUrl(clientEnv.appUrl));

@@ -6,7 +6,9 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import {
   isReservedStoreSubdomain,
+  isValidCustomDomain,
   isValidStoreSlug,
+  normalizeHostname,
 } from "@/lib/config/domains";
 import {
   deleteR2MediaAssetsByUrls,
@@ -104,6 +106,7 @@ export async function updateSellerStoreSettingsAction(
   const requestedSlug = slugify(readString(formData, "slug"));
   const heroTitle = readString(formData, "heroTitle");
   const heroSubtitle = readString(formData, "heroSubtitle");
+  const customDomain = normalizeHostname(readString(formData, "customDomain"));
   const aboutContent = readString(formData, "aboutContent");
   const socialInstagram = readString(formData, "socialInstagram");
   const socialTiktok = readString(formData, "socialTiktok");
@@ -179,12 +182,36 @@ export async function updateSellerStoreSettingsAction(
     }
   }
 
+  if (formData.has("customDomain")) {
+    if (!canManageCustomStorefront) {
+      return { ok: false, message: "Şəxsi domain üçün əvvəlcə RAdmin subdomain icazəsi verməlidir." };
+    }
+
+    if (customDomain && !isValidCustomDomain(customDomain)) {
+      return { ok: false, message: "Şəxsi domain düzgün deyil. Məsələn: shop.example.com" };
+    }
+
+    if (customDomain) {
+      const { data: domainOwner } = await (supabaseAdmin as any)
+        .from("stores")
+        .select("id")
+        .eq("settings->>customDomain", customDomain)
+        .neq("id", storeId)
+        .maybeSingle();
+
+      if (domainOwner) {
+        return { ok: false, message: "Bu domain başqa mağazaya bağlıdır." };
+      }
+    }
+  }
+
   try {
     const payload: Record<string, unknown> = { name, slug: nextSlug };
 
     if (
       formData.has("heroTitle") ||
       formData.has("heroSubtitle") ||
+      formData.has("customDomain") ||
       formData.has("aboutContent") ||
       formData.has("socialInstagram") ||
       formData.has("socialTiktok") || formData.has("profitTrackingPresent") ||
@@ -206,6 +233,12 @@ export async function updateSellerStoreSettingsAction(
         settings.heroSubtitle = heroSubtitle;
       } else if (formData.has("heroSubtitle")) {
         delete settings.heroSubtitle;
+      }
+
+      if (formData.has("customDomain") && customDomain) {
+        settings.customDomain = customDomain;
+      } else if (formData.has("customDomain")) {
+        delete settings.customDomain;
       }
 
       if (formData.has("aboutContent") && aboutContent) {
