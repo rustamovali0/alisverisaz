@@ -2291,19 +2291,19 @@ export function Storefront({
             <StoreWhatsAppButton phone={storeContactPhone} />
           </div>
         ) : (
-          <section data-store-search-sentinel className="-mx-4 min-w-0 sm:mx-0">
-            <div className="grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:min-h-[520px] lg:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-7 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
-                <StoreLogo store={store} className="mb-4 size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
-                <p className="max-w-xl text-[30px] font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
+          <section data-store-search-sentinel className="-mx-4 flex min-w-0 flex-col sm:mx-0">
+            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[520px] lg:grid-cols-[0.88fr_1.12fr]">
+              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
+                <StoreLogo store={store} className="mb-4 hidden size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
+                <p className="max-w-xl text-2xl font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
                   {store.heroSubtitle?.trim() || storefront("heroTitle")}
                 </p>
                 {customHeroDescription ? (
-                  <p className="mt-3 line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
+                  <p className="mt-3 hidden line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:block sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
                     {customHeroDescription}
                   </p>
                 ) : null}
-                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:mt-7 sm:gap-3">
+                <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-7 sm:gap-3">
                   <Button
                     type="button"
                     className="h-11 rounded-none bg-slate-950 px-5 text-sm font-bold text-white shadow-none md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-100 sm:h-12 sm:px-7"
@@ -2316,7 +2316,7 @@ export function Storefront({
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11 rounded-none border-slate-400 bg-transparent px-5 text-sm font-bold text-slate-900 shadow-none md:hover:border-slate-950 md:hover:bg-white dark:border-slate-600 dark:text-white dark:md:hover:bg-slate-800 sm:h-12 sm:px-7"
+                      className="hidden h-11 rounded-none border-slate-400 bg-transparent px-5 text-sm font-bold text-slate-900 shadow-none md:hover:border-slate-950 md:hover:bg-white dark:border-slate-600 dark:text-white dark:md:hover:bg-slate-800 sm:inline-flex sm:h-12 sm:px-7"
                       onClick={() => scrollToSection("contact")}
                     >
                       {storefront("contact")}
@@ -2325,7 +2325,7 @@ export function Storefront({
                 </div>
               </div>
 
-              <div className="relative order-1 min-h-[230px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[520px]">
+              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[520px]">
                 <StoreHeroCover store={store} />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
                 <StoreWhatsAppButton phone={storeContactPhone} />
@@ -2346,16 +2346,16 @@ export function Storefront({
               </div>
             </div>
 
-            <div className="border-x border-b border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:p-5">
+            <div className="order-1 border-y border-slate-200 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950 sm:p-5 lg:order-2 lg:border-x lg:border-t-0">
               <MarketplaceSearch
                 stores={[store]}
                 defaultValue={searchQuery}
                 storeSlug={store.slug}
                 searchBaseHref={storeHomeHref}
                 resultsAnchorId="products"
-                className="mx-auto max-w-4xl rounded-none border-0 bg-slate-100 p-1.5 shadow-none dark:bg-slate-900"
-                inputClassName="h-12 rounded-none border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100"
-                buttonClassName="!h-12 !min-w-12 rounded-none bg-slate-950 px-5 text-white md:hover:bg-blue-700 dark:bg-blue-600"
+                className="mx-auto max-w-4xl rounded-none border-0 bg-slate-100 p-1 shadow-none dark:bg-slate-900 sm:p-1.5"
+                inputClassName="h-11 rounded-none border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
+                buttonClassName="!h-11 !min-w-11 rounded-none bg-slate-950 px-4 text-white md:hover:bg-blue-700 dark:bg-blue-600 sm:!h-12 sm:!min-w-12 sm:px-5"
                 buttonSize="lg"
                 stackOnMobile
                 compactActions
@@ -2364,8 +2364,8 @@ export function Storefront({
           </section>
         )}
 
-        {customCategorySection}
         {modernProductsSection}
+        {customCategorySection}
         {aboutSection}
         {!isStoreOwner ? (
           <div id="contact" className="scroll-mt-28">
