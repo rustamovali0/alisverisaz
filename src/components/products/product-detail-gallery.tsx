@@ -21,7 +21,7 @@ type ProductDetailGalleryProps = {
   compact?: boolean;
 };
 
-export function ProductBackButton() {
+export function ProductBackButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
 
   return (
@@ -29,10 +29,14 @@ export function ProductBackButton() {
       type="button"
       variant="outline"
       onClick={() => router.back()}
-      className="inline-flex h-10 rounded-lg border-slate-200 bg-white px-3 text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      className={cn(
+        "inline-flex border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
+        compact ? "size-9 rounded-full p-0" : "h-10 rounded-lg px-3",
+      )}
+      aria-label="Geri"
     >
-      <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-      Geri
+      <ArrowLeft className={cn("size-4", !compact && "mr-2")} aria-hidden="true" />
+      {!compact ? "Geri" : null}
     </Button>
   );
 }

@@ -300,6 +300,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
       <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-4 py-3 sm:px-6 md:py-6 lg:px-8"}`}>
+        {isCustomStorefrontProduct ? (
+          <div className="mb-2 sm:mb-3">
+            <ProductBackButton compact />
+          </div>
+        ) : null}
         {!isCustomStorefrontProduct ? (
           <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
