@@ -3,13 +3,16 @@
 import {
   Heart,
   Home,
+  House,
   LayoutDashboard,
+  Boxes,
   Package,
   Plus,
+  ShoppingBag,
   ShoppingCart,
   Store,
   UserRound,
-  MessageCircle,
+  MapPinned,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -168,6 +171,7 @@ export function MobileBottomNav({
   const pathname = usePathname();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const [currentHash, setCurrentHash] = useState("");
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
   const isAuthLoading = !isResolved && !initialRole;
   const actualRole =
@@ -247,10 +251,10 @@ export function MobileBottomNav({
 
   const isolatedItems = isolatedStorefront || storeSubdomainSlug
     ? [
-        { href: storeHomeHref, label: nav("home"), icon: Home },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: nav("products"), icon: Package },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingCart, badge: cartCount },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Əlaqə", icon: MessageCircle },
+        { href: storeHomeHref, label: nav("home"), icon: House },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: nav("products"), icon: Boxes },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingBag, badge: cartCount },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Ünvan", icon: MapPinned },
       ]
     : null;
   const items = isolatedItems ?? (role === "seller"
@@ -301,20 +305,36 @@ export function MobileBottomNav({
 
       if (pathname === targetPath) {
         if (hash) {
+          window.history.replaceState(null, "", `#${hash}`);
+          setCurrentHash(`#${hash}`);
           scrollToHash(hash);
         } else {
+          window.history.replaceState(null, "", targetPath);
+          setCurrentHash("");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
         return;
       }
 
       router.push(href, { scroll: !hash });
+      setCurrentHash(hash ? `#${hash}` : "");
       if (hash) {
         window.setTimeout(() => scrollToHash(hash), 80);
       }
     },
     [pathname, router],
   );
+
+  useEffect(() => {
+    const syncHash = () => setCurrentHash(window.location.hash);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    window.addEventListener("popstate", syncHash);
+    return () => {
+      window.removeEventListener("hashchange", syncHash);
+      window.removeEventListener("popstate", syncHash);
+    };
+  }, [pathname]);
 
   const handleItemNavigation = useCallback(
     (href: string) => {
@@ -334,13 +354,22 @@ export function MobileBottomNav({
 
   const isNavItemActive = useCallback(
     (href: string) => {
-      if (href === "/") {
-        return pathname === "/";
+      const [targetHref, targetHash] = href.split("#");
+      const targetPath = targetHref.split("?")[0] || "/";
+
+      if (isolatedItems) {
+        if (targetHash) {
+          const nestedProducts = targetHash === "products" && pathname.startsWith(`${targetPath === "/" ? "" : targetPath}/products/`);
+          return nestedProducts || (pathname === targetPath && currentHash === `#${targetHash}`);
+        }
+        return pathname === targetPath && !currentHash;
       }
 
-      return pathname === href || pathname.startsWith(`${href}/`);
+      return targetPath === "/"
+        ? pathname === "/"
+        : pathname === targetPath || pathname.startsWith(`${targetPath}/`);
     },
-    [pathname],
+    [currentHash, isolatedItems, pathname],
   );
 
   const isAccountRoute =

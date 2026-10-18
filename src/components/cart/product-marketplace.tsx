@@ -2373,6 +2373,7 @@ export function Storefront({
               locations={locations}
               logoUrl={store.logoUrl}
               storeName={store.name}
+              isolated
               socialLinks={{
                 instagram: store.socialInstagram ?? undefined,
                 tiktok: store.socialTiktok ?? undefined,

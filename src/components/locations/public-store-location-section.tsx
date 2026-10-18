@@ -25,6 +25,7 @@ type PublicStoreLocationSectionProps = {
   locations: StoreLocation[];
   logoUrl?: string | null;
   storeName?: string;
+  isolated?: boolean;
   socialLinks?: {
     instagram?: string;
     tiktok?: string;
@@ -134,6 +135,7 @@ export function PublicStoreLocationSection({
   socialLinks,
   logoUrl,
   storeName,
+  isolated = false,
 }: PublicStoreLocationSectionProps) {
   const storefront = useTranslations("storefront");
   const activeLocations = locations.filter((location) => location.isActive);
@@ -164,16 +166,25 @@ export function PublicStoreLocationSection({
   }
 
   return (
-    <section className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6">
-      <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+    <section className={cn(
+      "w-full min-w-0",
+      isolated
+        ? "overflow-hidden border-y border-slate-200 bg-slate-950 text-white dark:border-slate-800 sm:rounded-[28px] sm:border"
+        : "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6",
+    )}>
+      <div className={cn(
+        "flex min-w-0 items-center justify-between gap-3",
+        isolated ? "bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.45),transparent_48%)] px-4 pb-5 pt-6 sm:px-7 sm:py-7" : "mb-4",
+      )}>
         <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
+          <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", isolated ? "bg-white/10 text-white ring-1 ring-white/15" : "border border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300")}>
             <MapPin className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
-              {storefront("storeInfo")}
+            <h2 className={cn("truncate text-xl font-semibold tracking-normal sm:text-2xl", isolated ? "text-white" : "text-slate-950 dark:text-slate-100")}>
+              {isolated ? "Ünvan və əlaqə" : storefront("storeInfo")}
             </h2>
+            {isolated ? <p className="mt-1 text-xs text-slate-300 sm:text-sm">Mağazaya gəlmək və əlaqə saxlamaq üçün məlumatlar</p> : null}
           </div>
         </div>
         {socials.length > 0 ? (
@@ -188,7 +199,7 @@ export function PublicStoreLocationSection({
                   target="_blank"
                   rel="noreferrer"
                   aria-label={item.label}
-                  className="grid size-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-600 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-300 dark:md:hover:border-blue-800 dark:md:hover:bg-blue-950/30"
+                  className={cn("grid size-10 place-items-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30", isolated ? "bg-white/10 text-white ring-1 ring-white/15 md:hover:bg-white/20" : "border border-slate-200 bg-white text-slate-600 md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-background dark:text-slate-300")}
                 >
                   <Icon className="size-4" aria-hidden="true" />
                 </a>
@@ -203,6 +214,7 @@ export function PublicStoreLocationSection({
           <div
             className={cn(
               "grid min-w-0 gap-3 sm:gap-4",
+              isolated && "bg-slate-100 p-3 text-slate-950 dark:bg-slate-900 sm:p-5",
               hasSingleLocation
                 ? "grid-cols-1"
                 : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3",
@@ -213,6 +225,7 @@ export function PublicStoreLocationSection({
                 key={location.id}
                 className={cn(
                   "min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-background sm:p-5",
+                  isolated && "rounded-[22px] border-0 shadow-[0_12px_35px_rgba(15,23,42,0.10)]",
                 )}
               >
                 <div className="flex min-w-0 flex-col items-start justify-between gap-3 xl:flex-row">
