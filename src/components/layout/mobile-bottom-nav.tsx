@@ -397,7 +397,7 @@ export function MobileBottomNav({
     return (
       <nav
         className={cn(
-          "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+          "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
           navVariantClass[variant],
           className,
         )}
@@ -420,7 +420,7 @@ export function MobileBottomNav({
   return (
     <nav
       className={cn(
-        "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+        "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
         navVariantClass[variant],
         className,
       )}

@@ -622,6 +622,18 @@
   }
 
   @media (max-width: 767px) {
+    .mobile-bottom-nav-stable {
+      position: fixed !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      will-change: transform;
+    }
+
     .marketplace-header,
     .mobile-performance-surface {
       backdrop-filter: none !important;
