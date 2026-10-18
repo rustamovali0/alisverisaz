@@ -473,7 +473,7 @@ export function CustomStoreFooter({
 
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
+      <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 pb-6 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-3">
             <StoreLogo store={store} className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" />
@@ -506,6 +506,18 @@ export function CustomStoreFooter({
             {storefront("contact")}
           </Link>
         </nav>
+      </div>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-4 border-t border-slate-200 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-center dark:border-slate-800 sm:px-6 md:pb-6 lg:px-8">
+        <a
+          href="https://alisveris.az"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-200"
+        >
+          alisveris.az saytına keç
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </a>
+        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+          © {new Date().getFullYear()} {store.name}. Bütün hüquqlar qorunur.
+        </p>
       </div>
     </footer>
   );
