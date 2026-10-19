@@ -206,15 +206,20 @@ function createCleanLocaleRedirect(request: NextRequest, pathname: string, local
 }
 
 function resolveSubdomainPath(pathname: string, storeSlug: string) {
-  if (pathname === "/" || pathname === `/${storeSlug}` || pathname === "/products") {
+  if (pathname === "/" || pathname === `/${storeSlug}`) {
     return `/${storeSlug}`;
   }
 
-  if (pathname.startsWith("/products/")) {
+  if (
+    pathname === "/products" ||
+    pathname === "/contact" ||
+    pathname === "/cart" ||
+    pathname.startsWith("/products/")
+  ) {
     return `/${storeSlug}${pathname}`;
   }
 
-  if (pathname.startsWith(`/${storeSlug}/products/`)) {
+  if (pathname.startsWith(`/${storeSlug}/`)) {
     return pathname;
   }
 

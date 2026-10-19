@@ -173,6 +173,7 @@ export function MobileBottomNav({
   const [cartCount, setCartCount] = useState(0);
   const [currentHash, setCurrentHash] = useState("");
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
+  const [isMobileKeyboardOpen, setIsMobileKeyboardOpen] = useState(false);
   const isAuthLoading = !isResolved && !initialRole;
   const actualRole =
     !isResolved && initialRole
@@ -249,6 +250,37 @@ export function MobileBottomNav({
     };
   }, [profile.status, profile.role, profile.userId, role]);
 
+  useEffect(() => {
+    let closeTimer: number | undefined;
+    const isEditableTarget = (target: EventTarget | null) =>
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      (target instanceof HTMLElement && target.isContentEditable);
+
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!isEditableTarget(event.target)) return;
+      window.clearTimeout(closeTimer);
+      setIsMobileKeyboardOpen(true);
+    };
+    const handleFocusOut = (event: FocusEvent) => {
+      if (!isEditableTarget(event.target)) return;
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        setIsMobileKeyboardOpen(false);
+        window.requestAnimationFrame(() => window.scrollTo(window.scrollX, window.scrollY));
+      }, 350);
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+    return () => {
+      window.clearTimeout(closeTimer);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
+
   const isolatedItems = isolatedStorefront || storeSubdomainSlug
     ? [
         { href: storeHomeHref, label: nav("home"), icon: House },
@@ -265,7 +297,7 @@ export function MobileBottomNav({
             icon: Home,
           },
           {
-            href: sellerStoreHref ?? "/store/dashboard/products",
+            href: sellerStoreHref ?? "#storefront-loading",
             label: "Mağazam",
             icon: Store,
           },
@@ -405,6 +437,7 @@ export function MobileBottomNav({
       <nav
         className={cn(
           "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
+          isMobileKeyboardOpen && "!hidden",
           navVariantClass[variant],
           className,
         )}
@@ -428,6 +461,7 @@ export function MobileBottomNav({
     <nav
       className={cn(
         "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
+        isMobileKeyboardOpen && "!hidden",
         navVariantClass[variant],
         className,
       )}
@@ -444,10 +478,12 @@ export function MobileBottomNav({
               key={item.href}
               type="button"
               onClick={() => handleItemNavigation(item.href)}
+              disabled={item.href === "#storefront-loading"}
               className={cn(
                 "relative grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
                 itemVariantClass[variant],
                 isActive && "text-blue-600 dark:text-blue-300",
+                item.href === "#storefront-loading" && "cursor-wait opacity-60",
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}

@@ -389,6 +389,7 @@ async function uploadProductImageFiles(input: {
         folder: `products/${input.userId}/${input.productId}`,
         maxSizeBytes: MAX_PRODUCT_IMAGE_SIZE,
         allowedMimeTypes: ALLOWED_PRODUCT_IMAGE_TYPES,
+        watermarkText: "alisveris.az",
       }),
     ),
   );

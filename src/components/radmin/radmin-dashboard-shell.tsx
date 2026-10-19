@@ -396,7 +396,7 @@ export function RadminDashboardShell({
       ) : null}
 
       <div className={cn("min-h-screen min-w-0 max-w-full overflow-x-hidden", sidebarWidth)}>
-        <header className="sticky top-0 z-30 border-b border-cyan-900/10 bg-white/90 shadow-sm shadow-cyan-950/5 backdrop-blur-xl dark:border-cyan-200/10 dark:bg-slate-950/90">
+        <header className="fixed inset-x-0 top-0 z-30 border-b border-cyan-900/10 bg-white/95 shadow-sm shadow-cyan-950/5 backdrop-blur-xl dark:border-cyan-200/10 dark:bg-slate-950/95 lg:sticky lg:inset-x-auto">
           <div className="flex h-16 min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
             <Button
               type="button"
@@ -449,7 +449,7 @@ export function RadminDashboardShell({
           </div>
         </header>
 
-        <main className="min-w-0 max-w-full overflow-x-hidden px-3 py-5 sm:px-6 lg:px-8">
+        <main className="min-w-0 max-w-full overflow-x-hidden px-3 pb-5 pt-[7.75rem] sm:px-6 lg:px-8 lg:py-5">
           <div className="min-w-0 max-w-full overflow-x-hidden rounded-2xl border border-white/80 bg-white/75 p-3 shadow-xl shadow-cyan-950/10 ring-1 ring-cyan-900/5 backdrop-blur sm:p-6 dark:border-cyan-200/10 dark:bg-slate-950/50 dark:shadow-black/20">
             {children}
           </div>

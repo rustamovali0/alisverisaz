@@ -267,7 +267,7 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             Mağaza adı, logo və banner şəklini buradan yeniləyin.
           </p>
         </div>
-        <div className="rounded-lg border bg-background p-3">
+        {customStorefrontEnabled ? <div className="rounded-lg border bg-background p-3">
           <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             Public mağaza URL
           </p>
@@ -296,7 +296,7 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
               </Button>
             </div>
           </div>
-        </div>
+        </div> : null}
         <label className="grid gap-2 text-sm font-medium">
           Mağaza adı
           <input
@@ -307,22 +307,19 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             required
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        {customStorefrontEnabled ? <label className="grid gap-2 text-sm font-medium">
           Mağaza URL-i
           <input
             name="slug"
             defaultValue={store.slug}
             placeholder="magazaadi"
             className="premium-input h-11"
-            readOnly={!customStorefrontEnabled}
             required
           />
           <span className="text-xs text-muted-foreground">
-            {customStorefrontEnabled
-              ? `RAdmin icazəsi aktivdir: /${store.slug} və subdomain işləyir, bu adı dəyişə bilərsiniz.`
-              : `RAdmin icazəsi yoxdur: bu ad dəyişmir və mağaza yalnız /store/${store.slug} ilə açılır.`}
+            RAdmin icazəsi aktivdir: /{store.slug} və subdomain işləyir, bu adı dəyişə bilərsiniz.
           </span>
-        </label>
+        </label> : <input type="hidden" name="slug" value={store.slug} />}
         <label className="grid gap-2 text-sm font-medium">
           Vitrin başlığı
           <input

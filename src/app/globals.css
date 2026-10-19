@@ -634,6 +634,13 @@
       will-change: transform;
     }
 
+    body:has(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus) .mobile-bottom-nav-stable,
+    body:has(textarea:focus) .mobile-bottom-nav-stable,
+    body:has(select:focus) .mobile-bottom-nav-stable,
+    body:has([contenteditable="true"]:focus) .mobile-bottom-nav-stable {
+      display: none !important;
+    }
+
     .marketplace-header,
     .mobile-performance-surface {
       backdrop-filter: none !important;

@@ -1707,6 +1707,7 @@ export function Storefront({
   const [inStockOnly, setInStockOnly] = useState(false);
   const [showAllMobileCategories, setShowAllMobileCategories] = useState(false);
   const [homeProductLimit, setHomeProductLimit] = useState(4);
+  const [isOwnerEditing, setIsOwnerEditing] = useState(false);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
     initialCursor: store.productNextCursor,
@@ -1970,7 +1971,7 @@ export function Storefront({
             storeBaseHref={storeBaseHref}
             productCardVariant={productCardVariant}
             labels={{ stock: labels.stock }}
-            isStoreOwner={isStoreOwner}
+            isStoreOwner={isStoreOwner && isOwnerEditing}
             forceMobileTwoColumns
           />
         </div>
@@ -2128,7 +2129,7 @@ export function Storefront({
         storeBaseHref={storeBaseHref}
         productCardVariant={productCardVariant}
         labels={{ stock: labels.stock }}
-        isStoreOwner={isStoreOwner}
+        isStoreOwner={isStoreOwner && isOwnerEditing}
         forceMobileTwoColumns
         compactMobileCards={isCustomStorefront}
         isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
@@ -2156,6 +2157,20 @@ export function Storefront({
         {aboutContent}
       </div>
     </section>
+  ) : null;
+
+  const ownerEditControl = isStoreOwner ? (
+    <div className="mb-4 flex justify-end">
+      <Button
+        type="button"
+        variant={isOwnerEditing ? "outline" : "default"}
+        className="h-10 gap-2 rounded-xl px-4 font-semibold shadow-sm"
+        onClick={() => setIsOwnerEditing((current) => !current)}
+      >
+        <Pencil className="size-4" aria-hidden="true" />
+        {isOwnerEditing ? "Redaktəni bağla" : "Redaktə et"}
+      </Button>
+    </div>
   ) : null;
 
   const customCategorySection = sortedStoreCategories.length > 0 ? (
@@ -2218,7 +2233,8 @@ export function Storefront({
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
         <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 md:gap-10">
-          {isStoreOwner ? (
+          {ownerEditControl}
+          {isStoreOwner && isOwnerEditing ? (
             <div className="relative min-w-0">
               <StoreBrandingQuickEdit store={store} />
               <StoreWhatsAppButton phone={storeContactPhone} />
@@ -2302,8 +2318,7 @@ export function Storefront({
           {modernCategoriesSection}
           {aboutSection}
           {modernProductsSection}
-          {!isStoreOwner ? (
-            <div id="store-info">
+          <div id="store-info">
               <PublicStoreLocationSection
                 locations={locations}
                 logoUrl={store.logoUrl}
@@ -2313,8 +2328,7 @@ export function Storefront({
                   tiktok: store.socialTiktok ?? undefined,
                 }}
               />
-            </div>
-          ) : null}
+          </div>
         </div>
         <SiteFooter {...footer} />
       </main>
@@ -2328,6 +2342,12 @@ export function Storefront({
           "mx-auto w-full max-w-[1440px] px-4 pb-5 sm:px-6 md:pb-8 lg:px-8",
     "pt-20 sm:pt-14 md:pt-12",
         )}>
+          {productsOnly ? ownerEditControl : null}
+          {productsOnly && isStoreOwner && isOwnerEditing ? (
+            <div className="mb-5">
+              <StoreBrandingQuickEdit store={store} />
+            </div>
+          ) : null}
           {productsOnly ? modernProductsSection : (
             <PublicStoreLocationSection
               locations={locations}
@@ -2347,7 +2367,8 @@ export function Storefront({
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
       <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-7 px-4 py-4 sm:px-6 sm:py-7 md:gap-10 lg:px-8 lg:py-9">
-        {isStoreOwner ? (
+        {ownerEditControl}
+        {isStoreOwner && isOwnerEditing ? (
           <div className="relative min-w-0">
             <StoreBrandingQuickEdit store={store} />
             <StoreWhatsAppButton phone={storeContactPhone} />
@@ -2429,8 +2450,7 @@ export function Storefront({
         {modernProductsSection}
         {customCategorySection}
         {aboutSection}
-        {!isStoreOwner ? (
-          <div id="contact" className="scroll-mt-28">
+        <div id="contact" className="scroll-mt-28">
             <PublicStoreLocationSection
               locations={locations}
               logoUrl={store.logoUrl}
@@ -2441,8 +2461,7 @@ export function Storefront({
                 tiktok: store.socialTiktok ?? undefined,
               }}
             />
-          </div>
-        ) : null}
+        </div>
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
       <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront={isCustomStorefront} />

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, Sparkles } from "lucide-react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,50 @@ type ProductFormProps = {
   standalone?: boolean;
   profitTrackingEnabled?: boolean;
 };
+
+const CATEGORY_KEYWORD_GROUPS = [
+  { category: ["moda"], words: ["geyim", "paltar", "köynək", "koynek", "şalvar", "salvar", "jeans", "ayaqqabı", "ayaqqabi", "çanta", "canta", "kostyum"] },
+  { category: ["elektronika"], words: ["telefon", "iphone", "samsung", "noutbuk", "laptop", "kompüter", "komputer", "qulaqcıq", "qulaqciq", "televizor", "kamera"] },
+  { category: ["gözəllik", "baxım"], words: ["ətir", "etir", "parfum", "krem", "şampun", "sampun", "makiyaj", "kosmetika", "saç", "sac"] },
+  { category: ["ana", "uşaq"], words: ["uşaq", "usaq", "körpə", "korpe", "oyuncaq", "beşik", "besik"] },
+  { category: ["avto"], words: ["avtomobil", "maşın", "masin", "mühərrik", "muherrik", "təkər", "teker", "yağ", "yag"] },
+  { category: ["ev", "bağ"], words: ["mebel", "divan", "masa", "stul", "yataq", "mətbəx", "metbex", "bağ", "bag"] },
+  { category: ["idman", "outdoor"], words: ["idman", "fitness", "trenajor", "velosiped", "top", "çadır", "cadir"] },
+  { category: ["kitab"], words: ["kitab", "roman", "dərslik", "derslik", "jurnal"] },
+  { category: ["qida", "içki"], words: ["qida", "yemək", "yemek", "içki", "icki", "qəhvə", "qehve", "çay", "cay"] },
+  { category: ["tikinti", "alət"], words: ["alət", "alet", "drel", "mişar", "misar", "tikinti", "vintaçan", "vintacan"] },
+  { category: ["heyvan"], words: ["it", "pişik", "pisik", "heyvan", "yem", "akvarium"] },
+];
+
+function normalizeCategoryText(value: string) {
+  return value.trim().toLocaleLowerCase("az-AZ");
+}
+
+function suggestedCategories(productName: string, categories: CategoryOption[]) {
+  const name = normalizeCategoryText(productName);
+  if (name.length < 2) return [];
+
+  return categories
+    .map((category) => {
+      const categoryName = normalizeCategoryText(category.name);
+      let score = categoryName.split(/\s+/).filter((word) => word.length > 2 && name.includes(word)).length * 4;
+
+      CATEGORY_KEYWORD_GROUPS.forEach((group) => {
+        if (
+          group.category.some((word) => categoryName.includes(word)) &&
+          group.words.some((word) => name.includes(word))
+        ) {
+          score += 6;
+        }
+      });
+
+      return { category, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.category.name.localeCompare(right.category.name, "az"))
+    .slice(0, 3)
+    .map((item) => item.category);
+}
 
 function variantsToText(product?: ManagedProduct) {
   return (product?.variants ?? [])
@@ -449,6 +494,9 @@ export function ProductForm({
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [trackStock, setTrackStock] = useState(product?.stockTrackingEnabled ?? false);
+  const [productName, setProductName] = useState(product?.name ?? "");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(product?.categoryId ?? "");
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
@@ -458,6 +506,11 @@ export function ProductForm({
   const existingImageCount = mode === "edit" ? product?.images.length ?? 0 : 0;
   const newImageLimit =
     imageLimit === null ? null : Math.max(imageLimit - existingImageCount, 0);
+  const categorySuggestions = useMemo(
+    () => suggestedCategories(productName, categories),
+    [categories, productName],
+  );
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -515,28 +568,67 @@ export function ProductForm({
           Ad
           <input
             name="name"
-            defaultValue={product?.name}
+            value={productName}
+            onChange={(event) => setProductName(event.target.value)}
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
             disabled={disabled}
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-medium">
+        <div className="relative grid min-w-0 gap-2 text-sm font-medium">
           Kateqoriya
-          <select
-            name="categoryId"
-            defaultValue={product?.categoryId ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <input type="hidden" name="categoryId" value={selectedCategoryId} />
+          {categorySuggestions.length > 0 ? (
+            <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {categorySuggestions.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700"
+                  onClick={() => setSelectedCategoryId(category.id)}
+                >
+                  <Sparkles className="size-3.5" aria-hidden="true" />
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
+            aria-expanded={isCategoryOpen}
+            onClick={() => setIsCategoryOpen((current) => !current)}
           >
-            <option value="">Kateqoriyasız</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            <span className={selectedCategory ? "text-foreground" : "text-muted-foreground"}>
+              {selectedCategory?.name ?? "Kateqoriya seçin"}
+            </span>
+            <ChevronDown className={`size-4 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+          {isCategoryOpen ? (
+            <div className="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
+              <button
+                type="button"
+                className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                onClick={() => { setSelectedCategoryId(""); setIsCategoryOpen(false); }}
+              >
+                Kateqoriyasız
+                {!selectedCategoryId ? <Check className="size-4 text-primary" /> : null}
+              </button>
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                  onClick={() => { setSelectedCategoryId(category.id); setIsCategoryOpen(false); }}
+                >
+                  <span>{category.name}</span>
+                  {selectedCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <section className="grid min-w-0 gap-3 rounded-md border border-border/80 bg-muted/20 p-3">
