@@ -744,12 +744,12 @@ export function CartCheckout({
             ? "container flex justify-center py-8"
             : isEmptyCart
               ? "container py-6 md:py-8"
-            : "container mx-auto grid max-w-[1280px] gap-5 py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
+            : "container mx-auto grid max-w-[1280px] gap-3 py-3 sm:gap-5 sm:py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
         }
       >
         {!checkoutOnly ? (
         <section className="rounded-none border-0 bg-transparent p-0 text-slate-950 shadow-none dark:text-slate-100 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-5 md:shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:md:border-slate-800 dark:md:bg-card">
-          <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 px-1 pb-2 sm:gap-3 sm:pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 type="button"
@@ -762,7 +762,7 @@ export function CartCheckout({
                   <ArrowLeft className="size-4 md:mr-2" aria-hidden="true" />
                   <span className="hidden md:inline">{common("back")}</span>
               </Button>
-              <h1 className="text-center text-3xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
+              <h1 className="text-center text-2xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
                 {common("cart")}
               </h1>
             </div>
@@ -772,7 +772,7 @@ export function CartCheckout({
               </Button>
             </div>
           </div>
-          <div className="mt-2 grid gap-3 bg-transparent md:mt-6">
+          <div className="mt-1 grid gap-2 bg-transparent sm:mt-2 sm:gap-3 md:mt-6">
             {visibleItems.length === 0 ? (
               <div className="grid place-items-center gap-3 py-12 text-center text-sm text-muted-foreground">
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
@@ -803,9 +803,9 @@ export function CartCheckout({
                 return (
                   <div
                   key={itemKey}
-                  className="grid grid-cols-[92px_minmax(0,1fr)] gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex sm:flex-row sm:items-center sm:p-4"
+                  className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex sm:flex-row sm:items-center sm:gap-4 sm:rounded-2xl sm:p-4"
                 >
-                  <div className="size-[92px] overflow-hidden rounded-[12px] border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 sm:size-20">
+                  <div className="size-[72px] overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 sm:size-20 sm:rounded-[12px]">
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
@@ -817,14 +817,14 @@ export function CartCheckout({
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-base font-semibold leading-6 text-slate-950 dark:text-slate-100 sm:truncate">
+                    <h2 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:truncate sm:text-base sm:leading-6">
                       {product.name}
                     </h2>
-                    <p className="mt-2 text-base font-semibold text-blue-700 dark:text-blue-300 sm:mt-1">
+                    <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-300 sm:text-base">
                       {formatMoney(unitPrice)}
                     </p>
                     {selectedVariantLabel.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-1 flex flex-wrap gap-1 sm:mt-2">
                         {selectedVariantLabel.map((label) => (
                           <span
                             key={label}
@@ -841,7 +841,7 @@ export function CartCheckout({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
+                      className="size-9 rounded-[9px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11 sm:rounded-[10px]"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -858,16 +858,16 @@ export function CartCheckout({
                         );
                       }}
                     >
-                      <Minus className="size-5" aria-hidden="true" />
+                      <Minus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
-                    <span className="w-10 text-center text-lg font-semibold sm:text-base">
+                    <span className="w-8 text-center text-base font-semibold sm:w-10">
                       {item.quantity}
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
+                      className="size-9 rounded-[9px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11 sm:rounded-[10px]"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -887,17 +887,17 @@ export function CartCheckout({
                         );
                       }}
                     >
-                      <Plus className="size-5" aria-hidden="true" />
+                      <Plus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="ml-auto size-12 rounded-[10px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/45 sm:ml-0 sm:size-11"
+                      className="ml-auto size-9 rounded-[9px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/45 sm:ml-0 sm:size-11 sm:rounded-[10px]"
                       onClick={() => void removeCartItem(itemKey, product.name)}
                       aria-label={`${product.name} məhsulunu səbətdən sil`}
                     >
-                      <Trash2 className="size-7 stroke-[2.2] sm:size-6" aria-hidden="true" />
+                      <Trash2 className="size-5 stroke-[2.2] sm:size-6" aria-hidden="true" />
                     </Button>
                   </div>
                   </div>
@@ -906,7 +906,7 @@ export function CartCheckout({
             )}
           </div>
           {visibleItems.length > 0 ? (
-            <div className="flex justify-end bg-transparent px-1 py-4">
+            <div className="flex justify-end bg-transparent px-1 py-2.5 sm:py-4">
               <Button
                 type="button"
                 variant="outline"
@@ -914,7 +914,7 @@ export function CartCheckout({
                 className="rounded-[10px] border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:bg-transparent dark:hover:bg-rose-950/30"
                 onClick={() => void clearCart()}
               >
-                <Trash2 className="mr-2 size-6 stroke-[2.2]" aria-hidden="true" />
+                <Trash2 className="mr-2 size-4 stroke-[2.2] sm:size-5" aria-hidden="true" />
                 Səbəti boşalt
               </Button>
             </div>
@@ -940,7 +940,7 @@ export function CartCheckout({
           className={
             checkoutOnly
               ? "h-fit w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100"
-              : "h-fit rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:p-5"
+              : "h-fit rounded-xl border border-slate-200 bg-white p-3 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 sm:rounded-2xl sm:p-4 md:p-5"
           }
         >
           {checkoutOnly ? (
@@ -951,11 +951,11 @@ export function CartCheckout({
               </Link>
             </Button>
           ) : null}
-          <h2 className="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100">{cartUi("confirmOrder")}</h2>
+          <h2 className="text-base font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-lg">{cartUi("confirmOrder")}</h2>
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <input type="hidden" name="promoCodes" value="" />
-          <div className="mt-4 grid gap-4">
+          <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4">
             {promoEligibleGroups.length > 0 ? (
               <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
                 <div>
@@ -1076,7 +1076,7 @@ export function CartCheckout({
                 <textarea
                   name="address"
                   defaultValue={defaultAddress}
-                  className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-20"
                   required
                 />
               </label>
@@ -1085,11 +1085,11 @@ export function CartCheckout({
               Qeyd
               <textarea
                 name="note"
-                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-20"
               />
             </label>
           </div>
-          <div className="mt-5 flex items-center justify-between border-t pt-4">
+          <div className="mt-4 flex items-center justify-between border-t pt-3 sm:mt-5 sm:pt-4">
             <span className="text-sm text-muted-foreground">Məhsullar</span>
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
@@ -1124,12 +1124,12 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-[10px] bg-blue-600 text-base font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white"
+            className="mt-3 h-10 w-full rounded-[10px] bg-blue-600 text-sm font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white sm:mt-4 sm:h-12 sm:text-base"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}
           </Button>
-          <Button asChild variant="outline" className="mt-3 w-full">
+          <Button asChild variant="outline" className="mt-2 h-10 w-full sm:mt-3">
             <Link href={returnHref}>Məhsula qayıt</Link>
           </Button>
         </form>
