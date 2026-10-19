@@ -278,7 +278,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/stores";
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-0 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
@@ -306,8 +306,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         ) : null}
         {!isCustomStorefrontProduct ? (
-          <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
-            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
+          <nav className="mb-3 min-w-0 text-sm text-slate-500 dark:text-slate-400 sm:mb-5 md:mb-6">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <ProductBackButton />
               <div className="flex min-w-0 items-center overflow-hidden">
                 <Link href={breadcrumbHomeHref} className="hover:text-blue-600 dark:hover:text-blue-300">
@@ -373,7 +373,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <span className="text-sm text-slate-500 dark:text-slate-400">Hələ rəy yoxdur</span>
               )}
             </div>
-            <p className={`${isCustomStorefrontProduct ? "mt-4 text-[26px] sm:text-[30px]" : "mt-6 text-[32px] md:text-[36px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
+            <p className={`${isCustomStorefrontProduct ? "mt-4 text-[26px] sm:text-[30px]" : "mt-4 text-[30px] sm:mt-6 md:text-[36px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
               {formatAznDiscountedPrice(
                 detail.product.priceAmount,
                 detail.product.discountAmount,
@@ -383,12 +383,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p> : null}
             {detail.product.description ? (
-              <p className={`${isCustomStorefrontProduct ? "mt-3 text-sm leading-6" : "mt-5 text-[15px] leading-7"} break-words text-slate-600 dark:text-slate-300`}>
+              <p className={`${isCustomStorefrontProduct ? "mt-3 text-sm leading-6" : "mt-3 text-sm leading-6 sm:mt-5 sm:text-[15px] sm:leading-7"} break-words text-slate-600 dark:text-slate-300`}>
                 {detail.product.description}
               </p>
             ) : null}
             {isStoreOwner ? (
-              <Button asChild className="mt-6 h-[52px] w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+              <Button asChild className="mt-4 h-11 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-6 sm:h-[52px]">
                 <Link href={`/sell/product/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
@@ -409,7 +409,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 compact={isCustomStorefrontProduct}
               />
             )}
-            <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2.5 h-11" : "mt-3 h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
+            <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2.5 h-11" : "mt-2 h-11 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
               <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                 <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                 Sual & Cavablar
@@ -475,7 +475,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </section>
 
         {detail.product.categoryId ? (
-          <div className={`${isCustomStorefrontProduct ? "mt-5 sm:mt-7" : "mt-8 md:mt-10"} scroll-mt-28`}>
+          <div className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-7 md:mt-10"} scroll-mt-28`}>
             <RelatedProductList
               initialProducts={[]}
               initialCursor={null}
@@ -489,11 +489,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         ) : null}
 
-        <section className={`${isCustomStorefrontProduct ? "mt-5 sm:mt-7" : "mt-8 md:mt-10"} min-w-0`}>
+        <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-7 md:mt-10"} min-w-0`}>
           <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-3 sm:p-4" : "rounded-2xl p-4 md:p-5"}`}>
             <div className={`${isCustomStorefrontProduct ? "mb-3" : "mb-4"} flex items-center gap-2`}>
               <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <h2 className={`${isCustomStorefrontProduct ? "text-lg" : "text-xl"} font-semibold tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
+              <h2 className={`${isCustomStorefrontProduct ? "text-lg" : "text-lg sm:text-xl"} min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
             </div>
             {canWriteReview ? (
               <ProductReviewForm

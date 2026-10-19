@@ -31,7 +31,7 @@ export function ProductBackButton({ compact = false }: { compact?: boolean }) {
       onClick={() => router.back()}
       className={cn(
         "inline-flex border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
-        compact ? "size-9 rounded-full p-0" : "h-10 rounded-lg px-3",
+        compact ? "size-9 rounded-full p-0" : "h-9 self-start rounded-lg px-3 sm:h-10",
       )}
       aria-label="Geri"
     >
