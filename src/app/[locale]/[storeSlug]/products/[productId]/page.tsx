@@ -52,12 +52,12 @@ type ProductDetailPageProps = {
 
 function FormattedProductDescription({ text }: { text: string }) {
   return (
-    <div className="grid gap-2.5 break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-[15px] sm:leading-7">
+    <div className="grid gap-1.5 break-words text-[13px] leading-5 text-slate-600 dark:text-slate-300 sm:gap-2.5 sm:text-[15px] sm:leading-7">
       {text.split(/\r?\n/).map((rawLine, index) => {
         const line = rawLine.trim();
-        if (!line) return <span key={index} className="h-1" aria-hidden="true" />;
+        if (!line) return <span key={index} className="h-0.5 sm:h-1" aria-hidden="true" />;
         if (line.startsWith("## ")) {
-          return <h2 key={index} className="mt-1 text-base font-bold leading-6 text-slate-950 dark:text-slate-100 sm:text-lg">{line.slice(3)}</h2>;
+          return <h2 key={index} className="mt-0.5 text-sm font-bold leading-5 text-slate-950 dark:text-slate-100 sm:mt-1 sm:text-lg sm:leading-6">{line.slice(3)}</h2>;
         }
         if (line.startsWith("• ") || line.startsWith("- ")) {
           return <p key={index} className="flex gap-2"><span className="font-bold text-blue-600">•</span><span>{line.slice(2)}</span></p>;
@@ -321,7 +321,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ]}
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
-      <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-4 py-3 sm:px-6 md:py-6 lg:px-8"}`}>
+      <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-3 py-2 sm:px-6 sm:py-3 md:py-6 lg:px-8"}`}>
         {isCustomStorefrontProduct ? (
           <div className="mb-2 sm:mb-3">
             <ProductBackButton compact />
@@ -348,7 +348,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </nav>
         ) : null}
 
-        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-3 sm:gap-4" : "gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start`}>
+        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-2.5 sm:gap-4" : "gap-3 sm:gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start`}>
           <ProductDetailGallery
             images={detail.product.images}
             fallbackImageUrl={detail.product.imageUrl}
@@ -357,10 +357,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             viewerRole={viewerRole}
             compact={isCustomStorefrontProduct}
           />
-          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-3 sm:p-5" : "rounded-2xl p-4 md:p-6"}`}>
+          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-5" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-6"}`}>
             <p className={`${isCustomStorefrontProduct ? "text-xs" : "text-sm"} truncate font-medium text-slate-500 dark:text-slate-400`}>{detail.store.name}</p>
             <div className={`${isCustomStorefrontProduct ? "mt-1" : "mt-2"} flex min-w-0 items-start justify-between gap-3`}>
-              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-[22px] sm:text-[28px]" : "text-[28px] md:text-[34px]"}`}>
+              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-xl sm:text-[28px]" : "text-[22px] sm:text-[28px] md:text-[34px]"}`}>
                 {detail.product.name}
               </h1>
               {!isStoreOwner && !isCustomStorefrontProduct ? (
@@ -392,25 +392,25 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-slate-500 dark:text-slate-400">Hələ rəy yoxdur</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Hələ rəy yoxdur</span>
               )}
             </div>
-            <p className={`${isCustomStorefrontProduct ? "mt-4 text-[26px] sm:text-[30px]" : "mt-4 text-[30px] sm:mt-6 md:text-[36px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
+            <p className={`${isCustomStorefrontProduct ? "mt-3 text-2xl sm:mt-4 sm:text-[30px]" : "mt-3 text-[26px] sm:mt-6 sm:text-[30px] md:text-[36px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
               {formatAznDiscountedPrice(
                 detail.product.priceAmount,
                 detail.product.discountAmount,
               )}
             </p>
-            {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
+            {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-2 text-xs text-slate-500 dark:text-slate-400 sm:mt-3 sm:text-sm" : "mt-2 text-xs font-semibold text-destructive sm:mt-3 sm:text-sm"}>
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p> : null}
             {detail.product.description ? (
-              <div className={isCustomStorefrontProduct ? "mt-3" : "mt-3 sm:mt-5"}>
+              <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-5"}>
                 <FormattedProductDescription text={detail.product.description} />
               </div>
             ) : null}
             {isStoreOwner ? (
-              <Button asChild className="mt-4 h-11 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-6 sm:h-[52px]">
+              <Button asChild className="mt-3 h-10 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-6 sm:h-[52px]">
                 <Link href={`/sell/product/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
@@ -431,7 +431,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 compact={isCustomStorefrontProduct}
               />
             )}
-            <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2.5 h-11" : "mt-2 h-11 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
+            <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
               <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                 <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                 Sual & Cavablar
@@ -512,10 +512,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ) : null}
 
         <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-7 md:mt-10"} min-w-0`}>
-          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-3 sm:p-4" : "rounded-2xl p-4 md:p-5"}`}>
+          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-4" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-5"}`}>
             <div className={`${isCustomStorefrontProduct ? "mb-3" : "mb-4"} flex items-center gap-2`}>
-              <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <h2 className={`${isCustomStorefrontProduct ? "text-lg" : "text-lg sm:text-xl"} min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
+              <Star className="size-4 fill-amber-400 text-amber-400 sm:size-5" aria-hidden="true" />
+              <h2 className={`${isCustomStorefrontProduct ? "text-base sm:text-lg" : "text-base sm:text-xl"} min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
             </div>
             {canWriteReview ? (
               <ProductReviewForm

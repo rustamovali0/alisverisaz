@@ -163,14 +163,14 @@ export function ProductDetailGallery({
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className={cn("group relative block w-full bg-slate-50 text-left dark:bg-slate-950/45", compact ? "aspect-[4/3] sm:aspect-square" : "aspect-square")}
+          className={cn("group relative block w-full bg-slate-50 text-left dark:bg-slate-950/45", compact ? "aspect-[3/2] sm:aspect-square" : "aspect-[4/3] sm:aspect-square")}
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
             <img
               src={activeImage.url}
               alt={productName}
-              className={cn("h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none", compact ? "p-2.5 sm:p-5" : "p-4 sm:p-6")}
+              className={cn("h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none", compact ? "p-3 sm:p-5" : "p-3 sm:p-6")}
             />
           ) : (
             <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
