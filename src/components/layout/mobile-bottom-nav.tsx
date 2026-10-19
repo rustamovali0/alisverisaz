@@ -400,7 +400,7 @@ export function MobileBottomNav({
     };
   }, [isolatedStorefront, storeId, storeSubdomainSlug]);
 
-  if (isAuthLoading) {
+  if (isAuthLoading && !isolatedItems) {
     return (
       <nav
         className={cn(

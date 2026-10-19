@@ -2053,6 +2053,9 @@ export function Storefront({
         id="products"
         className={cn(
           "min-w-0 scroll-mt-28",
+          productsOnly
+            ? "rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:p-8"
+            :
           isCustomStorefront
             ? "border-0 bg-transparent px-0 py-2 shadow-none"
             : "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6",
@@ -2060,7 +2063,14 @@ export function Storefront({
       >
       <div className={cn("grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between", isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5")}>
         <div className="min-w-0">
-          <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
+          <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+            {productsOnly ? "Bütün məhsullar" : home("recentlyListed")}
+          </h2>
+          {productsOnly ? (
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Məhsulları filtr və sıralama ilə rahat tapın
+            </p>
+          ) : null}
         </div>
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-end">
           <Button
