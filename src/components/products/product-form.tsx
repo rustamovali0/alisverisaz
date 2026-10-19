@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Heading2, List, ListOrdered, Pilcrow, Sparkles } from "lucide-react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -91,6 +91,76 @@ function suggestedCategories(productName: string, categories: CategoryOption[]) 
     .sort((left, right) => right.score - left.score || left.category.name.localeCompare(right.category.name, "az"))
     .slice(0, 3)
     .map((item) => item.category);
+}
+
+function ProductDescriptionEditor({
+  initialValue,
+  disabled,
+}: {
+  initialValue: string;
+  disabled?: boolean;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertText(text: string) {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = `${value.slice(0, start)}${text}${value.slice(end)}`;
+    setValue(nextValue);
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + text.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  const tools = [
+    { label: "Başlıq", icon: Heading2, text: `${value.trim() ? "\n\n" : ""}## Başlıq\n` },
+    { label: "Abzas", icon: Pilcrow, text: "\n\n" },
+    { label: "Maddə", icon: List, text: `${value.trim() ? "\n" : ""}• ` },
+    { label: "Nömrə", icon: ListOrdered, text: `${value.trim() ? "\n" : ""}1. ` },
+  ];
+
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      Açıqlama
+      <div className="overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+        <div className="flex gap-1.5 overflow-x-auto border-b bg-muted/45 p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button
+                key={tool.label}
+                type="button"
+                disabled={disabled}
+                onClick={() => insertText(tool.text)}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border bg-background px-3 text-xs font-semibold text-foreground shadow-sm disabled:opacity-50"
+              >
+                <Icon className="size-3.5" aria-hidden="true" />
+                {tool.label}
+              </button>
+            );
+          })}
+        </div>
+        <textarea
+          ref={textareaRef}
+          name="description"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Məhsulu hissələrə bölərək təsvir edin..."
+          className="min-h-40 w-full resize-y border-0 bg-transparent px-3.5 py-3 text-sm leading-6 outline-none"
+          disabled={disabled}
+        />
+      </div>
+      <span className="text-xs font-normal text-muted-foreground">
+        Başlıq, abzas və siyahılar məhsul səhifəsində eyni quruluşda göstərilir.
+      </span>
+    </label>
+  );
 }
 
 function variantsToText(product?: ManagedProduct) {
@@ -734,15 +804,7 @@ export function ProductForm({
         </label>
       </div>
 
-      <label className="grid gap-2 text-sm font-medium">
-        Açıqlama
-        <textarea
-          name="description"
-          defaultValue={product?.description ?? ""}
-          className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          disabled={disabled}
-        />
-      </label>
+      <ProductDescriptionEditor initialValue={product?.description ?? ""} disabled={disabled} />
 
       <input type="hidden" name="depositEnabled" value="off" />
       <input type="hidden" name="depositType" value="fixed" />

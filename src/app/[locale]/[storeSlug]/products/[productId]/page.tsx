@@ -50,6 +50,28 @@ type ProductDetailPageProps = {
   }>;
 };
 
+function FormattedProductDescription({ text }: { text: string }) {
+  return (
+    <div className="grid gap-2.5 break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-[15px] sm:leading-7">
+      {text.split(/\r?\n/).map((rawLine, index) => {
+        const line = rawLine.trim();
+        if (!line) return <span key={index} className="h-1" aria-hidden="true" />;
+        if (line.startsWith("## ")) {
+          return <h2 key={index} className="mt-1 text-base font-bold leading-6 text-slate-950 dark:text-slate-100 sm:text-lg">{line.slice(3)}</h2>;
+        }
+        if (line.startsWith("• ") || line.startsWith("- ")) {
+          return <p key={index} className="flex gap-2"><span className="font-bold text-blue-600">•</span><span>{line.slice(2)}</span></p>;
+        }
+        const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
+        if (numbered) {
+          return <p key={index} className="flex gap-2"><span className="font-semibold text-blue-600">{numbered[1]}.</span><span>{numbered[2]}</span></p>;
+        }
+        return <p key={index}>{line}</p>;
+      })}
+    </div>
+  );
+}
+
 function getLocationMapUrl(location: ProductLocationAvailability["location"]) {
   if (location.mapLink) {
     return location.mapLink;
@@ -383,9 +405,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p> : null}
             {detail.product.description ? (
-              <p className={`${isCustomStorefrontProduct ? "mt-3 text-sm leading-6" : "mt-3 text-sm leading-6 sm:mt-5 sm:text-[15px] sm:leading-7"} break-words text-slate-600 dark:text-slate-300`}>
-                {detail.product.description}
-              </p>
+              <div className={isCustomStorefrontProduct ? "mt-3" : "mt-3 sm:mt-5"}>
+                <FormattedProductDescription text={detail.product.description} />
+              </div>
             ) : null}
             {isStoreOwner ? (
               <Button asChild className="mt-4 h-11 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-6 sm:h-[52px]">
