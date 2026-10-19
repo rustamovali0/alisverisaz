@@ -264,7 +264,7 @@ export function CartCheckout({
   }, [deliveryMethod, deliverySettings, deliveryStoreOverrides, visibleItems]);
   const firstProduct = visibleItems[0]?.product;
   const isolatedProductsHref = isolatedStoreSlug
-    ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}#products`
+    ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}/products`
     : "/products";
   const isolatedHomeHref = isolatedStoreSlug
     ? isolatedStoreBaseHref || `/${isolatedStoreSlug}`

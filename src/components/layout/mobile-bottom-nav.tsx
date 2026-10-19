@@ -252,9 +252,9 @@ export function MobileBottomNav({
   const isolatedItems = isolatedStorefront || storeSubdomainSlug
     ? [
         { href: storeHomeHref, label: nav("home"), icon: House },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: nav("products"), icon: Boxes },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
         { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingBag, badge: cartCount },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: "Ünvan", icon: MapPinned },
+        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: "Ünvan", icon: MapPinned },
       ]
     : null;
   const items = isolatedItems ?? (role === "seller"
@@ -286,6 +286,12 @@ export function MobileBottomNav({
         ]);
   const totalNavItems = items.length + (isolatedItems ? 0 : 1);
   const navGridClass = totalNavItems >= 5 ? "grid-cols-5" : "grid-cols-4";
+  const isolatedNavPrefetchKey = isolatedItems?.map((item) => item.href).join("|") ?? "";
+
+  useEffect(() => {
+    if (!isolatedNavPrefetchKey) return;
+    isolatedNavPrefetchKey.split("|").forEach((href) => router.prefetch(href));
+  }, [isolatedNavPrefetchKey, router]);
 
   const isCurrentRoute = useCallback(
     (href: string) => {
@@ -362,7 +368,8 @@ export function MobileBottomNav({
           const nestedProducts = targetHash === "products" && pathname.startsWith(`${targetPath === "/" ? "" : targetPath}/products/`);
           return nestedProducts || (pathname === targetPath && currentHash === `#${targetHash}`);
         }
-        return pathname === targetPath && !currentHash;
+        const isProductDetail = targetPath.endsWith("/products") && pathname.startsWith(`${targetPath}/`);
+        return (pathname === targetPath || isProductDetail) && !currentHash;
       }
 
       return targetPath === "/"

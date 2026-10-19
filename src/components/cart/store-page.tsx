@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { BreadcrumbJsonLd, StoreJsonLd } from "@/components/seo/json-ld";
-import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
+import { getMarketplaceProductPage, getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
@@ -29,11 +29,14 @@ export type StorePageProps = {
   searchParams?: Promise<{
     category?: string;
     q?: string;
+    sort?: string;
   }>;
 };
 
 type StorePageRenderOptions = {
   forceMarketplaceRoute?: boolean;
+  productsOnly?: boolean;
+  contactOnly?: boolean;
 };
 
 export async function generateMetadata({
@@ -189,6 +192,27 @@ export async function renderStorePage(
     : `${siteConfig.url}/store/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
+  const productSort =
+    search?.sort === "oldest" || search?.sort === "price_asc" || search?.sort === "price_desc"
+      ? search.sort
+      : "newest";
+  const productPage = options.productsOnly
+    ? await getMarketplaceProductPage(locale, {
+        categoryId: selectedCategory?.id,
+        searchQuery: search?.q,
+        sort: productSort,
+        storeId: store.id,
+        limit: 20,
+      })
+    : null;
+  const renderedStore = productPage
+    ? {
+        ...store,
+        sampleProducts: productPage.products,
+        productNextCursor: productPage.nextCursor,
+        productHasMore: productPage.hasMore,
+      }
+    : store;
 
   void trackActivityEvent({
     eventType: "store_view",
@@ -218,7 +242,7 @@ export async function renderStorePage(
         ]}
       />
       <Storefront
-        store={store}
+        store={renderedStore}
         categories={categories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
@@ -229,6 +253,8 @@ export async function renderStorePage(
         legacyLayout={isLegacyStoreRoute}
         storeSubdomainSlug={storeSubdomainSlug}
         isStoreOwner={isStoreOwner}
+        productsOnly={options.productsOnly}
+        contactOnly={options.contactOnly}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,
           logoUrl: siteSettings.logoUrl,

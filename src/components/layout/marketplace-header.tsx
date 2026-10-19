@@ -308,9 +308,9 @@ export function MarketplaceHeader({
   const shouldShowAddListing = !isIsolatedStorefront && Boolean(addListingHref);
   const mobileMenuItems = isIsolatedStorefront ? [
     { href: storeHomeHref, label: "Əsas", icon: Info },
-    { href: `${isolatedBaseHref}#products`, label: nav("products"), icon: Search },
+    { href: `${isolatedBaseHref}/products`, label: nav("products"), icon: Search },
     { href: cartHref, label: common("cart"), icon: ShoppingCart },
-    { href: `${isolatedBaseHref}#contact`, label: "Əlaqə", icon: MessageCircle },
+    { href: `${isolatedBaseHref}/contact`, label: "Əlaqə", icon: MessageCircle },
   ] : [
     { href: "/help", label: "Yardım", icon: HelpCircle },
     { href: "/about", label: "Tətbiq haqqında", icon: Info },
@@ -459,8 +459,8 @@ export function MarketplaceHeader({
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             {isIsolatedStorefront ? <>
-              <Link href={`${isolatedBaseHref}#products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">{nav("products")}</Link>
-              <Link href={`${isolatedBaseHref}#contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
+              <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">{nav("products")}</Link>
+              <Link href={`${isolatedBaseHref}/contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
             </> : null}
             {!isIsolatedStorefront ? <Button
               asChild

@@ -105,6 +105,8 @@ type StorefrontProps = {
   isStoreOwner?: boolean;
   legacyLayout?: boolean;
   storeSubdomainSlug?: string | null;
+  productsOnly?: boolean;
+  contactOnly?: boolean;
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
@@ -296,12 +298,12 @@ export function CustomStorefrontHeader({
   const aboutContent = getStoreAboutContent(store);
   const navItems = [
     { href: storeHomeHref, label: storefront("home") },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: storefront("products") },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: storefront("products") },
     { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: storefront("categories") },
     ...(aboutContent
       ? [{ href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`, label: storefront("about") }]
       : []),
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: storefront("contact") },
+    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: storefront("contact") },
   ];
   const socialLinks = [
     {
@@ -500,7 +502,7 @@ export function CustomStoreFooter({
           <Link href={storeHomeHref} prefetch className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
             {storefront("home")}
           </Link>
-          <Link href={`${baseHref}#products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link href={`${baseHref}/products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
             {storefront("products")}
           </Link>
           <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
@@ -511,7 +513,7 @@ export function CustomStoreFooter({
               {storefront("about")}
             </Link>
           ) : null}
-          <Link href={`${baseHref}#contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link href={`${baseHref}/contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
             {storefront("contact")}
           </Link>
         </nav>
@@ -1233,7 +1235,7 @@ export function ProductGrid({
 
 function useInfiniteProducts({
   initialProducts, initialCursor, initialHasMore, locale,
-  categoryId, categoryIds, storeId, searchQuery, sort,
+  categoryId, categoryIds, storeId, searchQuery, sort, pageSize,
 }: {
   initialProducts: CartProduct[];
   initialCursor?: string | null;
@@ -1244,8 +1246,9 @@ function useInfiniteProducts({
   storeId?: string;
   searchQuery?: string;
   sort?: MarketplaceProductSort;
+  pageSize?: number;
 }) {
-  const options = productQueryOptions({ locale, categoryId, categoryIds, storeId, searchQuery, sort });
+  const options = productQueryOptions({ locale, categoryId, categoryIds, storeId, searchQuery, sort, pageSize });
   const key = JSON.stringify(options.queryKey);
   // Server data belongs only to the filters active when this view first mounted.
   const initialKey = useRef(key);
@@ -1688,6 +1691,8 @@ export function Storefront({
   isStoreOwner = false,
   legacyLayout = false,
   storeSubdomainSlug,
+  productsOnly = false,
+  contactOnly = false,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const home = useTranslations("home");
@@ -1701,6 +1706,7 @@ export function Storefront({
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [showAllMobileCategories, setShowAllMobileCategories] = useState(false);
+  const [homeProductLimit, setHomeProductLimit] = useState(4);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
     initialCursor: store.productNextCursor,
@@ -1710,6 +1716,7 @@ export function Storefront({
     storeId: store.id,
     searchQuery,
     sort: activeSort,
+    pageSize: productsOnly ? 20 : 4,
   });
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
@@ -2095,10 +2102,17 @@ export function Storefront({
         </div>
       ) : null}
       <ProductInfiniteGrid
-        products={filteredVisibleProducts}
-        hasMore={!hasLocalFilters && infinite.hasMore}
+        products={productsOnly ? filteredVisibleProducts : filteredVisibleProducts.slice(0, homeProductLimit)}
+        hasMore={!hasLocalFilters && (productsOnly ? infinite.hasMore : homeProductLimit < filteredVisibleProducts.length || infinite.hasMore)}
         isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
-        onLoadNext={infinite.loadNext}
+        onLoadNext={() => {
+          if (productsOnly) {
+            infinite.loadNext();
+            return;
+          }
+          setHomeProductLimit((current) => current + 4);
+          if (homeProductLimit >= filteredVisibleProducts.length) infinite.loadNext();
+        }}
         storeSlug={store.slug}
         storeName={store.name}
         storeBaseHref={storeBaseHref}
@@ -2293,6 +2307,26 @@ export function Storefront({
           ) : null}
         </div>
         <SiteFooter {...footer} />
+      </main>
+    );
+  }
+
+  if (productsOnly || contactOnly) {
+    return (
+      <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+        <div className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:py-8 lg:px-8">
+          {productsOnly ? modernProductsSection : (
+            <PublicStoreLocationSection
+              locations={locations}
+              logoUrl={store.logoUrl}
+              storeName={store.name}
+              isolated
+              socialLinks={{ instagram: store.socialInstagram ?? undefined, tiktok: store.socialTiktok ?? undefined }}
+            />
+          )}
+        </div>
+        <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
+        <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront />
       </main>
     );
   }

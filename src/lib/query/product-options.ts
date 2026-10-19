@@ -8,16 +8,17 @@ export type ProductQueryFilters = {
   storeId?: string;
   searchQuery?: string;
   sort?: MarketplaceProductSort;
+  pageSize?: number;
 };
 
 export function productQueryOptions(filters: ProductQueryFilters) {
   const categories = [...new Set(filters.categoryIds ?? [])].sort();
   const search = filters.searchQuery?.trim() ?? "";
   return infiniteQueryOptions({
-    queryKey: ["marketplace-products", filters.locale, filters.categoryId ?? "", categories.join(","), filters.storeId ?? "", search, filters.sort ?? "newest"],
+    queryKey: ["marketplace-products", filters.locale, filters.categoryId ?? "", categories.join(","), filters.storeId ?? "", search, filters.sort ?? "newest", filters.pageSize ?? 24],
     initialPageParam: null as string | null,
     queryFn: async ({ pageParam, signal }): Promise<MarketplaceProductPage> => {
-      const params = new URLSearchParams({ locale: filters.locale, limit: "24", sort: filters.sort ?? "newest" });
+      const params = new URLSearchParams({ locale: filters.locale, limit: String(filters.pageSize ?? 24), sort: filters.sort ?? "newest" });
       if (filters.categoryId) params.set("categoryId", filters.categoryId);
       if (categories.length) params.set("categoryIds", categories.join(","));
       if (filters.storeId) params.set("storeId", filters.storeId);
