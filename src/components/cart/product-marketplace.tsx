@@ -2314,7 +2314,10 @@ export function Storefront({
   if (productsOnly || contactOnly) {
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
-        <div className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 md:py-8 lg:px-8">
+        <div className={cn(
+          "mx-auto w-full max-w-[1440px] px-4 pb-5 sm:px-6 md:pb-8 lg:px-8",
+          contactOnly ? "pt-8 sm:pt-10 md:pt-12" : "pt-5 md:pt-8",
+        )}>
           {productsOnly ? modernProductsSection : (
             <PublicStoreLocationSection
               locations={locations}
