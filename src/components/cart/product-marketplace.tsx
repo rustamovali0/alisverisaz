@@ -730,7 +730,7 @@ function MarketplaceDropdown({
         type="button"
         className={cn(
           "flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-left font-semibold text-slate-900 transition md:hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
-          compact ? "h-9 px-2.5 text-xs" : "h-10 px-3 text-sm",
+          compact ? "h-9 px-2.5 text-xs sm:h-10 sm:px-3 sm:text-sm" : "h-10 px-3 text-sm",
         )}
         aria-label={label}
         aria-expanded={open}
@@ -1914,6 +1914,7 @@ export function Storefront({
         { value: "price_desc", label: t("sortPriceDesc") },
       ]}
       onChange={(value) => selectSort(value as MarketplaceProductSort)}
+      compact
     />
   );
 
@@ -1927,7 +1928,7 @@ export function Storefront({
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
-            className="h-10 gap-2 rounded-[10px] px-3 text-sm"
+            className="h-9 gap-1.5 rounded-[9px] px-2.5 text-xs sm:h-10 sm:gap-2 sm:rounded-[10px] sm:px-3 sm:text-sm"
             aria-expanded={isFiltersOpen}
             aria-controls="storefront-filters"
             onClick={() => setIsFiltersOpen((current) => !current)}
@@ -1939,7 +1940,7 @@ export function Storefront({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+            className="h-9 rounded-[9px] px-2.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-950 sm:h-10 sm:rounded-[10px] sm:px-3 sm:text-sm"
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
@@ -2076,13 +2077,12 @@ export function Storefront({
             </p>
           ) : null}
         </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-end">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1.5 sm:flex sm:items-center sm:justify-end sm:gap-2">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
             className={cn(
-              "gap-2 rounded-[10px] px-3 text-sm shadow-none",
-              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
+              "h-9 gap-1.5 rounded-[9px] px-2.5 text-xs shadow-none sm:h-11 sm:gap-2 sm:rounded-[10px] sm:px-3 sm:text-sm",
               isFiltersOpen
                 ? "bg-blue-600 text-white md:hover:bg-blue-700"
                 : "border-slate-200 bg-white text-slate-700 md:hover:bg-slate-50 md:hover:text-slate-950",
@@ -2099,8 +2099,7 @@ export function Storefront({
             type="button"
             variant="ghost"
             className={cn(
-              "rounded-[10px] px-3 text-sm text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100",
-              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
+              "h-9 rounded-[9px] px-2.5 text-xs text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100 sm:h-11 sm:rounded-[10px] sm:px-3 sm:text-sm",
             )}
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
