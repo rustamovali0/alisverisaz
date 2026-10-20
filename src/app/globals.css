@@ -4,78 +4,78 @@
 
 @layer base {
   :root {
-    --background: 210 33% 98%;
-    --foreground: 218 31% 12%;
+    --background: 210 29% 98%;
+    --foreground: 217 25% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 218 31% 12%;
+    --card-foreground: 217 25% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 218 31% 12%;
-    --primary: 217 91% 60%;
+    --popover-foreground: 217 25% 16%;
+    --primary: 213 47% 46%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 35% 94%;
-    --secondary-foreground: 216 28% 18%;
-    --muted: 214 30% 94%;
-    --muted-foreground: 216 13% 43%;
-    --accent: 38 94% 58%;
-    --accent-foreground: 220 30% 12%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 212 25% 94%;
+    --secondary-foreground: 216 24% 20%;
+    --muted: 210 24% 95%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 35 48% 50%;
+    --accent-foreground: 217 25% 16%;
+    --destructive: 353 50% 48%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 24% 88%;
-    --input: 214 24% 88%;
-    --ring: 217 91% 60%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 213 47% 46%;
     --radius: 0.5rem;
-    --marketplace-primary: 217 91% 60%;
-    --marketplace-primary-hover: 221 83% 53%;
+    --marketplace-primary: 213 47% 46%;
+    --marketplace-primary-hover: 215 48% 38%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 214 100% 97%;
-    --marketplace-navy: 233 43% 19%;
-    --marketplace-muted: 240 5% 58%;
-    --marketplace-success: 151 66% 45%;
+    --marketplace-primary-soft: 211 47% 96%;
+    --marketplace-navy: 217 25% 16%;
+    --marketplace-muted: 215 14% 46%;
+    --marketplace-success: 153 42% 40%;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 220 29% 8%;
+    --background: 218 25% 10%;
     --foreground: 210 32% 96%;
-    --card: 220 25% 11%;
+    --card: 218 22% 13%;
     --card-foreground: 210 32% 96%;
-    --popover: 220 25% 11%;
+    --popover: 218 22% 13%;
     --popover-foreground: 210 32% 96%;
-    --primary: 217 91% 60%;
+    --primary: 213 47% 46%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 219 21% 18%;
+    --secondary: 216 18% 19%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 219 21% 17%;
-    --muted-foreground: 215 18% 70%;
-    --accent: 42 91% 58%;
-    --accent-foreground: 220 29% 8%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 216 17% 18%;
+    --muted-foreground: 214 15% 70%;
+    --accent: 37 50% 55%;
+    --accent-foreground: 218 25% 10%;
+    --destructive: 353 43% 38%;
     --destructive-foreground: 210 40% 98%;
-    --border: 218 17% 22%;
-    --input: 218 17% 22%;
-    --ring: 217 91% 60%;
-    --marketplace-primary: 217 91% 60%;
-    --marketplace-primary-hover: 221 83% 53%;
+    --border: 216 15% 24%;
+    --input: 216 15% 24%;
+    --ring: 213 47% 52%;
+    --marketplace-primary: 213 47% 52%;
+    --marketplace-primary-hover: 213 47% 58%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 217 45% 18%;
+    --marketplace-primary-soft: 213 28% 21%;
     --marketplace-navy: 210 32% 96%;
     --marketplace-muted: 215 18% 70%;
     --marketplace-success: 151 60% 52%;
   }
 
   .dark .global-loader-root {
-    --background: 220 29% 8% !important;
+    --background: 218 25% 10% !important;
     --foreground: 210 32% 96% !important;
-    --card: 220 25% 11% !important;
+    --card: 218 22% 13% !important;
     --card-foreground: 210 32% 96% !important;
-    --popover: 220 25% 11% !important;
+    --popover: 218 22% 13% !important;
     --popover-foreground: 210 32% 96% !important;
-    --secondary: 219 21% 18% !important;
+    --secondary: 216 18% 19% !important;
     --secondary-foreground: 210 40% 98% !important;
-    --muted: 219 21% 17% !important;
-    --muted-foreground: 215 18% 70% !important;
-    --border: 218 17% 22% !important;
-    --input: 218 17% 22% !important;
+    --muted: 216 17% 18% !important;
+    --muted-foreground: 214 15% 70% !important;
+    --border: 216 15% 24% !important;
+    --input: 216 15% 24% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }
@@ -83,23 +83,23 @@
   /* Homepage presets provide light brand colors inline; dark mode must retain the
      semantic dark surface tokens instead of inheriting those preset surfaces. */
   .dark [data-homepage-preset] {
-    --background: 220 29% 8% !important;
+    --background: 218 25% 10% !important;
     --foreground: 210 32% 96% !important;
-    --card: 220 25% 11% !important;
+    --card: 218 22% 13% !important;
     --card-foreground: 210 32% 96% !important;
-    --popover: 220 25% 11% !important;
+    --popover: 218 22% 13% !important;
     --popover-foreground: 210 32% 96% !important;
-    --primary: 178 70% 42% !important;
-    --primary-foreground: 220 29% 8% !important;
-    --secondary: 219 21% 18% !important;
+    --primary: 213 47% 52% !important;
+    --primary-foreground: 0 0% 100% !important;
+    --secondary: 216 18% 19% !important;
     --secondary-foreground: 210 40% 98% !important;
-    --muted: 219 21% 17% !important;
-    --muted-foreground: 215 18% 70% !important;
-    --accent: 42 91% 58% !important;
-    --accent-foreground: 220 29% 8% !important;
-    --border: 218 17% 22% !important;
-    --input: 218 17% 22% !important;
-    --ring: 178 70% 42% !important;
+    --muted: 216 17% 18% !important;
+    --muted-foreground: 214 15% 70% !important;
+    --accent: 37 50% 55% !important;
+    --accent-foreground: 218 25% 10% !important;
+    --border: 216 15% 24% !important;
+    --input: 216 15% 24% !important;
+    --ring: 213 47% 52% !important;
     --home-hero-bg: hsl(var(--background)) !important;
     --home-categories-bg: hsl(var(--background)) !important;
     --home-stores-bg: hsl(var(--background)) !important;
@@ -108,9 +108,9 @@
     --home-button-bg: hsl(var(--primary)) !important;
     --home-button-text: hsl(var(--primary-foreground)) !important;
     --home-border: hsl(var(--border)) !important;
-    --marketplace-primary: 217 91% 60% !important;
-    --marketplace-primary-hover: 221 83% 53% !important;
-    --marketplace-primary-soft: 217 45% 18% !important;
+    --marketplace-primary: 213 47% 52% !important;
+    --marketplace-primary-hover: 213 47% 58% !important;
+    --marketplace-primary-soft: 213 28% 21% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }
@@ -283,27 +283,27 @@
   }
 
   .radmin-shell {
-    --background: 195 45% 96%;
+    --background: 200 25% 97%;
     --foreground: 219 42% 11%;
     --card: 0 0% 100%;
     --card-foreground: 219 42% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 219 42% 11%;
-    --primary: 186 89% 31%;
+    --primary: 185 45% 34%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 188 48% 92%;
+    --secondary: 190 24% 93%;
     --secondary-foreground: 204 55% 18%;
-    --muted: 190 42% 92%;
+    --muted: 195 20% 93%;
     --muted-foreground: 210 17% 43%;
-    --accent: 40 92% 57%;
+    --accent: 35 48% 50%;
     --accent-foreground: 219 42% 11%;
-    --border: 190 38% 84%;
-    --input: 190 38% 84%;
-    --ring: 186 89% 31%;
+    --border: 195 20% 85%;
+    --input: 195 20% 85%;
+    --ring: 185 45% 34%;
     background:
-      radial-gradient(circle at 18% 0%, rgb(94 234 212 / 0.23), transparent 34rem),
-      radial-gradient(circle at 92% 18%, rgb(244 183 64 / 0.16), transparent 28rem),
-      linear-gradient(135deg, #eefdf9 0%, #f8fbff 48%, #e8f7f2 100%);
+      radial-gradient(circle at 18% 0%, rgb(115 170 173 / 0.13), transparent 34rem),
+      radial-gradient(circle at 92% 18%, rgb(184 135 69 / 0.08), transparent 28rem),
+      linear-gradient(135deg, #f3f8f8 0%, #f8fafc 48%, #eef5f4 100%);
   }
 
   .dark .radmin-shell {
@@ -313,13 +313,13 @@
     --card-foreground: 210 32% 96%;
     --popover: 220 30% 12%;
     --popover-foreground: 210 32% 96%;
-    --primary: 180 72% 43%;
+    --primary: 185 45% 48%;
     --primary-foreground: 221 39% 8%;
     --secondary: 204 38% 17%;
     --secondary-foreground: 210 32% 96%;
     --muted: 208 31% 17%;
     --muted-foreground: 214 18% 72%;
-    --accent: 40 92% 58%;
+    --accent: 37 50% 55%;
     --accent-foreground: 221 39% 8%;
     --border: 200 28% 22%;
     --input: 200 28% 22%;
