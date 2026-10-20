@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
         avatarUrl: storeLogo ?? current.profile.avatar_url ?? null,
       } : null } : {}),
     },
-    { status: current ? 200 : 401, headers: { "Cache-Control": "private, no-store" } },
+    {
+      status: 200,
+      headers: { "Cache-Control": "private, max-age=0, must-revalidate" },
+    },
   );
 }

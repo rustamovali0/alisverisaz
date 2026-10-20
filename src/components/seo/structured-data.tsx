@@ -15,7 +15,7 @@ const structuredData = {
         "alisveris az",
       ],
       url: siteConfig.url,
-      logo: `${siteConfig.url}/icon.png`,
+      logo: `${siteConfig.url}/icon.svg`,
       sameAs: [siteConfig.url],
     },
     {

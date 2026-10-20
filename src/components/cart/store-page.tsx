@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
@@ -54,7 +54,7 @@ export async function generateMetadata({
   });
 
   if (!store) {
-    return {};
+    notFound();
   }
 
   const requestHeaders = await headers();
@@ -159,7 +159,10 @@ export async function renderStorePage(
   });
 
   if (!store) {
-    redirect(marketplaceHomeRedirect);
+    if (storeSubdomainSlug) {
+      redirect(marketplaceHomeRedirect);
+    }
+    notFound();
   }
 
   const isStoreOwner =

@@ -351,13 +351,13 @@ export function MarketplaceHeader({
               <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
                 <img
                   src={logoUrl}
-                  alt={displaySiteName}
+                  alt=""
                   className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                 />
                 {darkLogoUrl ? (
                   <img
                     src={darkLogoUrl}
-                    alt={displaySiteName}
+                    alt=""
                     className="hidden h-full w-full object-contain p-0.5 dark:block"
                   />
                 ) : null}
@@ -601,13 +601,13 @@ export function MarketplaceHeader({
                   <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
                     <img
                       src={logoUrl}
-                      alt={displaySiteName}
+                      alt=""
                       className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                     />
                     {darkLogoUrl ? (
                       <img
                         src={darkLogoUrl}
-                        alt={displaySiteName}
+                        alt=""
                         className="hidden h-full w-full object-contain p-0.5 dark:block"
                       />
                     ) : null}

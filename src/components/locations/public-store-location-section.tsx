@@ -161,7 +161,7 @@ export function PublicStoreLocationSection({
     },
   ].filter((item) => item.href);
 
-  if (activeLocations.length === 0 && socials.length === 0) {
+  if (activeLocations.length === 0 && socials.length === 0 && !isolated) {
     return null;
   }
 
@@ -181,9 +181,15 @@ export function PublicStoreLocationSection({
             <MapPin className="size-5" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <h2 className={cn("truncate text-xl font-semibold tracking-normal sm:text-2xl", isolated ? "text-white" : "text-slate-950 dark:text-slate-100")}>
-              {isolated ? "Ünvan və əlaqə" : storefront("storeInfo")}
-            </h2>
+            {isolated ? (
+              <h1 className="truncate text-xl font-semibold tracking-normal text-white sm:text-2xl">
+                Ünvan və əlaqə
+              </h1>
+            ) : (
+              <h2 className="truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+                {storefront("storeInfo")}
+              </h2>
+            )}
             {isolated ? <p className="mt-1 text-xs text-slate-300 sm:text-sm">Mağazaya gəlmək və əlaqə saxlamaq üçün məlumatlar</p> : null}
           </div>
         </div>
@@ -327,6 +333,10 @@ export function PublicStoreLocationSection({
             </Button>
           ) : null}
         </>
+      ) : isolated ? (
+        <div className="bg-slate-100 p-4 text-sm text-slate-600 dark:bg-slate-900 dark:text-slate-300 sm:p-6">
+          Mağaza ünvan və əlaqə məlumatlarını hələ əlavə etməyib.
+        </div>
       ) : null}
     </section>
   );

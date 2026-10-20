@@ -25,7 +25,7 @@ it("rechecks server cookies when browser auth reports an empty session", async (
   expect(await auth.getClientAuthProfileOnce()).toEqual(profile);
   expect(fetcher).toHaveBeenLastCalledWith(
     "/api/auth/session?scope=public&profile=1",
-    expect.objectContaining({ credentials: "same-origin", cache: "no-store" }),
+    expect.objectContaining({ credentials: "same-origin", cache: "no-cache" }),
   );
   fetcher.mockImplementation(async () => new Response(null, { status: 401 }));
   auth.clearClientAuthProfileCache();

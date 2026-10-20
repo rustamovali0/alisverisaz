@@ -127,9 +127,12 @@ type FooterProps = {
 
 function StoreLogo({ store, className }: { store: MarketplaceStore; className?: string }) {
   return store.logoUrl ? (
-    <img
+    <OptimizedImage
       src={store.logoUrl}
       alt={store.name}
+      width={160}
+      height={160}
+      sizes="(max-width: 640px) 64px, 112px"
       className={cn("rounded-lg border bg-background object-cover", className)}
     />
   ) : (
@@ -166,9 +169,12 @@ function StoreHeroCover({
   }
 
   return (
-    <img
+    <OptimizedImage
       src={coverUrl}
       alt={store.name}
+      fill
+      sizes="(max-width: 1024px) 100vw, 60vw"
+      fetchPriority="high"
       style={{
         "--store-banner-position": `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%`,
       } as CSSProperties}
@@ -732,7 +738,6 @@ function MarketplaceDropdown({
           "flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-left font-semibold text-slate-900 transition md:hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
           compact ? "h-9 px-2.5 text-xs sm:h-10 sm:px-3 sm:text-sm" : "h-10 px-3 text-sm",
         )}
-        aria-label={label}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((current) => !current)}
@@ -1059,18 +1064,9 @@ export function ProductGrid({
         return (
         <article
           key={product.id}
-          role="link"
-          tabIndex={0}
           onClick={openDetail}
-          onKeyDown={(event) => {
-            if (event.target !== event.currentTarget) return;
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              router.push(detailHref, { scroll: true });
-            }
-          }}
           className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
             compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
@@ -1079,7 +1075,6 @@ export function ProductGrid({
           <Link
             href={detailHref}
             className="block"
-            aria-label={t("productDetailAria", { name: product.name })}
             prefetch={false}
             scroll
           >
@@ -2068,9 +2063,15 @@ export function Storefront({
       >
       <div className={cn("grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between", isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5")}>
         <div className="min-w-0">
-          <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
-            {productsOnly ? "Bütün məhsullar" : home("recentlyListed")}
-          </h2>
+          {productsOnly ? (
+            <h1 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+              Bütün məhsullar
+            </h1>
+          ) : (
+            <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+              {home("recentlyListed")}
+            </h2>
+          )}
           {productsOnly ? (
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               Məhsulları filtr və sıralama ilə rahat tapın
@@ -2380,9 +2381,9 @@ export function Storefront({
             <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[520px] lg:grid-cols-[0.88fr_1.12fr]">
               <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
                 <StoreLogo store={store} className="mb-4 hidden size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
-                <p className="max-w-xl text-2xl font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
+                <h1 className="max-w-xl text-2xl font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
                   {store.heroTitle?.trim() || storefront("heroTitle")}
-                </p>
+                </h1>
                 {store.heroSubtitle?.trim() || customHeroDescription ? (
                   <p className="mt-3 hidden line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:block sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
                     {store.heroSubtitle?.trim() || customHeroDescription}

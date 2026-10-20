@@ -114,13 +114,13 @@ function cacheProfile(profile: ClientAuthProfile) {
 async function loadClientAuthProfile(): Promise<ClientAuthProfile> {
   const response = await fetch("/api/auth/session?scope=public&profile=1", {
     credentials: "same-origin",
-    cache: "no-store",
+    cache: "no-cache",
     signal: AbortSignal.timeout(15000),
   });
-  if (response.status === 401) return guestProfile;
   if (!response.ok) throw new Error("Session verification failed");
   const data = await response.json();
-  if (!data.authenticated || !isCachedProfile(data.profile) ||
+  if (!data.authenticated) return guestProfile;
+  if (!isCachedProfile(data.profile) ||
       data.profile.status !== "authenticated") {
     throw new Error("Invalid session profile");
   }

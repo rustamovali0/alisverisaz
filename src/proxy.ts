@@ -189,6 +189,9 @@ function createLocalizedRewrite(
       headers: requestHeaders,
     },
   });
+  if (request.method === "GET" || request.method === "HEAD") {
+    response.headers.set("Cache-Control", "private, max-age=0, must-revalidate");
+  }
   if (shouldSetLocaleCookie) {
     setLocaleCookie(response, locale, request.headers.get("host"));
   }
@@ -227,6 +230,46 @@ function resolveSubdomainPath(pathname: string, storeSlug: string) {
 }
 
 const customDomainCache = new Map<string, { slug: string | null; expiresAt: number }>();
+const storeSlugCache = new Map<string, { exists: boolean; expiresAt: number }>();
+
+async function storeSlugExists(slug: string) {
+  const cached = storeSlugCache.get(slug);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.exists;
+  }
+
+  if (!serverEnv.supabaseSecretKey) {
+    return true;
+  }
+
+  const url = new URL("/rest/v1/stores", clientEnv.supabaseUrl);
+  url.searchParams.set("select", "id");
+  url.searchParams.set("slug", `eq.${slug}`);
+  url.searchParams.set("limit", "1");
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        apikey: serverEnv.supabaseSecretKey,
+        authorization: `Bearer ${serverEnv.supabaseSecretKey}`,
+      },
+      cache: "no-store",
+    });
+    const rows = response.ok ? await response.json() as Array<{ id?: string }> : [];
+    const exists = rows.length > 0;
+    storeSlugCache.set(slug, { exists, expiresAt: Date.now() + 60_000 });
+    return exists;
+  } catch {
+    return true;
+  }
+}
+
+function createNotFoundResponse() {
+  return new NextResponse(
+    '<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Səhifə tapılmadı | Alışveriş.az</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font-family:Inter,system-ui,sans-serif}.card{max-width:520px;margin:24px;padding:32px;text-align:center;border:1px solid #e2e8f0;border-radius:20px;background:#fff}h1{margin:0 0 10px;font-size:28px}p{margin:0 0 22px;color:#64748b;line-height:1.6}a{display:inline-flex;min-height:44px;align-items:center;padding:0 18px;border-radius:12px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700}</style></head><body><main class="card"><h1>Səhifə tapılmadı</h1><p>Axtardığınız səhifə mövcud deyil və ya silinib.</p><a href="/">Ana səhifəyə qayıt</a></main></body></html>',
+    { status: 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "private, max-age=0, must-revalidate" } },
+  );
+}
 
 async function getCustomDomainStoreSlug(hostname: string | null | undefined) {
   const host = normalizeHostname(hostname);
@@ -300,6 +343,16 @@ export async function proxy(request: NextRequest) {
     ? null
     : await getCustomDomainStoreSlug(request.headers.get("host"));
   const storeSubdomainSlug = nativeStoreSubdomainSlug ?? customDomainStoreSlug;
+  const firstPathSegment = visiblePathname.split("/").filter(Boolean)[0] ?? "";
+  const possibleStoreSlug = storeSubdomainSlug ?? firstPathSegment;
+  if (
+    possibleStoreSlug &&
+    isValidStoreSlug(possibleStoreSlug) &&
+    !isReservedStoreSubdomain(possibleStoreSlug) &&
+    !(await storeSlugExists(possibleStoreSlug))
+  ) {
+    return createNotFoundResponse();
+  }
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
     : resolveStorePath(visiblePathname);

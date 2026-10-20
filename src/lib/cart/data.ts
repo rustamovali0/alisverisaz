@@ -281,6 +281,33 @@ function normalizeRawSearchValue(value: string | null | undefined) {
   return (value ?? "").trim().slice(0, MAX_SEARCH_LENGTH);
 }
 
+function getSearchCandidates(value: string) {
+  const source = value.toLocaleLowerCase("az-AZ");
+  const candidates = new Set([source, normalizeSearchValue(source)]);
+  const substitutions: Record<string, string> = {
+    c: "ç",
+    g: "ğ",
+    i: "ı",
+    o: "ö",
+    s: "ş",
+    u: "ü",
+    e: "ə",
+  };
+
+  for (let index = 0; index < source.length && candidates.size < 16; index += 1) {
+    const replacement = substitutions[source[index]];
+    if (replacement) {
+      candidates.add(`${source.slice(0, index)}${replacement}${source.slice(index + 1)}`);
+    }
+  }
+
+  candidates.add(
+    Array.from(source, (character) => substitutions[character] ?? character).join(""),
+  );
+
+  return Array.from(candidates).filter(Boolean).slice(0, 16);
+}
+
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     value,
@@ -609,8 +636,11 @@ async function getMarketplaceProductPageUncached(
     }
 
     if (normalizedSearch) {
-      const escaped = normalizedSearch.replace(/[%_]/g, "\\$&");
-      query = query.or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+      const filters = getSearchCandidates(input.searchQuery ?? "").flatMap((candidate) => {
+        const escaped = candidate.replace(/[%_]/g, "\\$&");
+        return [`name.ilike.%${escaped}%`, `description.ilike.%${escaped}%`];
+      });
+      query = query.or(filters.join(","));
     }
 
     return applyProductSort(

@@ -101,13 +101,13 @@ export function SiteFooter({
               <span className="grid size-8 place-items-center overflow-hidden rounded-md border border-cyan-100 bg-white shadow-sm dark:border-white/10 dark:bg-slate-950 md:size-11 md:rounded-lg">
                 <img
                   src={logoUrl}
-                  alt={displaySiteName}
+                  alt=""
                   className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                 />
                 {darkLogoUrl ? (
                   <img
                     src={darkLogoUrl}
-                    alt={displaySiteName}
+                    alt=""
                     className="hidden h-full w-full object-contain p-0.5 dark:block"
                   />
                 ) : null}
@@ -146,14 +146,14 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("platform")}
           </h2>
-          <div className="mt-2 grid gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-3 md:text-sm">
-            <Link href="/stores" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+          <div className="mt-2 grid gap-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-2 md:text-sm">
+            <Link href="/stores" className="inline-flex min-h-8 items-center transition hover:text-cyan-700 dark:hover:text-cyan-200">
               {nav("stores")}
             </Link>
-            <Link href="/products" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/products" className="inline-flex min-h-8 items-center transition hover:text-cyan-700 dark:hover:text-cyan-200">
               {nav("products")}
             </Link>
-            <Link href="/register" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/register" className="inline-flex min-h-8 items-center transition hover:text-cyan-700 dark:hover:text-cyan-200">
               {footer("openStore")}
             </Link>
           </div>
@@ -162,7 +162,7 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("account")}
           </h2>
-          <div className="mt-2 grid gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-3 md:text-sm">
+          <div className="mt-2 grid gap-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-2 md:text-sm [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center">
             {isResolved && role ? (
               <Link href={getAccountHref(role)} className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
                 {role === "seller" ? footer("goToPanel") : nav("account")}
@@ -186,7 +186,7 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("support")}
           </h2>
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:grid-cols-1 md:gap-3 md:text-sm">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:grid-cols-1 md:gap-2 md:text-sm [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center">
             <Link href="/help" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
               {footer("helpCenter")}
             </Link>
