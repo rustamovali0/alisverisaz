@@ -2270,9 +2270,9 @@ export function Storefront({
                         defaultValue={searchQuery}
                         storeSlug={store.slug}
                         searchBaseHref={storeHomeHref}
-                        className="rounded-[14px] bg-white p-1.5 shadow-[0_12px_35px_rgba(2,6,23,0.22)]"
-                        inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
-                        buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+                        className="rounded-[12px] bg-white p-1 shadow-[0_12px_35px_rgba(2,6,23,0.18)] sm:rounded-[14px] sm:p-1.5"
+                        inputClassName="h-10 rounded-[10px] border-transparent bg-transparent pl-10 text-[15px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 sm:h-12 sm:rounded-[12px] sm:pl-11 sm:text-[16px]"
+                        buttonClassName="!size-10 !min-w-10 rounded-[9px] bg-blue-600 p-0 text-white md:hover:bg-blue-700 sm:!size-11 sm:!min-w-11 sm:rounded-[10px]"
                         buttonSize="lg"
                         stackOnMobile
                         compactActions
@@ -2437,8 +2437,8 @@ export function Storefront({
                 searchBaseHref={storeHomeHref}
                 resultsAnchorId="products"
                 className="mx-auto max-w-4xl rounded-none border-0 bg-slate-100 p-1 shadow-none dark:bg-slate-900 sm:p-1.5"
-                inputClassName="h-11 rounded-none border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
-                buttonClassName="!h-11 !min-w-11 rounded-none bg-slate-950 px-4 text-white md:hover:bg-blue-700 dark:bg-blue-600 sm:!h-12 sm:!min-w-12 sm:px-5"
+                inputClassName="h-10 rounded-none border-transparent bg-transparent pl-10 text-[15px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11 sm:text-[16px]"
+                buttonClassName="!h-10 !min-w-10 rounded-none bg-slate-950 px-3 text-white md:hover:bg-blue-700 dark:bg-blue-600 sm:!h-12 sm:!min-w-12 sm:px-5"
                 buttonSize="lg"
                 stackOnMobile
                 compactActions
