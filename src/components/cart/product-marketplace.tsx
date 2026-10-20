@@ -170,8 +170,8 @@ function StoreHeroCover({
       alt={store.name}
       style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }}
       className={cn(
-        "h-full w-full object-cover object-center",
-        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL ? "bg-slate-950" : "",
+        "h-full w-full object-contain object-center sm:object-cover",
+        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL ? "bg-slate-100 dark:bg-slate-950" : "",
       )}
       onError={() => setHasError(true)}
     />
@@ -2242,24 +2242,24 @@ export function Storefront({
           ) : (
             <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
               <div className="relative overflow-hidden rounded-2xl bg-slate-950">
-                <div className="relative h-[380px] sm:h-[280px] lg:h-[340px]">
+                <div className="relative h-[260px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
                   <StoreWhatsAppButton phone={storeContactPhone} />
                   <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
                   <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6 lg:p-8">
+                <div className="absolute inset-x-0 bottom-0 z-10 p-3 sm:p-6 lg:p-8">
                   <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
                     <div className="flex min-w-0 items-end gap-3 sm:gap-5">
-                      <StoreLogo store={store} className="size-20 shrink-0 rounded-2xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 lg:size-28" />
+                      <StoreLogo store={store} className="size-16 shrink-0 rounded-xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 sm:rounded-2xl lg:size-28" />
                       <div className="min-w-0 pb-1 text-white">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                        <p className="mb-2 hidden text-xs font-semibold uppercase tracking-[0.18em] text-white/70 sm:block">
                           {storefront("marketplaceStore")}
                         </p>
-                        <h1 className="line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal sm:text-4xl lg:text-[44px]">
+                        <h1 className="line-clamp-2 break-words pb-1 text-2xl font-semibold leading-[1.16] tracking-normal sm:text-4xl lg:text-[44px]">
                           {store.name}
                         </h1>
-                        <p className="mt-2 break-words text-sm font-medium text-white/80 sm:text-base">
+                        <p className="mt-2 hidden break-words text-sm font-medium text-white/80 sm:block sm:text-base">
                           {heroSubtitle}
                         </p>
                       </div>
@@ -2278,7 +2278,7 @@ export function Storefront({
                         compactActions
                       />
                       {aboutContent ? (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 hidden justify-end sm:flex">
                           <Button
                             type="button"
                             variant="outline"
@@ -2293,7 +2293,7 @@ export function Storefront({
                     </div>
                   </div>
                   {heroCategories.length > 0 ? (
-                    <div className="mt-5 flex max-w-full flex-wrap gap-2">
+                    <div className="mt-5 hidden max-w-full flex-wrap gap-2 sm:flex">
                       {heroCategories.map((category) => (
                         <button
                           key={category.id}
