@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent,
 } from "react";
 import { useTranslations } from "next-intl";
@@ -168,9 +169,11 @@ function StoreHeroCover({
     <img
       src={coverUrl}
       alt={store.name}
-      style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }}
+      style={{
+        "--store-banner-position": `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%`,
+      } as CSSProperties}
       className={cn(
-        "h-full w-full object-contain object-center sm:object-cover",
+        "h-full w-full object-contain object-top sm:object-cover sm:object-[var(--store-banner-position)]",
         coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL ? "bg-slate-100 dark:bg-slate-950" : "",
       )}
       onError={() => setHasError(true)}
