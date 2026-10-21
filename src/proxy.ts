@@ -159,6 +159,12 @@ function createLocalizedRewrite(
   virtualStoreSlug?: string | null,
 ) {
   const url = request.nextUrl.clone();
+  // Behind nginx the public request is HTTPS while the standalone Next server
+  // listens on local HTTP. Keep internal rewrites on HTTP so Next does not try
+  // to open a TLS connection to its own plain-text port.
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    url.protocol = "http:";
+  }
 
   if (
     (pathname === "/radmin" || pathname.startsWith("/radmin/")) &&
