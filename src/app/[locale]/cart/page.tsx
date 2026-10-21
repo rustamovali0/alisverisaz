@@ -38,7 +38,7 @@ export default async function CartPage({ params, searchParams }: CartPageProps) 
     : null;
   const checkoutOnly = query?.mode === "checkout";
   const [current, deliverySettings, deliveryStoreOverrides] = await Promise.all([
-    checkoutOnly ? getCurrentUserProfile() : Promise.resolve(null),
+    getCurrentUserProfile(),
     getDeliverySettings(),
     getDeliveryStoreOverrides(),
   ]);

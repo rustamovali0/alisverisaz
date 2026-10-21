@@ -78,6 +78,26 @@ type MarketplaceLabels = {
   cart: string;
 };
 
+function updateFilterQuery(key: string, value: string | boolean) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (value === "" || value === false) url.searchParams.delete(key);
+  else url.searchParams.set(key, value === true ? "1" : value);
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function readFilterQuery() {
+  if (typeof window === "undefined") return null;
+  const query = new URL(window.location.href).searchParams;
+  return {
+    color: query.get("color") ?? "",
+    size: query.get("size") ?? "",
+    minPrice: query.get("minPrice") ?? "",
+    maxPrice: query.get("maxPrice") ?? "",
+    inStockOnly: query.get("inStock") === "1",
+  };
+}
+
 type ProductMarketplaceProps = {
   products: CartProduct[];
   nextCursor?: string | null;
@@ -799,6 +819,7 @@ function MarketplaceFilterBar({
   onMinPrice,
   onMaxPrice,
   onStockOnly,
+  priceError,
   layout = "stacked",
 }: {
   categories: CategoryOption[];
@@ -816,6 +837,7 @@ function MarketplaceFilterBar({
   onMinPrice: (value: string) => void;
   onMaxPrice: (value: string) => void;
   onStockOnly: (value: boolean) => void;
+  priceError?: string;
   layout?: "stacked" | "wide";
 }) {
   const t = useTranslations("marketplace");
@@ -880,6 +902,7 @@ function MarketplaceFilterBar({
             className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
           />
         </div>
+        {priceError ? <p className="text-xs font-medium text-rose-600 lg:col-span-5" role="alert">{priceError}</p> : null}
 
         <label className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           <input
@@ -1464,6 +1487,7 @@ export function ProductMarketplace({
   const visibleProducts = useMemo(() => {
     const min = minPrice.trim() ? Number(minPrice) : null;
     const max = maxPrice.trim() ? Number(maxPrice) : null;
+    const invalidRange = min !== null && max !== null && min > max;
 
     return infinite.products.filter((product) => {
       const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
@@ -1480,11 +1504,11 @@ export function ProductMarketplace({
         return false;
       }
 
-      if (min !== null && Number.isFinite(min) && finalPrice < min) {
+      if (!invalidRange && min !== null && Number.isFinite(min) && finalPrice < min) {
         return false;
       }
 
-      if (max !== null && Number.isFinite(max) && finalPrice > max) {
+      if (!invalidRange && max !== null && Number.isFinite(max) && finalPrice > max) {
         return false;
       }
 
@@ -1497,10 +1521,21 @@ export function ProductMarketplace({
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
+  const priceError = minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+    ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+    : "";
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
     setActiveSort(sort);
+    const saved = readFilterQuery();
+    if (saved) {
+      setColorFilter(saved.color);
+      setSizeFilter(saved.size);
+      setMinPrice(saved.minPrice);
+      setMaxPrice(saved.maxPrice);
+      setInStockOnly(saved.inStockOnly);
+    }
   }, [selectedCategoryId, sort]);
 
   function selectCategory(category?: CategoryOption) {
@@ -1550,6 +1585,7 @@ export function ProductMarketplace({
     setInStockOnly(false);
     selectCategory();
     selectSort("newest");
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) => updateFilterQuery(key, ""));
   }
 
   const filterBar = (
@@ -1563,12 +1599,13 @@ export function ProductMarketplace({
       minPrice={minPrice}
       maxPrice={maxPrice}
       inStockOnly={inStockOnly}
+      priceError={priceError}
       onCategory={selectCategory}
-      onColor={setColorFilter}
-      onSize={setSizeFilter}
-      onMinPrice={setMinPrice}
-      onMaxPrice={setMaxPrice}
-      onStockOnly={setInStockOnly}
+      onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
+      onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
+      onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
+      onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
+      onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
     />
   );
 
@@ -1576,8 +1613,8 @@ export function ProductMarketplace({
     visibleProducts.length === 0 && !infinite.hasMore && !infinite.isLoadingNext ? (
       <EmptyState
         className="min-h-96"
-        title={labels.emptyTitle}
-        description={labels.emptyDescription}
+        title={searchQuery || hasActiveProductFilters ? "Axtarışınıza uyğun məhsul tapılmadı" : labels.emptyTitle}
+        description={searchQuery || hasActiveProductFilters ? "Filtrləri təmizləyin və ya başqa axtarış sözü yoxlayın." : labels.emptyDescription}
       />
     ) : (
       <ProductInfiniteGrid
@@ -1754,6 +1791,7 @@ export function Storefront({
   const filteredVisibleProducts = useMemo(() => {
     const min = minPrice.trim() ? Number(minPrice) : null;
     const max = maxPrice.trim() ? Number(maxPrice) : null;
+    const invalidRange = min !== null && max !== null && min > max;
 
     return visibleProducts.filter((product) => {
       const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
@@ -1770,11 +1808,11 @@ export function Storefront({
         return false;
       }
 
-      if (min !== null && Number.isFinite(min) && finalPrice < min) {
+      if (!invalidRange && min !== null && Number.isFinite(min) && finalPrice < min) {
         return false;
       }
 
-      if (max !== null && Number.isFinite(max) && finalPrice > max) {
+      if (!invalidRange && max !== null && Number.isFinite(max) && finalPrice > max) {
         return false;
       }
 
@@ -1787,9 +1825,20 @@ export function Storefront({
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
+  const storefrontPriceError = minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+    ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+    : "";
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
+    const saved = readFilterQuery();
+    if (saved) {
+      setColorFilter(saved.color);
+      setSizeFilter(saved.size);
+      setMinPrice(saved.minPrice);
+      setMaxPrice(saved.maxPrice);
+      setInStockOnly(saved.inStockOnly);
+    }
   }, [selectedCategoryId]);
   const isMarketplaceStoreHref = storeHomeHref.startsWith("/store/");
   const storeProductCategoryIds = useMemo(
@@ -1871,6 +1920,7 @@ export function Storefront({
     setInStockOnly(false);
     selectCategory();
     selectSort("newest");
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) => updateFilterQuery(key, ""));
   }
 
   function scrollToSection(sectionId: string) {
@@ -1888,12 +1938,13 @@ export function Storefront({
       minPrice={minPrice}
       maxPrice={maxPrice}
       inStockOnly={inStockOnly}
+      priceError={storefrontPriceError}
       onCategory={selectCategory}
-      onColor={setColorFilter}
-      onSize={setSizeFilter}
-      onMinPrice={setMinPrice}
-      onMaxPrice={setMaxPrice}
-      onStockOnly={setInStockOnly}
+      onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
+      onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
+      onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
+      onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
+      onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
       layout="wide"
     />
   );

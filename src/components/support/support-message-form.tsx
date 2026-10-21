@@ -50,7 +50,7 @@ export function SupportMessageForm({
         <div>
           <h2 className="text-lg font-black tracking-normal">Dəstəyə yazın</h2>
           <p className="text-sm text-muted-foreground">
-            Mesajınız əsas admin panelində görünəcək.
+            Dəstək komandamız müraciətinizi qəbul edəcək.
           </p>
         </div>
       </div>
@@ -64,17 +64,20 @@ export function SupportMessageForm({
         ) : (
           <>
             <input
+              aria-label="Ad Soyad"
               name="fullName"
               placeholder="Ad Soyad"
               className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <input
+              aria-label="Email"
               name="email"
               type="email"
               placeholder="Email"
               className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <input
+              aria-label="Telefon"
               name="phone"
               placeholder="Telefon"
               className="h-11 rounded-md border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -82,6 +85,7 @@ export function SupportMessageForm({
           </>
         )}
         <input
+          aria-label="Mövzu"
           name="subject"
           placeholder="Mövzu"
           required
@@ -89,6 +93,7 @@ export function SupportMessageForm({
         />
       </div>
       <textarea
+        aria-label="Mesaj"
         name="message"
         required
         minLength={10}

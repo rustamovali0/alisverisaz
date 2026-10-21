@@ -55,13 +55,11 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
       }
 
       setSuccessMessage(result.message);
+      setIsSubmitting(false);
       void appAlert.success("Bərpa linki göndərildi", result.message, {
         dedupeKey: "password-reset-sent",
       });
 
-      window.setTimeout(() => {
-        window.location.assign(result.redirectTo || "/login");
-      }, 1200);
     } catch {
       const message = "Bərpa emaili göndərilmədi. Bir az sonra yenidən yoxlayın.";
       setServerError(message);

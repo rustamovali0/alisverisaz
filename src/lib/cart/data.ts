@@ -613,6 +613,21 @@ async function getMarketplaceProductPageUncached(
   const supabase = createSupabasePublicClient();
   const cursor = decodeProductCursor(input.cursor);
   const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
+  let matchingStoreIds: string[] = [];
+
+  if (normalizedSearch && !input.storeId) {
+    const storeFilters = getSearchCandidates(input.searchQuery ?? "").flatMap((candidate) => {
+      const escaped = candidate.replace(/[%_]/g, "\\$&");
+      return [`name.ilike.%${escaped}%`, `slug.ilike.%${escaped}%`];
+    });
+    const { data: matchingStores } = await (supabase as any)
+      .from("stores")
+      .select("id")
+      .eq("status", "active")
+      .or(storeFilters.join(","))
+      .limit(50);
+    matchingStoreIds = (matchingStores ?? []).map((store: { id: string }) => store.id);
+  }
 
   async function runQuery(selectColumns: string) {
     let query = (supabase as any)
@@ -640,6 +655,9 @@ async function getMarketplaceProductPageUncached(
         const escaped = candidate.replace(/[%_]/g, "\\$&");
         return [`name.ilike.%${escaped}%`, `description.ilike.%${escaped}%`];
       });
+      if (matchingStoreIds.length > 0) {
+        filters.push(`store_id.in.(${matchingStoreIds.join(",")})`);
+      }
       query = query.or(filters.join(","));
     }
 

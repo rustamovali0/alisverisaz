@@ -20,7 +20,7 @@ export default async function CustomerOrdersPage() {
   return (
     <DashboardPanel
       title="Sifarişlər"
-      description="Checkout təsdiqindən sonra yaranan real sifarişlər"
+      description="Təsdiqlədiyiniz sifarişlər burada görünəcək"
     >
       <CustomerOrdersView orders={orders} />
     </DashboardPanel>

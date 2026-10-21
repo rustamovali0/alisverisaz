@@ -271,7 +271,7 @@ export function CartCheckout({
     : "/";
   const returnHref = isolatedStoreSlug ? isolatedProductsHref :
     firstProduct?.storeSlug && firstProduct?.slug
-      ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
+      ? `/store/${firstProduct.storeSlug}/products/${firstProduct.slug}`
       : "/products";
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
@@ -857,6 +857,8 @@ export function CartCheckout({
                           ),
                         );
                       }}
+                      disabled={item.quantity <= 1}
+                      aria-label={`${product.name} sayını azalt`}
                     >
                       <Minus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
@@ -886,9 +888,15 @@ export function CartCheckout({
                           ),
                         );
                       }}
+                      disabled={stockLimit <= 0 || item.quantity >= stockLimit}
+                      aria-label={`${product.name} sayını artır`}
+                      title={item.quantity >= stockLimit ? `Stokda maksimum ${stockLimit} ədəd var` : undefined}
                     >
                       <Plus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
+                    {item.quantity >= stockLimit ? (
+                      <span className="sr-only" role="status">Stok həddinə çatdınız.</span>
+                    ) : null}
                     <Button
                       type="button"
                       variant="ghost"

@@ -255,6 +255,20 @@ function ensureAuthProfileWatcher() {
     // Browser auth events are hints; server cookies determine the actual session.
     setTimeout(refreshProfileAfterSessionChange, 0);
   });
+  const syncAcrossTabs = (event: StorageEvent) => {
+    if (event.key === AUTH_PROFILE_CACHE_KEY || event.key === null) {
+      inMemoryProfile = null;
+      didReadInitialCache = false;
+      void reloadClientAuthProfile();
+    }
+  };
+  const syncWhenVisible = () => {
+    if (document.visibilityState === "visible") void reloadClientAuthProfile();
+  };
+  window.addEventListener("storage", syncAcrossTabs);
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", syncWhenVisible);
+  }
   window.addEventListener("focus", refreshProfileAfterSessionChange);
 }
 
