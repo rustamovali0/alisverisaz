@@ -197,6 +197,7 @@ export function MobileBottomNav({
           ? nav("account")
           : auth("login");
   const isAuthenticated = Boolean(role);
+  const isProductDetailRoute = /\/products\/[^/]+\/?$/.test(pathname);
   const isStorefrontHome = Boolean(
     storeSubdomainSlug
       ? pathname === "/" || pathname === `/${storeSubdomainSlug}`
@@ -287,12 +288,19 @@ export function MobileBottomNav({
   }, []);
 
   const isolatedItems = isolatedStorefront || storeSubdomainSlug
-    ? [
-        { href: storeHomeHref, label: nav("home"), icon: House },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingBag, badge: cartCount },
-        { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: "Ünvan", icon: MapPinned },
-      ]
+    ? role === "seller"
+      ? [
+          { href: storeHomeHref, label: isProductDetailRoute ? "Mağaza" : nav("home"), icon: House },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
+          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
+          { href: "/store/dashboard", label: "Panel", icon: Store },
+        ]
+      : [
+          { href: storeHomeHref, label: isProductDetailRoute ? "Mağaza" : nav("home"), icon: House },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingBag, badge: cartCount },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: "Ünvan", icon: MapPinned },
+        ]
     : null;
   const items = isolatedItems ?? (role === "seller"
       ? [
@@ -406,7 +414,8 @@ export function MobileBottomNav({
           return nestedProducts || (pathname === targetPath && currentHash === `#${targetHash}`);
         }
         const isProductDetail = targetPath.endsWith("/products") && pathname.startsWith(`${targetPath}/`);
-        return (pathname === targetPath || isProductDetail) && !currentHash;
+        const isExactNestedSection = pathname === targetPath || isProductDetail;
+        return isExactNestedSection && !currentHash;
       }
 
       return targetPath === "/"
