@@ -198,6 +198,10 @@ export function MobileBottomNav({
           : auth("login");
   const isAuthenticated = Boolean(role);
   const isProductDetailRoute = /\/products\/[^/]+\/?$/.test(pathname);
+  const marketplaceProductStoreMatch = pathname.match(/^\/store\/([^/]+)\/products\/[^/]+\/?$/);
+  const sellerProductListHref = marketplaceProductStoreMatch
+    ? `/store/${marketplaceProductStoreMatch[1]}#products`
+    : null;
   const isStorefrontHome = Boolean(
     storeSubdomainSlug
       ? pathname === "/" || pathname === `/${storeSubdomainSlug}`
@@ -310,9 +314,9 @@ export function MobileBottomNav({
             icon: Home,
           },
           {
-            href: sellerStoreHref ?? "#storefront-loading",
-            label: "Mağazam",
-            icon: Store,
+            href: sellerProductListHref ?? sellerStoreHref ?? "#storefront-loading",
+            label: sellerProductListHref ? nav("products") : "Mağazam",
+            icon: sellerProductListHref ? Boxes : Store,
           },
           {
             href: "/sell/product/new",
