@@ -283,7 +283,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;
-  const canWriteReview = !isStoreOwner && (current?.role === "customer" || current?.role === "seller" || isCustomStorefrontProduct);
+  const isSellerViewer = current?.role === "seller";
+  const canWriteReview = !isSellerViewer && (current?.role === "customer" || isCustomStorefrontProduct);
   const storeBaseHref =
     storeSubdomainSlug === detail.store.slug
       ? "/"
@@ -416,7 +417,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   Redaktə et
                 </Link>
               </Button>
-            ) : (
+            ) : !isSellerViewer ? (
               <ProductPurchaseOptions
                 product={detail.product}
                 viewerRole={viewerRole}
@@ -430,13 +431,15 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 isolatedStoreBaseHref={isCustomStorefrontProduct ? storeBaseHref : null}
                 compact={isCustomStorefrontProduct}
               />
-            )}
-            <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
-              <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
-                <MessageCircle className="mr-2 size-4" aria-hidden="true" />
-                Sual & Cavablar
-              </Link>
-            </Button>
+            ) : null}
+            {!isSellerViewer ? (
+              <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
+                <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
+                  <MessageCircle className="mr-2 size-4" aria-hidden="true" />
+                  Sual & Cavablar
+                </Link>
+              </Button>
+            ) : null}
             {!isStoreOwner ? (
               <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-5 rounded-2xl p-4"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
                 <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">

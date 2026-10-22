@@ -310,7 +310,7 @@ export function MarketplaceHeader({
   const mobileMenuItems = isIsolatedStorefront ? [
     { href: storeHomeHref, label: "Əsas", icon: Info },
     { href: `${isolatedBaseHref}/products`, label: nav("products"), icon: Search },
-    { href: cartHref, label: common("cart"), icon: ShoppingCart },
+    ...(!isSeller ? [{ href: cartHref, label: common("cart"), icon: ShoppingCart }] : []),
     { href: `${isolatedBaseHref}/contact`, label: "Əlaqə", icon: MessageCircle },
   ] : [
     { href: "/help", label: "Yardım", icon: HelpCircle },
@@ -437,26 +437,6 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            {isSeller && !isHomePage && !isIsolatedStorefront ? (
-              <>
-                <Button
-                  asChild
-                  size="icon"
-                  variant="ghost"
-                  className={mobileUtilityButtonClass}
-                  aria-label={common("cart")}
-                >
-                  <Link href="/cart" prefetch className="relative grid place-items-center">
-                    <ShoppingCart className={mobileCommerceIconClass} aria-hidden="true" />
-                    {cartCount > 0 ? (
-                      <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
-                        {cartCount > 99 ? "99+" : cartCount}
-                      </span>
-                    ) : null}
-                  </Link>
-                </Button>
-              </>
-            ) : null}
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             {isIsolatedStorefront ? <>
@@ -540,24 +520,24 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            <Button
-              asChild
-              size="icon"
-              variant="ghost"
-              className={cn(
-                commerceUtilityButtonClass,
-              )}
-              aria-label={common("cart")}
-            >
-              <Link href={cartHref} prefetch className="relative grid place-items-center">
-                <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
-                {cartCount > 0 ? (
-                  <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                ) : null}
-              </Link>
-            </Button>
+            {!isSeller ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className={cn(commerceUtilityButtonClass)}
+                aria-label={common("cart")}
+              >
+                <Link href={cartHref} prefetch className="relative grid place-items-center">
+                  <ShoppingCart className={commerceUtilityIconClass} aria-hidden="true" />
+                  {cartCount > 0 ? (
+                    <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  ) : null}
+                </Link>
+              </Button>
+            ) : null}
             <div className={cn("hidden min-w-0 shrink-0 lg:block", isIsolatedStorefront && "!hidden")}>
               <HeaderAccountActions className="shrink-0" />
             </div>

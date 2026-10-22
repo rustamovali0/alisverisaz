@@ -66,6 +66,10 @@ export function ProductMessageForm({
     });
   }
 
+  if (viewerRole === "seller") {
+    return null;
+  }
+
   return (
     <form ref={formRef} action={handleSubmit} className="grid gap-2.5 md:gap-3">
       <input type="hidden" name="productId" value={productId} />

@@ -257,6 +257,10 @@ export function AddToCartButton({
     updateQuantity(quantity - 1);
   }
 
+  if (viewerRole === "seller") {
+    return null;
+  }
+
   if (quantity > 0 && !isUnavailable) {
     return (
       <div
@@ -340,6 +344,10 @@ export function BuyNowButton({
   );
   const stockLimit = selectedVariant ? selectedVariant.stockQuantity : product.stockQuantity;
   const isUnavailable = disabled || stockLimit <= 0;
+
+  if (viewerRole === "seller") {
+    return null;
+  }
 
   function handleBuyNow() {
     if (isUnavailable) {

@@ -82,7 +82,7 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
             </div>
           </div>
 
-          {!isStoreOwner ? (
+          {current?.role !== "seller" ? (
             <ProductMessageForm
               productId={detail.product.id}
               storeId={detail.store.id}

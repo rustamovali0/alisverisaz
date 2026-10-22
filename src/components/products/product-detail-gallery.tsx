@@ -239,13 +239,15 @@ export function ProductDetailGallery({
                   </p>
                 ) : null}
               </div>
-              <AddToCartButton
-                product={product}
-                viewerRole={viewerRole}
-                selectionReady={cartSelectionReady}
-                disabled={product.stockQuantity <= 0}
-                className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
-              />
+              {viewerRole !== "seller" ? (
+                <AddToCartButton
+                  product={product}
+                  viewerRole={viewerRole}
+                  selectionReady={cartSelectionReady}
+                  disabled={product.stockQuantity <= 0}
+                  className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
+                />
+              ) : null}
               <button
                 type="button"
                 className="grid size-12 shrink-0 place-items-center rounded-xl border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

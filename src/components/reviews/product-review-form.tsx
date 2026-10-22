@@ -88,6 +88,10 @@ export function ProductReviewForm({
     });
   }
 
+  if (viewerRole === "seller") {
+    return null;
+  }
+
   return (
     <form action={handleSubmit} className="grid gap-3">
       <input type="hidden" name="productId" value={productId} />
