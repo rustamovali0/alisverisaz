@@ -1693,12 +1693,13 @@ export function ProductMarketplace({
                   minPrice={minPrice}
                   maxPrice={maxPrice}
                   inStockOnly={inStockOnly}
+                  priceError={priceError}
                   onCategory={selectCategory}
-                  onColor={setColorFilter}
-                  onSize={setSizeFilter}
-                  onMinPrice={setMinPrice}
-                  onMaxPrice={setMaxPrice}
-                  onStockOnly={setInStockOnly}
+                  onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
+                  onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
+                  onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
+                  onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
+                  onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
                   layout="wide"
                 />
               </div>

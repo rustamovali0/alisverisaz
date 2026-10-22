@@ -14,6 +14,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
+import { refreshCachedClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { isRealImageFile } from "@/lib/images/client-file-validation";
 
 type RegisterFormProps = {
@@ -293,7 +294,11 @@ export function RegisterForm({
       }
 
       void appAlert.success("Qeydiyyat uğurludur", result.message);
+      if (role === "customer") {
+        await refreshCachedClientAuthProfile();
+      }
       router.replace(result.redirectTo);
+      router.refresh();
     });
   }
 

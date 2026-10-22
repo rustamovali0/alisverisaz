@@ -32,6 +32,7 @@ import type {
   DeliverySettings,
   DeliveryStoreOverride,
 } from "@/lib/delivery/types";
+import { formatAznPrice } from "@/lib/format";
 import {
   findMatchingProductVariant,
   formatProductVariantSelection,
@@ -100,10 +101,7 @@ function writeCart(items: CartItem[], isolatedStoreId?: string) {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
+  return formatAznPrice(value);
 }
 
 export function CartCheckout({
