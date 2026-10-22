@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, ExternalLink, ImagePlus } from "lucide-react";
+import { Copy, ExternalLink, ImagePlus, Loader2, Save } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -208,6 +208,13 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
     });
   }
 
+  const saveButton = (label = "Yadda saxla") => (
+    <Button type="submit" disabled={isPending} className="w-full sm:w-fit">
+      {isPending ? <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" /> : <Save className="mr-2 size-4" aria-hidden="true" />}
+      {isPending ? "Saxlanılır" : label}
+    </Button>
+  );
+
   return (
     <div className="grid gap-5">
       <form action={handleOrderMethodSubmit} className="premium-card grid gap-5 p-5">
@@ -252,21 +259,20 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
         </Button>
       </form>
 
-      <form action={handleSubmit} className="premium-card grid gap-5 p-5">
+      <form action={handleSubmit} className="grid gap-4">
         <input type="hidden" name="storeId" value={store.id} />
         <input type="hidden" name="profitTrackingPresent" value="1" />
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
+        <div>
+          <h2 className="text-xl font-black tracking-normal">Mağaza məlumatları</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Ad, mağaza ünvanı və əsas iş ayarlarını idarə edin.</p>
+        </div>
         <label className="flex items-center gap-3 text-sm font-medium">
           <input type="checkbox" name="profitTrackingEnabled" className="size-4"
             defaultChecked={readBooleanSetting(store.settings, "profitTrackingEnabled")}
             disabled={isPending} />
           Qazanc hesablaması
         </label>
-        <div>
-          <h2 className="text-xl font-black tracking-normal">Əsas ayarlar</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Mağaza adı, logo və banner şəklini buradan yeniləyin.
-          </p>
-        </div>
         {customStorefrontEnabled ? <div className="rounded-lg border bg-background p-3">
           <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             Public mağaza URL
@@ -354,6 +360,13 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             </span>
           </label>
         ) : null}
+        {saveButton("Mağaza məlumatlarını saxla")}
+        </section>
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
+          <div>
+            <h2 className="text-xl font-black tracking-normal">Vitrin məzmunu</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Başlıq, təqdimat və önə çıxan kateqoriyaları yeniləyin.</p>
+          </div>
         {customStorefrontEnabled && availableCategories.length > 0 ? (
           <fieldset className="grid gap-3 rounded-xl border bg-background p-4">
             <input type="hidden" name="featuredCategoriesPresent" value="1" />
@@ -383,6 +396,13 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             Bu mətn /{store.slug} və {store.slug}.alisveris.az mağaza səhifəsində “Haqqında” bölməsində görünəcək.
           </span>
         </label>
+        {saveButton("Vitrin məzmununu saxla")}
+        </section>
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
+          <div>
+            <h2 className="text-xl font-black tracking-normal">Logo və banner</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Mağazanın əsas vizual görünüşünü dəyişin.</p>
+          </div>
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <MediaPicker
             name="logo"
@@ -399,8 +419,10 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             positionY={typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50}
           />
         </div>
+        {saveButton("Logo və banneri saxla")}
+        </section>
         {customStorefrontEnabled ? (
-          <div className="grid gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+          <section className="premium-card grid gap-4 border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/20 sm:p-5">
             <div>
               <h3 className="font-bold text-slate-950 dark:text-slate-100">Subdomain vitrin şəkli</h3>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -413,11 +435,9 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
               currentUrl={storefrontHeroUrl || store.cover_url || "/auth/auth-banner.webp"}
               ratio="aspect-[16/9] max-w-2xl"
             />
-          </div>
+            {saveButton("Vitrin şəklini saxla")}
+          </section>
         ) : null}
-        <Button type="submit" disabled={isPending} className="w-fit">
-          {isPending ? "Saxlanılır" : "Yadda saxla"}
-        </Button>
       </form>
     </div>
   );

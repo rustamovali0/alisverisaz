@@ -162,6 +162,7 @@ export function MarketplaceHeader({
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
   const shouldSuppressSearch =
     isSellerDashboard ||
+    pathname.startsWith("/sell") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/seller") ||
     pathname.startsWith("/admin") ||
@@ -580,6 +581,13 @@ export function MarketplaceHeader({
             buttonClassName="!size-12 !min-w-12 !max-w-12 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
           />
         </div>
+      ) : null}
+      {showMobileSearch &&
+      !shouldSuppressSearch &&
+      shouldShowCompactMobileSearch &&
+      hasSearchData &&
+      (!shouldGateMobileSearch || isMobileSearchOpen) ? (
+        <div className="h-[76px] md:hidden" aria-hidden="true" />
       ) : null}
       {isMobileMenuOpen ? (
         <div className="fixed inset-0 z-[90] overscroll-contain" role="dialog" aria-modal="true" aria-label="Menyu">

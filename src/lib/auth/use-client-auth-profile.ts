@@ -21,6 +21,7 @@ export type ClientAuthProfile =
       email: string | null;
       fullName: string | null;
       avatarUrl: string | null;
+      storeSlug?: string | null;
     };
 
 export type ClientAuthProfileState = {

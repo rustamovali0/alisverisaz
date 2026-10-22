@@ -8,14 +8,16 @@ export async function GET(request: NextRequest) {
   const current = await getCurrentUserProfile(scope);
   const includeProfile = request.nextUrl.searchParams.get("profile") === "1";
   let storeLogo: string | null = null;
+  let storeSlug: string | null = null;
   if (includeProfile && current?.role === "seller") {
     try {
       const { createSupabaseServerClient } = await import("@/lib/supabase/server");
       const supabase = await createSupabaseServerClient();
-      const { data } = await supabase.from("stores").select("logo_url")
+      const { data } = await supabase.from("stores").select("logo_url,slug")
         .eq("owner_id", current.user.id).limit(1)
-        .returns<{ logo_url: string | null }[]>().maybeSingle();
+        .returns<{ logo_url: string | null; slug: string | null }[]>().maybeSingle();
       storeLogo = data?.logo_url ?? null;
+      storeSlug = data?.slug ?? null;
     } catch {
       // A missing store logo must not hide an authenticated account.
     }
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
         email: current.profile.email ?? current.user.email ?? null,
         fullName: current.profile.full_name ?? null,
         avatarUrl: storeLogo ?? current.profile.avatar_url ?? null,
+        ...(current.role === "seller" ? { storeSlug } : {}),
       } : null } : {}),
     },
     {

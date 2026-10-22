@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 import { m } from "framer-motion";
@@ -77,6 +77,10 @@ export function AppDashboardShell({
   }, [pathname]);
 
   const activeHref = useMemo(() => getActiveNavHref(navItems, pathname, hash), [hash, navItems, pathname]);
+  const activeItem = navItems.find((item) => item.href === activeHref);
+  const activeTitle = activeItem ? (activeItem.titleKey ? t(activeItem.titleKey as any) : activeItem.title) : title;
+  const panelRoot = pathname.startsWith("/radmin") ? "/radmin" : "/store/dashboard";
+  const isPanelRoot = pathname === panelRoot;
 
 
   useEffect(() => {
@@ -309,17 +313,25 @@ export function AppDashboardShell({
 
       <div className={cn(mobileRail ? "pl-16" : "pl-0", "min-w-0 lg:pl-72")}>
         <header className={cn("z-30 border-b bg-background/[0.82] backdrop-blur-xl", mobileRail && "sticky top-0")}>
-          <div className="flex h-14 items-center gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
+          <div className="flex min-h-14 items-center gap-3 px-4 py-2 sm:px-6 lg:min-h-16 lg:px-8">
             {!mobileRail ? (
               null
             ) : null}
+            {!isPanelRoot ? (
+              <Button type="button" variant="ghost" size="icon" className="size-9 shrink-0 rounded-lg" aria-label="Geri qayıt" onClick={() => {
+                if (window.history.length > 1) router.back();
+                else router.push(panelRoot);
+              }}>
+                <ArrowLeft className="size-5" aria-hidden="true" />
+              </Button>
+            ) : null}
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-semibold tracking-normal">
-                {title}
-              </h1>
-              <p className="hidden truncate text-sm text-muted-foreground sm:block">
-                {description}
-              </p>
+              <div className="flex min-w-0 items-center gap-1 text-[11px] font-semibold text-muted-foreground sm:text-xs">
+                <Link href={panelRoot} onClick={handleDashboardLinkClick} className="shrink-0 hover:text-foreground">{title}</Link>
+                {!isPanelRoot ? <><ChevronRight className="size-3.5 shrink-0" aria-hidden="true" /><span className="truncate">{activeTitle}</span></> : null}
+              </div>
+              <h1 className="truncate text-lg font-semibold tracking-normal">{activeTitle}</h1>
+              {isPanelRoot ? <p className="hidden truncate text-sm text-muted-foreground sm:block">{description}</p> : null}
             </div>
             {returnAction === "logout" ? (
               <LogoutButton className="shrink-0" />
@@ -330,7 +342,7 @@ export function AppDashboardShell({
             ) : null}
           </div>
         </header>
-        {!mobileRail ? renderMobileCardNavigation() : null}
+        {!mobileRail && isPanelRoot ? renderMobileCardNavigation() : null}
         <main className="min-w-0 max-w-full overflow-x-clip px-3 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:py-6 lg:px-8 lg:pb-6">
           {children}
         </main>

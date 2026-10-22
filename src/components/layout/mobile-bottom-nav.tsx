@@ -224,6 +224,11 @@ export function MobileBottomNav({
       return;
     }
 
+    if ("storeSlug" in profile && profile.storeSlug) {
+      setSellerStoreHref(getStorePath(profile.storeSlug));
+      return;
+    }
+
     let active = true;
     const supabase = createSupabaseBrowserClient();
     const ownerId = profile.userId;
@@ -248,7 +253,7 @@ export function MobileBottomNav({
     return () => {
       active = false;
     };
-  }, [profile.status, profile.role, profile.userId, role]);
+  }, [profile, role]);
 
   useEffect(() => {
     let closeTimer: number | undefined;
@@ -306,7 +311,7 @@ export function MobileBottomNav({
             label: nav("addProduct"),
             icon: Plus,
           },
-          { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
+          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
           storefrontItem,
