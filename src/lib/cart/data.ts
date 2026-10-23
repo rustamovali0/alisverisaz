@@ -23,7 +23,7 @@ import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/va
 import { getActivePromotionMaps } from "@/lib/promotions/data";
 
 type ProductRow = {
-  metadata?: { stockTrackingEnabled?: boolean } | null;
+  metadata?: { stockTrackingEnabled?: boolean; commerce_type?: string } | null;
   id: string;
   store_id: string;
   slug: string | null;
@@ -192,6 +192,7 @@ function toCartProduct(row: ProductRow): CartProduct {
     createdAt: row.created_at ?? null,
     name: readOriginalContentText(row.name),
     description: readOriginalContentText(row.description),
+    commerceType: row.metadata?.commerce_type === "rental" ? "rental" : "sale",
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.metadata?.stockTrackingEnabled === false ? Number.MAX_SAFE_INTEGER : row.stock_quantity,
@@ -1203,14 +1204,35 @@ async function getMarketplaceProductByIdUncached(input: {
   const row = data as ProductRow & {
     stores: StoreRow;
   };
-  const { count: storeProductCount } = await (supabase as any)
-    .from("products")
-    .select("id", {
-      count: "exact",
-      head: true,
-    })
-    .eq("store_id", row.stores.id)
-    .eq("status", "active");
+  const [{ count: storeProductCount }, categoryResult] = await Promise.all([
+    (supabase as any)
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", row.stores.id)
+      .eq("status", "active"),
+    row.category_id
+      ? (supabase as any)
+          .from("categories")
+          .select("id,name,slug,parent_id")
+          .eq("id", row.category_id)
+          .eq("is_active", true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const categoryRow = categoryResult.data as {
+    id: string;
+    name: string;
+    slug: string;
+    parent_id: string | null;
+  } | null;
+  const parentResult = categoryRow?.parent_id
+    ? await (supabase as any)
+        .from("categories")
+        .select("id,name,slug")
+        .eq("id", categoryRow.parent_id)
+        .eq("is_active", true)
+        .maybeSingle()
+    : { data: null };
 
   return {
     product: {
@@ -1239,6 +1261,20 @@ async function getMarketplaceProductByIdUncached(input: {
       categoryIds: row.category_id ? [row.category_id] : [],
       customStorefrontEnabled: readBooleanSetting(row.stores.settings, "customStorefrontEnabled"),
     },
+    category: categoryRow
+      ? {
+          id: categoryRow.id,
+          name: categoryRow.name,
+          slug: categoryRow.slug,
+          parent: parentResult.data
+            ? {
+                id: String(parentResult.data.id),
+                name: String(parentResult.data.name),
+                slug: String(parentResult.data.slug),
+              }
+            : null,
+        }
+      : null,
   };
 }
 

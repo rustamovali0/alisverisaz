@@ -41,6 +41,7 @@ type ProductRow = {
     approval_note?: string;
     rejection_note?: string;
     payment_status?: string;
+    commerce_type?: string;
     variants?: Array<{
       name: string;
       value: string;
@@ -187,6 +188,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     seoTitleTranslations: row.seo_title_translations ?? {},
     seoDescriptionTranslations: row.seo_description_translations ?? {},
     listingType: row.listing_type,
+    commerceType: row.metadata?.commerce_type === "rental" ? "rental" : "sale",
     paymentStatus: row.metadata?.payment_status,
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,

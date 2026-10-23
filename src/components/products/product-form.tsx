@@ -61,6 +61,9 @@ const CATEGORY_KEYWORD_GROUPS = [
   { category: ["qida", "içki"], words: ["qida", "yemək", "yemek", "içki", "icki", "qəhvə", "qehve", "çay", "cay"] },
   { category: ["tikinti", "alət"], words: ["alət", "alet", "drel", "mişar", "misar", "tikinti", "vintaçan", "vintacan"] },
   { category: ["heyvan"], words: ["it", "pişik", "pisik", "heyvan", "yem", "akvarium"] },
+  { category: ["səyahət", "baqaj", "çanta"], words: ["çamadan", "camadan", "baqaj", "səyahət", "seyahat", "yol çantası", "noutbuk çantası"] },
+  { category: ["hobbi", "yaradıcılıq"], words: ["musiqi", "gitara", "piano", "rəsm", "resm", "pazl", "model", "əl işi", "el isi"] },
+  { category: ["hədiyyə", "bayram"], words: ["hədiyyə", "hediyye", "gül", "gul", "buket", "şar", "sar", "suvenir", "bayram"] },
 ];
 
 function normalizeCategoryText(value: string) {
@@ -565,8 +568,16 @@ export function ProductForm({
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [trackStock, setTrackStock] = useState(product?.stockTrackingEnabled ?? false);
   const [productName, setProductName] = useState(product?.name ?? "");
+  const [commerceType, setCommerceType] = useState<"sale" | "rental">(
+    product?.commerceType ?? "sale",
+  );
   const [selectedCategoryId, setSelectedCategoryId] = useState(product?.categoryId ?? "");
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const initialCategory = categories.find((category) => category.id === product?.categoryId);
+  const [selectedRootCategoryId, setSelectedRootCategoryId] = useState(
+    initialCategory?.parentId ?? initialCategory?.id ?? "",
+  );
+  const [isRootCategoryOpen, setIsRootCategoryOpen] = useState(false);
+  const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
   const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
@@ -580,7 +591,26 @@ export function ProductForm({
     () => suggestedCategories(productName, categories),
     [categories, productName],
   );
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId),
+    [categories],
+  );
+  const subcategories = useMemo(
+    () => categories.filter((category) => category.parentId === selectedRootCategoryId),
+    [categories, selectedRootCategoryId],
+  );
+  const selectedRootCategory = rootCategories.find(
+    (category) => category.id === selectedRootCategoryId,
+  );
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  function selectCategory(category: CategoryOption) {
+    const rootId = category.parentId ?? category.id;
+    setSelectedRootCategoryId(rootId);
+    setSelectedCategoryId(category.id);
+    setIsRootCategoryOpen(false);
+    setIsSubcategoryOpen(false);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -645,8 +675,8 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <div className="relative grid min-w-0 gap-2 text-sm font-medium">
-          Kateqoriya
+        <div className="grid min-w-0 gap-3 text-sm font-medium">
+          <span>Kateqoriya</span>
           <input type="hidden" name="categoryId" value={selectedCategoryId} />
           {categorySuggestions.length > 0 ? (
             <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -655,7 +685,7 @@ export function ProductForm({
                   key={category.id}
                   type="button"
                   className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700"
-                  onClick={() => setSelectedCategoryId(category.id)}
+                  onClick={() => selectCategory(category)}
                 >
                   <Sparkles className="size-3.5" aria-hidden="true" />
                   {category.name}
@@ -663,39 +693,85 @@ export function ProductForm({
               ))}
             </div>
           ) : null}
-          <button
-            type="button"
-            className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-            aria-expanded={isCategoryOpen}
-            onClick={() => setIsCategoryOpen((current) => !current)}
-          >
-            <span className={selectedCategory ? "text-foreground" : "text-muted-foreground"}>
-              {selectedCategory?.name ?? "Kateqoriya seçin"}
-            </span>
-            <ChevronDown className={`size-4 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-          </button>
-          {isCategoryOpen ? (
-            <div className="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
-              <button
-                type="button"
-                className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
-                onClick={() => { setSelectedCategoryId(""); setIsCategoryOpen(false); }}
-              >
-                Kateqoriyasız
-                {!selectedCategoryId ? <Check className="size-4 text-primary" /> : null}
-              </button>
-              {categories.map((category) => (
+          <div className="relative grid gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">Əsas kateqoriya</span>
+            <button
+              type="button"
+              className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              disabled={disabled}
+              aria-expanded={isRootCategoryOpen}
+              onClick={() => {
+                setIsRootCategoryOpen((current) => !current);
+                setIsSubcategoryOpen(false);
+              }}
+            >
+              <span className={selectedRootCategory ? "text-foreground" : "text-muted-foreground"}>
+                {selectedRootCategory?.name ?? "Əsas kateqoriya seçin"}
+              </span>
+              <ChevronDown className={`size-4 transition-transform ${isRootCategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
+            {isRootCategoryOpen ? (
+              <div className="absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
                 <button
-                  key={category.id}
                   type="button"
                   className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
-                  onClick={() => { setSelectedCategoryId(category.id); setIsCategoryOpen(false); }}
+                  onClick={() => {
+                    setSelectedRootCategoryId("");
+                    setSelectedCategoryId("");
+                    setIsRootCategoryOpen(false);
+                  }}
                 >
-                  <span>{category.name}</span>
-                  {selectedCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                  Kateqoriyasız
+                  {!selectedRootCategoryId ? <Check className="size-4 text-primary" /> : null}
                 </button>
-              ))}
+                {rootCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                    onClick={() => {
+                      setSelectedRootCategoryId(category.id);
+                      setSelectedCategoryId(category.id);
+                      setIsRootCategoryOpen(false);
+                    }}
+                  >
+                    <span>{category.name}</span>
+                    {selectedRootCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {selectedRootCategoryId && subcategories.length > 0 ? (
+            <div className="relative grid gap-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">Alt kateqoriya</span>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                disabled={disabled}
+                aria-expanded={isSubcategoryOpen}
+                onClick={() => setIsSubcategoryOpen((current) => !current)}
+              >
+                <span className={selectedCategory?.parentId ? "text-foreground" : "text-muted-foreground"}>
+                  {selectedCategory?.parentId ? selectedCategory.name : "Alt kateqoriya seçin"}
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${isSubcategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              {isSubcategoryOpen ? (
+                <div className="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
+                  {subcategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                      onClick={() => selectCategory(category)}
+                    >
+                      <span>{category.name}</span>
+                      {selectedCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -743,6 +819,33 @@ export function ProductForm({
         <input type="hidden" name="stockTrackingPresent" value="1" />
       </section>
 
+      <fieldset className="grid gap-2 rounded-md border border-border/80 bg-background p-3">
+        <legend className="px-1 text-sm font-semibold">Elan növü</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {(["sale", "rental"] as const).map((type) => (
+            <label
+              key={type}
+              className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
+                commerceType === type
+                  ? "border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200"
+                  : "border-input bg-background text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              <input
+                type="radio"
+                name="commerceType"
+                value={type}
+                checked={commerceType === type}
+                onChange={() => setCommerceType(type)}
+                disabled={disabled}
+                className="sr-only"
+              />
+              {type === "sale" ? "Satış" : "İcarə"}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
       <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {profitTrackingEnabled ? <label className="grid min-w-0 gap-2 text-sm font-medium">
           Maya dəyəri
@@ -759,7 +862,7 @@ export function ProductForm({
           />
         </label> : null}
         <label className="grid min-w-0 gap-2 text-sm font-medium">
-          Satış qiyməti
+          {commerceType === "rental" ? "İcarə qiyməti" : "Satış qiyməti"}
           <input
             name="priceAmount"
             type="number"

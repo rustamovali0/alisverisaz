@@ -372,6 +372,33 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 />
               ) : null}
             </div>
+            {detail.product.commerceType === "rental" ? (
+              <span className="mt-2 inline-flex w-fit rounded-full bg-blue-600 px-2.5 py-1 text-xs font-black text-white">
+                İcarə məhsulu
+              </span>
+            ) : null}
+            {detail.category ? (
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span>Kateqoriya:</span>
+                {detail.category.parent ? (
+                  <>
+                    <Link
+                      href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.parent.slug}`}
+                      className="rounded-md bg-slate-100 px-2 py-1 text-slate-700 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-blue-300"
+                    >
+                      {detail.category.parent.name}
+                    </Link>
+                    <span aria-hidden="true">›</span>
+                  </>
+                ) : null}
+                <Link
+                  href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.slug}`}
+                  className="rounded-md bg-blue-50 px-2 py-1 text-blue-700 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-200"
+                >
+                  {detail.category.name}
+                </Link>
+              </div>
+            ) : null}
             <div className={`${isCustomStorefrontProduct ? "mt-2.5" : "mt-4"} flex min-w-0 flex-wrap items-center gap-2`}>
               {reviewSummary.count ? (
                 <>

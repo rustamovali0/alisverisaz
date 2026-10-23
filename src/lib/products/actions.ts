@@ -818,6 +818,7 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "seo_description_ru"),
   };
   const status = readStatus(readString(formData, "status"));
+  const commerceType = readString(formData, "commerceType") === "rental" ? "rental" : "sale";
   const variantConfig = parseVariantConfig(formData);
   const variants = variantConfig.legacyVariants;
   const depositEnabled = false;
@@ -840,6 +841,7 @@ function readProductPayload(formData: FormData) {
     seoTitleTranslations,
     seoDescriptionTranslations,
     status,
+    commerceType,
     variants,
     variantOptions: variantConfig.options,
     variantCombinations: variantConfig.combinations,
@@ -934,6 +936,7 @@ export async function createStoreProductAction(
   const productStatus: ProductStatus = requiresApproval ? "draft" : payload.status;
   const productMetadata = {
     stockTrackingEnabled: payload.stockTrackingEnabled,
+    commerce_type: payload.commerceType,
     variants: payload.variants,
     variant_options: payload.variantOptions,
     variant_combinations: payload.variantCombinations,
@@ -1155,6 +1158,7 @@ export async function updateProductAction(
   if (formData.has("stockTrackingPresent")) {
     baseMetadata.stockTrackingEnabled = payload.stockTrackingEnabled;
   }
+  baseMetadata.commerce_type = payload.commerceType;
   const metadata =
     existing.listing_type === "personal"
       ? {
@@ -1809,6 +1813,7 @@ export async function createPersonalListingAction(
         metadata: {
           payment_status: "pending",
           stockTrackingEnabled: payload.stockTrackingEnabled,
+          commerce_type: payload.commerceType,
           listing_fee_amount: 1,
           variants: payload.variants,
           variant_options: payload.variantOptions,

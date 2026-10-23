@@ -1128,6 +1128,11 @@ export function ProductGrid({
                 </div>
               )}
               <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
+                {product.commerceType === "rental" ? (
+                  <span className="rounded-full bg-blue-600 px-2 py-1 text-[11px] font-black text-white shadow-sm">
+                    İcarə
+                  </span>
+                ) : null}
                 {product.isPromoted ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-slate-950 shadow-sm">
                     <Crown className="size-3" aria-hidden="true" />

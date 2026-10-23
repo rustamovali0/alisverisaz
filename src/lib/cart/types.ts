@@ -14,6 +14,7 @@ export type CartProduct = {
   createdAt?: string | null;
   name: string;
   description: string | null;
+  commerceType?: "sale" | "rental";
   priceAmount: number;
   discountAmount: number;
   stockQuantity: number;
@@ -76,6 +77,12 @@ export type MarketplaceProductDetail = {
     images: ProductImage[];
   };
   store: MarketplaceStore;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    parent: { id: string; name: string; slug: string } | null;
+  } | null;
 };
 
 export type CartItem = {
