@@ -177,6 +177,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "box",
     },
     {
+      title: "Məhsul köçürmə",
+      href: "/radmin/product-transfer",
+      icon: "package",
+    },
+    {
       title: "Yeni məhsullar",
       href: "/radmin/new-products",
       icon: "package",
