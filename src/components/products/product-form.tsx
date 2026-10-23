@@ -66,6 +66,14 @@ const CATEGORY_KEYWORD_GROUPS = [
   { category: ["hədiyyə", "bayram"], words: ["hədiyyə", "hediyye", "gül", "gul", "buket", "şar", "sar", "suvenir", "bayram"] },
 ];
 
+const PRODUCT_FIELD_LABELS: Record<string, string> = {
+  name: "Ad",
+  costAmount: "Maya dəyəri",
+  priceAmount: "Qiymət",
+  discountedPriceAmount: "Endirimli qiymət",
+  stockQuantity: "Stok sayı",
+};
+
 function normalizeCategoryText(value: string) {
   return value.trim().toLocaleLowerCase("az-AZ");
 }
@@ -637,7 +645,28 @@ export function ProductForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const invalidField = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+      ":invalid",
+    );
+
+    if (invalidField) {
+      const fieldLabel = PRODUCT_FIELD_LABELS[invalidField.name] ?? "Bu sahə";
+      const message = invalidField.validity.valueMissing
+        ? `${fieldLabel} sahəsini doldurun.`
+        : invalidField.validity.rangeUnderflow
+          ? `${fieldLabel} üçün icazə verilən minimum dəyəri daxil edin.`
+          : invalidField.validity.rangeOverflow
+            ? `${fieldLabel} üçün icazə verilən maksimum dəyəri daxil edin.`
+            : `${fieldLabel} sahəsində düzgün dəyər daxil edin.`;
+
+      void appAlert.info("Məlumatları yoxlayın", message);
+      invalidField.focus({ preventScroll: true });
+      invalidField.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const formData = new FormData(form);
     formData.delete("images");
     imageFiles.forEach((file) => {
       formData.append("images", file);
@@ -679,6 +708,7 @@ export function ProductForm({
   return (
     <form
       onSubmit={handleSubmit}
+      noValidate
       className="grid min-w-0 gap-5 overflow-hidden rounded-xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5 [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
