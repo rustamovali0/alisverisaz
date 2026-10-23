@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -9,6 +9,7 @@ import type { SellerDailyAlertConfig } from "@/lib/seller-alerts/data";
 
 export function SellerDailyAlertForm({ config }: { config: SellerDailyAlertConfig }) {
   const [isPending, startTransition] = useTransition();
+  const [audience, setAudience] = useState(config.audience);
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -30,11 +31,22 @@ export function SellerDailyAlertForm({ config }: { config: SellerDailyAlertConfi
         </label>
         <label className="grid gap-1.5 text-sm font-medium">
           Auditoriya
-          <select name="audience" defaultValue={config.audience} className="h-10 rounded-md border border-input bg-background px-3 font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <select
+            name="audience"
+            value={audience}
+            onChange={(event) => setAudience(event.target.value as SellerDailyAlertConfig["audience"])}
+            className="h-10 rounded-md border border-input bg-background px-3 font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <option value="all_sellers">Bütün satıcılar</option>
             <option value="missing_assets">Logo və ya banneri çatışmayanlar</option>
           </select>
         </label>
+      </div>
+      <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm">
+        <span className="font-bold">Göndərilənlər: </span>
+        {audience === "all_sellers"
+          ? "Bütün satıcı hesabları"
+          : "Logo və ya banneri çatışmayan mağaza sahibləri"}
       </div>
       <label className="grid gap-1.5 text-sm font-medium">
         Mətn
