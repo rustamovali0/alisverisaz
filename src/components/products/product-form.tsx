@@ -656,21 +656,21 @@ export function ProductForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid min-w-0 gap-4 overflow-hidden rounded-md border bg-card p-4 text-card-foreground shadow-sm [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
+      className="grid min-w-0 gap-5 overflow-hidden rounded-xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5 [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       {mode === "store-create" ? (
         <input type="hidden" name="storeId" value={stores[0]?.id ?? ""} />
       ) : null}
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-        <label className="grid min-w-0 gap-2 text-sm font-medium">
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+        <label className="grid min-w-0 content-start gap-2 text-sm font-medium">
           Ad
           <input
             name="name"
             value={productName}
             onChange={(event) => setProductName(event.target.value)}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             required
             disabled={disabled}
           />
@@ -777,7 +777,7 @@ export function ProductForm({
         </div>
       </div>
 
-      <section className="grid min-w-0 gap-3 rounded-md border border-border/80 bg-muted/20 p-3">
+      <section className="grid min-w-0 gap-3 rounded-xl border border-border/80 bg-muted/20 p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <label className="flex min-w-0 items-start gap-3 text-sm font-semibold">
             <input
@@ -805,7 +805,7 @@ export function ProductForm({
                 step="1"
                 defaultValue={product?.stockQuantity ?? undefined}
                 placeholder="Məsələn, 25"
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
                 required
                 disabled={disabled}
               />
@@ -819,7 +819,7 @@ export function ProductForm({
         <input type="hidden" name="stockTrackingPresent" value="1" />
       </section>
 
-      <fieldset className="grid gap-2 rounded-md border border-border/80 bg-background p-3">
+      <fieldset className="grid gap-2 rounded-xl border border-border/80 bg-background p-4">
         <legend className="px-1 text-sm font-semibold">Elan növü</legend>
         <div className="grid grid-cols-2 gap-2">
           {(["sale", "rental"] as const).map((type) => (
@@ -846,7 +846,11 @@ export function ProductForm({
         </div>
       </fieldset>
 
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        className={`grid min-w-0 gap-4 sm:grid-cols-2 ${
+          profitTrackingEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3"
+        }`}
+      >
         {profitTrackingEnabled ? <label className="grid min-w-0 gap-2 text-sm font-medium">
           Maya dəyəri
           <input
@@ -857,7 +861,7 @@ export function ProductForm({
             defaultValue={product?.costAmount ?? undefined}
             placeholder="Maya dəyəri"
             required
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           />
         </label> : null}
@@ -870,7 +874,7 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.priceAmount ?? undefined}
             placeholder="Əsas qiymət"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             required
             disabled={disabled}
           />
@@ -888,7 +892,7 @@ export function ProductForm({
                 : ""
             }
             placeholder="Endirim yoxdursa boş saxlayın"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           />
         </label>
@@ -897,7 +901,7 @@ export function ProductForm({
           <select
             name="status"
             defaultValue={product?.status ?? "active"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             disabled={disabled}
           >
             <option value="draft">Qaralama</option>
