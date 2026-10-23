@@ -133,6 +133,16 @@ function readOriginalContentText(fallback: string | null) {
   return fallback || "";
 }
 
+function readPublicStoreDescription(value: string | null) {
+  const description = value?.trim();
+  if (!description) return null;
+
+  const normalized = description.toLocaleLowerCase("az-AZ").replace(/\s+/g, " ");
+  return normalized === "satıcı mağazası" || normalized === "satici magazasi"
+    ? null
+    : description;
+}
+
 function toCartProduct(row: ProductRow): CartProduct {
   const primary = row.product_images?.find((image) => image.is_primary);
   const first = row.product_images?.[0];
@@ -830,7 +840,7 @@ async function getMarketplaceStoresUncached(
         id: store.id,
         name: store.name,
         slug: store.slug,
-        description: store.description,
+        description: readPublicStoreDescription(store.description),
         aboutContent: readSetting(store.settings, "aboutContent"),
         address: readSetting(store.settings, "address"),
         phone: readSetting(store.settings, "phone"),
@@ -967,7 +977,7 @@ export async function getMarketplaceStoreCards(input: {
             id: store.id,
             name: store.name,
             slug: store.slug,
-            description: store.description,
+            description: readPublicStoreDescription(store.description),
             aboutContent: readSetting(store.settings, "aboutContent"),
             address: readSetting(store.settings, "address"),
             phone: readSetting(store.settings, "phone"),
@@ -1076,7 +1086,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     ownerId: store.owner_id ?? null,
     name: store.name,
     slug: store.slug,
-    description: store.description,
+    description: readPublicStoreDescription(store.description),
     aboutContent: readSetting(store.settings, "aboutContent"),
     heroTitle: readSetting(store.settings, "heroTitle"),
     heroSubtitle: readSetting(store.settings, "heroSubtitle"),
