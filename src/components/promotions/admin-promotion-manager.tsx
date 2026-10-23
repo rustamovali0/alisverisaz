@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgePlus, Check, Crown, Package, Store, X } from "lucide-react";
+import { BadgePlus, Check, Crown, Package, Store, Trash2, X } from "lucide-react";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import {
   approvePromotionRequestAction,
   cancelPromotionRequestAction,
   createAdminPromotionAction,
+  deletePromotionRequestAction,
   rejectPromotionRequestAction,
 } from "@/lib/promotions/actions";
 import type {
@@ -100,6 +101,44 @@ function AdminPromotionActionButton({
         <Check className="mr-2 size-4" aria-hidden="true" />
       )}
       {isPending ? "İcra olunur" : label}
+    </Button>
+  );
+}
+
+function DeletePromotionButton({ request }: { request: PromotionRequest }) {
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      const target = request.targetType === "store"
+        ? request.storeName
+        : request.productName ?? "Məhsul";
+      const confirmed = await appAlert.confirm({
+        title: "Önə çıxarma qeydi silinsin?",
+        message: request.status === "approved"
+          ? `“${target}” artıq önə çıxarılmayacaq və qeyd siyahıdan silinəcək.`
+          : `“${target}” üçün bu qeyd siyahıdan silinəcək.`,
+        confirmText: "Sil",
+        cancelText: "Ləğv et",
+        variant: "danger",
+      });
+      if (!confirmed.isConfirmed) return;
+
+      const formData = new FormData();
+      formData.set("requestId", request.id);
+      const result = await deletePromotionRequestAction(formData);
+      if (!result.ok) {
+        void appAlert.error(result.message, "Qeyd silinmədi");
+        return;
+      }
+      void appAlert.success("Qeyd silindi", result.message);
+    });
+  }
+
+  return (
+    <Button type="button" size="sm" variant="destructive" disabled={isPending} onClick={handleDelete}>
+      <Trash2 className="mr-2 size-4" aria-hidden="true" />
+      {isPending ? "Silinir" : "Sil"}
     </Button>
   );
 }
@@ -282,6 +321,7 @@ export function AdminPromotionManager({
                   successTitle="Rədd edildi"
                   variant="destructive"
                 />
+                <DeletePromotionButton request={request} />
               </div>
             ) : null}
             {request.status === "approved" ? (
@@ -293,6 +333,12 @@ export function AdminPromotionManager({
                   successTitle="Ləğv edildi"
                   variant="destructive"
                 />
+                <DeletePromotionButton request={request} />
+              </div>
+            ) : null}
+            {request.status === "rejected" || request.status === "canceled" ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <DeletePromotionButton request={request} />
               </div>
             ) : null}
           </div>

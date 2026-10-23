@@ -220,7 +220,15 @@ function CategoryCard({ category }: { category: CategoryOption }) {
   );
 }
 
-function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; compact?: boolean }) {
+function HomeStoreCard({
+  store,
+  compact = false,
+  showPromotionBadge = false,
+}: {
+  store: MarketplaceStore;
+  compact?: boolean;
+  showPromotionBadge?: boolean;
+}) {
   const marketplace = useTranslations("marketplace");
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
@@ -249,7 +257,7 @@ function HomeStoreCard({ store, compact = false }: { store: MarketplaceStore; co
               </div>
             )}
             <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-950/28 to-transparent" />
-            {store.isPromoted ? (
+            {store.isPromoted && showPromotionBadge ? (
               <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-black text-amber-700 shadow-sm ring-1 ring-white/70 backdrop-blur">
                 <Crown className="size-3" aria-hidden="true" />
                 Önə çıxarılıb
@@ -326,7 +334,16 @@ export function HomeExperience({
           .map((storeId) => alphabeticalStores.find((store) => store.id === storeId))
           .filter((store): store is MarketplaceStore => Boolean(store))
       : alphabeticalStores;
-  const featuredStores = selectedFeaturedStores.slice(
+  const featuredStores = selectedFeaturedStores
+    .map((store, index) => ({ store, index }))
+    .sort((left, right) => {
+      if (left.store.isPromoted !== right.store.isPromoted) {
+        return left.store.isPromoted ? -1 : 1;
+      }
+      return left.index - right.index;
+    })
+    .map(({ store }) => store)
+    .slice(
     0,
     visibleLimit(featuredSection, 8),
   );
@@ -470,7 +487,11 @@ export function HomeExperience({
                     index >= 4 && "hidden lg:block",
                   )}
                 >
-                  <HomeStoreCard store={store} compact={index > 1} />
+                  <HomeStoreCard
+                    store={store}
+                    compact={index > 1}
+                    showPromotionBadge={initialRole === "seller"}
+                  />
                 </div>
               ))}
             </div>
