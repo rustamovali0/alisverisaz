@@ -39,6 +39,17 @@ type StorePageRenderOptions = {
   contactOnly?: boolean;
 };
 
+function publicStoreDescription(description: string | null) {
+  const value = description?.trim();
+
+  if (!value) return null;
+
+  const normalized = value.toLocaleLowerCase("az-AZ").replace(/\s+/g, " ");
+  return normalized === "satıcı mağazası" || normalized === "satici magazasi"
+    ? null
+    : value;
+}
+
 export async function generateMetadata({
   params,
 }: StorePageProps): Promise<Metadata> {
@@ -77,7 +88,7 @@ export async function generateMetadata({
     ? `${store.name} (${store.slug}) | Rəsmi mağaza`
     : `${store.name} (${store.slug}) mağazası | Alışveriş.az`;
   const description =
-    store.description ||
+    publicStoreDescription(store.description) ||
     `${store.name} (${store.slug}) mağazasının Alışveriş.az səhifəsi. Yeni məhsullar, kateqoriyalar və əlaqə məlumatları.`;
 
   return {

@@ -116,7 +116,7 @@ export async function ensureSellerStore(input: {
       owner_id: input.userId,
       name: storeName,
       slug: storeSlug,
-      description: input.description ?? "Satıcı mağazası",
+      description: input.description?.trim() || null,
       logo_url: input.logoUrl ?? null,
       cover_url: input.coverUrl ?? null,
       status: "active",
