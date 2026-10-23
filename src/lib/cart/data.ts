@@ -1065,7 +1065,9 @@ async function getMarketplaceStoreBySlugUncached(input: {
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
     .map((product) => toCartProduct(product));
   const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
-  const promotedPageProducts = markPromotedProducts(pageProducts, promotedProductIds);
+  const promotedPageProducts = sortPromotedFirst(
+    markPromotedProducts(pageProducts, promotedProductIds),
+  );
   const lastProduct = promotedPageProducts.at(-1);
 
   return {

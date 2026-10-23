@@ -1758,7 +1758,9 @@ export function Storefront({
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
   const visibleProducts = useMemo(
-    () => infinite.products.filter((product) => product.storeId === store.id),
+    () => infinite.products
+      .filter((product) => product.storeId === store.id)
+      .sort((left, right) => Number(Boolean(right.isPromoted)) - Number(Boolean(left.isPromoted))),
     [infinite.products, store.id],
   );
   const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
