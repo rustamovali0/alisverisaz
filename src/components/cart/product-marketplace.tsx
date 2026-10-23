@@ -1107,31 +1107,6 @@ export function ProductGrid({
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
           )}
         >
-          {product.commerceType === "rental" || product.isPromoted || hasDiscount || isNewProduct ? (
-            <div className="flex min-h-9 items-center gap-1.5 overflow-x-auto border-b border-slate-100 bg-white px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-slate-800 dark:bg-card">
-              {product.commerceType === "rental" ? (
-                <span className="shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-black leading-none text-white shadow-sm sm:text-[11px]">
-                  İcarə
-                </span>
-              ) : null}
-              {product.isPromoted ? (
-                <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-amber-400 px-2 py-1 text-[10px] font-black leading-none text-slate-950 shadow-sm sm:text-[11px]">
-                  <Crown className="size-3" aria-hidden="true" />
-                  Önə çıxarılıb
-                </span>
-              ) : null}
-              {hasDiscount ? (
-                <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-2 py-1 text-[10px] font-black leading-none text-white sm:text-[11px]">
-                  -{discountPercent}%
-                </span>
-              ) : null}
-              {isNewProduct ? (
-                <span className="shrink-0 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold leading-none text-blue-700 sm:text-[11px]">
-                  {t("newLabel")}
-                </span>
-              ) : null}
-            </div>
-          ) : null}
           <Link
             href={detailHref}
             className="block"
@@ -1164,6 +1139,40 @@ export function ProductGrid({
                   </span>
                 </div>
               )}
+              {product.isPromoted || isNewProduct ? (
+                <div
+                  className={cn(
+                    "absolute left-1.5 top-1.5 z-10 flex items-center gap-1 overflow-hidden sm:left-2 sm:top-2 sm:gap-1.5",
+                    isolatedStoreSlug ? "right-1.5 sm:right-2" : "right-12",
+                  )}
+                >
+                  {product.isPromoted ? (
+                    <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-1 text-[9px] font-black leading-none text-slate-950 shadow-sm sm:gap-1 sm:px-2 sm:text-[11px]">
+                      <Crown className="size-2.5 sm:size-3" aria-hidden="true" />
+                      Önə çıxan
+                    </span>
+                  ) : null}
+                  {isNewProduct ? (
+                    <span className="shrink-0 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-1.5 py-1 text-[9px] font-bold leading-none text-blue-700 shadow-sm sm:px-2 sm:text-[11px]">
+                      {t("newLabel")}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {product.commerceType === "rental" || hasDiscount ? (
+                <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 sm:bottom-2 sm:left-2">
+                  {product.commerceType === "rental" ? (
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                      İcarə
+                    </span>
+                  ) : null}
+                  {hasDiscount ? (
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                      -{discountPercent}%
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </Link>
           {!isolatedStoreSlug ? <FavoriteToggleButton
