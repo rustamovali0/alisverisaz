@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Heading2, List, ListOrdered, Pilcrow, Sparkles } from "lucide-react";
 
@@ -578,6 +578,7 @@ export function ProductForm({
   );
   const [isRootCategoryOpen, setIsRootCategoryOpen] = useState(false);
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
+  const categoryPickerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
@@ -603,6 +604,28 @@ export function ProductForm({
     (category) => category.id === selectedRootCategoryId,
   );
   const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  useEffect(() => {
+    if (!isRootCategoryOpen && !isSubcategoryOpen) return;
+
+    function closeCategoryMenus(event: PointerEvent | KeyboardEvent) {
+      if (event instanceof KeyboardEvent) {
+        if (event.key !== "Escape") return;
+      } else if (categoryPickerRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsRootCategoryOpen(false);
+      setIsSubcategoryOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeCategoryMenus);
+    document.addEventListener("keydown", closeCategoryMenus);
+    return () => {
+      document.removeEventListener("pointerdown", closeCategoryMenus);
+      document.removeEventListener("keydown", closeCategoryMenus);
+    };
+  }, [isRootCategoryOpen, isSubcategoryOpen]);
 
   function selectCategory(category: CategoryOption) {
     const rootId = category.parentId ?? category.id;
@@ -670,12 +693,12 @@ export function ProductForm({
             name="name"
             value={productName}
             onChange={(event) => setProductName(event.target.value)}
-            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             required
             disabled={disabled}
           />
         </label>
-        <div className="grid min-w-0 gap-3 text-sm font-medium">
+        <div ref={categoryPickerRef} className="grid min-w-0 gap-3 text-sm font-medium">
           <span>Kateqoriya</span>
           <input type="hidden" name="categoryId" value={selectedCategoryId} />
           {categorySuggestions.length > 0 ? (
@@ -697,7 +720,7 @@ export function ProductForm({
             <span className="text-xs font-semibold text-muted-foreground">Əsas kateqoriya</span>
             <button
               type="button"
-              className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
               disabled={disabled}
               aria-expanded={isRootCategoryOpen}
               onClick={() => {
@@ -747,7 +770,7 @@ export function ProductForm({
               <span className="text-xs font-semibold text-muted-foreground">Alt kateqoriya</span>
               <button
                 type="button"
-                className="flex h-11 w-full items-center justify-between rounded-xl border border-input bg-background px-3.5 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
                 disabled={disabled}
                 aria-expanded={isSubcategoryOpen}
                 onClick={() => setIsSubcategoryOpen((current) => !current)}
@@ -777,7 +800,7 @@ export function ProductForm({
         </div>
       </div>
 
-      <section className="grid min-w-0 gap-3 rounded-xl border border-border/80 bg-muted/20 p-4">
+      <section className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <label className="flex min-w-0 items-start gap-3 text-sm font-semibold">
             <input
@@ -805,7 +828,7 @@ export function ProductForm({
                 step="1"
                 defaultValue={product?.stockQuantity ?? undefined}
                 placeholder="Məsələn, 25"
-                className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 required
                 disabled={disabled}
               />
@@ -819,7 +842,7 @@ export function ProductForm({
         <input type="hidden" name="stockTrackingPresent" value="1" />
       </section>
 
-      <fieldset className="grid gap-2 rounded-xl border border-border/80 bg-background p-4">
+      <fieldset className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
         <legend className="px-1 text-sm font-semibold">Elan növü</legend>
         <div className="grid grid-cols-2 gap-2">
           {(["sale", "rental"] as const).map((type) => (
@@ -827,8 +850,8 @@ export function ProductForm({
               key={type}
               className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
                 commerceType === type
-                  ? "border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200"
-                  : "border-input bg-background text-muted-foreground hover:bg-muted/50"
+                  ? "border-blue-500 bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/15 dark:bg-blue-500"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
               }`}
             >
               <input
@@ -861,7 +884,7 @@ export function ProductForm({
             defaultValue={product?.costAmount ?? undefined}
             placeholder="Maya dəyəri"
             required
-            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           />
         </label> : null}
@@ -874,7 +897,7 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.priceAmount ?? undefined}
             placeholder="Əsas qiymət"
-            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             required
             disabled={disabled}
           />
@@ -892,7 +915,7 @@ export function ProductForm({
                 : ""
             }
             placeholder="Endirim yoxdursa boş saxlayın"
-            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           />
         </label>
@@ -901,7 +924,7 @@ export function ProductForm({
           <select
             name="status"
             defaultValue={product?.status ?? "active"}
-            className="h-11 rounded-xl border border-input bg-background px-3.5 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           >
             <option value="draft">Qaralama</option>
