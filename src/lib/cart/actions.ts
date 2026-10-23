@@ -288,7 +288,11 @@ async function applyOrderVariantSnapshots(input: {
   orderIds: string[];
   items: ValidatedCartVariantItem[];
 }) {
-  if (input.orderIds.length === 0 || input.items.length === 0) {
+  const hasVariantData = input.items.some(
+    (item) => item.selectedVariant || item.variantSnapshot.length > 0,
+  );
+
+  if (input.orderIds.length === 0 || input.items.length === 0 || !hasVariantData) {
     return;
   }
 
@@ -560,16 +564,6 @@ async function sendOrderEmailNotifications(orderIds: string[]) {
   }
 
   await Promise.allSettled(tasks);
-}
-
-function scheduleOrderEmailNotifications(orderIds: string[]) {
-  if (orderIds.length === 0) {
-    return;
-  }
-
-  after(async () => {
-    await sendOrderEmailNotifications(orderIds);
-  });
 }
 
 export async function getCartProductsAction(productIds: string[], locale = "az") {
@@ -1299,25 +1293,28 @@ export async function createWhatsAppOrderIntentAction(
     };
   }
 
-  await trackActivityEvent({
-    eventType: "whatsapp_order_intent",
-    actorId: current?.user.id ?? null,
-    storeId,
-    metadata: {
-      title: "WhatsApp sifarişi",
-      description: `${settings.name} · ${formatMoney(subtotal)}`,
-      order_id: order.id,
-      order_number: order.order_number,
-      total_amount: subtotal,
-      item_count: itemCount,
-      stock_decremented: false,
-    },
+  after(async () => {
+    await Promise.allSettled([
+      trackActivityEvent({
+        eventType: "whatsapp_order_intent",
+        actorId: current?.user.id ?? null,
+        storeId,
+        metadata: {
+          title: "WhatsApp sifarişi",
+          description: `${settings.name} · ${formatMoney(subtotal)}`,
+          order_id: order.id,
+          order_number: order.order_number,
+          total_amount: subtotal,
+          item_count: itemCount,
+          stock_decremented: false,
+        },
+      }),
+      notifyOrderCreated([order.id]),
+      sendOrderEmailNotifications([order.id]),
+    ]);
   });
-
-  void notifyOrderCreated([order.id]);
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard");
-  revalidatePath("/store/dashboard/orders");
   revalidatePath("/store/dashboard/orders");
   revalidatePath("/seller/orders");
   revalidatePath("/admin/orders");
@@ -1425,7 +1422,13 @@ export async function createCheckoutOrdersAction(
     };
   }
 
-  if (current) {
+  const profileNeedsSync = Boolean(
+    current &&
+      (!current.profile?.full_name?.trim() ||
+        !isValidNormalizedPhone(normalizeAzerbaijanPhone(current.profile?.phone ?? ""))),
+  );
+
+  if (current && profileNeedsSync) {
     await ensureAuthProfile({
       id: current.user.id,
       email: current.user.email ?? null,
@@ -1435,7 +1438,7 @@ export async function createCheckoutOrdersAction(
     });
   }
 
-  const ip = await getClientIp();
+  const ip = isGuestCheckout ? await getClientIp() : "";
   const checkoutIdentityKey = isGuestCheckout
     ? hashCheckoutIdentity(`guest:${ip}:${phone}`)
     : null;
@@ -1482,7 +1485,14 @@ export async function createCheckoutOrdersAction(
     };
   }
 
-  const whatsappTemplate = await getGlobalWhatsAppOrderTemplate();
+  const needsWhatsappTemplate =
+    !forceSystemOrder &&
+    Array.from(groupedByStore.keys()).some(
+      (storeId) => storeSettings.get(storeId)?.orderMethod === "whatsapp",
+    );
+  const whatsappTemplate = needsWhatsappTemplate
+    ? await getGlobalWhatsAppOrderTemplate()
+    : "";
   const systemItems: ValidatedCartVariantItem[] = [];
   const whatsappGroups: WhatsAppCheckoutGroup[] = [];
 
@@ -1579,46 +1589,43 @@ export async function createCheckoutOrdersAction(
     promosByStore: resolvedPromos.promos,
   });
 
-  await Promise.all(
-    [
-      ...checkout.orders.map((order) =>
-        trackActivityEvent({
-          eventType: "order_created",
-          actorId: current?.user.id ?? null,
-          storeId: typeof order.storeId === "string" ? order.storeId : null,
-          metadata: {
-            title: "Yeni sifariş",
-            description:
-              typeof order.orderNumber === "string" ? order.orderNumber : "Sifariş",
-            order_id: typeof order.id === "string" ? order.id : null,
-            order_number:
-              typeof order.orderNumber === "string" ? order.orderNumber : null,
-            total_amount:
-              typeof order.totalAmount === "number" ? order.totalAmount : null,
-            item_count: typeof order.itemCount === "number" ? order.itemCount : null,
-          },
-        }),
-      ),
-      ...whatsappGroups.map((group) =>
-        trackActivityEvent({
-          eventType: "whatsapp_order_intent",
-          actorId: current?.user.id ?? null,
-          storeId: group.storeId,
-          metadata: {
-            title: "WhatsApp sifariş niyyəti",
-            description: `${group.storeName} · ${formatMoney(group.totalAmount)}`,
-            total_amount: group.totalAmount,
-            item_count: group.itemCount,
-          },
-        }),
-      ),
-    ],
-  );
+  const orderActivityInputs = checkout.orders.map((order) => ({
+    eventType: "order_created" as const,
+    actorId: current?.user.id ?? null,
+    storeId: typeof order.storeId === "string" ? order.storeId : null,
+    metadata: {
+      title: "Yeni sifariş",
+      description: typeof order.orderNumber === "string" ? order.orderNumber : "Sifariş",
+      order_id: typeof order.id === "string" ? order.id : null,
+      order_number: typeof order.orderNumber === "string" ? order.orderNumber : null,
+      total_amount: typeof order.totalAmount === "number" ? order.totalAmount : null,
+      item_count: typeof order.itemCount === "number" ? order.itemCount : null,
+    },
+  }));
+  const whatsappActivityInputs = whatsappGroups.map((group) => ({
+    eventType: "whatsapp_order_intent" as const,
+    actorId: current?.user.id ?? null,
+    storeId: group.storeId,
+    metadata: {
+      title: "WhatsApp sifariş niyyəti",
+      description: `${group.storeName} · ${formatMoney(group.totalAmount)}`,
+      total_amount: group.totalAmount,
+      item_count: group.itemCount,
+    },
+  }));
 
-  if (checkout.orderIds.length > 0) {
-    void notifyOrderCreated(checkout.orderIds);
-    scheduleOrderEmailNotifications(checkout.orderIds);
-  }
+  after(async () => {
+    await Promise.allSettled([
+      ...orderActivityInputs.map((input) => trackActivityEvent(input)),
+      ...whatsappActivityInputs.map((input) => trackActivityEvent(input)),
+      ...(checkout.orderIds.length > 0
+        ? [
+            notifyOrderCreated(checkout.orderIds),
+            sendOrderEmailNotifications(checkout.orderIds),
+          ]
+        : []),
+    ]);
+  });
 
   if (checkout.orderIds.length > 0) {
     revalidatePath("/dashboard/orders");
