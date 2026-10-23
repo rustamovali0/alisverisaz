@@ -353,14 +353,26 @@ export function CustomStorefrontHeader({
   const storefrontIconClass = "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
 
   useEffect(() => {
+    let frameId = 0;
+
     function updateHeaderSearchVisibility() {
-      setShowHeaderSearch(window.scrollY > 160);
+      if (frameId) return;
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        setShowHeaderSearch((isVisible) =>
+          isVisible ? window.scrollY > 80 : window.scrollY > 200,
+        );
+      });
     }
 
     updateHeaderSearchVisibility();
     window.addEventListener("scroll", updateHeaderSearchVisibility, { passive: true });
 
-    return () => window.removeEventListener("scroll", updateHeaderSearchVisibility);
+    return () => {
+      window.removeEventListener("scroll", updateHeaderSearchVisibility);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
   }, []);
 
   return (
@@ -1049,8 +1061,8 @@ export function ProductGrid({
         layout === "related"
           ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
           : forceMobileTwoColumns
-            ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
-            : "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
+            ? "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
+            : "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
       )}
     >
       {products.map((product) => {
@@ -1095,6 +1107,31 @@ export function ProductGrid({
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
           )}
         >
+          {product.commerceType === "rental" || product.isPromoted || hasDiscount || isNewProduct ? (
+            <div className="flex min-h-9 items-center gap-1.5 overflow-x-auto border-b border-slate-100 bg-white px-2 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-slate-800 dark:bg-card">
+              {product.commerceType === "rental" ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-2 py-1 text-[10px] font-black leading-none text-white shadow-sm sm:text-[11px]">
+                  İcarə
+                </span>
+              ) : null}
+              {product.isPromoted ? (
+                <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-amber-400 px-2 py-1 text-[10px] font-black leading-none text-slate-950 shadow-sm sm:text-[11px]">
+                  <Crown className="size-3" aria-hidden="true" />
+                  Önə çıxarılıb
+                </span>
+              ) : null}
+              {hasDiscount ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-2 py-1 text-[10px] font-black leading-none text-white sm:text-[11px]">
+                  -{discountPercent}%
+                </span>
+              ) : null}
+              {isNewProduct ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[10px] font-bold leading-none text-blue-700 sm:text-[11px]">
+                  {t("newLabel")}
+                </span>
+              ) : null}
+            </div>
+          ) : null}
           <Link
             href={detailHref}
             className="block"
@@ -1117,7 +1154,7 @@ export function ProductGrid({
                   loading="lazy"
                   decoding="async"
                   className={cn(
-                    "h-full w-full object-contain p-1.5 transition-transform duration-200 ease-out motion-reduce:transition-none sm:p-2 md:group-hover:scale-[1.025]",
+                    "h-full w-full object-cover transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.025]",
                   )}
                 />
               ) : (
@@ -1127,29 +1164,6 @@ export function ProductGrid({
                   </span>
                 </div>
               )}
-              <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
-                {product.commerceType === "rental" ? (
-                  <span className="rounded-full bg-blue-600 px-2 py-1 text-[11px] font-black text-white shadow-sm">
-                    İcarə
-                  </span>
-                ) : null}
-                {product.isPromoted ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-slate-950 shadow-sm">
-                    <Crown className="size-3" aria-hidden="true" />
-                    Önə çıxarılıb
-                  </span>
-                ) : null}
-                {hasDiscount ? (
-                  <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-black text-white">
-                    -{discountPercent}%
-                  </span>
-                ) : null}
-                {isNewProduct ? (
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                    {t("newLabel")}
-                  </span>
-                ) : null}
-              </div>
             </div>
           </Link>
           {!isolatedStoreSlug ? <FavoriteToggleButton
@@ -2113,7 +2127,7 @@ export function Storefront({
         className={cn(
           "min-w-0 scroll-mt-28",
           productsOnly
-            ? "rounded-[24px] border border-slate-200 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:p-8"
+            ? "rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-[24px] sm:p-6 lg:p-8"
             :
           isCustomStorefront
             ? "border-0 bg-transparent px-0 py-2 shadow-none"
@@ -2401,8 +2415,10 @@ export function Storefront({
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
         <div className={cn(
-          "mx-auto w-full max-w-[1440px] px-4 pb-5 sm:px-6 md:pb-8 lg:px-8",
-    "pt-20 sm:pt-14 md:pt-12",
+          "mx-auto w-full max-w-[1440px] pb-5 md:pb-8 lg:px-8",
+          productsOnly
+            ? "px-2 pt-2 sm:px-6 sm:pt-4 md:pt-6"
+            : "px-4 pt-20 sm:px-6 sm:pt-14 md:pt-12",
         )}>
           {productsOnly ? ownerEditControl : null}
           {productsOnly && isStoreOwner && isOwnerEditing ? (
