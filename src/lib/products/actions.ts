@@ -12,6 +12,7 @@ import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { isProfitTrackingEnabled, validateProfitPrices } from "@/lib/products/profit";
 import { notifyProductSubmitted } from "@/lib/products/approval-notifications";
+import { getProductApprovalSettings } from "@/lib/products/approval-settings";
 import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
 import {
   deleteR2ImageByUrl,
@@ -929,7 +930,7 @@ export async function createStoreProductAction(
     };
   }
 
-  const requiresApproval = false;
+  const { requireApproval: requiresApproval } = await getProductApprovalSettings();
   const productStatus: ProductStatus = requiresApproval ? "draft" : payload.status;
   const productMetadata = {
     stockTrackingEnabled: payload.stockTrackingEnabled,
@@ -981,35 +982,42 @@ export async function createStoreProductAction(
     };
   }
 
-  try {
-    await replaceVariants({
+  const [variantsResult, locationsResult, imagesResult] = await Promise.allSettled([
+    replaceVariants({
       productId: product.id,
       options: payload.variantOptions,
       combinations: payload.variantCombinations,
       legacyVariants: payload.variants,
-    });
-    await replaceProductLocations({
+    }),
+    replaceProductLocations({
       productId: product.id,
       storeId,
       formData,
-    });
-  } catch (error) {
+    }),
+    uploadProductImages({
+      userId: current.user.id,
+      productId: product.id,
+      productName: payload.name,
+      files: imageFiles,
+    }),
+  ]);
+
+  const productDetailError = [variantsResult, locationsResult]
+    .find((result): result is PromiseRejectedResult => result.status === "rejected");
+
+  if (productDetailError) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
+      message: productDetailError.reason instanceof Error
+        ? productDetailError.reason.message
+        : "Məhsul detalları saxlanmadı.",
     };
   }
 
   let imageWarning = "";
 
-  try {
-    await uploadProductImages({
-      userId: current.user.id,
-      productId: product.id,
-      productName: payload.name,
-      files: imageFiles,
-    });
-  } catch (error) {
+  if (imagesResult.status === "rejected") {
+    const error = imagesResult.reason;
     console.error("Product image upload failed after product create", {
       productId: product.id,
       storeId,

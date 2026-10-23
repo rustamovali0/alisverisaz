@@ -95,6 +95,33 @@ export async function updateProductApprovalSettingsAction(
     };
   }
 
+  if (!requireApproval) {
+    const { data: pendingProducts } = await (supabase as any)
+      .from("products")
+      .select("id,metadata")
+      .eq("listing_type", "store")
+      .eq("status", "draft")
+      .eq("metadata->>approval_status", "pending");
+
+    await Promise.all(((pendingProducts ?? []) as Array<{ id: string; metadata: Record<string, unknown> | null }>).map((product) => {
+      const metadata = normalizeMetadata(product.metadata);
+      return (supabase as any)
+        .from("products")
+        .update({
+          status: "active",
+          metadata: {
+            ...metadata,
+            approval_status: "none",
+            approval_requested_at: null,
+            requested_status: null,
+          },
+        })
+        .eq("id", product.id);
+    }));
+
+    invalidateProductPublicData({ homepage: true });
+  }
+
   await recordAdminAudit({
     adminId: current.user.id,
     action: "update_product_approval_settings",
@@ -105,6 +132,8 @@ export async function updateProductApprovalSettingsAction(
     },
   });
   revalidatePath("/radmin/new-products");
+  revalidatePath("/store/dashboard/products");
+  revalidatePath("/store/dashboard/pending-products");
 
   return {
     ok: true,
