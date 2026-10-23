@@ -50,7 +50,6 @@ export async function updateSellerDailyAlertAction(
   const { error } = await (supabase as any).from("platform_settings").upsert({
     key: "seller_daily_alert",
     value,
-    updated_by: current.user.id,
   }, { onConflict: "key" });
 
   if (error) {
