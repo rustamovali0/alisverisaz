@@ -2482,7 +2482,7 @@ export function Storefront({
 
   return (
     <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
-      <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-col gap-7 px-4 py-4 sm:px-6 sm:py-7 md:gap-10 lg:px-8 lg:py-9">
+      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-7 px-4 py-4 sm:px-6 sm:py-7 md:gap-8 lg:px-7 lg:py-7">
         {ownerEditControl}
         {isStoreOwner && isOwnerEditing ? (
           <div className="relative min-w-0">
@@ -2491,10 +2491,10 @@ export function Storefront({
           </div>
         ) : (
           <section data-store-search-sentinel className="-mx-4 flex min-w-0 flex-col sm:mx-0">
-            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[500px] lg:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
-                <StoreLogo store={store} className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-24 lg:mb-7 lg:size-28" />
-                <h1 className="max-w-xl text-pretty text-2xl font-black leading-[1.18] tracking-[-0.025em] text-slate-950 dark:text-white sm:text-4xl sm:leading-[1.16] lg:text-[48px] lg:leading-[1.16]">
+            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[430px] lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-12 lg:py-10 xl:px-14">
+                <StoreLogo store={store} className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-5 sm:size-20 lg:mb-6 lg:size-20" />
+                <h1 className="max-w-xl text-pretty text-2xl font-black leading-[1.18] tracking-[-0.025em] text-slate-950 dark:text-white sm:text-4xl sm:leading-[1.16] lg:text-[42px] lg:leading-[1.16]">
                   {store.heroTitle?.trim() || storefront("heroTitle")}
                 </h1>
                 {store.heroSubtitle?.trim() || customHeroDescription ? (
@@ -2524,7 +2524,7 @@ export function Storefront({
                 </div>
               </div>
 
-              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[500px]">
+              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[430px]">
                 <StoreHeroCover store={store} isolated />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
                 <StoreWhatsAppButton phone={storeContactPhone} />

@@ -375,6 +375,25 @@ export async function proxy(request: NextRequest) {
 
     return createNotFoundResponse();
   }
+  if (
+    !storeSubdomainSlug &&
+    firstPathSegment &&
+    isValidStoreSlug(firstPathSegment) &&
+    !isReservedStoreSubdomain(firstPathSegment) &&
+    await storeSlugExists(firstPathSegment)
+  ) {
+    const storePrefix = `/${firstPathSegment}`;
+    const isSupportedStorefrontPath =
+      visiblePathname === storePrefix ||
+      visiblePathname === `${storePrefix}/products` ||
+      visiblePathname === `${storePrefix}/contact` ||
+      visiblePathname === `${storePrefix}/cart` ||
+      visiblePathname.startsWith(`${storePrefix}/products/`);
+
+    if (!isSupportedStorefrontPath) {
+      return createMarketplaceHomeRedirect(request);
+    }
+  }
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
     : resolveStorePath(visiblePathname);
