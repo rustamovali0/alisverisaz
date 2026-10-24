@@ -478,12 +478,12 @@ export function HomeExperience({
               href="/stores"
               action={home("viewAll")}
             />
-            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-5 sm:px-5 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
+            <div className="flex snap-x gap-3 overflow-x-auto pb-1 pr-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:pr-0 lg:grid-cols-4">
               {featuredStores.map((store, index) => (
                 <div
                   key={store.id}
                   className={cn(
-                    "w-[62vw] max-w-[240px] shrink-0 snap-start md:w-auto md:max-w-none",
+                    "w-[56vw] max-w-[218px] shrink-0 snap-start md:w-auto md:max-w-none",
                     index >= 4 && "hidden lg:block",
                   )}
                 >
