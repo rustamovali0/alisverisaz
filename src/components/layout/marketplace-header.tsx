@@ -241,7 +241,9 @@ export function MarketplaceHeader({
   const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
-    !shouldSuppressSearch && hasSearchData && (!hasInlinePrimarySearch || !isHomeSearchVisible);
+    !shouldSuppressSearch &&
+    hasSearchData &&
+    (isIsolatedStorefront || !hasInlinePrimarySearch || !isHomeSearchVisible);
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
