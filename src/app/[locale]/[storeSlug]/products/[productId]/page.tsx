@@ -237,7 +237,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     visibleProductLocations[0]?.location ??
     null;
   const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
-  const sellerPhone = sellerLocation?.phone?.trim() || detail.store.phone?.trim() || "";
+  const sellerPhone =
+    detail.store.whatsappPhone?.trim() ||
+    sellerLocation?.phone?.trim() ||
+    detail.store.phone?.trim() ||
+    "";
   const sellerMapUrl = sellerLocation
     ? getLocationMapUrl(sellerLocation)
     : sellerAddress
@@ -347,6 +351,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <FavoriteToggleButton
                   productId={detail.product.id}
                   productName={detail.product.name}
+                  favoriteCount={detail.favoriteCount}
                   className="shrink-0"
                 />
               ) : null}

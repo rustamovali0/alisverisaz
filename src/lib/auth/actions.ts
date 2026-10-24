@@ -807,6 +807,10 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
           typeof data.user.user_metadata?.banner_url === "string"
             ? data.user.user_metadata.banner_url
             : null,
+        phone:
+          typeof data.user.user_metadata?.phone === "string"
+            ? data.user.user_metadata.phone
+            : null,
       });
     } catch (storeError) {
       sellerStoreSyncError =
@@ -1460,6 +1464,7 @@ export async function updateUserRoleAction(
           typeof existingMeta.avatar_url === "string" ? existingMeta.avatar_url : null,
         coverUrl:
           typeof existingMeta.banner_url === "string" ? existingMeta.banner_url : null,
+        phone: typeof existingMeta.phone === "string" ? existingMeta.phone : null,
       });
     } catch (storeError) {
       void recordAdminAudit({

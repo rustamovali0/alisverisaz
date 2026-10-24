@@ -1214,7 +1214,7 @@ async function getMarketplaceProductByIdUncached(input: {
   const row = data as ProductRow & {
     stores: StoreRow;
   };
-  const [{ count: storeProductCount }, categoryResult] = await Promise.all([
+  const [{ count: storeProductCount }, categoryResult, { count: favoriteCount }] = await Promise.all([
     (supabase as any)
       .from("products")
       .select("id", { count: "exact", head: true })
@@ -1228,6 +1228,10 @@ async function getMarketplaceProductByIdUncached(input: {
           .eq("is_active", true)
           .maybeSingle()
       : Promise.resolve({ data: null }),
+    (createSupabaseAdminClient() as any)
+      .from("favorites")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", row.id),
   ]);
   const categoryRow = categoryResult.data as {
     id: string;
@@ -1271,6 +1275,7 @@ async function getMarketplaceProductByIdUncached(input: {
       categoryIds: row.category_id ? [row.category_id] : [],
       customStorefrontEnabled: readBooleanSetting(row.stores.settings, "customStorefrontEnabled"),
     },
+    favoriteCount: favoriteCount ?? 0,
     category: categoryRow
       ? {
           id: categoryRow.id,

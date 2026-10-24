@@ -17,6 +17,7 @@ type FavoriteToggleButtonProps = {
   productName?: string;
   className?: string;
   compact?: boolean;
+  favoriteCount?: number;
 };
 
 type FavoriteProductCache = {
@@ -102,12 +103,14 @@ export function FavoriteToggleButton({
   productName = "Məhsul",
   className,
   compact = false,
+  favoriteCount,
 }: FavoriteToggleButtonProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const [displayCount, setDisplayCount] = useState(Math.max(0, favoriteCount ?? 0));
   const isMutatingRef = useRef(false);
   const isActive = Boolean(favoriteId);
 
@@ -173,10 +176,12 @@ export function FavoriteToggleButton({
     }
 
     const previousFavoriteId = favoriteId;
+    const previousCount = displayCount;
     const wasActive = Boolean(previousFavoriteId);
     isMutatingRef.current = true;
     setIsMutating(true);
     setFavoriteId(wasActive ? null : productId);
+    setDisplayCount(Math.max(0, previousCount + (wasActive ? -1 : 1)));
     emitFavoriteUpdate({ productId, isActive: !wasActive });
 
     void (async () => {
@@ -184,6 +189,7 @@ export function FavoriteToggleButton({
 
       if (authProfile.status !== "authenticated") {
         setFavoriteId(previousFavoriteId);
+        setDisplayCount(previousCount);
         emitFavoriteUpdate({ productId, isActive: wasActive });
         setIsMutating(false);
         isMutatingRef.current = false;
@@ -225,6 +231,7 @@ export function FavoriteToggleButton({
       });
       } catch {
         setFavoriteId(previousFavoriteId);
+        setDisplayCount(previousCount);
         updateFavoriteProductCache(userId, productId, wasActive);
         emitFavoriteUpdate({ productId, isActive: wasActive });
         showToast({
@@ -239,7 +246,7 @@ export function FavoriteToggleButton({
     })();
   }
 
-  return (
+  const button = (
     <button
       type="button"
       aria-label={
@@ -262,5 +269,18 @@ export function FavoriteToggleButton({
         aria-hidden="true"
       />
     </button>
+  );
+
+  if (favoriteCount === undefined) {
+    return button;
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      {button}
+      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+        {displayCount} nəfər
+      </span>
+    </div>
   );
 }

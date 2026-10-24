@@ -434,6 +434,7 @@ export function MobileBottomNav({
   );
 
   const isAccountRoute =
+    (!role && (pathname === "/login" || pathname.startsWith("/login/"))) ||
     (role === "seller" && pathname === "/store/dashboard") ||
     (role !== "seller" && pathname.startsWith("/dashboard"));
   const currentItemHref = items.find((item) => isNavItemActive(item.href))?.href ?? null;

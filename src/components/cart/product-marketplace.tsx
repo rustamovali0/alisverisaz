@@ -782,7 +782,7 @@ function MarketplaceDropdown({
         type="button"
         className={cn(
           "flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-left font-semibold text-slate-900 transition md:hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
-          compact ? "h-9 px-2.5 text-xs sm:h-10 sm:px-3 sm:text-sm" : "h-10 px-3 text-sm",
+          compact ? "h-9 px-2.5 text-sm sm:h-10 sm:px-3" : "h-10 px-3 text-sm",
         )}
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -810,7 +810,7 @@ function MarketplaceDropdown({
                 aria-selected={selected}
                 className={cn(
                   "flex w-full items-center justify-between gap-2 rounded-md text-left text-slate-800 transition md:hover:bg-blue-50 dark:text-slate-100 dark:md:hover:bg-blue-950/30",
-                  compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm",
+                  compact ? "px-3 py-2 text-sm" : "px-3 py-2 text-sm",
                   selected && "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
                 )}
                 onClick={() => {
@@ -1341,6 +1341,7 @@ function useInfiniteProducts({
     products: (query.data?.pages ?? []).reduce<CartProduct[]>((all, page) => mergeProducts(all, page.products), []),
     hasMore: Boolean(query.hasNextPage),
     isLoadingNext: query.isPending || query.isFetchingNextPage,
+    isRefreshing: query.isPending || (query.isFetching && !query.isFetchingNextPage),
     loadNext: () => {
       if (query.hasNextPage && !query.isFetching) void query.fetchNextPage();
     },
@@ -1798,7 +1799,6 @@ export function Storefront({
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [showAllMobileCategories, setShowAllMobileCategories] = useState(false);
   const [homeProductLimit, setHomeProductLimit] = useState(4);
   const [isOwnerEditing, setIsOwnerEditing] = useState(false);
   const infinite = useInfiniteProducts({
@@ -2099,30 +2099,14 @@ export function Storefront({
           "p-3 sm:p-4",
         )}
       >
-        <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+        <div className="mb-3 flex min-w-0 items-center gap-3">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-xl">
               {legacyLayout ? home("categories") : storefront("featuredCategories")}
             </h2>
           </div>
-          <button
-            type="button"
-            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200 sm:text-sm"
-            onClick={() => {
-              if (isCustomStorefront) {
-                setShowAllMobileCategories((current) => !current);
-                scheduleScrollToPageSection("store-categories");
-                return;
-              }
-
-              selectCategory();
-            }}
-          >
-            {showAllMobileCategories ? storefront("showLess") : storefront("viewAll")}
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
         </div>
-        <div className="-mx-3 grid min-w-0 grid-flow-col grid-rows-2 auto-cols-[164px] snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:grid-rows-none sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="-mx-3 grid min-w-0 grid-flow-col auto-cols-[164px] snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
           {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
@@ -2135,7 +2119,6 @@ export function Storefront({
                 type="button"
                 className={cn(
                   "group flex min-h-[52px] w-[164px] min-w-0 shrink-0 snap-start items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-none transition duration-200 md:hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100 sm:w-auto",
-                  isCustomStorefront && !showAllMobileCategories && index >= 12 && "hidden sm:flex",
                   !hasProducts && "text-muted-foreground opacity-70",
                   isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
@@ -2226,7 +2209,11 @@ export function Storefront({
           {filterBar}
         </div>
       ) : null}
-      <ProductInfiniteGrid
+      {infinite.isRefreshing ? (
+        <div className="flex min-h-64 items-center justify-center" aria-live="polite">
+          <GlobalLoader />
+        </div>
+      ) : <ProductInfiniteGrid
         products={productsOnly ? filteredVisibleProducts : filteredVisibleProducts.slice(0, homeProductLimit)}
         hasMore={!hasLocalFilters && (productsOnly ? infinite.hasMore : homeProductLimit < filteredVisibleProducts.length || infinite.hasMore)}
         isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
@@ -2247,7 +2234,7 @@ export function Storefront({
         forceMobileTwoColumns
         compactMobileCards={isCustomStorefront}
         isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
-      />
+      />}
     </section>
   );
 
@@ -2298,18 +2285,8 @@ export function Storefront({
             {storefront("featuredCategories")}
           </h2>
         </div>
-        <button
-          type="button"
-          className="shrink-0 text-sm font-semibold text-slate-600 transition md:hover:text-blue-600 dark:text-slate-300 dark:md:hover:text-blue-300"
-          onClick={() => setShowAllMobileCategories((current) => !current)}
-        >
-          {showAllMobileCategories ? storefront("showLess") : storefront("viewAll")}
-        </button>
       </div>
-      <div className={cn(
-        "-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6",
-        showAllMobileCategories && "grid grid-cols-2 overflow-visible",
-      )}>
+      <div className="-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
         {sortedStoreCategories.map((category, index) => {
           const Icon = getCategoryIcon(category);
           const hasProducts = storeProductCategoryIds.has(category.id);
@@ -2320,8 +2297,6 @@ export function Storefront({
               type="button"
               className={cn(
                 "group relative min-h-[116px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[18px] border border-slate-200 bg-white p-3.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900 sm:min-h-[132px] sm:w-auto sm:p-4",
-                showAllMobileCategories && "w-auto",
-                !showAllMobileCategories && index >= 6 && "sm:hidden lg:block",
                 !hasProducts && "opacity-65",
                 activeCategoryId === category.id && "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30",
               )}

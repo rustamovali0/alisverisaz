@@ -77,6 +77,7 @@ export type MarketplaceProductDetail = {
     images: ProductImage[];
   };
   store: MarketplaceStore;
+  favoriteCount: number;
   category: {
     id: string;
     name: string;

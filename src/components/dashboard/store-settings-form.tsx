@@ -4,7 +4,6 @@ import { Copy, ExternalLink, ImagePlus, Loader2, Save } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSellerStoreSettingsAction } from "@/lib/store-settings/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { getStorefrontUrl, getStorePath } from "@/lib/config/domains";
@@ -175,7 +174,7 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
   const customDomain = readSetting(store.settings, "customDomain");
   const aboutContent = readSetting(store.settings, "aboutContent");
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
-  const whatsappPhone = readSetting(store.settings, "whatsappPhone");
+  const whatsappPhone = readSetting(store.settings, "whatsappPhone") || readSetting(store.settings, "phone");
   const storefrontHeroUrl = readSetting(store.settings, "storefrontHeroUrl");
   const featuredCategoryIds = Array.isArray(store.settings?.featuredCategoryIds)
     ? store.settings.featuredCategoryIds.filter((item): item is string => typeof item === "string")
@@ -247,13 +246,15 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             WhatsApp üzərindən
           </label>
         </div>
-        <label className="grid gap-2 text-sm font-medium">
-          WhatsApp nömrəsi
-          <PhoneInput name="whatsappPhone" defaultValue={whatsappPhone} />
-          <span className="text-xs text-muted-foreground">
-            WhatsApp üzərindən sifariş qəbul etmək üçün nömrə mütləqdir.
-          </span>
-        </label>
+        <div className="rounded-lg border bg-background p-4 text-sm">
+          <p className="font-semibold">WhatsApp nömrəsi</p>
+          <p className="mt-1 text-muted-foreground">
+            {whatsappPhone || "Qeydiyyat zamanı daxil etdiyiniz telefon nömrəsi istifadə olunur."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Bu nömrəni dəyişmək üçün profilinizdəki telefon nömrəsini yeniləyin.
+          </p>
+        </div>
         <Button type="submit" disabled={isOrderMethodPending} className="w-fit">
           {isOrderMethodPending ? "Saxlanılır" : "Sifariş üsulunu saxla"}
         </Button>

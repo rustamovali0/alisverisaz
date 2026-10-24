@@ -218,6 +218,10 @@ export function WhatsAppOrderButton({
     });
   }
 
+  if (!whatsappPhone) {
+    return null;
+  }
+
   return (
     <Button
       type="button"
