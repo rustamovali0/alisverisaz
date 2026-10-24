@@ -1121,17 +1121,29 @@ export function ProductGrid({
               )}
             >
               {product.imageUrl ? (
-                <OptimizedImage
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
-                  loading="lazy"
-                  decoding="async"
-                  className={cn(
-                    "h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
-                  )}
-                />
+                <>
+                  <OptimizedImage
+                    src={product.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                    loading="lazy"
+                    decoding="async"
+                    aria-hidden="true"
+                    className="scale-110 object-cover opacity-45 blur-xl saturate-125 dark:opacity-35"
+                  />
+                  <OptimizedImage
+                    src={product.imageUrl}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                    loading="lazy"
+                    decoding="async"
+                    className={cn(
+                      "z-[1] h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
+                    )}
+                  />
+                </>
               ) : (
                 <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
                   <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
