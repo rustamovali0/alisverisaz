@@ -20,6 +20,7 @@ import {
   ProductDetailGallery,
 } from "@/components/products/product-detail-gallery";
 import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
+import { CollapsibleProductDescription } from "@/components/products/collapsible-product-description";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
@@ -49,28 +50,6 @@ type ProductDetailPageProps = {
     productId: string;
   }>;
 };
-
-function FormattedProductDescription({ text }: { text: string }) {
-  return (
-    <div className="grid gap-1.5 break-words text-[13px] leading-5 text-slate-600 dark:text-slate-300 sm:gap-2.5 sm:text-[15px] sm:leading-7">
-      {text.split(/\r?\n/).map((rawLine, index) => {
-        const line = rawLine.trim();
-        if (!line) return <span key={index} className="h-0.5 sm:h-1" aria-hidden="true" />;
-        if (line.startsWith("## ")) {
-          return <h2 key={index} className="mt-0.5 text-sm font-bold leading-5 text-slate-950 dark:text-slate-100 sm:mt-1 sm:text-lg sm:leading-6">{line.slice(3)}</h2>;
-        }
-        if (line.startsWith("• ") || line.startsWith("- ")) {
-          return <p key={index} className="flex gap-2"><span className="font-bold text-blue-600">•</span><span>{line.slice(2)}</span></p>;
-        }
-        const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
-        if (numbered) {
-          return <p key={index} className="flex gap-2"><span className="font-semibold text-blue-600">{numbered[1]}.</span><span>{numbered[2]}</span></p>;
-        }
-        return <p key={index}>{line}</p>;
-      })}
-    </div>
-  );
-}
 
 function getLocationMapUrl(location: ProductLocationAvailability["location"]) {
   if (location.mapLink) {
@@ -434,7 +413,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </p> : null}
             {detail.product.description ? (
               <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-5"}>
-                <FormattedProductDescription text={detail.product.description} />
+                <CollapsibleProductDescription text={detail.product.description} />
               </div>
             ) : null}
             {isStoreOwner ? (
