@@ -277,6 +277,18 @@ function createNotFoundResponse() {
   );
 }
 
+function createMarketplaceHomeRedirect(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.protocol = "https:";
+  url.hostname = getStoreRootDomain();
+  url.port = "";
+  url.pathname = "/";
+  url.search = "";
+  url.hash = "";
+
+  return NextResponse.redirect(url, 308);
+}
+
 async function getCustomDomainStoreSlug(hostname: string | null | undefined) {
   const host = normalizeHostname(hostname);
 
@@ -357,6 +369,10 @@ export async function proxy(request: NextRequest) {
     !isReservedStoreSubdomain(possibleStoreSlug) &&
     !(await storeSlugExists(possibleStoreSlug))
   ) {
+    if (nativeStoreSubdomainSlug) {
+      return createMarketplaceHomeRedirect(request);
+    }
+
     return createNotFoundResponse();
   }
   const effectivePathname = storeSubdomainSlug
