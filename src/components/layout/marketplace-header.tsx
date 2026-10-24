@@ -564,13 +564,6 @@ export function MarketplaceHeader({
           />
         </div>
       ) : null}
-      {showMobileSearch &&
-      !shouldSuppressSearch &&
-      shouldShowCompactMobileSearch &&
-      hasSearchData &&
-      (!shouldGateMobileSearch || isMobileSearchOpen) ? (
-        <div className="h-[76px] md:hidden" aria-hidden="true" />
-      ) : null}
       {isMobileMenuOpen ? (
         <div className="fixed inset-0 z-[90] overscroll-contain" role="dialog" aria-modal="true" aria-label="Menyu">
           <button
