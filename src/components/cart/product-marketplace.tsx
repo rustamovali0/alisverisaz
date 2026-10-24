@@ -1052,6 +1052,9 @@ export function ProductGrid({
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
+  const { profile, isResolved } = useClientAuthProfileState();
+  const isSellerViewer =
+    isResolved && profile.status === "authenticated" && profile.role === "seller";
   const isLiquidGlass = productCardVariant === "liquid-glass";
   const [clientNow, setClientNow] = useState<number | null>(null);
 
@@ -1270,7 +1273,7 @@ export function ProductGrid({
                       Redaktə et
                     </Link>
                   </Button>
-                ) : requiresDetailSelection ? (
+                ) : isSellerViewer ? null : requiresDetailSelection ? (
                   <Button
                     asChild
                     className={cn(
