@@ -669,9 +669,9 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
 
   const { data: profile, error: profileLookupError } = await supabase
     .from("profiles")
-    .select("role,full_name")
+    .select("role,full_name,phone")
     .eq("id", data.user.id)
-    .returns<{ role: AuthRole; full_name: string | null }[]>()
+    .returns<{ role: AuthRole; full_name: string | null; phone: string | null }[]>()
     .maybeSingle();
 
   if (profileLookupError || !profile || !isAuthRole(profile.role)) {
@@ -807,10 +807,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
           typeof data.user.user_metadata?.banner_url === "string"
             ? data.user.user_metadata.banner_url
             : null,
-        phone:
-          typeof data.user.user_metadata?.phone === "string"
-            ? data.user.user_metadata.phone
-            : null,
+        phone: profile.phone,
       });
     } catch (storeError) {
       sellerStoreSyncError =
@@ -1339,6 +1336,14 @@ export async function updateCustomerProfileAction(formData: FormData): Promise<A
       ok: false,
       message: error.message,
     };
+  }
+
+  if (current.role === "seller") {
+    await ensureSellerStore({
+      userId: current.user.id,
+      name: fullName,
+      phone,
+    });
   }
 
   revalidatePath("/dashboard", "layout");

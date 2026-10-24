@@ -34,6 +34,7 @@ type MobileBottomNavProps = {
   storeId?: string;
   isolatedStorefront?: boolean;
   initialRole?: AuthRole | null;
+  sellerOwnsStore?: boolean;
 };
 
 const CART_KEY = "alisveris_cart";
@@ -163,6 +164,7 @@ export function MobileBottomNav({
   initialRole,
   storeId,
   isolatedStorefront = false,
+  sellerOwnsStore = false,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
   const nav = useTranslations("nav");
@@ -188,15 +190,18 @@ export function MobileBottomNav({
         ? "customer"
         : null;
   const role = actualRole === "admin" ? null : actualRole ?? routeRole;
-  const accountHref = isAuthLoading ? null : accountPath(role);
+  const navigationRole = isolatedStorefront && role === "seller" && !sellerOwnsStore
+    ? "customer"
+    : role;
+  const accountHref = isAuthLoading ? null : accountPath(navigationRole);
   const accountText = isAuthLoading
     ? nav("account")
-    : role === "seller"
+    : navigationRole === "seller"
         ? "Panel"
-        : role
+        : navigationRole
           ? nav("account")
           : auth("login");
-  const isAuthenticated = Boolean(role);
+  const isAuthenticated = Boolean(navigationRole);
   const isProductDetailRoute = /\/products\/[^/]+\/?$/.test(pathname);
   const marketplaceProductStoreMatch = pathname.match(/^\/store\/([^/]+)\/products\/[^/]+\/?$/);
   const sellerProductListHref = marketplaceProductStoreMatch
@@ -292,7 +297,7 @@ export function MobileBottomNav({
   }, []);
 
   const isolatedItems = isolatedStorefront || storeSubdomainSlug
-    ? role === "seller"
+    ? navigationRole === "seller"
       ? [
           { href: storeHomeHref, label: isProductDetailRoute ? "Mağaza" : nav("home"), icon: House },
           { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
@@ -306,7 +311,7 @@ export function MobileBottomNav({
           { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: "Ünvan", icon: MapPinned },
         ]
     : null;
-  const items = isolatedItems ?? (role === "seller"
+  const items = isolatedItems ?? (navigationRole === "seller"
       ? [
           {
             href: "/",

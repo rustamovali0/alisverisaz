@@ -157,6 +157,12 @@ export function MarketplaceHeader({
         ? profile.role
         : null;
   const isSeller = resolvedRole === "seller";
+  const currentStoreSlug = searchStoreSlug ?? storeSubdomainSlug ?? null;
+  const sellerOwnsCurrentStore =
+    isSeller &&
+    (!isIsolatedStorefront ||
+      !currentStoreSlug ||
+      (profile.status === "authenticated" && profile.storeSlug === currentStoreSlug));
   const isGuest = resolvedRole === null;
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
@@ -312,7 +318,7 @@ export function MarketplaceHeader({
   const mobileMenuItems = isIsolatedStorefront ? [
     { href: storeHomeHref, label: "Əsas", icon: Info },
     { href: `${isolatedBaseHref}/products`, label: nav("products"), icon: Search },
-    ...(!isSeller ? [{ href: cartHref, label: common("cart"), icon: ShoppingCart }] : []),
+    ...(!sellerOwnsCurrentStore ? [{ href: cartHref, label: common("cart"), icon: ShoppingCart }] : []),
     { href: `${isolatedBaseHref}/contact`, label: "Əlaqə", icon: MessageCircle },
   ] : [
     { href: "/help", label: "Yardım", icon: HelpCircle },
@@ -522,7 +528,7 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            {!isSeller ? (
+            {!sellerOwnsCurrentStore ? (
               <Button
                 asChild
                 size="icon"
@@ -670,6 +676,7 @@ export function MarketplaceHeader({
           storeId={storeId}
           isolatedStorefront={isIsolatedStorefront}
           initialRole={initialRole}
+          sellerOwnsStore={sellerOwnsCurrentStore}
         />
       ) : null}
     </>

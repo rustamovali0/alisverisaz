@@ -266,8 +266,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;
-  const isSellerViewer = current?.role === "seller";
-  const canWriteReview = !isSellerViewer && (current?.role === "customer" || isCustomStorefrontProduct);
+  const isSellerViewer = isStoreOwner;
+  const canWriteReview = !isStoreOwner &&
+    (current?.role === "customer" || current?.role === "seller" || isCustomStorefrontProduct);
   const storeBaseHref =
     storeSubdomainSlug === detail.store.slug
       ? "/"
@@ -432,7 +433,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               <ProductPurchaseOptions
                 product={detail.product}
                 viewerRole={viewerRole}
-                showWhatsappOrderButton={siteSettings.showWhatsappOrderButton}
+                showWhatsappOrderButton
                 sellerPhone={sellerPhone}
                 sellerName={detail.store.name}
                 buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
@@ -554,6 +555,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             storeSubdomainSlug={storeSubdomainSlug}
             storeId={detail.store.id}
             isolatedStorefront={isCustomStorefrontProduct}
+            sellerOwnsStore={isStoreOwner}
           />
         </>
       ) : (

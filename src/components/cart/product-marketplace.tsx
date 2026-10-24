@@ -1034,6 +1034,7 @@ export function ProductGrid({
   labels,
   layout = "grid",
   isStoreOwner = false,
+  sellerOwnsStore = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
   isolatedStoreSlug,
@@ -1046,6 +1047,7 @@ export function ProductGrid({
   labels: Pick<MarketplaceLabels, "stock">;
   layout?: "grid" | "related";
   isStoreOwner?: boolean;
+  sellerOwnsStore?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
   isolatedStoreSlug?: string;
@@ -1054,7 +1056,7 @@ export function ProductGrid({
   const router = useRouter();
   const { profile, isResolved } = useClientAuthProfileState();
   const isSellerViewer =
-    isResolved && profile.status === "authenticated" && profile.role === "seller";
+    sellerOwnsStore && isResolved && profile.status === "authenticated" && profile.role === "seller";
   const isLiquidGlass = productCardVariant === "liquid-glass";
   const [clientNow, setClientNow] = useState<number | null>(null);
 
@@ -1359,6 +1361,7 @@ export function ProductInfiniteGrid({
   productCardVariant,
   labels,
   isStoreOwner = false,
+  sellerOwnsStore = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
   isolatedStoreSlug,
@@ -1373,6 +1376,7 @@ export function ProductInfiniteGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
+  sellerOwnsStore?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
   isolatedStoreSlug?: string;
@@ -1389,6 +1393,7 @@ export function ProductInfiniteGrid({
         productCardVariant={productCardVariant}
         labels={labels}
         isStoreOwner={isStoreOwner}
+        sellerOwnsStore={sellerOwnsStore}
         forceMobileTwoColumns={forceMobileTwoColumns}
         compactMobileCards={compactMobileCards}
         isolatedStoreSlug={isolatedStoreSlug}
@@ -2082,6 +2087,7 @@ export function Storefront({
             productCardVariant={productCardVariant}
             labels={{ stock: labels.stock }}
             isStoreOwner={isStoreOwner && isOwnerEditing}
+            sellerOwnsStore={isStoreOwner}
             forceMobileTwoColumns
           />
         </div>
@@ -2231,6 +2237,7 @@ export function Storefront({
         productCardVariant={productCardVariant}
         labels={{ stock: labels.stock }}
         isStoreOwner={isStoreOwner && isOwnerEditing}
+        sellerOwnsStore={isStoreOwner}
         forceMobileTwoColumns
         compactMobileCards={isCustomStorefront}
         isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
@@ -2450,7 +2457,7 @@ export function Storefront({
           )}
         </div>
         <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-        <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront />
+        <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront sellerOwnsStore={isStoreOwner} />
       </main>
     );
   }
@@ -2555,7 +2562,7 @@ export function Storefront({
         </div>
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront={isCustomStorefront} />
+      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront={isCustomStorefront} sellerOwnsStore={isStoreOwner} />
     </main>
   );
 }
