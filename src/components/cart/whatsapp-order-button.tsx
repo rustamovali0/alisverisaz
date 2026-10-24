@@ -96,32 +96,60 @@ export function WhatsAppOrderButton({
     normalizedSelection,
   );
 
-  function buildMessage(orderNumber: string) {
+  function buildMessage() {
+    const isRental = product.commerceType === "rental";
+    const orderDate = new Intl.DateTimeFormat("az-AZ", {
+      dateStyle: "long",
+      timeStyle: "short",
+    }).format(new Date());
+    const productUrl = typeof window !== "undefined"
+      ? window.location.href.split("#")[0]
+      : "";
+    const formattedVariants = variantLabels.map((label) => `• ${label}`);
     const lines = [
-      "Salam. Alisveris.az yeni sifaris.",
-      orderNumber ? `Sifariş: ${orderNumber}` : "",
-      `Məhsul: ${product.name}`,
-      ...variantLabels,
-      `Say: ${quantity}`,
-      `Qiymət: ${formatMoney(unitPrice)}`,
-      `Cəmi: ${formatMoney(total)}`,
-      `Mağaza: ${sellerName}`,
-      buyerName ? `Alıcı: ${buyerName}` : "",
-      buyerPhone ? `Alıcı nömrəsi: ${buyerPhone}` : "",
-      typeof window !== "undefined" ? `Link: ${window.location.href}` : "",
-    ].filter(Boolean);
+      "🛍 *Alisveris.az — Yeni sifariş*",
+      "",
+      "Salam! Mağazanıza yeni sifariş sorğusu göndərildi.",
+      "",
+      "📋 *Sifariş məlumatları*",
+      `• Tarix: ${orderDate}`,
+      `• Elan növü: ${isRental ? "İcarə" : "Satış"}`,
+      "",
+      "📦 *Məhsul məlumatları*",
+      `• Məhsul: ${product.name}`,
+      ...formattedVariants,
+      `• Say: ${quantity}`,
+      `• ${isRental ? "İcarə qiyməti" : "Vahid qiymət"}: ${formatMoney(unitPrice)}`,
+      product.discountAmount > 0 ? `• Endirim: ${formatMoney(product.discountAmount)}` : null,
+      `• Ümumi məbləğ: *${formatMoney(total)}*`,
+      product.depositEnabled && product.depositAmount > 0
+        ? `• Depozit: ${formatMoney(product.depositAmount)}`
+        : null,
+      `• Stok: ${product.stockTrackingEnabled === false ? "Limitsiz" : stockLimit}`,
+      "",
+      "👤 *Alıcı məlumatları*",
+      `• Ad: ${buyerName.trim() || "Qeyd edilməyib"}`,
+      `• Telefon: ${buyerPhone.trim() || "Qeyd edilməyib"}`,
+      "",
+      "🏪 *Mağaza*",
+      `• ${sellerName}`,
+      "",
+      productUrl ? `🔗 *Məhsula bax:* ${productUrl}` : null,
+      "",
+      "Zəhmət olmasa sifarişi təsdiqləmək üçün alıcı ilə əlaqə saxlayın.",
+    ].filter((line): line is string => line !== null);
 
     return lines.join("\n");
   }
 
-  function getWhatsAppUrl(orderNumber = "") {
-    const message = buildMessage(orderNumber);
+  function getWhatsAppUrl() {
+    const message = buildMessage();
 
     return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
   }
 
-  function openWhatsApp(orderNumber = "", popup?: Window | null) {
-    const url = getWhatsAppUrl(orderNumber);
+  function openWhatsApp(popup?: Window | null) {
+    const url = getWhatsAppUrl();
 
     if (popup) {
       popup.location.href = url;
@@ -204,16 +232,16 @@ export function WhatsAppOrderButton({
 
         if (!result.ok) {
           isSubmittingRef.current = false;
-          openWhatsApp("", popup);
+          openWhatsApp(popup);
           return;
         }
 
         setCheckoutRequestId(crypto.randomUUID());
         isSubmittingRef.current = false;
-        openWhatsApp(result.orderNumber, popup);
+        openWhatsApp(popup);
       } catch {
         isSubmittingRef.current = false;
-        openWhatsApp("", popup);
+        openWhatsApp(popup);
       }
     });
   }
