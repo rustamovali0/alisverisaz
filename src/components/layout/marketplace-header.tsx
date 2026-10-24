@@ -179,13 +179,13 @@ export function MarketplaceHeader({
   const instagramHref = normalizeInstagramHref(instagramUrl);
   const whatsappHref = normalizeWhatsappHref(whatsappUrl);
   const commerceUtilityButtonClass =
-    "group inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-8";
+    "group inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-7";
   const mobileUtilityButtonClass =
     "group inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-6";
   const commerceUtilityIconClass =
-    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
   const mobileCommerceIconClass =
     "!size-6 min-h-6 min-w-6 stroke-[2.15] transition-transform duration-200";
 
@@ -332,7 +332,7 @@ export function MarketplaceHeader({
       >
         <div
           className={cn(
-            "container flex min-h-14 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1 py-1.5 sm:min-h-[68px] sm:gap-2 sm:py-2 xl:flex-nowrap",
+            "container flex min-h-14 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1 py-1.5 sm:min-h-[60px] sm:gap-1.5 sm:py-1.5 xl:flex-nowrap",
             isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
           )}
         >
@@ -340,7 +340,7 @@ export function MarketplaceHeader({
             type="button"
             size="icon"
             variant="ghost"
-            className={cn(mobileUtilityButtonClass, "md:size-11 md:[&_svg]:!size-7")}
+            className={cn(mobileUtilityButtonClass, "md:size-10 md:[&_svg]:!size-6")}
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Menyunu aç"
             aria-expanded={isMobileMenuOpen}
@@ -349,7 +349,7 @@ export function MarketplaceHeader({
           </Button>
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3 md:flex-none">
             {logoUrl ? (
-              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
+              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-9 md:rounded-md">
                 <img
                   src={logoUrl}
                   alt=""
@@ -364,11 +364,11 @@ export function MarketplaceHeader({
                 ) : null}
               </span>
             ) : (
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-10 md:rounded-md md:text-lg">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-9 md:rounded-md md:text-base">
                 a
               </span>
             )}
-            <span className="min-w-0 origin-left truncate text-[20px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 min-[390px]:text-[22px] md:text-xl md:font-black md:group-hover:scale-105">
+            <span className="min-w-0 origin-left truncate text-[20px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 min-[390px]:text-[22px] md:text-[19px] md:font-black md:group-hover:scale-105">
               {displaySiteName}
             </span>
           </Link>
@@ -447,7 +447,7 @@ export function MarketplaceHeader({
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
                 isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -460,7 +460,7 @@ export function MarketplaceHeader({
             {!isIsolatedStorefront ? <Button
               asChild
               variant="ghost"
-              className="group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
+              className="group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
             >
               <Link href="/stores" prefetch>
                 <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
@@ -472,7 +472,7 @@ export function MarketplaceHeader({
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
                 isAboutActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -490,9 +490,9 @@ export function MarketplaceHeader({
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
                 className="min-w-0 flex-1 rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900"
-                inputClassName="h-12 rounded-xl border-0 bg-slate-50 pl-11 pr-4 text-[16px] text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
+                inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 pr-3 text-sm text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
                 buttonSize="lg"
-                buttonClassName="h-12 rounded-[10px] bg-blue-600 px-6 text-white hover:bg-blue-700"
+                buttonClassName="h-10 rounded-lg bg-blue-600 px-5 text-sm text-white hover:bg-blue-700"
               />
             </div>
           ) : null}
@@ -539,7 +539,7 @@ export function MarketplaceHeader({
               </Button>
             ) : null}
             <div className={cn("hidden min-w-0 shrink-0 lg:block", isIsolatedStorefront && "!hidden")}>
-              <HeaderAccountActions className="shrink-0" />
+              <HeaderAccountActions className="shrink-0 [&_button]:h-10 [&_a]:h-10 [&_a]:text-[13px] [&_svg]:!size-5" />
             </div>
           </div>
         </div>
