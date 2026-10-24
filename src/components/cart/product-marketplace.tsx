@@ -1161,7 +1161,7 @@ export function ProductGrid({
                   {product.isPromoted ? (
                     <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-1 text-[9px] font-black leading-none text-slate-950 shadow-sm sm:gap-1 sm:px-2 sm:text-[11px]">
                       <Crown className="size-2.5 sm:size-3" aria-hidden="true" />
-                      Önə çıxan
+                      VIP
                     </span>
                   ) : null}
                   {isNewProduct ? (
