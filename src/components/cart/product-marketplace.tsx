@@ -1129,7 +1129,7 @@ export function ProductGrid({
                   loading="lazy"
                   decoding="async"
                   className={cn(
-                    "h-full w-full object-cover transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.025]",
+                    "h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
                   )}
                 />
               ) : (
