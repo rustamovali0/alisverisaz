@@ -384,7 +384,7 @@ export function CustomStorefrontHeader({
         <Link
           href={storeHomeHref}
           prefetch
-          className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_300px] xl:flex-[0_1_340px] 2xl:flex-[0_1_420px]"
+          className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_250px] xl:flex-[0_1_280px] 2xl:flex-[0_1_320px]"
         >
           <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
           <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl 2xl:text-[27px]">
@@ -428,6 +428,20 @@ export function CustomStorefrontHeader({
             );
           })}
         </nav>
+        <div className="hidden min-w-[250px] flex-1 lg:block xl:min-w-[300px]">
+          <MarketplaceSearch
+            stores={[store]}
+            defaultValue={searchQuery}
+            storeSlug={store.slug}
+            searchBaseHref={storeHomeHref}
+            resultsAnchorId="products"
+            compactActions
+            className="rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-none dark:border-slate-800 dark:bg-slate-900"
+            inputClassName="h-10 rounded-lg border-0 bg-transparent pl-10 text-sm text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:text-slate-100"
+            buttonClassName="!size-10 !min-w-10 rounded-lg bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+            buttonSize="lg"
+          />
+        </div>
         <div className="hidden shrink-0 lg:block">
           {!isolatedStorefront ? <HeaderAccountActions showSellerCta={false} customerOnlyRegister /> : null}
         </div>
@@ -470,7 +484,7 @@ export function CustomStorefrontHeader({
         </div>
       </div>
       {showHeaderSearch ? (
-        <div className="border-t border-slate-200 bg-white/95 px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 lg:px-8">
+        <div className="border-t border-slate-200 bg-white/95 px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 lg:hidden lg:px-8">
           <div className="mx-auto w-full max-w-[680px]">
             <MarketplaceSearch
               stores={[store]}
@@ -2474,10 +2488,10 @@ export function Storefront({
           </div>
         ) : (
           <section data-store-search-sentinel className="-mx-4 flex min-w-0 flex-col sm:mx-0">
-            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[520px] lg:grid-cols-[0.88fr_1.12fr]">
+            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[500px] lg:grid-cols-[0.88fr_1.12fr]">
               <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-14 lg:py-14 xl:px-20">
-                <StoreLogo store={store} className="mb-4 hidden size-16 rounded-none border-0 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-20 lg:mb-7 lg:size-24" />
-                <h1 className="max-w-xl text-2xl font-black leading-[1.1] tracking-[-0.035em] text-slate-950 dark:text-white sm:text-4xl lg:text-[54px]">
+                <StoreLogo store={store} className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-6 sm:size-24 lg:mb-7 lg:size-28" />
+                <h1 className="max-w-xl text-pretty text-2xl font-black leading-[1.18] tracking-[-0.025em] text-slate-950 dark:text-white sm:text-4xl sm:leading-[1.16] lg:text-[48px] lg:leading-[1.16]">
                   {store.heroTitle?.trim() || storefront("heroTitle")}
                 </h1>
                 {store.heroSubtitle?.trim() || customHeroDescription ? (
@@ -2507,7 +2521,7 @@ export function Storefront({
                 </div>
               </div>
 
-              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[520px]">
+              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[500px]">
                 <StoreHeroCover store={store} isolated />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
                 <StoreWhatsAppButton phone={storeContactPhone} />
@@ -2528,7 +2542,7 @@ export function Storefront({
               </div>
             </div>
 
-            <div className="order-1 border-y border-slate-200 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950 sm:p-5 lg:order-2 lg:border-x lg:border-t-0">
+            <div className="order-1 border-y border-slate-200 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950 sm:p-5 lg:hidden lg:order-2 lg:border-x lg:border-t-0">
               <MarketplaceSearch
                 stores={[store]}
                 defaultValue={searchQuery}

@@ -301,14 +301,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ]}
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
-      <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-7" : "px-3 py-2 sm:px-6 sm:py-3 md:py-6 lg:px-8"}`}>
+      <div className={`mx-auto w-full max-w-[1160px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-6" : "px-3 py-2 sm:px-6 sm:py-3 md:py-5 lg:px-6"}`}>
         {isCustomStorefrontProduct ? (
           <div className="mb-2 sm:mb-3">
             <ProductBackButton compact />
           </div>
         ) : null}
         {!isCustomStorefrontProduct ? (
-          <nav className="mb-3 min-w-0 text-sm text-slate-500 dark:text-slate-400 sm:mb-5 md:mb-6">
+          <nav className="mb-3 min-w-0 text-sm text-slate-500 dark:text-slate-400 sm:mb-4 md:mb-5">
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <ProductBackButton />
               <div className="flex min-w-0 items-center overflow-hidden">
@@ -328,7 +328,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </nav>
         ) : null}
 
-        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-2.5 sm:gap-4" : "gap-3 sm:gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start`}>
+        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-2.5 sm:gap-4" : "gap-3 sm:gap-4 md:gap-5"} lg:grid-cols-[minmax(0,0.52fr)_minmax(350px,0.48fr)] lg:items-start`}>
           <ProductDetailGallery
             images={detail.product.images}
             fallbackImageUrl={detail.product.imageUrl}
@@ -337,10 +337,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             viewerRole={viewerRole}
             compact={isCustomStorefrontProduct}
           />
-          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-5" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-6"}`}>
+          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-5" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-5"}`}>
             <p className={`${isCustomStorefrontProduct ? "text-xs" : "text-sm"} truncate font-medium text-slate-500 dark:text-slate-400`}>{detail.store.name}</p>
             <div className={`${isCustomStorefrontProduct ? "mt-1" : "mt-2"} flex min-w-0 items-start justify-between gap-3`}>
-              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-xl sm:text-[28px]" : "text-[22px] sm:text-[28px] md:text-[34px]"}`}>
+              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-xl sm:text-[28px]" : "text-[22px] sm:text-[26px] md:text-[30px]"}`}>
                 {detail.product.name}
               </h1>
               {!isStoreOwner && !isCustomStorefrontProduct ? (
@@ -387,8 +387,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                         key={value}
                         className={
                           value <= Math.round(reviewSummary.average)
-                            ? `${isCustomStorefrontProduct ? "size-4" : "size-5"} fill-amber-400 text-amber-400`
-                            : `${isCustomStorefrontProduct ? "size-4" : "size-5"} text-muted-foreground`
+                            ? "size-4 fill-amber-400 text-amber-400"
+                            : "size-4 text-muted-foreground"
                         }
                         aria-hidden="true"
                       />
@@ -402,7 +402,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 <span className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Hələ rəy yoxdur</span>
               )}
             </div>
-            <p className={`${isCustomStorefrontProduct ? "mt-3 text-2xl sm:mt-4 sm:text-[30px]" : "mt-3 text-[26px] sm:mt-6 sm:text-[30px] md:text-[36px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
+            <p className={`${isCustomStorefrontProduct ? "mt-3 text-2xl sm:mt-4 sm:text-[30px]" : "mt-3 text-[26px] sm:mt-4 sm:text-[28px] md:text-[30px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
               {formatAznDiscountedPrice(
                 detail.product.priceAmount,
                 detail.product.discountAmount,
@@ -412,12 +412,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
             </p> : null}
             {detail.product.description ? (
-              <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-5"}>
+              <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-4"}>
                 <CollapsibleProductDescription text={detail.product.description} />
               </div>
             ) : null}
             {isStoreOwner ? (
-              <Button asChild className="mt-3 h-10 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-6 sm:h-[52px]">
+              <Button asChild className="mt-3 h-10 w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700 sm:mt-4 sm:h-11">
                 <Link href={`/sell/product/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
@@ -439,7 +439,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               />
             ) : null}
             {!isSellerViewer ? (
-              <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-[52px]"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
+              <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-11"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200`}>
                 <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
                   <MessageCircle className="mr-2 size-4" aria-hidden="true" />
                   Sual & Cavablar
@@ -447,10 +447,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </Button>
             ) : null}
             {!isStoreOwner ? (
-              <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-5 rounded-2xl p-4"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
+              <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-4 rounded-xl p-3"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
                 <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`${isCustomStorefrontProduct ? "size-10" : "size-12"} grid shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900`}>
+                    <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                       {detail.store.logoUrl ? (
                         <img
                           src={detail.store.logoUrl}
@@ -506,7 +506,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </section>
 
         {detail.product.categoryId ? (
-          <div className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-7 md:mt-10"} scroll-mt-28`}>
+          <div className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} scroll-mt-28`}>
             <RelatedProductList
               initialProducts={[]}
               initialCursor={null}
@@ -520,7 +520,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           </div>
         ) : null}
 
-        <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-7 md:mt-10"} min-w-0`}>
+        <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} min-w-0`}>
           <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-4" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-5"}`}>
             <div className={`${isCustomStorefrontProduct ? "mb-3" : "mb-4"} flex items-center gap-2`}>
               <Star className="size-4 fill-amber-400 text-amber-400 sm:size-5" aria-hidden="true" />
