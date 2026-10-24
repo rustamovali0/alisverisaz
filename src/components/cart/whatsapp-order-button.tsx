@@ -1,6 +1,5 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { WhatsAppIcon } from "@/components/icons/social-icons";
@@ -258,7 +257,6 @@ export function WhatsAppOrderButton({
       <span className="truncate">
         {isPending ? "Sifariş yaradılır" : "WhatsApp ilə sifariş et"}
       </span>
-      <MessageCircle className="ml-2 hidden size-4 shrink-0 sm:block" aria-hidden="true" />
     </Button>
   );
 }
