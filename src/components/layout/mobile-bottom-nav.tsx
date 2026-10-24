@@ -422,11 +422,15 @@ export function MobileBottomNav({
         return isExactNestedSection && !currentHash;
       }
 
+      if (targetPath === "/products" && isProductDetailRoute) {
+        return true;
+      }
+
       return targetPath === "/"
         ? pathname === "/"
         : pathname === targetPath || pathname.startsWith(`${targetPath}/`);
     },
-    [currentHash, isolatedItems, pathname],
+    [currentHash, isProductDetailRoute, isolatedItems, pathname],
   );
 
   const isAccountRoute =
