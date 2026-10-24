@@ -53,10 +53,10 @@ function toWhatsAppPhone(value: string) {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
+  return `${new Intl.NumberFormat("az-AZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)} ₼`;
 }
 
 export function WhatsAppOrderButton({
@@ -98,23 +98,27 @@ export function WhatsAppOrderButton({
   function buildMessage() {
     const isRental = product.commerceType === "rental";
     const orderDate = new Intl.DateTimeFormat("az-AZ", {
-      dateStyle: "long",
-      timeStyle: "short",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     }).format(new Date());
     const productUrl = typeof window !== "undefined"
       ? window.location.href.split("#")[0]
       : "";
     const formattedVariants = variantLabels.map((label) => `• ${label}`);
     const lines = [
-      "🛍 *Alisveris.az — Yeni sifariş*",
+      "*Alisveris.az — Yeni sifariş*",
       "",
       "Salam! Mağazanıza yeni sifariş sorğusu göndərildi.",
       "",
-      "📋 *Sifariş məlumatları*",
+      "*Sifariş məlumatları*",
       `• Tarix: ${orderDate}`,
       `• Elan növü: ${isRental ? "İcarə" : "Satış"}`,
       "",
-      "📦 *Məhsul məlumatları*",
+      "*Məhsul məlumatları*",
       `• Məhsul: ${product.name}`,
       ...formattedVariants,
       `• Say: ${quantity}`,
@@ -126,14 +130,14 @@ export function WhatsAppOrderButton({
         : null,
       `• Stok: ${product.stockTrackingEnabled === false ? "Limitsiz" : stockLimit}`,
       "",
-      "👤 *Alıcı məlumatları*",
+      "*Alıcı məlumatları*",
       `• Ad: ${buyerName.trim() || "Qeyd edilməyib"}`,
       `• Telefon: ${buyerPhone.trim() || "Qeyd edilməyib"}`,
       "",
-      "🏪 *Mağaza*",
+      "*Mağaza*",
       `• ${sellerName}`,
       "",
-      productUrl ? `🔗 *Məhsula bax:* ${productUrl}` : null,
+      productUrl ? `*Məhsula bax:* ${productUrl}` : null,
       "",
       "Zəhmət olmasa sifarişi təsdiqləmək üçün alıcı ilə əlaqə saxlayın.",
     ].filter((line): line is string => line !== null);

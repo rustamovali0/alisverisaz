@@ -137,7 +137,7 @@ export const defaultSiteSettings: SiteSettings = {
   logoUrl: "/brand/alisveris-logo.svg",
   darkLogoUrl: "/brand/alisveris-logo-dark.svg",
   faviconUrl: "/brand/alisveris-logo.svg",
-  defaultSeoTitle: "Alışveriş - Marketplace, mağaza və elan platforması",
+  defaultSeoTitle: "Alışveriş - Onlayn alış-veriş platforması",
   defaultMetaDescription:
     "Azərbaycanda məhsul satışı, mağaza idarəetməsi, elan yerləşdirmə və sifarişlər üçün marketplace platforması.",
   defaultSeoKeywords:
