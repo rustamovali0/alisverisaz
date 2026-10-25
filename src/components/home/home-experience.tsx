@@ -173,8 +173,8 @@ function SectionHeader({
     if (href === "/products") void queryClient.prefetchInfiniteQuery(productQueryOptions({ locale }));
   };
   return (
-    <div className="mb-4 flex items-center justify-between gap-4 md:mb-6">
-      <h2 className="text-xl font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[26px]">
+    <div className="mb-3 flex items-center justify-between gap-3 md:mb-6">
+      <h2 className="text-lg font-bold leading-tight tracking-[-0.02em] text-slate-950 dark:text-slate-50 sm:text-xl md:text-[26px]">
         {mobileTitle ? (
           <>
             <span className="md:hidden">{mobileTitle}</span>
@@ -189,7 +189,7 @@ function SectionHeader({
         onMouseEnter={prefetch}
         onFocus={prefetch}
         scroll
-        className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-primary transition hover:bg-orange-50 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:hover:bg-orange-500/10"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1.5 text-xs font-bold text-primary transition hover:bg-orange-50 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:hover:bg-orange-500/10 sm:px-3 sm:py-2 sm:text-sm"
       >
         {action}
         <ArrowRight className="size-4" aria-hidden="true" />
@@ -204,9 +204,9 @@ function CategoryCard({ category }: { category: CategoryOption }) {
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group flex min-h-[64px] min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-slate-950 shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)]"
+      className="group flex min-h-14 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-2.5 text-slate-950 shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[64px] sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-3 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)]"
     >
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-600 transition group-hover:bg-primary group-hover:text-white dark:bg-orange-400/10 dark:text-orange-300 sm:size-11">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-orange-50 text-orange-600 transition group-hover:bg-primary group-hover:text-white dark:bg-orange-400/10 dark:text-orange-300 sm:size-11 sm:rounded-xl">
         <CategoryIcon className="size-4 stroke-[2.1] sm:size-[18px]" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
@@ -388,18 +388,18 @@ export function HomeExperience({
         ...(themeAccent ? { "--marketplace-primary": themeAccent } : {}),
       }}
     >
-      <div className="mx-auto w-full max-w-[1380px] space-y-10 md:space-y-16">
+      <div className="mx-auto w-full max-w-[1380px] space-y-7 md:space-y-16">
         <section className="relative isolate grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.65fr)]">
-          <div className="relative min-h-[440px] overflow-hidden rounded-[28px] bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.14)] sm:min-h-[500px]">
+          <div className="relative min-h-[300px] overflow-hidden rounded-2xl bg-slate-950 shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:min-h-[500px] sm:rounded-[28px]">
             <OptimizedImage src={heroImageUrl} alt="" fill sizes="(max-width:1023px) 100vw, 68vw" className="object-cover opacity-55" priority />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.70)_48%,rgba(2,6,23,0.10)_100%)]" />
           <div className="relative z-10 min-w-0">
-            <div className="flex min-h-[440px] max-w-2xl flex-col justify-end p-6 sm:min-h-[500px] sm:p-10 lg:p-12">
+            <div className="flex min-h-[300px] max-w-2xl flex-col justify-end p-4 sm:min-h-[500px] sm:p-10 lg:p-12">
             <p className="inline-flex w-fit rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-orange-200 backdrop-blur">{home("heroEyebrow")}</p>
-            <h1 className="mt-5 max-w-[15ch] whitespace-pre-line text-[2.4rem] font-black leading-[1.02] tracking-[-0.045em] text-white sm:text-5xl lg:text-[3.7rem]">
+            <h1 className="mt-3 max-w-[15ch] whitespace-pre-line text-[2rem] font-black leading-[1.02] tracking-[-0.045em] text-white sm:mt-5 sm:text-5xl lg:text-[3.7rem]">
               {displayHeroTitle}
             </h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-200 sm:text-base">
+            <p className="mt-3 line-clamp-2 max-w-lg text-xs leading-5 text-slate-200 sm:mt-4 sm:text-base sm:leading-6">
               {displayHeroDescription}
             </p>
             <div data-home-search-sentinel className="mt-5 h-px w-full" aria-hidden="true" />
@@ -412,7 +412,7 @@ export function HomeExperience({
                 ))}
               </div>
             ) : null}
-            <div className="mt-6 flex flex-wrap items-center gap-4">
+            <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-6 sm:gap-4">
               {showSellerQuickActions ? (
                 <Link href="/sell/product/new" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
                   <BadgePlus className="size-4" aria-hidden="true" />
@@ -455,7 +455,7 @@ export function HomeExperience({
             />
             <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {activeCategories.map((category) => (
-                <div key={category.id} className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-auto sm:max-w-none"><CategoryCard category={category} /></div>
+                <div key={category.id} className="w-[46vw] max-w-[170px] shrink-0 snap-start sm:w-auto sm:max-w-none"><CategoryCard category={category} /></div>
               ))}
             </div>
           </section>
@@ -471,6 +471,7 @@ export function HomeExperience({
               locale={locale}
               sort="newest"
               productCardVariant={productCardVariant}
+              compactMobileCards
               labels={{ stock: marketplace("stock") }}
             />
           </section>
@@ -490,6 +491,7 @@ export function HomeExperience({
               locale={locale}
               sort="newest"
               productCardVariant={productCardVariant}
+              compactMobileCards
               labels={{ stock: marketplace("stock") }}
             />
           </section>
@@ -505,6 +507,7 @@ export function HomeExperience({
               locale={locale}
               sort="newest"
               productCardVariant={productCardVariant}
+              compactMobileCards
               labels={{ stock: marketplace("stock") }}
             />
           </section>

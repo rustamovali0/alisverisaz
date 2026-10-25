@@ -1077,10 +1077,10 @@ export function ProductGrid({
     <div
       className={cn(
         layout === "related"
-          ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
+          ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
           : forceMobileTwoColumns
-            ? "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
-            : "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
+            ? "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+            : "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5",
       )}
     >
       {products.map((product) => {
@@ -1134,7 +1134,7 @@ export function ProductGrid({
             <div
               data-product-card-image
               className={cn(
-                "relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-900",
+                "relative aspect-[5/4] overflow-hidden bg-slate-50 dark:bg-slate-900 sm:aspect-[4/3]",
                 isLiquidGlass && "liquid-glass-product-image-shell",
               )}
             >
@@ -1211,8 +1211,8 @@ export function ProductGrid({
             compact
             className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
           /> : null}
-          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-3 sm:p-4">
-            <div className="mb-2 min-w-0 text-[11px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:text-xs">
+          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
+            <div className="mb-1.5 min-w-0 text-[9px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:mb-2 sm:text-xs">
               {displayStoreName ? (
                 <span className="block min-w-0 truncate">{displayStoreName}</span>
               ) : (
@@ -1221,14 +1221,14 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
+                "line-clamp-2 min-h-9 break-words text-[12px] font-bold leading-[18px] tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
                 isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
               )}
             >
               {product.name}
             </h2>
-            <div className="mt-3 min-w-0 border-t border-slate-100 pt-3 dark:border-slate-800">
-              <p className="truncate text-lg font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-xl">
+            <div className="mt-2 min-w-0 border-t border-slate-100 pt-2 dark:border-slate-800 sm:mt-3 sm:pt-3">
+              <p className="truncate text-base font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-lg">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
               {hasDiscount ? (
