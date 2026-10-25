@@ -248,8 +248,7 @@ export function MarketplaceHeader({
   const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
     !shouldSuppressSearch &&
-    hasSearchData &&
-    (isIsolatedStorefront || !hasInlinePrimarySearch || !isHomeSearchVisible);
+    hasSearchData;
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
@@ -338,9 +337,21 @@ export function MarketplaceHeader({
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
         }
       >
+        {!isIsolatedStorefront && !isSellerDashboard ? (
+          <div className="hidden border-b border-slate-100 bg-slate-950 text-white lg:block dark:border-slate-800">
+            <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide text-slate-300">
+              <span>Azərbaycanın onlayn alış-veriş platforması</span>
+              <div className="flex items-center gap-5">
+                <Link href="/help" className="transition hover:text-white">Kömək mərkəzi</Link>
+                <Link href="/stores" className="transition hover:text-white">Mağazalar</Link>
+                <Link href="/register?role=seller" className="font-bold text-orange-300 transition hover:text-orange-200">Satıcı ol</Link>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div
           className={cn(
-            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-2 xl:flex-nowrap",
+            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-3 xl:flex-nowrap",
             isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
           )}
         >
@@ -446,7 +457,7 @@ export function MarketplaceHeader({
               </>
             ) : null}
           </div>
-          <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
+          <nav className="hidden shrink-0 items-center gap-0.5 2xl:flex">
             {isIsolatedStorefront ? <>
               <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-orange-600 dark:text-slate-200 dark:hover:text-orange-300">{nav("products")}</Link>
               <Link href={`${isolatedBaseHref}/contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
@@ -492,7 +503,7 @@ export function MarketplaceHeader({
             </Button> : null}
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[300px] max-w-[440px] flex-[1_1_360px] items-center gap-2 xl:flex 2xl:max-w-[520px]">
+            <div className="ml-auto hidden min-w-[320px] max-w-[560px] flex-[1_1_460px] items-center gap-2 lg:flex 2xl:max-w-[620px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}

@@ -14,7 +14,6 @@ import { productQueryOptions } from "@/lib/query/product-options";
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { InfiniteProductGrid } from "@/components/cart/product-marketplace";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { Link } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
@@ -390,28 +389,24 @@ export function HomeExperience({
       }}
     >
       <div className="mx-auto w-full max-w-[1380px] space-y-10 md:space-y-16">
-        <section className="relative isolate grid min-w-0 gap-8 overflow-hidden rounded-3xl border border-orange-100 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.13),transparent_42%),linear-gradient(135deg,#fff7ed,#ffffff_58%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-orange-500/15 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_42%),linear-gradient(135deg,#17120f,#0f172a_58%)] sm:p-9 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center lg:gap-12 lg:p-12">
+        <section className="relative isolate grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.65fr)]">
+          <div className="relative min-h-[440px] overflow-hidden rounded-[28px] bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.14)] sm:min-h-[500px]">
+            <OptimizedImage src={heroImageUrl} alt="" fill sizes="(max-width:1023px) 100vw, 68vw" className="object-cover opacity-55" priority />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.94)_0%,rgba(2,6,23,0.70)_48%,rgba(2,6,23,0.10)_100%)]" />
           <div className="relative z-10 min-w-0">
-            <p className="inline-flex rounded-full bg-orange-100 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">{home("heroEyebrow")}</p>
-            <h1 className="mt-5 max-w-[17ch] whitespace-pre-line text-[2.35rem] font-black leading-[1.06] tracking-[-0.04em] text-slate-950 dark:text-slate-50 sm:text-5xl lg:text-[3.6rem]">
+            <div className="flex min-h-[440px] max-w-2xl flex-col justify-end p-6 sm:min-h-[500px] sm:p-10 lg:p-12">
+            <p className="inline-flex w-fit rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-orange-200 backdrop-blur">{home("heroEyebrow")}</p>
+            <h1 className="mt-5 max-w-[15ch] whitespace-pre-line text-[2.4rem] font-black leading-[1.02] tracking-[-0.045em] text-white sm:text-5xl lg:text-[3.7rem]">
               {displayHeroTitle}
             </h1>
-            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
+            <p className="mt-4 max-w-lg text-sm leading-6 text-slate-200 sm:text-base">
               {displayHeroDescription}
             </p>
             <div data-home-search-sentinel className="mt-5 h-px w-full" aria-hidden="true" />
-            <MarketplaceSearch
-              stores={stores}
-              className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950"
-              inputClassName="h-12 rounded-xl border-0 bg-transparent pl-11 text-base shadow-none focus-visible:ring-2 focus-visible:ring-primary"
-              buttonClassName="rounded-xl bg-primary px-6 text-white shadow-md shadow-primary/20 hover:bg-orange-600"
-              compactActions
-              placeholder={home("heroSearchPlaceholder")}
-            />
             {popularSearchPills.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
                 {popularSearchPills.map((item) => (
-                  <Link key={item.key} href={item.href} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-orange-200 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:text-orange-300">
+                  <Link key={item.key} href={item.href} className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-orange-300 hover:bg-orange-500/20">
                     {item.label}
                   </Link>
                 ))}
@@ -424,20 +419,30 @@ export function HomeExperience({
                   {home("createListing")}
                 </Link>
               ) : null}
-              <Link href="/stores" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:border-orange-200 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-orange-300">
+              <Link href="/stores" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20">
                 {home("allStores")}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
-          </div>
-          <div className="relative hidden min-h-[360px] overflow-hidden rounded-2xl shadow-2xl shadow-slate-950/20 lg:block" aria-hidden="true">
-            <OptimizedImage src={heroImageUrl} alt="" fill sizes="430px" className="object-cover" loading="lazy" />
-          </div>
-          {mobileHeroImageUrl ? (
-            <div className="relative h-36 overflow-hidden rounded-xl lg:hidden" aria-hidden="true">
-              <OptimizedImage src={mobileHeroImageUrl} alt="" fill sizes="100vw" className="object-cover" loading="lazy" />
             </div>
-          ) : null}
+          </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <Link href="/products" className="group relative min-h-[210px] overflow-hidden rounded-[28px] bg-orange-500 p-7 text-white shadow-lg shadow-orange-950/10">
+              <div className="absolute -right-12 -top-12 size-40 rounded-full border-[28px] border-white/10 transition group-hover:scale-110" />
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-100">Yeni kolleksiya</p>
+              <h2 className="mt-4 max-w-[10ch] text-3xl font-black leading-tight">Yeni məhsulları kəşf et</h2>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">Məhsullara bax <ArrowRight className="size-4" /></span>
+            </Link>
+            <Link href="/stores" className="group relative min-h-[210px] overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 p-7 text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+              {mobileHeroImageUrl ? <OptimizedImage src={mobileHeroImageUrl} alt="" fill sizes="360px" className="object-cover opacity-15" loading="lazy" /> : null}
+              <div className="relative z-10">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-600">Etibarlı mağazalar</p>
+                <h2 className="mt-4 max-w-[12ch] text-3xl font-black leading-tight">Satıcıları bir yerdə tap</h2>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-orange-600">Mağazaları aç <ArrowRight className="size-4" /></span>
+              </div>
+            </Link>
+          </div>
         </section>
 
         {activeCategories.length > 0 ? (

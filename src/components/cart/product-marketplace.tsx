@@ -61,7 +61,6 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
-  Star,
   Store,
   Truck,
   Utensils,
@@ -1120,7 +1119,7 @@ export function ProductGrid({
           key={product.id}
           onClick={openDetail}
           className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_16px_38px_rgba(15,23,42,0.10)]",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
             compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
@@ -1135,7 +1134,7 @@ export function ProductGrid({
             <div
               data-product-card-image
               className={cn(
-                "relative aspect-[4/3] overflow-hidden bg-slate-50 dark:bg-slate-900",
+                "relative aspect-square overflow-hidden bg-slate-50 dark:bg-slate-900",
                 isLiquidGlass && "liquid-glass-product-image-shell",
               )}
             >
@@ -1212,8 +1211,8 @@ export function ProductGrid({
             compact
             className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
           /> : null}
-          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-            <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
+          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-3 sm:p-4">
+            <div className="mb-2 min-w-0 text-[11px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:text-xs">
               {displayStoreName ? (
                 <span className="block min-w-0 truncate">{displayStoreName}</span>
               ) : (
@@ -1222,20 +1221,14 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
+                "line-clamp-2 min-h-10 break-words text-sm font-bold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
                 isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
               )}
             >
               {product.name}
             </h2>
-            <div className="mt-1.5 flex items-center gap-0.5 text-amber-400 sm:gap-1" aria-label="Rəy yoxdur">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <Star key={value} className="size-3 sm:size-3.5" aria-hidden="true" />
-              ))}
-              <span className="ml-1 text-xs text-muted-foreground">(0)</span>
-            </div>
-            <div className="mt-1.5 min-w-0 sm:mt-2">
-              <p className="truncate text-base font-bold text-slate-950 dark:text-slate-100 sm:text-lg">
+            <div className="mt-3 min-w-0 border-t border-slate-100 pt-3 dark:border-slate-800">
+              <p className="truncate text-lg font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-xl">
                 {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
               </p>
               {hasDiscount ? (
