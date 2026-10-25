@@ -327,6 +327,18 @@ export function MarketplaceHeader({
 
   return (
     <>
+      {!isIsolatedStorefront && !isSellerDashboard ? (
+        <div className="hidden border-b border-slate-800 bg-slate-950 text-white lg:block">
+          <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide text-slate-300">
+            <span>Azərbaycanın onlayn alış-veriş platforması</span>
+            <div className="flex items-center gap-5">
+              <Link href="/help" className="transition hover:text-white">Kömək mərkəzi</Link>
+              <Link href="/stores" className="transition hover:text-white">Mağazalar</Link>
+              <Link href="/register?role=seller" className="font-bold text-orange-300 transition hover:text-orange-200">Satıcı ol</Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <header
         className={
           sticky
@@ -337,18 +349,6 @@ export function MarketplaceHeader({
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
         }
       >
-        {!isIsolatedStorefront && !isSellerDashboard ? (
-          <div className="hidden border-b border-slate-100 bg-slate-950 text-white lg:block dark:border-slate-800">
-            <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide text-slate-300">
-              <span>Azərbaycanın onlayn alış-veriş platforması</span>
-              <div className="flex items-center gap-5">
-                <Link href="/help" className="transition hover:text-white">Kömək mərkəzi</Link>
-                <Link href="/stores" className="transition hover:text-white">Mağazalar</Link>
-                <Link href="/register?role=seller" className="font-bold text-orange-300 transition hover:text-orange-200">Satıcı ol</Link>
-              </div>
-            </div>
-          </div>
-        ) : null}
         <div
           className={cn(
             "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-3 xl:flex-nowrap",
