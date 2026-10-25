@@ -128,7 +128,6 @@ export function WhatsAppOrderButton({
       product.depositEnabled && product.depositAmount > 0
         ? `• Depozit: ${formatMoney(product.depositAmount)}`
         : null,
-      `• Stok: ${product.stockTrackingEnabled === false ? "Limitsiz" : stockLimit}`,
       "",
       "*Alıcı məlumatları*",
       `• Ad: ${buyerName.trim() || "Qeyd edilməyib"}`,
