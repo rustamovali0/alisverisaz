@@ -151,7 +151,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
   return (
     <AuthCard
       className={cn(
-        "mx-auto max-w-[520px] rounded-2xl border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
+        "mx-auto max-w-[500px] rounded-2xl border-slate-200 bg-white text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100",
         isAdminMode &&
           "border-emerald-400/35 bg-[#06100d]/95 p-4 text-emerald-50 shadow-2xl shadow-emerald-950/40 backdrop-blur-xl sm:p-5 [&_h1]:text-white [&_input]:border-emerald-300/45 [&_input]:bg-emerald-50 [&_input]:font-mono [&_input]:text-slate-950 [&_input]:placeholder:text-slate-500 [&_input]:focus-visible:border-emerald-300 [&_input]:focus-visible:ring-emerald-300/35 [&_p]:text-emerald-100",
       )}
@@ -192,7 +192,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
         )
       }
       title={mode === "admin" ? "Admin giriş" : "Xoş gəlmisiniz"}
-      description={mode === "public" ? "Hesabınıza daxil olun və alış-verişə qaldığınız yerdən davam edin." : visualLabel}
+      description={mode === "public" ? "Sifarişlərinizə, seçilmişlərinizə və hesab məlumatlarınıza təhlükəsiz giriş edin." : visualLabel}
       footer={
         mode === "public" ? (
           <div className="space-y-3">

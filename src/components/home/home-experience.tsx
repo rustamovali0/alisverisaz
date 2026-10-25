@@ -377,6 +377,7 @@ export function HomeExperience({
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
   const showSellerQuickActions = initialRole === null || initialRole === "seller";
   const promotedProducts = products.filter((product) => product.isPromoted).slice(0, 8);
+  const regularProducts = products.filter((product) => !product.isPromoted);
   const discountedProducts = products.filter((product) => product.discountAmount > 0).slice(0, 8);
 
   return (
@@ -470,6 +471,25 @@ export function HomeExperience({
           </section>
         ) : null}
 
+        {regularProducts.length > 0 ? (
+          <section>
+            <SectionHeader
+              title={home("recentlyListed")}
+              href="/products"
+              action={productsLabel}
+            />
+            <InfiniteProductGrid
+              initialProducts={regularProducts}
+              initialCursor={productNextCursor}
+              initialHasMore={productHasMore}
+              locale={locale}
+              sort="newest"
+              productCardVariant={productCardVariant}
+              labels={{ stock: marketplace("stock") }}
+            />
+          </section>
+        ) : null}
+
         {discountedProducts.length > 0 ? (
           <section className="rounded-3xl bg-orange-50/70 px-3 py-6 dark:bg-orange-500/5 sm:px-6 sm:py-8">
             <SectionHeader title="Endirimli məhsullar" href="/products" action={productsLabel} />
@@ -485,24 +505,6 @@ export function HomeExperience({
           </section>
         ) : null}
 
-        {products.length > 0 ? (
-          <section>
-            <SectionHeader
-              title={home("recentlyListed")}
-              href="/products"
-              action={productsLabel}
-            />
-            <InfiniteProductGrid
-              initialProducts={products}
-              initialCursor={productNextCursor}
-              initialHasMore={productHasMore}
-              locale={locale}
-              sort="newest"
-              productCardVariant={productCardVariant}
-              labels={{ stock: marketplace("stock") }}
-            />
-          </section>
-        ) : null}
         {featuredStores.length > 0 ? (
           <section id="featured-stores">
             <SectionHeader

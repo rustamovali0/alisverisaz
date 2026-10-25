@@ -411,6 +411,7 @@ export function MarketplaceSearch({
         className={cn(
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
           compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
+          compactActions && "text-white [&>svg]:block [&>svg]:shrink-0 [&>svg]:stroke-white",
           buttonClassName,
         )}
         onPointerDown={(event) => {
@@ -421,7 +422,7 @@ export function MarketplaceSearch({
         }}
         aria-label={resolvedButtonLabel}
       >
-        {compactActions ? <Search className="size-5" aria-hidden="true" /> : resolvedButtonLabel}
+        {compactActions ? <Search className="size-5 stroke-[2.4]" aria-hidden="true" /> : resolvedButtonLabel}
         {!compactActions && buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
