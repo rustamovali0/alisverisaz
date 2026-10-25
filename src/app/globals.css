@@ -10,7 +10,7 @@
     --card-foreground: 217 25% 16%;
     --popover: 0 0% 100%;
     --popover-foreground: 217 25% 16%;
-    --primary: 213 47% 46%;
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
     --secondary: 212 25% 94%;
     --secondary-foreground: 216 24% 20%;
@@ -22,12 +22,12 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214 20% 88%;
     --input: 214 20% 88%;
-    --ring: 213 47% 46%;
-    --radius: 0.5rem;
-    --marketplace-primary: 213 47% 46%;
-    --marketplace-primary-hover: 215 48% 38%;
+    --ring: 24 95% 53%;
+    --radius: 0.75rem;
+    --marketplace-primary: 24 95% 53%;
+    --marketplace-primary-hover: 17 88% 48%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 211 47% 96%;
+    --marketplace-primary-soft: 33 100% 96%;
     --marketplace-navy: 217 25% 16%;
     --marketplace-muted: 215 14% 46%;
     --marketplace-success: 153 42% 40%;
@@ -41,7 +41,7 @@
     --card-foreground: 210 32% 96%;
     --popover: 218 22% 13%;
     --popover-foreground: 210 32% 96%;
-    --primary: 213 47% 46%;
+    --primary: 24 95% 56%;
     --primary-foreground: 0 0% 100%;
     --secondary: 216 18% 19%;
     --secondary-foreground: 210 40% 98%;
@@ -53,11 +53,11 @@
     --destructive-foreground: 210 40% 98%;
     --border: 216 15% 24%;
     --input: 216 15% 24%;
-    --ring: 213 47% 52%;
-    --marketplace-primary: 213 47% 52%;
-    --marketplace-primary-hover: 213 47% 58%;
+    --ring: 24 95% 56%;
+    --marketplace-primary: 24 95% 56%;
+    --marketplace-primary-hover: 24 95% 62%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 213 28% 21%;
+    --marketplace-primary-soft: 24 42% 18%;
     --marketplace-navy: 210 32% 96%;
     --marketplace-muted: 215 18% 70%;
     --marketplace-success: 151 60% 52%;
@@ -89,7 +89,7 @@
     --card-foreground: 210 32% 96% !important;
     --popover: 218 22% 13% !important;
     --popover-foreground: 210 32% 96% !important;
-    --primary: 213 47% 52% !important;
+    --primary: 24 95% 56% !important;
     --primary-foreground: 0 0% 100% !important;
     --secondary: 216 18% 19% !important;
     --secondary-foreground: 210 40% 98% !important;
@@ -99,7 +99,7 @@
     --accent-foreground: 218 25% 10% !important;
     --border: 216 15% 24% !important;
     --input: 216 15% 24% !important;
-    --ring: 213 47% 52% !important;
+    --ring: 24 95% 56% !important;
     --home-hero-bg: hsl(var(--background)) !important;
     --home-categories-bg: hsl(var(--background)) !important;
     --home-stores-bg: hsl(var(--background)) !important;
@@ -108,9 +108,9 @@
     --home-button-bg: hsl(var(--primary)) !important;
     --home-button-text: hsl(var(--primary-foreground)) !important;
     --home-border: hsl(var(--border)) !important;
-    --marketplace-primary: 213 47% 52% !important;
-    --marketplace-primary-hover: 213 47% 58% !important;
-    --marketplace-primary-soft: 213 28% 21% !important;
+    --marketplace-primary: 24 95% 56% !important;
+    --marketplace-primary-hover: 24 95% 62% !important;
+    --marketplace-primary-soft: 24 42% 18% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }

@@ -191,8 +191,8 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           </Button>
         )
       }
-      title={mode === "admin" ? "Admin giriş" : "Giriş"}
-      description={visualLabel}
+      title={mode === "admin" ? "Admin giriş" : "Xoş gəlmisiniz"}
+      description={mode === "public" ? "Hesabınıza daxil olun və alış-verişə qaldığınız yerdən davam edin." : visualLabel}
       footer={
         mode === "public" ? (
           <div className="space-y-3">
@@ -279,7 +279,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           type="submit"
           disabled={isPending}
           className={cn(
-            "h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700",
+            "h-12 w-full rounded-xl bg-primary font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-[hsl(var(--marketplace-primary-hover))]",
             isAdminMode &&
               "h-10 rounded-lg bg-emerald-400 font-black text-slate-950 shadow-lg shadow-emerald-500/15 hover:bg-emerald-300",
           )}

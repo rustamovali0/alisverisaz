@@ -343,8 +343,8 @@ export function RegisterForm({
           </Link>
         </Button>
       }
-      title="Qeydiyyat"
-      description={canRegister ? undefined : "Qeydiyyat hazırda bağlıdır."}
+      title="Hesabınızı yaradın"
+      description={canRegister ? "Alıcı və ya satıcı kimi bir neçə addımda başlayın." : "Qeydiyyat hazırda bağlıdır."}
       footer={
         <div className="space-y-3">
           <Link className="font-medium text-primary hover:underline" href="/">

@@ -27,7 +27,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   const copy = visualCopy[variant];
 
   return (
-    <aside className="relative hidden h-full min-h-[360px] overflow-hidden rounded-xl border border-border/70 bg-slate-950 lg:block">
+    <aside className="relative h-full min-h-48 overflow-hidden bg-slate-950 lg:min-h-[620px]">
       <Image
         src="/auth/auth-marketplace-panel.webp"
         alt="Alisveris marketplace auth banner"
@@ -36,16 +36,16 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
         sizes="(min-width: 1280px) 560px, 100vw"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/35 to-black/10" />
-      <div className="absolute inset-x-0 bottom-0 max-h-full overflow-y-auto p-5 text-white">
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/10" />
+      <div className="absolute inset-x-0 bottom-0 max-h-full overflow-y-auto p-6 text-white sm:p-8 lg:p-12">
         <div className="mb-2 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
           <span className="h-px w-12 bg-primary/80" />
           Alisveris.az
         </div>
-        <h2 className="max-w-lg text-[1.75rem] font-black leading-tight tracking-tight sm:text-[2.15rem]">
+        <h2 className="max-w-lg text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
           {copy.title}
         </h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
+        <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
           {copy.description}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

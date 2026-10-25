@@ -317,6 +317,7 @@
     "passwordResetHelp": "Use the existing password recovery flow to change your password. A link will be sent to your email.",
     "resetPassword": "Reset password",
     "stats": {
+      "orders": "Total orders",
       "activeOrders": "Active",
       "completedOrders": "Completed",
       "favorites": "Favorites",

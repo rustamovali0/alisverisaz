@@ -317,6 +317,7 @@
     "passwordResetHelp": "Şifrəni dəyişmək üçün mövcud bərpa flow-undan istifadə edin. Link email ünvanınıza göndərilir.",
     "resetPassword": "Şifrəni yenilə",
     "stats": {
+      "orders": "Ümumi sifarişlər",
       "activeOrders": "Aktiv",
       "completedOrders": "Tamamlanmış",
       "favorites": "Sevimlilər",
