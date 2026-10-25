@@ -185,7 +185,7 @@ export function MarketplaceHeader({
   const instagramHref = normalizeInstagramHref(instagramUrl);
   const whatsappHref = normalizeWhatsappHref(whatsappUrl);
   const commerceUtilityButtonClass =
-    "group inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-7";
+    "group inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:bg-orange-50 hover:text-orange-600 dark:border-transparent dark:text-white dark:hover:bg-orange-500/10 dark:hover:text-orange-300 [&_svg]:!size-6";
   const mobileUtilityButtonClass =
     "group inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-6";
   const commerceUtilityIconClass =
@@ -332,7 +332,7 @@ export function MarketplaceHeader({
         className={
           sticky
             ? cn(
-                "marketplace-header sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-none backdrop-blur dark:border-slate-800 dark:bg-slate-950/95",
+                "marketplace-header sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95",
                 !isHomePage && "bg-white/95 dark:bg-slate-950/95",
               )
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
@@ -340,7 +340,7 @@ export function MarketplaceHeader({
       >
         <div
           className={cn(
-            "container flex min-h-14 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1 py-1.5 sm:min-h-[60px] sm:gap-1.5 sm:py-1.5 xl:flex-nowrap",
+            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-2 xl:flex-nowrap",
             isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
           )}
         >
@@ -448,14 +448,14 @@ export function MarketplaceHeader({
           </div>
           <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             {isIsolatedStorefront ? <>
-              <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">{nav("products")}</Link>
+              <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-orange-600 dark:text-slate-200 dark:hover:text-orange-300">{nav("products")}</Link>
               <Link href={`${isolatedBaseHref}/contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
             </> : null}
             {!isIsolatedStorefront ? <Button
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group h-10 rounded-xl bg-transparent px-3 text-sm font-semibold text-slate-700 shadow-none hover:bg-orange-50 hover:text-orange-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-orange-500/10 dark:hover:text-orange-300",
                 isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -497,10 +497,10 @@ export function MarketplaceHeader({
                 stores={stores}
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
-                className="min-w-0 flex-1 rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900"
-                inputClassName="h-10 rounded-lg border-0 bg-slate-50 pl-10 pr-3 text-sm text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
+                className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                inputClassName="h-10 rounded-xl border-0 bg-slate-50 pl-10 pr-3 text-sm text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-orange-200 dark:bg-slate-900 dark:text-slate-100"
                 buttonSize="lg"
-                buttonClassName="h-10 rounded-lg bg-blue-600 px-5 text-sm text-white hover:bg-blue-700"
+                buttonClassName="h-10 rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-orange-600"
               />
             </div>
           ) : null}

@@ -376,6 +376,8 @@ export function HomeExperience({
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
   const showSellerQuickActions = initialRole === null || initialRole === "seller";
+  const promotedProducts = products.filter((product) => product.isPromoted).slice(0, 8);
+  const discountedProducts = products.filter((product) => product.discountAmount > 0).slice(0, 8);
 
   return (
     <main
@@ -445,11 +447,41 @@ export function HomeExperience({
               href="/categories"
               action={home("viewAll")}
             />
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {activeCategories.map((category) => (
-                <CategoryCard key={category.id} category={category} />
+                <div key={category.id} className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-auto sm:max-w-none"><CategoryCard category={category} /></div>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {promotedProducts.length > 0 ? (
+          <section>
+            <SectionHeader title="Sənin üçün seçilənlər" href="/products" action={productsLabel} />
+            <InfiniteProductGrid
+              initialProducts={promotedProducts}
+              initialCursor={null}
+              initialHasMore={false}
+              locale={locale}
+              sort="newest"
+              productCardVariant={productCardVariant}
+              labels={{ stock: marketplace("stock") }}
+            />
+          </section>
+        ) : null}
+
+        {discountedProducts.length > 0 ? (
+          <section className="rounded-3xl bg-orange-50/70 px-3 py-6 dark:bg-orange-500/5 sm:px-6 sm:py-8">
+            <SectionHeader title="Endirimli məhsullar" href="/products" action={productsLabel} />
+            <InfiniteProductGrid
+              initialProducts={discountedProducts}
+              initialCursor={null}
+              initialHasMore={false}
+              locale={locale}
+              sort="newest"
+              productCardVariant={productCardVariant}
+              labels={{ stock: marketplace("stock") }}
+            />
           </section>
         ) : null}
 

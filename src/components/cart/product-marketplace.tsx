@@ -1120,7 +1120,7 @@ export function ProductGrid({
           key={product.id}
           onClick={openDetail}
           className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
+            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_16px_38px_rgba(15,23,42,0.10)]",
             compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
               "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
@@ -1184,7 +1184,7 @@ export function ProductGrid({
                     </span>
                   ) : null}
                   {isNewProduct ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-1.5 py-1 text-[9px] font-bold leading-none text-blue-700 shadow-sm sm:px-2 sm:text-[11px]">
+                    <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-1.5 py-1 text-[9px] font-bold leading-none text-orange-700 shadow-sm sm:px-2 sm:text-[11px]">
                       {t("newLabel")}
                     </span>
                   ) : null}
@@ -1193,7 +1193,7 @@ export function ProductGrid({
               {product.commerceType === "rental" || hasDiscount ? (
                 <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 sm:bottom-2 sm:left-2">
                   {product.commerceType === "rental" ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full bg-blue-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-orange-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
                       İcarə
                     </span>
                   ) : null}
@@ -1222,7 +1222,7 @@ export function ProductGrid({
             </div>
             <h2
               className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-blue-700 md:dark:group-hover:text-blue-300",
+                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
                 isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
               )}
             >
@@ -1279,7 +1279,7 @@ export function ProductGrid({
                   <Button
                     asChild
                     className={cn(
-                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-primary px-2 text-[12px] font-bold leading-none text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
@@ -1296,7 +1296,7 @@ export function ProductGrid({
                     isolatedStoreSlug={isolatedStoreSlug}
                     disabled={isOutOfStock}
                     className={cn(
-                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
+                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-primary px-2 text-[12px] font-bold text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
                         "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
