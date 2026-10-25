@@ -102,13 +102,13 @@ const homeDesignStyle: CSSProperties & Record<string, string> = {
   "--muted-foreground": "215 16% 43%",
   "--border": "214 20% 88%",
   "--input": "214 20% 88%",
-  "--primary": "213 47% 46%",
+  "--primary": "24 95% 53%",
   "--primary-foreground": "0 0% 100%",
-  "--ring": "213 47% 46%",
-  "--marketplace-primary": "213 47% 46%",
-  "--marketplace-primary-hover": "215 48% 38%",
+  "--ring": "24 95% 53%",
+  "--marketplace-primary": "24 95% 53%",
+  "--marketplace-primary-hover": "17 88% 48%",
   "--marketplace-primary-hover-foreground": "0 0% 100%",
-  "--marketplace-primary-soft": "211 47% 96%",
+  "--marketplace-primary-soft": "33 100% 96%",
   "--marketplace-navy": "221 39% 12%",
   "--marketplace-muted": "215 16% 43%",
 } as const;
@@ -190,7 +190,7 @@ function SectionHeader({
         onMouseEnter={prefetch}
         onFocus={prefetch}
         scroll
-        className="inline-flex shrink-0 items-center gap-1 rounded-full px-1 text-sm font-bold text-blue-700 transition hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-blue-300 dark:hover:text-blue-200"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2 text-sm font-bold text-primary transition hover:bg-orange-50 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:hover:bg-orange-500/10"
       >
         {action}
         <ArrowRight className="size-4" aria-hidden="true" />
@@ -205,16 +205,16 @@ function CategoryCard({ category }: { category: CategoryOption }) {
   return (
     <Link
       href={`/products?category=${category.slug}`}
-      className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg border border-stone-200 bg-white px-2.5 py-2 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 sm:min-h-[56px] sm:px-3 md:hover:-translate-y-0.5 md:hover:border-blue-200 md:hover:shadow-[0_8px_22px_rgba(15,23,42,0.07)]"
+      className="group flex min-h-[64px] min-w-0 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-slate-950 shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_14px_34px_rgba(15,23,42,0.09)]"
     >
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 transition dark:bg-blue-400/10 dark:text-blue-300 sm:size-9">
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-orange-50 text-orange-600 transition group-hover:bg-primary group-hover:text-white dark:bg-orange-400/10 dark:text-orange-300 sm:size-11">
         <CategoryIcon className="size-4 stroke-[2.1] sm:size-[18px]" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
         <span className="truncate text-[12px] font-medium leading-4 sm:text-[13px]">
           {category.name}
         </span>
-        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
+        <ArrowRight className="hidden size-3.5 shrink-0 text-slate-400 transition sm:block md:group-hover:translate-x-0.5 md:group-hover:text-orange-600" />
       </span>
     </Link>
   );
@@ -233,13 +233,13 @@ function HomeStoreCard({
   const coverUrl = store.coverUrl || store.sampleProducts[0]?.imageUrl || null;
 
   return (
-    <article className="group h-full min-w-0 overflow-visible rounded-xl border border-stone-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-0.5 md:hover:border-blue-200 md:hover:shadow-[0_10px_26px_rgba(15,23,42,0.08)]">
+    <article className="group h-full min-w-0 overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 dark:border-slate-800 dark:bg-slate-900 md:hover:-translate-y-1 md:hover:border-orange-200 md:hover:shadow-[0_16px_36px_rgba(15,23,42,0.10)]">
       <Link
         href={getStorePath(store.slug)}
-        className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+        className="relative block h-full min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         <div className="relative">
-          <div className={cn("relative overflow-hidden rounded-t-xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
+          <div className={cn("relative overflow-hidden rounded-t-2xl bg-stone-100 dark:bg-slate-800", compact ? "aspect-[16/7]" : "aspect-[16/8]")}>
             {coverUrl ? (
               <OptimizedImage
                 src={coverUrl}
@@ -251,7 +251,7 @@ function HomeStoreCard({
               />
             ) : (
               <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#f8fafc,#ecfdf5)] dark:bg-[linear-gradient(135deg,#1e293b,#052e2b)]">
-                <span className="text-4xl font-black text-blue-700/50 dark:text-blue-300/50">
+                <span className="text-4xl font-black text-orange-600/60 dark:text-orange-300/60">
                   {store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
                 </span>
               </div>
@@ -264,7 +264,7 @@ function HomeStoreCard({
               </span>
             ) : null}
           </div>
-          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-blue-700 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-blue-300 md:-bottom-7 md:left-4 md:size-14">
+          <div className="absolute -bottom-6 left-3 z-30 grid size-12 place-items-center overflow-hidden rounded-xl border-2 border-white bg-white text-lg font-black text-orange-600 shadow-lg shadow-slate-950/12 dark:border-slate-900 dark:bg-slate-900 dark:text-orange-300 md:-bottom-7 md:left-4 md:size-14">
             {store.logoUrl ? (
               <OptimizedImage
                 src={store.logoUrl}
@@ -290,7 +290,7 @@ function HomeStoreCard({
                 {marketplace("productCount", { count: store.productCount })}
               </p>
             </div>
-            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition sm:size-5 md:block md:group-hover:translate-x-0.5 md:group-hover:text-blue-700" />
+            <ArrowRight className="mt-1 hidden size-4 text-slate-400 transition sm:size-5 md:block md:group-hover:translate-x-0.5 md:group-hover:text-orange-600" />
           </div>
         </div>
       </Link>
@@ -386,11 +386,11 @@ export function HomeExperience({
         ...(themeAccent ? { "--marketplace-primary": themeAccent } : {}),
       }}
     >
-      <div className="mx-auto w-full max-w-[1280px] space-y-8 md:space-y-14">
-        <section className="relative grid min-w-0 gap-6 rounded-2xl bg-slate-50 p-5 dark:bg-slate-900 sm:p-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:p-10">
+      <div className="mx-auto w-full max-w-[1380px] space-y-10 md:space-y-16">
+        <section className="relative isolate grid min-w-0 gap-8 overflow-hidden rounded-3xl border border-orange-100 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.13),transparent_42%),linear-gradient(135deg,#fff7ed,#ffffff_58%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] dark:border-orange-500/15 dark:bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_42%),linear-gradient(135deg,#17120f,#0f172a_58%)] sm:p-9 lg:grid-cols-[minmax(0,1fr)_430px] lg:items-center lg:gap-12 lg:p-12">
           <div className="relative z-10 min-w-0">
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{home("heroEyebrow")}</p>
-            <h1 className="mt-3 max-w-[18ch] whitespace-pre-line text-[2rem] font-bold leading-[1.15] tracking-tight text-slate-950 dark:text-slate-50 sm:text-4xl lg:text-5xl">
+            <p className="inline-flex rounded-full bg-orange-100 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">{home("heroEyebrow")}</p>
+            <h1 className="mt-5 max-w-[17ch] whitespace-pre-line text-[2.35rem] font-black leading-[1.06] tracking-[-0.04em] text-slate-950 dark:text-slate-50 sm:text-5xl lg:text-[3.6rem]">
               {displayHeroTitle}
             </h1>
             <p className="mt-4 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
@@ -399,16 +399,16 @@ export function HomeExperience({
             <div data-home-search-sentinel className="mt-5 h-px w-full" aria-hidden="true" />
             <MarketplaceSearch
               stores={stores}
-              className="rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-700 dark:bg-slate-950"
-              inputClassName="h-12 rounded-lg border-0 bg-transparent pl-11 text-base shadow-none focus-visible:ring-2 focus-visible:ring-blue-500"
-              buttonClassName="rounded-lg bg-blue-700 text-white hover:bg-blue-800"
+              className="rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-900/10 dark:border-slate-700 dark:bg-slate-950"
+              inputClassName="h-12 rounded-xl border-0 bg-transparent pl-11 text-base shadow-none focus-visible:ring-2 focus-visible:ring-primary"
+              buttonClassName="rounded-xl bg-primary px-6 text-white shadow-md shadow-primary/20 hover:bg-orange-600"
               compactActions
               placeholder={home("heroSearchPlaceholder")}
             />
             {popularSearchPills.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
                 {popularSearchPills.map((item) => (
-                  <Link key={item.key} href={item.href} className="text-xs text-slate-500 underline-offset-4 hover:text-blue-700 hover:underline focus-visible:underline dark:text-slate-400 dark:hover:text-blue-300">
+                  <Link key={item.key} href={item.href} className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-orange-200 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:text-orange-300">
                     {item.label}
                   </Link>
                 ))}
@@ -416,19 +416,19 @@ export function HomeExperience({
             ) : null}
             <div className="mt-6 flex flex-wrap items-center gap-4">
               {showSellerQuickActions ? (
-                <Link href="/sell/product/new" className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
+                <Link href="/sell/product/new" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-slate-950 px-5 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200">
                   <BadgePlus className="size-4" aria-hidden="true" />
                   {home("createListing")}
                 </Link>
               ) : null}
-              <Link href="/stores" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-slate-700 hover:text-blue-700 dark:text-slate-200 dark:hover:text-blue-300">
+              <Link href="/stores" className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:border-orange-200 hover:text-orange-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-orange-300">
                 {home("allStores")}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
-          <div className="relative hidden min-h-[280px] overflow-hidden rounded-xl lg:block" aria-hidden="true">
-            <OptimizedImage src={heroImageUrl} alt="" fill sizes="300px" className="object-cover" loading="lazy" />
+          <div className="relative hidden min-h-[360px] overflow-hidden rounded-2xl shadow-2xl shadow-slate-950/20 lg:block" aria-hidden="true">
+            <OptimizedImage src={heroImageUrl} alt="" fill sizes="430px" className="object-cover" loading="lazy" />
           </div>
           {mobileHeroImageUrl ? (
             <div className="relative h-36 overflow-hidden rounded-xl lg:hidden" aria-hidden="true">
