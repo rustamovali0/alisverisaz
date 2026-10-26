@@ -334,7 +334,6 @@ export function MarketplaceHeader({
             <div className="flex items-center gap-5">
               <Link href="/help" className="transition hover:text-white">Kömək mərkəzi</Link>
               <Link href="/stores" className="transition hover:text-white">Mağazalar</Link>
-              <Link href="/register?role=seller" className="font-bold text-orange-300 transition hover:text-orange-200">Satıcı ol</Link>
             </div>
           </div>
         </div>
