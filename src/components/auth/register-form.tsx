@@ -44,11 +44,28 @@ function LegalReadDialog({
   onRead: () => void;
 }) {
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const onCloseRef = useRef(onClose);
   const title = "İstifadəçi razılaşması və məxfilik siyasəti";
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!hasReachedEnd) {
+      return;
+    }
+
+    const closeTimer = window.setTimeout(() => {
+      onCloseRef.current();
+    }, 1_000);
+
+    return () => window.clearTimeout(closeTimer);
+  }, [hasReachedEnd]);
 
   function handleLegalScroll(event: UIEvent<HTMLDivElement>) {
     const area = event.currentTarget;
-    if (area.scrollTop + area.clientHeight >= area.scrollHeight - 16) {
+    if (!hasReachedEnd && area.scrollTop + area.clientHeight >= area.scrollHeight - 16) {
       setHasReachedEnd(true);
       onRead();
     }
@@ -73,7 +90,6 @@ function LegalReadDialog({
             <section><h3 className="font-bold text-slate-950">Toplanan məlumatlar</h3><p>Qeydiyyat və sifariş zamanı ad, e-poçt, telefon, ünvan və hesabın işləməsi üçün lazım olan texniki məlumatlar toplanır. Mağaza hesabında mağaza adı, loqo, banner və əlaqə məlumatları saxlanıla bilər.</p></section>
             <section><h3 className="font-bold text-slate-950">Məlumatların istifadəsi və cookie-lər</h3><p>Məlumatlar hesabı yaratmaq, sifarişi icra etmək, təhlükəsizliyi qorumaq və dəstək göstərmək üçün istifadə olunur; icazəsiz satılmır. Sayt sessiya, səbət və təhlükəsizlik üçün zəruri cookie-lərdən istifadə edir.</p></section>
             <section><h3 className="font-bold text-slate-950">Saxlanma və təhlükəsizlik</h3><p>Məlumatlara giriş rol və icazələrlə məhdudlaşdırılır. Profil məlumatlarının yenilənməsi və ya silinməsi üçün dəstək mərkəzinə müraciət edilə bilər.</p></section>
-            <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Sənədlərin birləşdirilmiş mətnini sona qədər oxudunuz. Razılıq avtomatik seçiləcək.</p>
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-3 sm:px-5">
