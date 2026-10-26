@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  readPendingFavorites,
+  savePendingFavorite,
+} from "@/lib/catalog/pending-favorites";
 import { Heart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -26,7 +30,8 @@ type FavoriteProductCache = {
 };
 
 let favoriteProductCache: FavoriteProductCache | null = null;
-let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null = null;
+let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null =
+  null;
 let favoriteProductCachePromiseUserId: string | null = null;
 const FAVORITE_UPDATED_EVENT = "alisveris-favorite-updated";
 
@@ -37,7 +42,11 @@ type FavoriteUpdatedDetail = {
 
 function emitFavoriteUpdate(detail: FavoriteUpdatedDetail) {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent<FavoriteUpdatedDetail>(FAVORITE_UPDATED_EVENT, { detail }));
+    window.dispatchEvent(
+      new CustomEvent<FavoriteUpdatedDetail>(FAVORITE_UPDATED_EVENT, {
+        detail,
+      }),
+    );
   }
 }
 
@@ -85,7 +94,11 @@ async function loadFavoriteProductCache() {
   return favoriteProductCachePromise;
 }
 
-function updateFavoriteProductCache(userId: string, productId: string, isActive: boolean) {
+function updateFavoriteProductCache(
+  userId: string,
+  productId: string,
+  isActive: boolean,
+) {
   if (!favoriteProductCache || favoriteProductCache.userId !== userId) {
     return;
   }
@@ -110,7 +123,9 @@ export function FavoriteToggleButton({
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
-  const [displayCount, setDisplayCount] = useState(Math.max(0, favoriteCount ?? 0));
+  const [displayCount, setDisplayCount] = useState(
+    Math.max(0, favoriteCount ?? 0),
+  );
   const isMutatingRef = useRef(false);
   const isActive = Boolean(favoriteId);
 
@@ -122,7 +137,12 @@ export function FavoriteToggleButton({
         const cache = await loadFavoriteProductCache();
 
         if (mounted) {
-          setFavoriteId(cache?.productIds.has(productId) ? productId : null);
+          setFavoriteId(
+            cache?.productIds.has(productId) ||
+              (!cache && readPendingFavorites().includes(productId))
+              ? productId
+              : null,
+          );
           setIsReady(true);
         }
 
@@ -133,6 +153,9 @@ export function FavoriteToggleButton({
 
       if (authProfile.status !== "authenticated") {
         if (mounted) {
+          setFavoriteId(
+            readPendingFavorites().includes(productId) ? productId : null,
+          );
           setIsReady(true);
         }
         return;
@@ -141,7 +164,9 @@ export function FavoriteToggleButton({
       const result = await getFavoriteProductIdsAction();
 
       if (mounted) {
-        setFavoriteId(result.ok && result.productIds.includes(productId) ? productId : null);
+        setFavoriteId(
+          result.ok && result.productIds.includes(productId) ? productId : null,
+        );
         setIsReady(true);
       }
     }
@@ -163,7 +188,8 @@ export function FavoriteToggleButton({
     }
 
     window.addEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
-    return () => window.removeEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
+    return () =>
+      window.removeEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
   }, [productId]);
 
   function toggleFavorite(event: React.MouseEvent<HTMLButtonElement>) {
@@ -171,7 +197,11 @@ export function FavoriteToggleButton({
     event.stopPropagation();
 
     if (isMutatingRef.current) {
-      showToast({ title: "Bir az gözləyin...", description: "Əməliyyat davam edir.", variant: "info" });
+      showToast({
+        title: "Bir az gözləyin...",
+        description: "Əməliyyat davam edir.",
+        variant: "info",
+      });
       return;
     }
 
@@ -188,14 +218,13 @@ export function FavoriteToggleButton({
       const authProfile = await getClientAuthProfileOnce();
 
       if (authProfile.status !== "authenticated") {
-        setFavoriteId(previousFavoriteId);
-        setDisplayCount(previousCount);
-        emitFavoriteUpdate({ productId, isActive: wasActive });
+        savePendingFavorite(productId, !wasActive);
         setIsMutating(false);
         isMutatingRef.current = false;
         showToast({
           title: "Giriş tələb olunur",
-          description: "Seçilmişlərə əlavə etmək üçün zəhmət olmasa giriş edin.",
+          description:
+            "Seçiminiz saxlanıldı. Hesabınıza əlavə etmək üçün giriş edin.",
           variant: "info",
         });
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
@@ -211,24 +240,26 @@ export function FavoriteToggleButton({
       updateFavoriteProductCache(userId, productId, !wasActive);
 
       try {
-        const result = await setFavoriteProductStateAction(productId, !wasActive);
+        const result = await setFavoriteProductStateAction(
+          productId,
+          !wasActive,
+        );
         if (!result.ok) throw new Error(result.message);
 
         if (wasActive) {
-
-        showToast({
-          title: "Məhsul seçilmişlərdən çıxarıldı.",
-          variant: "info",
-        });
-        return;
+          showToast({
+            title: "Məhsul seçilmişlərdən çıxarıldı.",
+            variant: "info",
+          });
+          return;
         }
 
-      setFavoriteId(productId);
-      updateFavoriteProductCache(userId, productId, true);
-      showToast({
-        title: "Məhsul seçilmişlərə əlavə edildi.",
-        variant: "success",
-      });
+        setFavoriteId(productId);
+        updateFavoriteProductCache(userId, productId, true);
+        showToast({
+          title: "Məhsul seçilmişlərə əlavə edildi.",
+          variant: "success",
+        });
       } catch {
         setFavoriteId(previousFavoriteId);
         setDisplayCount(previousCount);
@@ -260,7 +291,8 @@ export function FavoriteToggleButton({
       className={cn(
         "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 md:hover:shadow-md",
         compact ? "size-10" : "size-11",
-        isActive && "border-foreground/25 bg-background text-foreground hover:text-foreground",
+        isActive &&
+          "border-foreground/25 bg-background text-foreground hover:text-foreground",
         className,
       )}
     >

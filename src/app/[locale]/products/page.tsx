@@ -1,3 +1,4 @@
+import { parseCatalogFilters } from "@/lib/catalog/filters";
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
 import { getMarketplaceProductPage } from "@/lib/cart/data";
@@ -10,13 +11,17 @@ type ProductsPageProps = {
     locale: string;
   }>;
   searchParams?: Promise<{
+    [key: string]: string | undefined;
     category?: string;
     q?: string;
     sort?: string;
   }>;
 };
 
-function getDescendantCategoryIds(categories: Array<{ id: string; parentId?: string | null }>, categoryId?: string) {
+function getDescendantCategoryIds(
+  categories: Array<{ id: string; parentId?: string | null }>,
+  categoryId?: string,
+) {
   if (!categoryId) {
     return [];
   }
@@ -27,7 +32,11 @@ function getDescendantCategoryIds(categories: Array<{ id: string; parentId?: str
   while (changed) {
     changed = false;
     categories.forEach((category) => {
-      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+      if (
+        category.parentId &&
+        ids.has(category.parentId) &&
+        !ids.has(category.id)
+      ) {
         ids.add(category.id);
         changed = true;
       }
@@ -55,7 +64,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ProductsPage({ params, searchParams }: ProductsPageProps) {
+export default async function ProductsPage({
+  params,
+  searchParams,
+}: ProductsPageProps) {
   const { locale } = await params;
   const search = await searchParams;
   setRequestLocale(locale);
@@ -67,9 +79,24 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
     getActiveHomeThemeSetting(),
   ]);
   const selectedCategory = categories.find(
-    (category) => category.slug === search?.category || category.id === search?.category,
+    (category) =>
+      category.slug === search?.category || category.id === search?.category,
   );
+  let filters;
+  let filterError = "";
+  try {
+    filters = parseCatalogFilters(
+      new URLSearchParams(
+        Object.entries(search ?? {}).filter(
+          (entry): entry is [string, string] => typeof entry[1] === "string",
+        ),
+      ),
+    );
+  } catch {
+    filterError = "Qiymət aralığını düzgün daxil edin.";
+  }
   const productPage = await getMarketplaceProductPage(locale, {
+    filters,
     categoryId: selectedCategory?.id,
     categoryIds: getDescendantCategoryIds(categories, selectedCategory?.id),
     searchQuery: search?.q,
@@ -79,6 +106,14 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
   return (
     <ProductMarketplace
+      key={JSON.stringify({
+        category: selectedCategory?.id,
+        query: search?.q,
+        sort: search?.sort,
+        filters,
+      })}
+      initialFilters={filters}
+      initialFilterError={filterError}
       products={productPage.products}
       nextCursor={productPage.nextCursor}
       hasMore={productPage.hasMore}
@@ -87,7 +122,9 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
       locale={locale}
       searchQuery={search?.q}
       sort={
-        search?.sort === "oldest" || search?.sort === "price_asc" || search?.sort === "price_desc"
+        search?.sort === "oldest" ||
+        search?.sort === "price_asc" ||
+        search?.sort === "price_desc"
           ? search.sort
           : "newest"
       }

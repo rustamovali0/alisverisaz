@@ -1,4 +1,5 @@
 "use client";
+import type { CatalogFilters } from "@/lib/catalog/filters";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { productQueryOptions } from "@/lib/query/product-options";
 import dynamic from "next/dynamic";
@@ -25,8 +26,15 @@ import { PublicStoreLocationSection } from "@/components/locations/public-store-
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreWhatsAppButton } from "@/components/store/store-whatsapp-button";
-const StoreBrandingQuickEdit = dynamic(() => import("@/components/store/store-branding-quick-edit").then((module) => module.StoreBrandingQuickEdit));
-import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
+const StoreBrandingQuickEdit = dynamic(() =>
+  import("@/components/store/store-branding-quick-edit").then(
+    (module) => module.StoreBrandingQuickEdit,
+  ),
+);
+import {
+  InstagramBrandIcon,
+  TikTokIcon,
+} from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -82,7 +90,11 @@ function updateFilterQuery(key: string, value: string | boolean) {
   const url = new URL(window.location.href);
   if (value === "" || value === false) url.searchParams.delete(key);
   else url.searchParams.set(key, value === true ? "1" : value);
-  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  window.history.replaceState(
+    null,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 }
 
 function readFilterQuery() {
@@ -98,6 +110,8 @@ function readFilterQuery() {
 }
 
 type ProductMarketplaceProps = {
+  initialFilters?: CatalogFilters;
+  initialFilterError?: string;
   products: CartProduct[];
   nextCursor?: string | null;
   hasMore?: boolean;
@@ -144,7 +158,13 @@ type FooterProps = {
   };
 };
 
-function StoreLogo({ store, className }: { store: MarketplaceStore; className?: string }) {
+function StoreLogo({
+  store,
+  className,
+}: {
+  store: MarketplaceStore;
+  className?: string;
+}) {
   return store.logoUrl ? (
     <OptimizedImage
       src={store.logoUrl}
@@ -182,7 +202,10 @@ function StoreHeroCover({
   if (hasError) {
     return (
       <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#eff6ff,#f8fafc)] dark:bg-[linear-gradient(135deg,#111827,#020617)]">
-        <Store className="size-12 text-blue-300 dark:text-blue-500/60" aria-hidden="true" />
+        <Store
+          className="size-12 text-blue-300 dark:text-blue-500/60"
+          aria-hidden="true"
+        />
       </div>
     );
   }
@@ -194,12 +217,16 @@ function StoreHeroCover({
       fill
       sizes="(max-width: 1024px) 100vw, 60vw"
       fetchPriority="high"
-      style={{
-        "--store-banner-position": `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%`,
-      } as CSSProperties}
+      style={
+        {
+          "--store-banner-position": `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%`,
+        } as CSSProperties
+      }
       className={cn(
         "h-full w-full object-contain object-top sm:object-cover sm:object-[var(--store-banner-position)]",
-        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL ? "bg-slate-100 dark:bg-slate-950" : "",
+        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL
+          ? "bg-slate-100 dark:bg-slate-950"
+          : "",
       )}
       onError={() => setHasError(true)}
     />
@@ -211,9 +238,16 @@ function getStickyScrollOffset() {
     return DEFAULT_STICKY_SCROLL_OFFSET;
   }
 
-  const header = document.querySelector<HTMLElement>("[data-storefront-header]");
+  const header = document.querySelector<HTMLElement>(
+    "[data-storefront-header]",
+  );
 
-  return Math.max(header?.offsetHeight ?? DEFAULT_STICKY_SCROLL_OFFSET, DEFAULT_STICKY_SCROLL_OFFSET) + 18;
+  return (
+    Math.max(
+      header?.offsetHeight ?? DEFAULT_STICKY_SCROLL_OFFSET,
+      DEFAULT_STICKY_SCROLL_OFFSET,
+    ) + 18
+  );
 }
 
 function scrollToPageSection(sectionId: string, updateHash = false) {
@@ -227,7 +261,10 @@ function scrollToPageSection(sectionId: string, updateHash = false) {
     return;
   }
 
-  const top = section.getBoundingClientRect().top + window.scrollY - getStickyScrollOffset();
+  const top =
+    section.getBoundingClientRect().top +
+    window.scrollY -
+    getStickyScrollOffset();
 
   window.scrollTo({
     top: Math.max(top, 0),
@@ -237,7 +274,11 @@ function scrollToPageSection(sectionId: string, updateHash = false) {
   if (updateHash) {
     const url = new URL(window.location.href);
     url.hash = sectionId;
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }
 }
 
@@ -283,7 +324,10 @@ function scrollToPageTop(updateUrl?: string) {
   }
 }
 
-function normalizeStoreSocialHref(kind: "instagram" | "tiktok", value?: string | null) {
+function normalizeStoreSocialHref(
+  kind: "instagram" | "tiktok",
+  value?: string | null,
+) {
   const cleanValue = value?.trim();
 
   if (!cleanValue) {
@@ -326,12 +370,26 @@ export function CustomStorefrontHeader({
   const aboutContent = getStoreAboutContent(store);
   const navItems = [
     { href: storeHomeHref, label: storefront("home") },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: storefront("products") },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: storefront("categories") },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`,
+      label: storefront("products"),
+    },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`,
+      label: storefront("categories"),
+    },
     ...(aboutContent
-      ? [{ href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`, label: storefront("about") }]
+      ? [
+          {
+            href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`,
+            label: storefront("about"),
+          },
+        ]
       : []),
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: storefront("contact") },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`,
+      label: storefront("contact"),
+    },
   ];
   const socialLinks = [
     {
@@ -349,7 +407,8 @@ export function CustomStorefrontHeader({
   ].filter((item) => item.href);
   const iconButtonClass =
     "group grid size-12 shrink-0 place-items-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 md:hover:!border-transparent md:hover:!bg-transparent md:hover:text-blue-600 md:hover:shadow-none dark:border-transparent dark:text-white dark:md:hover:!border-transparent dark:md:hover:text-blue-300 [&_svg]:!size-8";
-  const storefrontIconClass = "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+  const storefrontIconClass =
+    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
 
   useEffect(() => {
     let frameId = 0;
@@ -366,7 +425,9 @@ export function CustomStorefrontHeader({
     }
 
     updateHeaderSearchVisibility();
-    window.addEventListener("scroll", updateHeaderSearchVisibility, { passive: true });
+    window.addEventListener("scroll", updateHeaderSearchVisibility, {
+      passive: true,
+    });
 
     return () => {
       window.removeEventListener("scroll", updateHeaderSearchVisibility);
@@ -385,45 +446,47 @@ export function CustomStorefrontHeader({
           prefetch
           className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_250px] xl:flex-[0_1_280px] 2xl:flex-[0_1_320px]"
         >
-          <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
+          <StoreLogo
+            store={store}
+            className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11"
+          />
           <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl 2xl:text-[27px]">
             {store.name}
           </span>
         </Link>
-        <nav
-          className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex"
-        >
+        <nav className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex">
           {navItems.map((item) => {
             const hashIndex = item.href.indexOf("#");
-            const sectionId = hashIndex >= 0 ? item.href.slice(hashIndex + 1) : null;
+            const sectionId =
+              hashIndex >= 0 ? item.href.slice(hashIndex + 1) : null;
 
             return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
-              className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
-              onClick={(event) => {
-                if (typeof window === "undefined") {
-                  return;
-                }
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
+                onClick={(event) => {
+                  if (typeof window === "undefined") {
+                    return;
+                  }
 
-                const targetUrl = new URL(item.href, window.location.href);
-                if (targetUrl.pathname !== window.location.pathname) {
-                  return;
-                }
+                  const targetUrl = new URL(item.href, window.location.href);
+                  if (targetUrl.pathname !== window.location.pathname) {
+                    return;
+                  }
 
-                event.preventDefault();
-                if (sectionId) {
-                  onNavigateSection?.(sectionId);
-                  scheduleScrollToPageSection(sectionId, true);
-                } else {
-                  scrollToPageTop(item.href);
-                }
-              }}
-            >
-              {item.label}
-            </Link>
+                  event.preventDefault();
+                  if (sectionId) {
+                    onNavigateSection?.(sectionId);
+                    scheduleScrollToPageSection(sectionId, true);
+                  } else {
+                    scrollToPageTop(item.href);
+                  }
+                }}
+              >
+                {item.label}
+              </Link>
             );
           })}
         </nav>
@@ -442,7 +505,9 @@ export function CustomStorefrontHeader({
           />
         </div>
         <div className="hidden shrink-0 lg:block">
-          {!isolatedStorefront ? <HeaderAccountActions showSellerCta={false} customerOnlyRegister /> : null}
+          {!isolatedStorefront ? (
+            <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
+          ) : null}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 2xl:ml-0">
           {socialLinks.length > 0 ? (
@@ -460,7 +525,10 @@ export function CustomStorefrontHeader({
                     aria-label={item.label}
                   >
                     <a href={item.href} target="_blank" rel="noreferrer">
-                      <Icon className={storefrontIconClass} aria-hidden="true" />
+                      <Icon
+                        className={storefrontIconClass}
+                        aria-hidden="true"
+                      />
                     </a>
                   </Button>
                 );
@@ -468,18 +536,36 @@ export function CustomStorefrontHeader({
             </div>
           ) : null}
           {isAuthenticated && !isolatedStorefront ? (
-            <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("favorites")}>
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className={iconButtonClass}
+              aria-label={storefront("favorites")}
+            >
               <Link href="/favorites" prefetch>
                 <Heart className={storefrontIconClass} aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
-          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("cart")}>
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className={iconButtonClass}
+            aria-label={storefront("cart")}
+          >
             <Link href={cartHref} prefetch>
-              <ShoppingCart className={storefrontIconClass} aria-hidden="true" />
+              <ShoppingCart
+                className={storefrontIconClass}
+                aria-hidden="true"
+              />
             </Link>
           </Button>
-          <ThemeToggle className={iconButtonClass} iconClassName={storefrontIconClass} />
+          <ThemeToggle
+            className={iconButtonClass}
+            iconClassName={storefrontIconClass}
+          />
         </div>
       </div>
       {showHeaderSearch ? (
@@ -515,9 +601,14 @@ function getDisplayStoreDescription(store: MarketplaceStore) {
   const normalizedDescription = description
     .toLocaleLowerCase("az-AZ")
     .replace(/\s+/g, " ");
-  const hiddenDefaultDescriptions = new Set(["satıcı mağazası", "satici magazasi"]);
+  const hiddenDefaultDescriptions = new Set([
+    "satıcı mağazası",
+    "satici magazasi",
+  ]);
 
-  return hiddenDefaultDescriptions.has(normalizedDescription) ? null : description;
+  return hiddenDefaultDescriptions.has(normalizedDescription)
+    ? null
+    : description;
 }
 
 function getStoreAboutContent(store: MarketplaceStore) {
@@ -541,7 +632,10 @@ export function CustomStoreFooter({
       <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 pb-6 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-3">
-            <StoreLogo store={store} className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" />
+            <StoreLogo
+              store={store}
+              className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            />
             <h2 className="truncate text-2xl font-semibold text-slate-950 dark:text-slate-100">
               {store.name}
             </h2>
@@ -553,21 +647,37 @@ export function CustomStoreFooter({
           ) : null}
         </div>
         <nav className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm font-medium text-slate-600 dark:text-slate-300 sm:flex sm:items-center">
-          <Link href={storeHomeHref} prefetch className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={storeHomeHref}
+            prefetch
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("home")}
           </Link>
-          <Link href={`${baseHref}/products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}/products`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("products")}
           </Link>
-          <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}#store-categories`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("categories")}
           </Link>
           {aboutContent ? (
-            <Link href={`${baseHref}#about`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            <Link
+              href={`${baseHref}#about`}
+              className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+            >
               {storefront("about")}
             </Link>
           ) : null}
-          <Link href={`${baseHref}/contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}/contact`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("contact")}
           </Link>
         </nav>
@@ -588,7 +698,10 @@ export function CustomStoreFooter({
   );
 }
 
-function getStoreHeroSubtitle(store: MarketplaceStore, primaryCategoryName?: string) {
+function getStoreHeroSubtitle(
+  store: MarketplaceStore,
+  primaryCategoryName?: string,
+) {
   if (store.heroSubtitle?.trim()) {
     return store.heroSubtitle.trim();
   }
@@ -620,19 +733,30 @@ function ProductListLoader({ show }: { show: boolean }) {
   }
 
   return (
-    <div className="flex justify-center py-5" aria-live="polite" aria-busy="true">
+    <div
+      className="flex justify-center py-5"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <GlobalLoader />
     </div>
   );
 }
 
-function buildStoreProductHref(storeSlug: string, productSlug: string, storeBaseHref?: string) {
+function buildStoreProductHref(
+  storeSlug: string,
+  productSlug: string,
+  storeBaseHref?: string,
+) {
   const baseHref = storeBaseHref ?? getStorePath(storeSlug);
 
   return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
 
-function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: string) {
+function getDescendantCategoryIds(
+  categories: CategoryOption[],
+  categoryId?: string,
+) {
   if (!categoryId) {
     return [];
   }
@@ -643,7 +767,11 @@ function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: str
   while (changed) {
     changed = false;
     categories.forEach((category) => {
-      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+      if (
+        category.parentId &&
+        ids.has(category.parentId) &&
+        !ids.has(category.id)
+      ) {
         ids.add(category.id);
         changed = true;
       }
@@ -653,8 +781,13 @@ function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: str
   return [...ids];
 }
 
-function getScopedCategoryOptions(categories: CategoryOption[], selectedCategoryId?: string) {
-  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+function getScopedCategoryOptions(
+  categories: CategoryOption[],
+  selectedCategoryId?: string,
+) {
+  const selectedCategory = categories.find(
+    (category) => category.id === selectedCategoryId,
+  );
   const children = selectedCategory
     ? categories.filter((category) => category.parentId === selectedCategory.id)
     : [];
@@ -664,7 +797,9 @@ function getScopedCategoryOptions(categories: CategoryOption[], selectedCategory
   }
 
   if (selectedCategory?.parentId) {
-    return categories.filter((category) => category.parentId === selectedCategory.parentId);
+    return categories.filter(
+      (category) => category.parentId === selectedCategory.parentId,
+    );
   }
 
   return categories.filter((category) => !category.parentId);
@@ -688,7 +823,9 @@ function CategoryFilters({
   }
 
   const renderFilterButton = (category?: CategoryOption) => {
-    const isSelected = category ? selectedCategoryId === category.id : !selectedCategoryId;
+    const isSelected = category
+      ? selectedCategoryId === category.id
+      : !selectedCategoryId;
     const label = category?.name ?? allLabel;
 
     if (onSelect) {
@@ -712,7 +849,9 @@ function CategoryFilters({
         variant={isSelected ? "default" : "outline"}
         className="shrink-0 justify-start lg:w-full"
       >
-        <Link href={category ? `${baseHref}?category=${category.slug}` : baseHref}>
+        <Link
+          href={category ? `${baseHref}?category=${category.slug}` : baseHref}
+        >
           {label}
         </Link>
       </Button>
@@ -749,7 +888,8 @@ function MarketplaceDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selectedOption = options.find((option) => option.value === value) ?? options[0];
+  const selectedOption =
+    options.find((option) => option.value === value) ?? options[0];
 
   useEffect(() => {
     if (!open) {
@@ -757,7 +897,10 @@ function MarketplaceDropdown({
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -788,7 +931,13 @@ function MarketplaceDropdown({
         onClick={() => setOpen((current) => !current)}
       >
         <span className="truncate">{selectedOption?.label ?? label}</span>
-        <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden="true" />
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden="true"
+        />
       </button>
       {open ? (
         <div
@@ -810,7 +959,8 @@ function MarketplaceDropdown({
                 className={cn(
                   "flex w-full items-center justify-between gap-2 rounded-md text-left text-slate-800 transition md:hover:bg-blue-50 dark:text-slate-100 dark:md:hover:bg-blue-950/30",
                   compact ? "px-3 py-2 text-sm" : "px-3 py-2 text-sm",
-                  selected && "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
+                  selected &&
+                    "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
                 )}
                 onClick={() => {
                   onChange(option.value);
@@ -818,7 +968,9 @@ function MarketplaceDropdown({
                 }}
               >
                 <span className="truncate">{option.label}</span>
-                {selected ? <Check className="size-4 shrink-0" aria-hidden="true" /> : null}
+                {selected ? (
+                  <Check className="size-4 shrink-0" aria-hidden="true" />
+                ) : null}
               </button>
             );
           })}
@@ -869,17 +1021,40 @@ function MarketplaceFilterBar({
   const isWide = layout === "wide";
 
   return (
-    <section className={cn("relative z-20 w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card", isWide ? "p-3 md:p-4" : "p-2.5")}>
-      <h2 className={cn("text-xs font-bold text-slate-950 dark:text-slate-100", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
-      <div className={cn(isWide ? "grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(12rem,0.9fr)] lg:items-center" : "space-y-2")}>
+    <section
+      className={cn(
+        "relative z-20 w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card",
+        isWide ? "p-3 md:p-4" : "p-2.5",
+      )}
+    >
+      <h2
+        className={cn(
+          "text-xs font-bold text-slate-950 dark:text-slate-100",
+          isWide ? "mb-3" : "mb-2",
+        )}
+      >
+        {t("filters")}
+      </h2>
+      <div
+        className={cn(
+          isWide
+            ? "grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(12rem,0.9fr)] lg:items-center"
+            : "space-y-2",
+        )}
+      >
         <MarketplaceDropdown
           label={t("categoryFilter")}
           value={selectedCategoryId ?? ""}
           options={[
             { value: "", label: t("allCategories") },
-            ...categories.map((category) => ({ value: category.id, label: category.name })),
+            ...categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })),
           ]}
-          onChange={(value) => onCategory(categories.find((category) => category.id === value))}
+          onChange={(value) =>
+            onCategory(categories.find((category) => category.id === value))
+          }
           compact
         />
 
@@ -911,23 +1086,40 @@ function MarketplaceFilterBar({
             min="0"
             inputMode="decimal"
             value={minPrice === "0" ? "" : minPrice}
-            onChange={(event) => onMinPrice(event.target.value === "0" ? "" : event.target.value)}
+            onChange={(event) =>
+              onMinPrice(event.target.value === "0" ? "" : event.target.value)
+            }
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
+            className={cn(
+              "h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+              !isWide && "sm:w-24",
+            )}
           />
           <input
             type="number"
             min="0"
             inputMode="decimal"
             value={maxPrice === "0" ? "" : maxPrice}
-            onChange={(event) => onMaxPrice(event.target.value === "0" ? "" : event.target.value)}
+            onChange={(event) =>
+              onMaxPrice(event.target.value === "0" ? "" : event.target.value)
+            }
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
+            className={cn(
+              "h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+              !isWide && "sm:w-24",
+            )}
           />
         </div>
-        {priceError ? <p className="text-xs font-medium text-rose-600 lg:col-span-5" role="alert">{priceError}</p> : null}
+        {priceError ? (
+          <p
+            className="text-xs font-medium text-rose-600 lg:col-span-5"
+            role="alert"
+          >
+            {priceError}
+          </p>
+        ) : null}
 
         <label className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           <input
@@ -938,7 +1130,6 @@ function MarketplaceFilterBar({
           />
           {t("inStockOnly")}
         </label>
-
       </div>
     </section>
   );
@@ -999,7 +1190,8 @@ function MobileCategoryCatalog({
       <div className="grid grid-cols-2 gap-2">
         {categories.map((category, index) => {
           const Icon = getCategoryIcon(category);
-          const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
+          const iconStyle =
+            CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
 
           return (
             <button
@@ -1008,14 +1200,19 @@ function MobileCategoryCatalog({
               onClick={() => onSelect(category)}
               className="group flex min-h-[52px] min-w-0 touch-manipulation items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:border-slate-800 dark:bg-card"
             >
-              <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+              <span
+                className={cn(
+                  "grid size-8 shrink-0 place-items-center rounded-lg ring-1",
+                  iconStyle,
+                )}
+              >
                 <Icon className="size-4 stroke-[2.2]" aria-hidden="true" />
               </span>
-                <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate text-[13px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
-                    {category.name}
-                  </span>
+              <span className="grid min-w-0 flex-1 gap-0.5">
+                <span className="truncate text-[13px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
+                  {category.name}
                 </span>
+              </span>
             </button>
           );
         })}
@@ -1055,7 +1252,10 @@ export function ProductGrid({
   const router = useRouter();
   const { profile, isResolved } = useClientAuthProfileState();
   const isSellerViewer =
-    sellerOwnsStore && isResolved && profile.status === "authenticated" && profile.role === "seller";
+    sellerOwnsStore &&
+    isResolved &&
+    profile.status === "authenticated" &&
+    profile.role === "seller";
   const isLiquidGlass = productCardVariant === "liquid-glass";
   const [clientNow, setClientNow] = useState<number | null>(null);
 
@@ -1097,7 +1297,9 @@ export function ProductGrid({
         const detailHref = detailStoreSlug
           ? buildStoreProductHref(detailStoreSlug, product.slug, storeBaseHref)
           : "/products";
-        const createdTime = product.createdAt ? new Date(product.createdAt).getTime() : 0;
+        const createdTime = product.createdAt
+          ? new Date(product.createdAt).getTime()
+          : 0;
         const isNewProduct =
           clientNow !== null &&
           Number.isFinite(createdTime) &&
@@ -1107,7 +1309,9 @@ export function ProductGrid({
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
 
-          if (target.closest("a,button,input,textarea,select,[role='button']")) {
+          if (
+            target.closest("a,button,input,textarea,select,[role='button']")
+          ) {
             return;
           }
 
@@ -1115,191 +1319,224 @@ export function ProductGrid({
         }
 
         return (
-        <article
-          key={product.id}
-          onClick={openDetail}
-          className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
-            compactMobileCards && "max-sm:rounded-xl",
-            isLiquidGlass &&
-              "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-orange-200/80",
-          )}
-        >
-          <Link
-            href={detailHref}
-            className="block"
-            prefetch={false}
-            scroll
+          <article
+            key={product.id}
+            onClick={openDetail}
+            className={cn(
+              "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
+              compactMobileCards && "max-sm:rounded-xl",
+              isLiquidGlass &&
+                "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-orange-200/80",
+            )}
           >
-            <div
-              data-product-card-image
-              className={cn(
-                "relative aspect-[5/4] overflow-hidden bg-slate-50 dark:bg-slate-900 sm:aspect-[4/3]",
-                isLiquidGlass && "liquid-glass-product-image-shell",
-              )}
-            >
-              {product.imageUrl ? (
-                <>
-                  <OptimizedImage
-                    src={product.imageUrl}
-                    alt=""
-                    fill
-                    sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
-                    loading="lazy"
-                    decoding="async"
-                    aria-hidden="true"
-                    className="scale-110 object-cover opacity-45 blur-xl saturate-125 dark:opacity-35"
-                  />
-                  <OptimizedImage
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
-                    loading="lazy"
-                    decoding="async"
-                    className={cn(
-                      "z-[1] h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
-                    )}
-                  />
-                </>
-              ) : (
-                <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
-                  <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
-                    <ShoppingCart className="size-7 stroke-[2.4]" aria-hidden="true" />
-                  </span>
-                </div>
-              )}
-              {product.isPromoted || isNewProduct ? (
-                <div
-                  className={cn(
-                    "absolute left-1.5 top-1.5 z-10 flex items-center gap-1 overflow-hidden sm:left-2 sm:top-2 sm:gap-1.5",
-                    isolatedStoreSlug ? "right-1.5 sm:right-2" : "right-12",
-                  )}
-                >
-                  {product.isPromoted ? (
-                    <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-1 text-[9px] font-black leading-none text-slate-950 shadow-sm sm:gap-1 sm:px-2 sm:text-[11px]">
-                      <Crown className="size-2.5 sm:size-3" aria-hidden="true" />
-                      VIP
-                    </span>
-                  ) : null}
-                  {isNewProduct ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-1.5 py-1 text-[9px] font-bold leading-none text-orange-700 shadow-sm sm:px-2 sm:text-[11px]">
-                      {t("newLabel")}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-              {product.commerceType === "rental" || hasDiscount ? (
-                <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 sm:bottom-2 sm:left-2">
-                  {product.commerceType === "rental" ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full bg-orange-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
-                      İcarə
-                    </span>
-                  ) : null}
-                  {hasDiscount ? (
-                    <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
-                      -{discountPercent}%
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          </Link>
-          {!isolatedStoreSlug ? <FavoriteToggleButton
-            productId={product.id}
-            productName={product.name}
-            compact
-            className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
-          /> : null}
-          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-            <div className="mb-1.5 min-w-0 text-[9px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:mb-2 sm:text-xs">
-              {displayStoreName ? (
-                <span className="block min-w-0 truncate">{displayStoreName}</span>
-              ) : (
-                <span>{t("store")}</span>
-              )}
-            </div>
-            <h2
-              className={cn(
-                "line-clamp-2 min-h-9 break-words text-[12px] font-bold leading-[18px] tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
-                isLiquidGlass && "font-black md:group-hover:text-orange-700 md:dark:group-hover:text-orange-200",
-              )}
-            >
-              {product.name}
-            </h2>
-            <div className="mt-2 min-w-0 border-t border-slate-100 pt-2 dark:border-slate-800 sm:mt-3 sm:pt-3">
-              <p className="truncate text-base font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-lg">
-                {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
-              </p>
-              {hasDiscount ? (
-                <p className="truncate text-sm font-medium text-muted-foreground line-through">
-                  {formatAznPrice(product.priceAmount)}
-                </p>
-              ) : null}
-            </div>
-            <p
-              className={cn(
-                "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
-                product.stockTrackingEnabled === false && "hidden",
-                isOutOfStock
-                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
-                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
-              )}
-            >
-              <span className="truncate">
-                {isOutOfStock
-                  ? t("outOfStock")
-                  : t("stockWithCount", { count: product.stockQuantity })}
-              </span>
-            </p>
-            <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
-              <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-              {t("deliveryWithStore")}
-            </p>
-            <div className={cn("relative z-10 mt-auto grid gap-2", compactMobileCards ? "pt-2.5 sm:pt-3" : "pt-3")}>
+            <Link href={detailHref} className="block" prefetch={false} scroll>
               <div
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
+                data-product-card-image
+                className={cn(
+                  "relative aspect-[5/4] overflow-hidden bg-slate-50 dark:bg-slate-900 sm:aspect-[4/3]",
+                  isLiquidGlass && "liquid-glass-product-image-shell",
+                )}
               >
-                {isStoreOwner ? (
-                  <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
-                    <Link href={`/sell/product/${product.id}/edit`}>
-                      <Pencil className="mr-2 size-4" aria-hidden="true" />
-                      Redaktə et
-                    </Link>
-                  </Button>
-                ) : isSellerViewer ? null : requiresDetailSelection ? (
-                  <Button
-                    asChild
+                {product.imageUrl ? (
+                  <>
+                    <OptimizedImage
+                      src={product.imageUrl}
+                      alt=""
+                      fill
+                      sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                      loading="lazy"
+                      decoding="async"
+                      aria-hidden="true"
+                      className="scale-110 object-cover opacity-45 blur-xl saturate-125 dark:opacity-35"
+                    />
+                    <OptimizedImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                      loading="lazy"
+                      decoding="async"
+                      className={cn(
+                        "z-[1] h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
+                      )}
+                    />
+                  </>
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
+                    <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
+                      <ShoppingCart
+                        className="size-7 stroke-[2.4]"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+                )}
+                {product.isPromoted || isNewProduct ? (
+                  <div
                     className={cn(
-                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-primary px-2 text-[12px] font-bold leading-none text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
-                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
-                      isLiquidGlass &&
-                        "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25",
+                      "absolute left-1.5 top-1.5 z-10 flex items-center gap-1 overflow-hidden sm:left-2 sm:top-2 sm:gap-1.5",
+                      isolatedStoreSlug ? "right-1.5 sm:right-2" : "right-12",
                     )}
                   >
-                    <Link href={detailHref} prefetch={false} scroll className="inline-flex items-center justify-center">
-                      <PackageSearch className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
-                      {t("viewDetails")}
-                    </Link>
-                  </Button>
+                    {product.isPromoted ? (
+                      <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-1 text-[9px] font-black leading-none text-slate-950 shadow-sm sm:gap-1 sm:px-2 sm:text-[11px]">
+                        <Crown
+                          className="size-2.5 sm:size-3"
+                          aria-hidden="true"
+                        />
+                        VIP
+                      </span>
+                    ) : null}
+                    {isNewProduct ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-1.5 py-1 text-[9px] font-bold leading-none text-orange-700 shadow-sm sm:px-2 sm:text-[11px]">
+                        {t("newLabel")}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+                {product.commerceType === "rental" || hasDiscount ? (
+                  <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 sm:bottom-2 sm:left-2">
+                    {product.commerceType === "rental" ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-orange-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                        İcarə
+                      </span>
+                    ) : null}
+                    {hasDiscount ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                        -{discountPercent}%
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </Link>
+            {!isolatedStoreSlug ? (
+              <FavoriteToggleButton
+                productId={product.id}
+                productName={product.name}
+                compact
+                className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
+              />
+            ) : null}
+            <div
+              data-product-card-body
+              className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3"
+            >
+              <div className="mb-1.5 min-w-0 text-[9px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:mb-2 sm:text-xs">
+                {displayStoreName ? (
+                  <span className="block min-w-0 truncate">
+                    {displayStoreName}
+                  </span>
                 ) : (
-                  <AddToCartButton
-                    product={product}
-                    isolatedStoreSlug={isolatedStoreSlug}
-                    disabled={isOutOfStock}
-                    className={cn(
-                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-primary px-2 text-[12px] font-bold text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
-                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
-                      isLiquidGlass &&
-                        "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
-                    )}
-                  />
+                  <span>{t("store")}</span>
                 )}
               </div>
+              <h2
+                className={cn(
+                  "line-clamp-2 min-h-9 break-words text-[12px] font-bold leading-[18px] tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
+                  isLiquidGlass &&
+                    "font-black md:group-hover:text-orange-700 md:dark:group-hover:text-orange-200",
+                )}
+              >
+                {product.name}
+              </h2>
+              <div className="mt-2 min-w-0 border-t border-slate-100 pt-2 dark:border-slate-800 sm:mt-3 sm:pt-3">
+                <p className="truncate text-base font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-lg">
+                  {formatAznDiscountedPrice(
+                    product.priceAmount,
+                    product.discountAmount,
+                  )}
+                </p>
+                {hasDiscount ? (
+                  <p className="truncate text-sm font-medium text-muted-foreground line-through">
+                    {formatAznPrice(product.priceAmount)}
+                  </p>
+                ) : null}
+              </div>
+              <p
+                className={cn(
+                  "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
+                  product.stockTrackingEnabled === false && "hidden",
+                  isOutOfStock
+                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
+                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+                )}
+              >
+                <span className="truncate">
+                  {isOutOfStock
+                    ? t("outOfStock")
+                    : t("stockWithCount", { count: product.stockQuantity })}
+                </span>
+              </p>
+              <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
+                <Truck
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                {t("deliveryWithStore")}
+              </p>
+              <div
+                className={cn(
+                  "relative z-10 mt-auto grid gap-2",
+                  compactMobileCards ? "pt-2.5 sm:pt-3" : "pt-3",
+                )}
+              >
+                <div
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  {isStoreOwner ? (
+                    <Button
+                      asChild
+                      className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm"
+                    >
+                      <Link href={`/sell/product/${product.id}/edit`}>
+                        <Pencil className="mr-2 size-4" aria-hidden="true" />
+                        Redaktə et
+                      </Link>
+                    </Button>
+                  ) : isSellerViewer ? null : requiresDetailSelection ? (
+                    <Button
+                      asChild
+                      className={cn(
+                        "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-primary px-2 text-[12px] font-bold leading-none text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
+                        compactMobileCards &&
+                          "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
+                        isLiquidGlass &&
+                          "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25",
+                      )}
+                    >
+                      <Link
+                        href={detailHref}
+                        prefetch={false}
+                        scroll
+                        className="inline-flex items-center justify-center"
+                      >
+                        <PackageSearch
+                          className="mr-2 size-5 shrink-0 stroke-[2.2]"
+                          aria-hidden="true"
+                        />
+                        {t("viewDetails")}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <AddToCartButton
+                      product={product}
+                      isolatedStoreSlug={isolatedStoreSlug}
+                      disabled={isOutOfStock}
+                      className={cn(
+                        "!h-11 min-h-11 w-full rounded-xl border-0 bg-primary px-2 text-[12px] font-bold text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
+                        compactMobileCards &&
+                          "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
+                        isLiquidGlass &&
+                          "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                      )}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
         );
       })}
     </div>
@@ -1307,9 +1544,19 @@ export function ProductGrid({
 }
 
 function useInfiniteProducts({
-  initialProducts, initialCursor, initialHasMore, locale,
-  categoryId, categoryIds, storeId, searchQuery, sort, pageSize,
+  initialProducts,
+  initialCursor,
+  initialHasMore,
+  locale,
+  categoryId,
+  categoryIds,
+  storeId,
+  searchQuery,
+  sort,
+  pageSize,
+  filters,
 }: {
+  filters?: CatalogFilters;
   initialProducts: CartProduct[];
   initialCursor?: string | null;
   initialHasMore?: boolean;
@@ -1321,22 +1568,48 @@ function useInfiniteProducts({
   sort?: MarketplaceProductSort;
   pageSize?: number;
 }) {
-  const options = productQueryOptions({ locale, categoryId, categoryIds, storeId, searchQuery, sort, pageSize });
+  const options = productQueryOptions({
+    locale,
+    categoryId,
+    categoryIds,
+    storeId,
+    searchQuery,
+    sort,
+    pageSize,
+    filters,
+  });
   const key = JSON.stringify(options.queryKey);
   // Server data belongs only to the filters active when this view first mounted.
   const initialKey = useRef(key);
   const query = useInfiniteQuery({
     ...options,
-    initialData: key === initialKey.current ? {
-      pages: [{ products: initialProducts, nextCursor: initialCursor ?? null, hasMore: Boolean(initialHasMore) }],
-      pageParams: [null],
-    } : undefined,
+    initialData:
+      key === initialKey.current
+        ? {
+            pages: [
+              {
+                products: initialProducts,
+                nextCursor: initialCursor ?? null,
+                hasMore: Boolean(initialHasMore),
+              },
+            ],
+            pageParams: [null],
+          }
+        : undefined,
   });
   return {
-    products: (query.data?.pages ?? []).reduce<CartProduct[]>((all, page) => mergeProducts(all, page.products), []),
+    products: (query.data?.pages ?? []).reduce<CartProduct[]>(
+      (all, page) => mergeProducts(all, page.products),
+      [],
+    ),
     hasMore: Boolean(query.hasNextPage),
+    isError: query.isError,
+    retry: () => {
+      void query.refetch();
+    },
     isLoadingNext: query.isPending || query.isFetchingNextPage,
-    isRefreshing: query.isPending || (query.isFetching && !query.isFetchingNextPage),
+    isRefreshing:
+      query.isPending || (query.isFetching && !query.isFetchingNextPage),
     loadNext: () => {
       if (query.hasNextPage && !query.isFetching) void query.fetchNextPage();
     },
@@ -1474,6 +1747,8 @@ export function InfiniteProductGrid({
 }
 
 export function ProductMarketplace({
+  initialFilters = {},
+  initialFilterError = "",
   products,
   nextCursor,
   hasMore,
@@ -1490,11 +1765,15 @@ export function ProductMarketplace({
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const [activeSort, setActiveSort] = useState<MarketplaceProductSort>(sort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [colorFilter, setColorFilter] = useState("");
-  const [sizeFilter, setSizeFilter] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [inStockOnly, setInStockOnly] = useState(false);
+  const [colorFilter, setColorFilter] = useState(initialFilters.color ?? "");
+  const [sizeFilter, setSizeFilter] = useState(initialFilters.size ?? "");
+  const [minPrice, setMinPrice] = useState(initialFilters.minPrice ?? "");
+  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice ?? "");
+  const [inStockOnly, setInStockOnly] = useState(
+    Boolean(initialFilters.inStock),
+  );
+  const [remoteFilters, setRemoteFilters] =
+    useState<CatalogFilters>(initialFilters);
   const categoryQueryIds = useMemo(
     () => getDescendantCategoryIds(categories, activeCategoryId),
     [activeCategoryId, categories],
@@ -1512,6 +1791,7 @@ export function ProductMarketplace({
     categoryIds: categoryQueryIds,
     searchQuery,
     sort: activeSort,
+    filters: remoteFilters,
   });
   const variantFilterValues = useMemo(() => {
     const values = {
@@ -1537,49 +1817,50 @@ export function ProductMarketplace({
 
     return {
       colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
-      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+      sizes: [...values.size].sort((a, b) =>
+        a.localeCompare(b, "az", { numeric: true }),
+      ),
     };
   }, [infinite.products]);
-  const visibleProducts = useMemo(() => {
-    const min = minPrice.trim() ? Number(minPrice) : null;
-    const max = maxPrice.trim() ? Number(maxPrice) : null;
-    const invalidRange = min !== null && max !== null && min > max;
-
-    return infinite.products.filter((product) => {
-      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
-      const values = product.options?.flatMap((option) => option.values.map((value) => ({
-        type: option.type,
-        value: value.value,
-      }))) ?? [];
-
-      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
-        return false;
-      }
-
-      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
-        return false;
-      }
-
-      if (!invalidRange && min !== null && Number.isFinite(min) && finalPrice < min) {
-        return false;
-      }
-
-      if (!invalidRange && max !== null && Number.isFinite(max) && finalPrice > max) {
-        return false;
-      }
-
-      return !inStockOnly || product.stockQuantity > 0;
-    });
-  }, [colorFilter, infinite.products, inStockOnly, maxPrice, minPrice, sizeFilter]);
+  const visibleProducts = infinite.products;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const min = minPrice ? Number(minPrice) : undefined,
+        max = maxPrice ? Number(maxPrice) : undefined;
+      if (
+        (min !== undefined && (!Number.isFinite(min) || min < 0)) ||
+        (max !== undefined && (!Number.isFinite(max) || max < 0)) ||
+        (min !== undefined && max !== undefined && min > max)
+      )
+        return;
+      setRemoteFilters((current) => ({
+        ...current,
+        color: colorFilter || undefined,
+        size: sizeFilter || undefined,
+        minPrice: minPrice || undefined,
+        maxPrice: maxPrice || undefined,
+        inStock: inStockOnly,
+      }));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [colorFilter, sizeFilter, minPrice, maxPrice, inStockOnly]);
   const hasLocalFilters = Boolean(
-    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
+    colorFilter ||
+    sizeFilter ||
+    minPrice ||
+    maxPrice ||
+    inStockOnly ||
+    remoteFilters.discount ||
+    remoteFilters.vip ||
+    remoteFilters.commerceType,
   );
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
-  const priceError = minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
-    ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
-    : "";
+  const priceError =
+    minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+      ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+      : initialFilterError;
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
@@ -1609,7 +1890,11 @@ export function ProductMarketplace({
       url.searchParams.delete("category");
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
@@ -1629,8 +1914,14 @@ export function ProductMarketplace({
       url.searchParams.set("sort", nextSort);
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    window.requestAnimationFrame(() =>
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" }),
+    );
   }
 
   function resetFilters() {
@@ -1639,9 +1930,15 @@ export function ProductMarketplace({
     setMinPrice("");
     setMaxPrice("");
     setInStockOnly(false);
+    setRemoteFilters({});
+    ["discount", "vip", "commerceType"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
     selectCategory();
     selectSort("newest");
-    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) => updateFilterQuery(key, ""));
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
   }
 
   const filterBar = (
@@ -1657,31 +1954,59 @@ export function ProductMarketplace({
       inStockOnly={inStockOnly}
       priceError={priceError}
       onCategory={selectCategory}
-      onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
-      onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
-      onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
-      onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
-      onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
+      onColor={(value) => {
+        setColorFilter(value);
+        updateFilterQuery("color", value);
+      }}
+      onSize={(value) => {
+        setSizeFilter(value);
+        updateFilterQuery("size", value);
+      }}
+      onMinPrice={(value) => {
+        setMinPrice(value);
+        updateFilterQuery("minPrice", value);
+      }}
+      onMaxPrice={(value) => {
+        setMaxPrice(value);
+        updateFilterQuery("maxPrice", value);
+      }}
+      onStockOnly={(value) => {
+        setInStockOnly(value);
+        updateFilterQuery("inStock", value);
+      }}
     />
   );
 
-  const productGrid = (
-    visibleProducts.length === 0 && !infinite.hasMore && !infinite.isLoadingNext ? (
-      <EmptyState
-        className="min-h-96"
-        title={searchQuery || hasActiveProductFilters ? "Axtarışınıza uyğun məhsul tapılmadı" : labels.emptyTitle}
-        description={searchQuery || hasActiveProductFilters ? "Filtrləri təmizləyin və ya başqa axtarış sözü yoxlayın." : labels.emptyDescription}
-      />
-    ) : (
-      <ProductInfiniteGrid
-        products={visibleProducts}
-        hasMore={!hasLocalFilters && infinite.hasMore}
-        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
-        onLoadNext={infinite.loadNext}
-        productCardVariant={productCardVariant}
-        labels={{ stock: labels.stock }}
-      />
-    )
+  const productGrid = infinite.isError ? (
+    <EmptyState
+      className="min-h-80"
+      title="Məhsulları yükləmək mümkün olmadı"
+      description="Bağlantını yoxlayın və yenidən cəhd edin."
+      action={<Button onClick={infinite.retry}>Yenidən cəhd et</Button>}
+    />
+  ) : visibleProducts.length === 0 && !infinite.isLoadingNext ? (
+    <EmptyState
+      className="min-h-96"
+      title={
+        searchQuery || hasActiveProductFilters
+          ? "Axtarışınıza uyğun məhsul tapılmadı"
+          : labels.emptyTitle
+      }
+      description={
+        searchQuery || hasActiveProductFilters
+          ? "Filtrləri təmizləyin və ya başqa axtarış sözü yoxlayın."
+          : labels.emptyDescription
+      }
+    />
+  ) : (
+    <ProductInfiniteGrid
+      products={visibleProducts}
+      hasMore={infinite.hasMore}
+      isLoadingNext={infinite.isLoadingNext}
+      onLoadNext={infinite.loadNext}
+      productCardVariant={productCardVariant}
+      labels={{ stock: labels.stock }}
+    />
   );
 
   const sortControl = (
@@ -1723,7 +2048,13 @@ export function ProductMarketplace({
                 >
                   <SlidersHorizontal className="size-4" aria-hidden="true" />
                   {t("filters")}
-                  <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+                  <ChevronDown
+                    className={cn(
+                      "size-4 transition-transform",
+                      isFiltersOpen && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
                 </Button>
                 <Button
                   type="button"
@@ -1734,7 +2065,9 @@ export function ProductMarketplace({
                 >
                   {t("clearFilters")}
                 </Button>
-                <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+                <div className="min-w-[10rem] flex-1 sm:flex-none">
+                  {sortControl}
+                </div>
               </div>
             </div>
             {isFiltersOpen ? (
@@ -1751,11 +2084,26 @@ export function ProductMarketplace({
                   inStockOnly={inStockOnly}
                   priceError={priceError}
                   onCategory={selectCategory}
-                  onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
-                  onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
-                  onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
-                  onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
-                  onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
+                  onColor={(value) => {
+                    setColorFilter(value);
+                    updateFilterQuery("color", value);
+                  }}
+                  onSize={(value) => {
+                    setSizeFilter(value);
+                    updateFilterQuery("size", value);
+                  }}
+                  onMinPrice={(value) => {
+                    setMinPrice(value);
+                    updateFilterQuery("minPrice", value);
+                  }}
+                  onMaxPrice={(value) => {
+                    setMaxPrice(value);
+                    updateFilterQuery("maxPrice", value);
+                  }}
+                  onStockOnly={(value) => {
+                    setInStockOnly(value);
+                    updateFilterQuery("inStock", value);
+                  }}
                   layout="wide"
                 />
               </div>
@@ -1790,13 +2138,19 @@ export function Storefront({
   const home = useTranslations("home");
   const storefront = useTranslations("storefront");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
-  const [activeSort, setActiveSort] = useState<MarketplaceProductSort>("newest");
+  const [activeSort, setActiveSort] =
+    useState<MarketplaceProductSort>("newest");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [colorFilter, setColorFilter] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [remoteFilters, setRemoteFilters] = useState<CatalogFilters>({});
+  const categoryQueryIds = useMemo(
+    () => getDescendantCategoryIds(categories, activeCategoryId),
+    [categories, activeCategoryId],
+  );
   const [homeProductLimit, setHomeProductLimit] = useState(4);
   const [isOwnerEditing, setIsOwnerEditing] = useState(false);
   const infinite = useInfiniteProducts({
@@ -1805,6 +2159,8 @@ export function Storefront({
     initialHasMore: store.productHasMore,
     locale,
     categoryId: activeCategoryId,
+    categoryIds: categoryQueryIds,
+    filters: remoteFilters,
     storeId: store.id,
     searchQuery,
     sort: activeSort,
@@ -1813,9 +2169,14 @@ export function Storefront({
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
   const visibleProducts = useMemo(
-    () => infinite.products
-      .filter((product) => product.storeId === store.id)
-      .sort((left, right) => Number(Boolean(right.isPromoted)) - Number(Boolean(left.isPromoted))),
+    () =>
+      infinite.products
+        .filter((product) => product.storeId === store.id)
+        .sort(
+          (left, right) =>
+            Number(Boolean(right.isPromoted)) -
+            Number(Boolean(left.isPromoted)),
+        ),
     [infinite.products, store.id],
   );
   const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
@@ -1843,49 +2204,42 @@ export function Storefront({
 
     return {
       colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
-      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+      sizes: [...values.size].sort((a, b) =>
+        a.localeCompare(b, "az", { numeric: true }),
+      ),
     };
   }, [infinite.products]);
-  const filteredVisibleProducts = useMemo(() => {
-    const min = minPrice.trim() ? Number(minPrice) : null;
-    const max = maxPrice.trim() ? Number(maxPrice) : null;
-    const invalidRange = min !== null && max !== null && min > max;
-
-    return visibleProducts.filter((product) => {
-      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
-      const values = product.options?.flatMap((option) => option.values.map((value) => ({
-        type: option.type,
-        value: value.value,
-      }))) ?? [];
-
-      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
-        return false;
-      }
-
-      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
-        return false;
-      }
-
-      if (!invalidRange && min !== null && Number.isFinite(min) && finalPrice < min) {
-        return false;
-      }
-
-      if (!invalidRange && max !== null && Number.isFinite(max) && finalPrice > max) {
-        return false;
-      }
-
-      return !inStockOnly || product.stockQuantity > 0;
-    });
-  }, [colorFilter, inStockOnly, maxPrice, minPrice, sizeFilter, visibleProducts]);
+  const filteredVisibleProducts = visibleProducts;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const min = minPrice ? Number(minPrice) : undefined,
+        max = maxPrice ? Number(maxPrice) : undefined;
+      if (
+        (min !== undefined && (!Number.isFinite(min) || min < 0)) ||
+        (max !== undefined && (!Number.isFinite(max) || max < 0)) ||
+        (min !== undefined && max !== undefined && min > max)
+      )
+        return;
+      setRemoteFilters({
+        color: colorFilter || undefined,
+        size: sizeFilter || undefined,
+        minPrice: minPrice || undefined,
+        maxPrice: maxPrice || undefined,
+        inStock: inStockOnly,
+      });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [colorFilter, sizeFilter, minPrice, maxPrice, inStockOnly]);
   const hasLocalFilters = Boolean(
     colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
   );
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
-  const storefrontPriceError = minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
-    ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
-    : "";
+  const storefrontPriceError =
+    minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+      ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+      : "";
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
@@ -1905,12 +2259,17 @@ export function Storefront({
   );
   const isCustomStorefront = !legacyLayout && !isMarketplaceStoreHref;
   const legacyCategories = useMemo(
-    () => categories.filter((category) => storeProductCategoryIds.has(category.id)),
+    () =>
+      categories.filter((category) => storeProductCategoryIds.has(category.id)),
     [categories, storeProductCategoryIds],
   );
   const sortedStoreCategories = useMemo(() => {
-    const available = categories.filter((category) => storeProductCategoryIds.has(category.id));
-    const featuredOrder = new Map((store.featuredCategoryIds ?? []).map((id, index) => [id, index]));
+    const available = categories.filter((category) =>
+      storeProductCategoryIds.has(category.id),
+    );
+    const featuredOrder = new Map(
+      (store.featuredCategoryIds ?? []).map((id, index) => [id, index]),
+    );
     return available.sort((a, b) => {
       const aOrder = featuredOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
       const bOrder = featuredOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
@@ -1922,16 +2281,24 @@ export function Storefront({
   );
   const heroCategories = sortedStoreCategories.slice(0, 5);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
-  const storeContactPhone = store.whatsappPhone || store.phone ||
+  const storeContactPhone =
+    store.whatsappPhone ||
+    store.phone ||
     locations.find((location) => location.isActive && location.phone)?.phone;
-  const selectedFeaturedCategories = (store.featuredCategoryIds?.length ?? 0) > 0
-    ? sortedStoreCategories.filter((category) => store.featuredCategoryIds?.includes(category.id))
-    : sortedStoreCategories;
+  const selectedFeaturedCategories =
+    (store.featuredCategoryIds?.length ?? 0) > 0
+      ? sortedStoreCategories.filter((category) =>
+          store.featuredCategoryIds?.includes(category.id),
+        )
+      : sortedStoreCategories;
   const customHeroCategories = selectedFeaturedCategories.slice(0, 4);
   const customHeroDescription = getDisplayStoreDescription(store);
   const aboutContent = getStoreAboutContent(store);
 
-  function selectCategory(category?: CategoryOption, options?: { scrollToProducts?: boolean }) {
+  function selectCategory(
+    category?: CategoryOption,
+    options?: { scrollToProducts?: boolean },
+  ) {
     setActiveCategoryId(category?.id);
 
     if (typeof window === "undefined") {
@@ -1946,7 +2313,11 @@ export function Storefront({
       url.searchParams.delete("category");
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
     if (options?.scrollToProducts ?? true) {
       scheduleScrollToPageSection("products");
     }
@@ -1967,7 +2338,11 @@ export function Storefront({
       url.searchParams.set("sort", nextSort);
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }
 
   function resetFilters() {
@@ -1978,7 +2353,9 @@ export function Storefront({
     setInStockOnly(false);
     selectCategory();
     selectSort("newest");
-    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) => updateFilterQuery(key, ""));
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
   }
 
   function scrollToSection(sectionId: string) {
@@ -1998,11 +2375,26 @@ export function Storefront({
       inStockOnly={inStockOnly}
       priceError={storefrontPriceError}
       onCategory={selectCategory}
-      onColor={(value) => { setColorFilter(value); updateFilterQuery("color", value); }}
-      onSize={(value) => { setSizeFilter(value); updateFilterQuery("size", value); }}
-      onMinPrice={(value) => { setMinPrice(value); updateFilterQuery("minPrice", value); }}
-      onMaxPrice={(value) => { setMaxPrice(value); updateFilterQuery("maxPrice", value); }}
-      onStockOnly={(value) => { setInStockOnly(value); updateFilterQuery("inStock", value); }}
+      onColor={(value) => {
+        setColorFilter(value);
+        updateFilterQuery("color", value);
+      }}
+      onSize={(value) => {
+        setSizeFilter(value);
+        updateFilterQuery("size", value);
+      }}
+      onMinPrice={(value) => {
+        setMinPrice(value);
+        updateFilterQuery("minPrice", value);
+      }}
+      onMaxPrice={(value) => {
+        setMaxPrice(value);
+        updateFilterQuery("maxPrice", value);
+      }}
+      onStockOnly={(value) => {
+        setInStockOnly(value);
+        updateFilterQuery("inStock", value);
+      }}
       layout="wide"
     />
   );
@@ -2023,7 +2415,10 @@ export function Storefront({
   );
 
   const productsSection = (
-    <section id="products" className="mt-4 min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8">
+    <section
+      id="products"
+      className="mt-4 min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8"
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="break-words text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
           {t("storeProducts")}
@@ -2039,7 +2434,13 @@ export function Storefront({
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             {t("filters")}
-            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+            <ChevronDown
+              className={cn(
+                "size-4 transition-transform",
+                isFiltersOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
           </Button>
           <Button
             type="button"
@@ -2071,8 +2472,8 @@ export function Storefront({
         <div className="min-w-0">
           <ProductInfiniteGrid
             products={filteredVisibleProducts}
-            hasMore={!hasLocalFilters && infinite.hasMore}
-            isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
+            hasMore={infinite.hasMore}
+            isLoadingNext={infinite.isLoadingNext}
             onLoadNext={infinite.loadNext}
             storeSlug={store.slug}
             storeName={store.name}
@@ -2101,7 +2502,9 @@ export function Storefront({
         <div className="mb-3 flex min-w-0 items-center gap-3">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-xl">
-              {legacyLayout ? home("categories") : storefront("featuredCategories")}
+              {legacyLayout
+                ? home("categories")
+                : storefront("featuredCategories")}
             </h2>
           </div>
         </div>
@@ -2110,7 +2513,8 @@ export function Storefront({
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
             const Icon = getCategoryIcon(category);
-            const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
+            const iconStyle =
+              CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
 
             return (
               <button
@@ -2119,13 +2523,21 @@ export function Storefront({
                 className={cn(
                   "group flex min-h-[52px] w-[164px] min-w-0 shrink-0 snap-start items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-none transition duration-200 md:hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100 sm:w-auto",
                   !hasProducts && "text-muted-foreground opacity-70",
-                  isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
+                  isSelected &&
+                    "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
                 onClick={() =>
-                  selectCategory(category, { scrollToProducts: !isCustomStorefront })
+                  selectCategory(category, {
+                    scrollToProducts: !isCustomStorefront,
+                  })
                 }
               >
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center rounded-lg ring-1",
+                    iconStyle,
+                  )}
+                >
                   <Icon className="size-4 stroke-[2.1]" aria-hidden="true" />
                 </span>
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
@@ -2142,19 +2554,23 @@ export function Storefront({
     ) : null;
 
   const modernProductsSection = (
-      <section
-        id="products"
-        className={cn(
-          "min-w-0 scroll-mt-28",
-          productsOnly
-            ? "rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-[24px] sm:p-6 lg:p-8"
-            :
-          isCustomStorefront
+    <section
+      id="products"
+      className={cn(
+        "min-w-0 scroll-mt-28",
+        productsOnly
+          ? "rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-[24px] sm:p-6 lg:p-8"
+          : isCustomStorefront
             ? "border-0 bg-transparent px-0 py-2 shadow-none"
             : "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6",
+      )}
+    >
+      <div
+        className={cn(
+          "grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between",
+          isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5",
         )}
       >
-      <div className={cn("grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between", isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5")}>
         <div className="min-w-0">
           {productsOnly ? (
             <h1 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
@@ -2187,7 +2603,13 @@ export function Storefront({
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             {t("filters")}
-            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+            <ChevronDown
+              className={cn(
+                "size-4 transition-transform",
+                isFiltersOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
           </Button>
           <Button
             type="button"
@@ -2200,41 +2622,61 @@ export function Storefront({
           >
             {t("clearFilters")}
           </Button>
-          <div className="col-span-2 min-w-0 sm:col-auto sm:min-w-[10rem]">{sortControl}</div>
+          <div className="col-span-2 min-w-0 sm:col-auto sm:min-w-[10rem]">
+            {sortControl}
+          </div>
         </div>
       </div>
       {isFiltersOpen ? (
-        <div id="storefront-modern-filters" className="relative z-20 mb-5 w-full">
+        <div
+          id="storefront-modern-filters"
+          className="relative z-20 mb-5 w-full"
+        >
           {filterBar}
         </div>
       ) : null}
       {infinite.isRefreshing ? (
-        <div className="flex min-h-64 items-center justify-center" aria-live="polite">
+        <div
+          className="flex min-h-64 items-center justify-center"
+          aria-live="polite"
+        >
           <GlobalLoader />
         </div>
-      ) : <ProductInfiniteGrid
-        products={productsOnly ? filteredVisibleProducts : filteredVisibleProducts.slice(0, homeProductLimit)}
-        hasMore={!hasLocalFilters && (productsOnly ? infinite.hasMore : homeProductLimit < filteredVisibleProducts.length || infinite.hasMore)}
-        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
-        onLoadNext={() => {
-          if (productsOnly) {
-            infinite.loadNext();
-            return;
+      ) : (
+        <ProductInfiniteGrid
+          products={
+            productsOnly
+              ? filteredVisibleProducts
+              : filteredVisibleProducts.slice(0, homeProductLimit)
           }
-          setHomeProductLimit((current) => current + 4);
-          if (homeProductLimit >= filteredVisibleProducts.length) infinite.loadNext();
-        }}
-        storeSlug={store.slug}
-        storeName={store.name}
-        storeBaseHref={storeBaseHref}
-        productCardVariant={productCardVariant}
-        labels={{ stock: labels.stock }}
-        isStoreOwner={isStoreOwner && isOwnerEditing}
-        sellerOwnsStore={isStoreOwner}
-        forceMobileTwoColumns
-        compactMobileCards={isCustomStorefront}
-        isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
-      />}
+          hasMore={
+            productsOnly
+              ? infinite.hasMore
+              : homeProductLimit < filteredVisibleProducts.length ||
+                infinite.hasMore
+          }
+          isLoadingNext={infinite.isLoadingNext}
+          onLoadNext={() => {
+            if (productsOnly) {
+              infinite.loadNext();
+              return;
+            }
+            setHomeProductLimit((current) => current + 4);
+            if (homeProductLimit >= filteredVisibleProducts.length)
+              infinite.loadNext();
+          }}
+          storeSlug={store.slug}
+          storeName={store.name}
+          storeBaseHref={storeBaseHref}
+          productCardVariant={productCardVariant}
+          labels={{ stock: labels.stock }}
+          isStoreOwner={isStoreOwner && isOwnerEditing}
+          sellerOwnsStore={isStoreOwner}
+          forceMobileTwoColumns
+          compactMobileCards={isCustomStorefront}
+          isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
+        />
+      )}
     </section>
   );
 
@@ -2274,49 +2716,64 @@ export function Storefront({
     </div>
   ) : null;
 
-  const customCategorySection = sortedStoreCategories.length > 0 ? (
-    <section id="store-categories" className="min-w-0 scroll-mt-28 py-2 sm:py-4">
-      <div className="mb-4 flex items-end justify-between gap-4 sm:mb-6">
-        <div className="min-w-0">
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
-            {storefront("store")}
-          </p>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
-            {storefront("featuredCategories")}
-          </h2>
+  const customCategorySection =
+    sortedStoreCategories.length > 0 ? (
+      <section
+        id="store-categories"
+        className="min-w-0 scroll-mt-28 py-2 sm:py-4"
+      >
+        <div className="mb-4 flex items-end justify-between gap-4 sm:mb-6">
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
+              {storefront("store")}
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+              {storefront("featuredCategories")}
+            </h2>
+          </div>
         </div>
-      </div>
-      <div className="-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
-        {sortedStoreCategories.map((category, index) => {
-          const Icon = getCategoryIcon(category);
-          const hasProducts = storeProductCategoryIds.has(category.id);
+        <div className="-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
+          {sortedStoreCategories.map((category, index) => {
+            const Icon = getCategoryIcon(category);
+            const hasProducts = storeProductCategoryIds.has(category.id);
 
-          return (
-            <button
-              key={category.id}
-              type="button"
-              className={cn(
-                "group relative min-h-[116px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[18px] border border-slate-200 bg-white p-3.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900 sm:min-h-[132px] sm:w-auto sm:p-4",
-                !hasProducts && "opacity-65",
-                activeCategoryId === category.id && "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30",
-              )}
-              onClick={() => selectCategory(category, { scrollToProducts: true })}
-            >
-              <span className={cn("grid size-10 place-items-center rounded-xl ring-1 sm:size-11 sm:rounded-2xl", CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length])}>
-                <Icon className="size-5" aria-hidden="true" />
-              </span>
-              <span className="mt-4 flex items-end justify-between gap-2 sm:mt-5">
-                <span className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 dark:text-white">
-                  {category.name}
+            return (
+              <button
+                key={category.id}
+                type="button"
+                className={cn(
+                  "group relative min-h-[116px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[18px] border border-slate-200 bg-white p-3.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900 sm:min-h-[132px] sm:w-auto sm:p-4",
+                  !hasProducts && "opacity-65",
+                  activeCategoryId === category.id &&
+                    "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30",
+                )}
+                onClick={() =>
+                  selectCategory(category, { scrollToProducts: true })
+                }
+              >
+                <span
+                  className={cn(
+                    "grid size-10 place-items-center rounded-xl ring-1 sm:size-11 sm:rounded-2xl",
+                    CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length],
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
                 </span>
-                <ArrowRight className="size-4 shrink-0 text-slate-400 transition-transform md:group-hover:translate-x-1 md:group-hover:text-blue-600" aria-hidden="true" />
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  ) : null;
+                <span className="mt-4 flex items-end justify-between gap-2 sm:mt-5">
+                  <span className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 dark:text-white">
+                    {category.name}
+                  </span>
+                  <ArrowRight
+                    className="size-4 shrink-0 text-slate-400 transition-transform md:group-hover:translate-x-1 md:group-hover:text-blue-600"
+                    aria-hidden="true"
+                  />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    ) : null;
 
   if (!isCustomStorefront) {
     return (
@@ -2334,13 +2791,22 @@ export function Storefront({
                 <div className="relative h-[190px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
                   <StoreWhatsAppButton phone={storeContactPhone} />
-                  <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
+                  <div
+                    className="absolute inset-0 bg-slate-950/55"
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div className="absolute inset-x-0 bottom-0 z-10 p-2.5 sm:p-6 lg:p-8">
                   <div className="grid min-w-0 gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
                     <div className="flex min-w-0 items-end gap-3 sm:gap-5">
-                      <StoreLogo store={store} className="size-16 shrink-0 rounded-xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 sm:rounded-2xl lg:size-28" />
+                      <StoreLogo
+                        store={store}
+                        className="size-16 shrink-0 rounded-xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 sm:rounded-2xl lg:size-28"
+                      />
                       <div className="min-w-0 pb-1 text-white">
                         <p className="mb-2 hidden text-xs font-semibold uppercase tracking-[0.18em] text-white/70 sm:block">
                           {storefront("marketplaceStore")}
@@ -2375,7 +2841,10 @@ export function Storefront({
                             onClick={() => scrollToSection("about")}
                           >
                             {storefront("learnAboutStore")}
-                            <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                            <ArrowRight
+                              className="ml-2 size-4"
+                              aria-hidden="true"
+                            />
                           </Button>
                         </div>
                       ) : null}
@@ -2408,15 +2877,15 @@ export function Storefront({
           {aboutSection}
           {modernProductsSection}
           <div id="store-info">
-              <PublicStoreLocationSection
-                locations={locations}
-                logoUrl={store.logoUrl}
-                storeName={store.name}
-                socialLinks={{
-                  instagram: store.socialInstagram ?? undefined,
-                  tiktok: store.socialTiktok ?? undefined,
-                }}
-              />
+            <PublicStoreLocationSection
+              locations={locations}
+              logoUrl={store.logoUrl}
+              storeName={store.name}
+              socialLinks={{
+                instagram: store.socialInstagram ?? undefined,
+                tiktok: store.socialTiktok ?? undefined,
+              }}
+            />
           </div>
         </div>
         <SiteFooter {...footer} />
@@ -2427,30 +2896,43 @@ export function Storefront({
   if (productsOnly || contactOnly) {
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
-        <div className={cn(
-          "mx-auto w-full max-w-[1440px] pb-5 md:pb-8 lg:px-8",
-          productsOnly
-            ? "px-2 pt-2 sm:px-6 sm:pt-4 md:pt-6"
-            : "px-4 pt-20 sm:px-6 sm:pt-14 md:pt-12",
-        )}>
+        <div
+          className={cn(
+            "mx-auto w-full max-w-[1440px] pb-5 md:pb-8 lg:px-8",
+            productsOnly
+              ? "px-2 pt-2 sm:px-6 sm:pt-4 md:pt-6"
+              : "px-4 pt-20 sm:px-6 sm:pt-14 md:pt-12",
+          )}
+        >
           {productsOnly ? ownerEditControl : null}
           {productsOnly && isStoreOwner && isOwnerEditing ? (
             <div className="mb-5">
               <StoreBrandingQuickEdit store={store} />
             </div>
           ) : null}
-          {productsOnly ? modernProductsSection : (
+          {productsOnly ? (
+            modernProductsSection
+          ) : (
             <PublicStoreLocationSection
               locations={locations}
               logoUrl={store.logoUrl}
               storeName={store.name}
               isolated
-              socialLinks={{ instagram: store.socialInstagram ?? undefined, tiktok: store.socialTiktok ?? undefined }}
+              socialLinks={{
+                instagram: store.socialInstagram ?? undefined,
+                tiktok: store.socialTiktok ?? undefined,
+              }}
             />
           )}
         </div>
         <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-        <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront sellerOwnsStore={isStoreOwner} />
+        <MobileBottomNav
+          storeHomeHref={storeHomeHref}
+          storeSubdomainSlug={storeSubdomainSlug}
+          storeId={store.id}
+          isolatedStorefront
+          sellerOwnsStore={isStoreOwner}
+        />
       </main>
     );
   }
@@ -2465,10 +2947,16 @@ export function Storefront({
             <StoreWhatsAppButton phone={storeContactPhone} />
           </div>
         ) : (
-          <section data-store-search-sentinel className="-mx-4 flex min-w-0 flex-col sm:mx-0">
+          <section
+            data-store-search-sentinel
+            className="-mx-4 flex min-w-0 flex-col sm:mx-0"
+          >
             <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[430px] lg:grid-cols-[0.9fr_1.1fr]">
               <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-12 lg:py-10 xl:px-14">
-                <StoreLogo store={store} className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-5 sm:size-20 lg:mb-6 lg:size-20" />
+                <StoreLogo
+                  store={store}
+                  className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-5 sm:size-20 lg:mb-6 lg:size-20"
+                />
                 <h1 className="max-w-xl text-pretty text-2xl font-black leading-[1.18] tracking-[-0.025em] text-slate-950 dark:text-white sm:text-4xl sm:leading-[1.16] lg:text-[42px] lg:leading-[1.16]">
                   {store.heroTitle?.trim() || storefront("heroTitle")}
                 </h1>
@@ -2501,7 +2989,10 @@ export function Storefront({
 
               <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[430px]">
                 <StoreHeroCover store={store} isolated />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent" aria-hidden="true" />
+                <div
+                  className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent"
+                  aria-hidden="true"
+                />
                 <StoreWhatsAppButton phone={storeContactPhone} />
                 {customHeroCategories.length > 0 ? (
                   <div className="absolute inset-x-4 bottom-4 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inset-x-7 sm:bottom-7">
@@ -2510,7 +3001,9 @@ export function Storefront({
                         key={category.id}
                         type="button"
                         className="h-9 shrink-0 bg-white px-3.5 text-[11px] font-bold text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition md:hover:bg-blue-600 md:hover:text-white sm:h-10 sm:px-4 sm:text-xs"
-                        onClick={() => selectCategory(category, { scrollToProducts: true })}
+                        onClick={() =>
+                          selectCategory(category, { scrollToProducts: true })
+                        }
                       >
                         {category.name}
                       </button>
@@ -2542,20 +3035,26 @@ export function Storefront({
         {customCategorySection}
         {aboutSection}
         <div id="contact" className="scroll-mt-28">
-            <PublicStoreLocationSection
-              locations={locations}
-              logoUrl={store.logoUrl}
-              storeName={store.name}
-              isolated
-              socialLinks={{
-                instagram: store.socialInstagram ?? undefined,
-                tiktok: store.socialTiktok ?? undefined,
-              }}
-            />
+          <PublicStoreLocationSection
+            locations={locations}
+            logoUrl={store.logoUrl}
+            storeName={store.name}
+            isolated
+            socialLinks={{
+              instagram: store.socialInstagram ?? undefined,
+              tiktok: store.socialTiktok ?? undefined,
+            }}
+          />
         </div>
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} storeId={store.id} isolatedStorefront={isCustomStorefront} sellerOwnsStore={isStoreOwner} />
+      <MobileBottomNav
+        storeHomeHref={storeHomeHref}
+        storeSubdomainSlug={storeSubdomainSlug}
+        storeId={store.id}
+        isolatedStorefront={isCustomStorefront}
+        sellerOwnsStore={isStoreOwner}
+      />
     </main>
   );
 }

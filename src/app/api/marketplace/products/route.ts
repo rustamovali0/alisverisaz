@@ -1,3 +1,4 @@
+import { parseCatalogFilters } from "@/lib/catalog/filters";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getMarketplaceProductPage } from "@/lib/cart/data";
@@ -29,15 +30,19 @@ export async function GET(request: NextRequest) {
   const limit = clampLimit(searchParams.get("limit"));
 
   try {
-    const page = await getMarketplaceProductPage(searchParams.get("locale") ?? "az", {
-      categoryId: cleanParam(searchParams.get("categoryId"), 80),
-      categoryIds: cleanParamList(searchParams.get("categoryIds")),
-      searchQuery: cleanParam(searchParams.get("q"), 120),
-      storeId: cleanParam(searchParams.get("storeId"), 80),
-      cursor: cleanParam(searchParams.get("cursor"), 200) ?? null,
-      sort: cleanParam(searchParams.get("sort"), 40) ?? null,
-      limit,
-    });
+    const page = await getMarketplaceProductPage(
+      searchParams.get("locale") ?? "az",
+      {
+        filters: parseCatalogFilters(searchParams),
+        categoryId: cleanParam(searchParams.get("categoryId"), 80),
+        categoryIds: cleanParamList(searchParams.get("categoryIds")),
+        searchQuery: cleanParam(searchParams.get("q"), 120),
+        storeId: cleanParam(searchParams.get("storeId"), 80),
+        cursor: cleanParam(searchParams.get("cursor"), 200) ?? null,
+        sort: cleanParam(searchParams.get("sort"), 40) ?? null,
+        limit,
+      },
+    );
 
     return NextResponse.json(page, {
       headers: {

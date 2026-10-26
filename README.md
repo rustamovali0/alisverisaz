@@ -1,3 +1,11 @@
+## Live marketplace design integration
+
+The production homepage now runs inside the existing Next.js marketplace. The approved green storefront uses real product/category/store data, existing Supabase authentication, customer/seller/RAdmin routes, cart and checkout actions, messages, reviews, notifications and current payment methods. The Vite `frontend/` directory is retained as the approved visual prototype; it is not the production commerce runtime.
+
+Deploy the standalone Next build with `deploy/live-marketplace-vds.config.cjs`, a server-local `app.env`, `.next/static/`, `public/`, and Linux-compatible Sharp packages. The process binds `::ffff:127.0.0.1:3004`. Verify a staging instance using `QA_HOST=alisveris.az node deploy/verify-live-marketplace.mjs http://127.0.0.1:3104`. Keep the previous release and PM2 configuration for rollback. The older gateway documentation below describes the previous deployment.
+
+Catalog filters are evaluated on the server before pagination, with globally prioritized active VIP products and prices after discount. Compact public candidate records are read in batches and cached for 30 seconds; only selected product cards are hydrated. At larger catalog sizes this candidate stage should move into an indexed database query/RPC. No database migration is required for this UI integration.
+
 # alisveris.az
 
 Azərbaycanda məhsulların, mağazaların və sifarişlərin idarə edilməsi üçün marketplace.

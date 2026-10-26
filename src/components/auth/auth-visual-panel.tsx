@@ -11,7 +11,7 @@ const visualCopy = {
   login: {
     title: "Alış-veriş dünyasına qoşul",
     description:
-      "Minlərlə məhsulu kəşf et, öz mağazanı yarat və alıcılarla birbaşa əlaqə saxla.",
+      "Mağazaların məhsullarını kəşf et, öz mağazanı yarat və alıcılarla birbaşa əlaqə saxla.",
   },
   register: {
     title: "Mağazanı bu gün yarat",
@@ -31,14 +31,14 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   return (
     <aside className="relative h-full min-h-52 overflow-hidden bg-slate-950 lg:min-h-[560px]">
       <Image
-        src="/auth/auth-marketplace-panel.webp"
+        src="/marketplace/images/hero.jpg"
         alt="Alisveris marketplace auth banner"
         fill
         quality={70}
         sizes="(min-width: 1280px) 560px, 100vw"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(15,23,42,0.20),rgba(15,23,42,0.92))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(5,73,47,0.20),rgba(5,52,35,0.94))]" />
       <div className="absolute right-6 top-6 hidden rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md sm:block">
         Alış-veriş daha rahat
       </div>

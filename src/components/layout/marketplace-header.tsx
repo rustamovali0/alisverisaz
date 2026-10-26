@@ -1,36 +1,38 @@
 "use client";
-
+import { useEffect, useRef, useState } from "react";
 import {
-  BadgePlus,
+  ArrowRight,
+  ArrowUpRight,
+  ChevronDown,
+  ChevronRight,
+  Crown,
+  Grid2X2,
   Heart,
   HelpCircle,
-  Info,
   Menu,
-  MessageCircle,
-  Search,
-  ShoppingCart,
+  ShoppingBag,
+  Store,
+  Truck,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
-
 import { HeaderAccountActions } from "@/components/auth/header-account-actions";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
-import { InstagramBrandIcon, WhatsAppIcon } from "@/components/icons/social-icons";
+import { MarketplaceBrand } from "@/components/layout/marketplace-brand";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { getCategoryIcon } from "@/components/categories/category-icons";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
 import type { AuthRole } from "@/lib/auth/types";
-import { Link, usePathname } from "@/i18n/navigation";
 import type { MarketplaceStore } from "@/lib/cart/types";
 import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
-import { cn } from "@/lib/utils";
 
 type MarketplaceHeaderProps = {
+  storeId?: string;
+  isolatedStorefront?: boolean;
   siteName?: string;
   logoUrl?: string;
   darkLogoUrl?: string;
@@ -43,8 +45,6 @@ type MarketplaceHeaderProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
-  storeId?: string;
-  isolatedStorefront?: boolean;
   brandHomeHref?: string;
   productsHref?: string;
   searchStoreSlug?: string | null;
@@ -53,644 +53,328 @@ type MarketplaceHeaderProps = {
   instagramUrl?: string;
   whatsappUrl?: string;
 };
-
-const CART_KEY = "alisveris_cart";
-
-function formatBrandName(value?: string) {
-  if (!value || value.toLocaleLowerCase("az-AZ").includes("alisveris")) {
-    return "Alışveriş";
-  }
-
-  return value;
-}
-
-function readCartCount(storeId?: string) {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-
+function cartCount(storeId?: string) {
   try {
-    const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
-      quantity?: number;
-      storeId?: string;
-    }>;
-
-    return items
-      .filter((item) => !storeId || item.storeId === storeId)
-      .reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+    const value = JSON.parse(localStorage.getItem("alisveris_cart") || "[]");
+    return Array.isArray(value)
+      ? value
+          .filter((item) => !storeId || item.storeId === storeId)
+          .reduce(
+            (sum, item) => sum + Math.max(0, Number(item.quantity) || 0),
+            0,
+          )
+      : 0;
   } catch {
     return 0;
   }
 }
-
-function normalizeInstagramHref(value?: string) {
-  const trimmed = value?.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-
-  return `https://instagram.com/${trimmed.replace(/^@/, "")}`;
-}
-
-function normalizeWhatsappHref(value?: string) {
-  const trimmed = value?.trim();
-
-  if (!trimmed) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed;
-  }
-
-  const phone = trimmed.replace(/[^\d]/g, "");
-
-  return phone ? `https://wa.me/${phone}` : "";
-}
-
 export function MarketplaceHeader({
-  siteName = "Alışveriş",
+  siteName = "alışveriş",
   logoUrl,
-  darkLogoUrl,
   stores = [],
   categories = [],
   searchDefaultValue,
-  showMobileSearch = false,
-  compactMobileSearch = false,
   showBottomNav = true,
   mobileNavbarVariant,
   storeSubdomainSlug,
   storeHomeHref = "/",
-  storeId,
-  isolatedStorefront = false,
   brandHomeHref = storeHomeHref,
   productsHref = "/products",
   searchStoreSlug,
   initialRole,
-  sticky = true,
-  instagramUrl,
-  whatsappUrl,
+  storeId,
+  isolatedStorefront = false,
 }: MarketplaceHeaderProps) {
-  const nav = useTranslations("nav");
-  const common = useTranslations("common");
-  const isIsolatedStorefront = isolatedStorefront || Boolean(storeSubdomainSlug);
-  const displaySiteName = isIsolatedStorefront ? siteName : formatBrandName(siteName);
-  const isolatedBaseHref = storeHomeHref === "/" ? "" : storeHomeHref;
-  const cartHref = isIsolatedStorefront ? `${isolatedBaseHref}/cart` : "/cart";
   const pathname = usePathname();
   const { profile, isResolved } = useClientAuthProfileState();
-  const isMarketplaceStoreLanding =
-    /^\/store\/[^/]+\/?$/.test(pathname) && !pathname.startsWith("/store/dashboard");
-  const isHomePage =
-    pathname === storeHomeHref ||
-    (Boolean(storeSubdomainSlug) && pathname === `/${storeSubdomainSlug}`);
-  const hasInlinePrimarySearch = isHomePage || isMarketplaceStoreLanding;
-  const resolvedRole =
-    !isResolved && initialRole
-      ? initialRole
-      : profile.status === "authenticated"
-        ? profile.role
-        : null;
-  const isSeller = resolvedRole === "seller";
-  const currentStoreSlug = searchStoreSlug ?? storeSubdomainSlug ?? null;
-  const sellerOwnsCurrentStore =
+  const role = isResolved
+    ? profile.status === "authenticated"
+      ? profile.role
+      : null
+    : (initialRole ?? null);
+  const isSeller = role === "seller";
+  const ownsStore =
     isSeller &&
-    (!isIsolatedStorefront ||
-      !currentStoreSlug ||
-      (profile.status === "authenticated" && profile.storeSlug === currentStoreSlug));
-  const isGuest = resolvedRole === null;
-  const isSellerDashboard =
-    pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
-  const shouldSuppressSearch =
-    isSellerDashboard ||
-    pathname.startsWith("/sell") ||
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/seller") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/radmin") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/forgot-password");
-  const isProductsActive = pathname === productsHref || pathname.startsWith(`${productsHref}/`);
-  const isAboutActive = pathname.startsWith("/about");
-  const [isHomeSearchVisible, setIsHomeSearchVisible] = useState(hasInlinePrimarySearch);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const instagramHref = normalizeInstagramHref(instagramUrl);
-  const whatsappHref = normalizeWhatsappHref(whatsappUrl);
-  const commerceUtilityButtonClass =
-    "group inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:bg-orange-50 hover:text-orange-600 dark:border-transparent dark:text-white dark:hover:bg-orange-500/10 dark:hover:text-orange-300 [&_svg]:!size-6";
-  const mobileUtilityButtonClass =
-    "group inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-6";
-  const commerceUtilityIconClass =
-    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
-  const sellerCommerceIconClass =
-    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
-  const mobileCommerceIconClass =
-    "!size-6 min-h-6 min-w-6 stroke-[2.15] transition-transform duration-200";
-
+    profile.status === "authenticated" &&
+    (profile.storeSlug === searchStoreSlug ||
+      stores.some((s) => s.id === storeId && s.ownerId === profile.userId));
+  const hideCart = isSeller && (!isolatedStorefront || ownsStore);
+  const scopedProducts = isolatedStorefront
+    ? `${storeHomeHref === "/" ? "" : storeHomeHref}/products`
+    : "/products";
+  const categoryHref = (slug: string) =>
+    `${scopedProducts}?category=${encodeURIComponent(slug)}`;
+  const [count, setCount] = useState(0);
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!hasInlinePrimarySearch) {
-      setIsHomeSearchVisible(false);
-      return;
-    }
-
-    let observer: IntersectionObserver | null = null;
-    let removeScrollFallback: (() => void) | null = null;
-    const frame = window.requestAnimationFrame(() => {
-      const sentinel = document.querySelector(
-        "[data-home-search-sentinel], [data-store-search-sentinel]",
-      );
-      if (!sentinel) {
-        const updateFallback = () => setIsHomeSearchVisible(window.scrollY < 180);
-        updateFallback();
-        window.addEventListener("scroll", updateFallback, { passive: true });
-        removeScrollFallback = () => window.removeEventListener("scroll", updateFallback);
-        return;
-      }
-
-      observer = new IntersectionObserver(
-        ([entry]) => setIsHomeSearchVisible(entry?.isIntersecting ?? false),
-        { rootMargin: "-74px 0px 0px 0px", threshold: 0 },
-      );
-      observer.observe(sentinel);
-    });
-
+    const sync = () =>
+      setCount(cartCount(isolatedStorefront ? storeId : undefined));
+    sync();
+    window.addEventListener("storage", sync);
+    window.addEventListener("alisveris-cart-updated", sync);
     return () => {
-      window.cancelAnimationFrame(frame);
-      observer?.disconnect();
-      removeScrollFallback?.();
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("alisveris-cart-updated", sync);
     };
-  }, [hasInlinePrimarySearch, pathname]);
-
+  }, [storeId, isolatedStorefront]);
   useEffect(() => {
-    function syncCartCount() {
-      setCartCount(readCartCount(isIsolatedStorefront ? storeId : undefined));
-    }
-
-    syncCartCount();
-    window.addEventListener("storage", syncCartCount);
-    window.addEventListener("alisveris-cart-updated", syncCartCount);
-
-    return () => {
-      window.removeEventListener("storage", syncCartCount);
-      window.removeEventListener("alisveris-cart-updated", syncCartCount);
-    };
-  }, [isIsolatedStorefront, storeId]);
-
-  const hasSearchData = stores.length > 0 || categories.length > 0;
-  const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
-  const shouldShowDesktopSearch =
-    !shouldSuppressSearch &&
-    hasSearchData;
-  const pathnameSegments = pathname.split("/").filter(Boolean);
-  const productsSegmentIndex = pathnameSegments.indexOf("products");
-  const isProductDetailPage =
-    compactMobileSearch ||
-    (productsSegmentIndex !== -1 &&
-      productsSegmentIndex < pathnameSegments.length - 1 &&
-      !pathname.startsWith("/store/dashboard") &&
-      !pathname.startsWith("/dashboard") &&
-      !pathname.startsWith("/seller") &&
-      !pathname.startsWith("/admin") &&
-      !pathname.startsWith("/radmin"));
-  const shouldUseCompactSearchButton =
-    pathname === "/cart" ||
-    pathname.startsWith("/cart/") ||
-    pathname === "/checkout" ||
-    pathname.startsWith("/checkout/") ||
-    pathname === "/favorites" ||
-    pathname.startsWith("/favorites/");
-  const shouldGateMobileSearch = isProductDetailPage || shouldUseCompactSearchButton;
-  const shouldShowMobileSearchToggle =
-    showMobileSearch &&
-    !shouldSuppressSearch &&
-    shouldGateMobileSearch &&
-    shouldShowCompactMobileSearch &&
-    hasSearchData;
-
-  useEffect(() => {
-    setIsMobileSearchOpen(false);
-    setIsMobileMenuOpen(false);
+    setMenu(false);
   }, [pathname]);
-
   useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return;
-    }
-
-    const scrollY = window.scrollY;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyWidth = document.body.style.width;
-
-    document.documentElement.style.overflow = "hidden";
+    if (!menu) return;
+    const previous = document.activeElement as HTMLElement;
+    const old = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-
-    return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.width = previousBodyWidth;
-      window.scrollTo(0, scrollY);
+    menuRef.current?.querySelector<HTMLElement>("button,a")?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenu(false);
+      if (e.key !== "Tab") return;
+      const list = menuRef.current?.querySelectorAll<HTMLElement>(
+        "a[href],button:not([disabled])",
+      );
+      if (!list?.length) return;
+      const first = list[0],
+        last = list[list.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
-  }, [isMobileMenuOpen]);
-
-  const addListingHref = isSeller
-    ? "/sell/product/new"
-    : isGuest
-      ? "/register?role=seller&next=/store/dashboard"
-      : "";
-  const shouldShowAddListing = !isIsolatedStorefront && Boolean(addListingHref);
-  const mobileMenuItems = isIsolatedStorefront ? [
-    { href: storeHomeHref, label: "Əsas", icon: Info },
-    { href: `${isolatedBaseHref}/products`, label: nav("products"), icon: Search },
-    ...(!sellerOwnsCurrentStore ? [{ href: cartHref, label: common("cart"), icon: ShoppingCart }] : []),
-    { href: `${isolatedBaseHref}/contact`, label: "Əlaqə", icon: MessageCircle },
-  ] : [
-    { href: "/help", label: "Yardım", icon: HelpCircle },
-    { href: "/about", label: "Tətbiq haqqında", icon: Info },
-    { href: "/contact", label: "Bizimlə əlaqə", icon: MessageCircle },
-  ];
-
+    document.addEventListener("keydown", key);
+    return () => {
+      document.body.style.overflow = old;
+      document.removeEventListener("keydown", key);
+      previous?.focus();
+    };
+  }, [menu]);
+  const sellerHref = isSeller ? "/store/dashboard" : "/register?role=seller";
   return (
     <>
-      {!isIsolatedStorefront && !isSellerDashboard && isHomePage ? (
-        <div className="hidden border-b border-slate-200 bg-slate-100 text-slate-700 lg:block dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-          <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide">
-            <span>Azərbaycanın onlayn alış-veriş platforması</span>
-            <div className="flex items-center gap-5">
-              <Link href="/help" className="transition hover:text-orange-600">Kömək mərkəzi</Link>
-              <Link href="/stores" className="transition hover:text-orange-600">Mağazalar</Link>
-            </div>
+      <div className="live-utility">
+        <div className="live-wrap">
+          <span>
+            <Truck size={14} />
+            Azərbaycanın mağazaları — bir ünvanda
+          </span>
+          <div>
+            <Link href={sellerHref}>
+              Satıcı ol
+              <ArrowUpRight size={12} />
+            </Link>
+            <Link href="/help">Yardım mərkəzi</Link>
+            <LanguageSwitcher />
+            <ThemeToggle />
           </div>
         </div>
-      ) : null}
-      <header
-        className={
-          sticky
-            ? cn(
-                "marketplace-header sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95",
-                !isHomePage && "bg-white/95 dark:bg-slate-950/95",
-              )
-            : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
-        }
-      >
-        <div
-          className={cn(
-            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-3 xl:flex-nowrap",
-            isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
-          )}
-        >
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className={cn(mobileUtilityButtonClass, "md:size-10 md:[&_svg]:!size-6")}
-            onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Menyunu aç"
-            aria-expanded={isMobileMenuOpen}
-          >
-            <Menu className={mobileCommerceIconClass} aria-hidden="true" />
-          </Button>
-          <Link href={brandHomeHref} prefetch className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3 md:flex-none">
-            {logoUrl ? (
-              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-orange-100 bg-white shadow-sm dark:border-orange-200/20 md:size-9 md:rounded-md">
-                <img
-                  src={logoUrl}
-                  alt=""
-                  className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
-                />
-                {darkLogoUrl ? (
-                  <img
-                    src={darkLogoUrl}
-                    alt=""
-                    className="hidden h-full w-full object-contain p-0.5 dark:block"
-                  />
-                ) : null}
-              </span>
-            ) : (
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-9 md:rounded-md md:text-base">
-                a
-              </span>
-            )}
-            <span className="min-w-0 origin-left truncate text-[20px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 min-[390px]:text-[22px] md:text-[19px] md:font-black md:group-hover:scale-105">
-              {displaySiteName}
-            </span>
-          </Link>
-          <div className="ml-auto flex shrink-0 items-center gap-0.5 md:hidden">
-            {shouldShowMobileSearchToggle ? (
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={mobileUtilityButtonClass}
-                onClick={() => setIsMobileSearchOpen((value) => !value)}
-                aria-label={isMobileSearchOpen ? "Axtarışı gizlət" : "Axtarışı aç"}
-                aria-expanded={isMobileSearchOpen}
-              >
-                <Search
-                  className={mobileCommerceIconClass}
-                  aria-hidden="true"
-                />
-              </Button>
-            ) : null}
-            {instagramHref ? (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className={mobileUtilityButtonClass}
-                aria-label="Instagram"
-              >
-                <a href={instagramHref} target="_blank" rel="noreferrer">
-                  <InstagramBrandIcon className={mobileCommerceIconClass} />
-                </a>
-              </Button>
-            ) : null}
-            {whatsappHref ? (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className={mobileUtilityButtonClass}
-                aria-label="WhatsApp"
-              >
-                <a href={whatsappHref} target="_blank" rel="noreferrer">
-                  <WhatsAppIcon className={mobileCommerceIconClass} />
-                </a>
-              </Button>
-            ) : null}
-            {!isGuest && !isIsolatedStorefront ? (
-              <>
-                <NotificationCenter
-                  buttonClassName={mobileUtilityButtonClass}
-                  iconClassName={mobileCommerceIconClass}
-                />
-                <Button
-                  asChild
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "max-[374px]:hidden",
-                    mobileUtilityButtonClass,
-                  )}
-                  aria-label={nav("favorites")}
-                >
-                  <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className={mobileCommerceIconClass} aria-hidden="true" />
-                  </Link>
-                </Button>
-              </>
-            ) : null}
-          </div>
-          <nav className="hidden shrink-0 items-center gap-0.5 2xl:flex">
-            {isIsolatedStorefront ? <>
-              <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-orange-600 dark:text-slate-200 dark:hover:text-orange-300">{nav("products")}</Link>
-              <Link href={`${isolatedBaseHref}/contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
-            </> : null}
-            {!isIsolatedStorefront ? <Button
-              asChild
-              variant={isProductsActive ? "secondary" : "ghost"}
-              className={cn(
-                "group h-10 rounded-xl bg-transparent px-3 text-sm font-semibold text-slate-700 shadow-none hover:bg-orange-50 hover:text-orange-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-orange-500/10 dark:hover:text-orange-300",
-                isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
-              )}
-            >
-              <Link href={productsHref} prefetch>
-                <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
-                  {nav("products")}
-                </span>
-              </Link>
-            </Button> : null}
-            {!isIsolatedStorefront ? <Button
-              asChild
-              variant="ghost"
-              className="group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
-            >
-              <Link href="/stores" prefetch>
-                <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
-                  Mağazalar
-                </span>
-              </Link>
-            </Button> : null}
-            {!isIsolatedStorefront ? <Button
-              asChild
-              variant={isAboutActive ? "secondary" : "ghost"}
-              className={cn(
-                "group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
-                isAboutActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
-              )}
-            >
-              <Link href="/about" prefetch>
-                <span className="inline-block transition-transform duration-200 md:group-hover:scale-105">
-                  {nav("about")}
-                </span>
-              </Link>
-            </Button> : null}
-          </nav>
-          {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[320px] max-w-[560px] flex-[1_1_460px] items-center gap-2 lg:flex 2xl:max-w-[620px]">
-              <MarketplaceSearch
-                stores={stores}
-                defaultValue={searchDefaultValue}
-                storeSlug={searchStoreSlug ?? undefined}
-                className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-                inputClassName="h-10 rounded-xl border-0 bg-slate-50 pl-10 pr-3 text-sm text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-orange-200 dark:bg-slate-900 dark:text-slate-100"
-                buttonSize="lg"
-                buttonClassName="h-10 rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-orange-600"
-              />
-            </div>
-          ) : null}
-          <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
-            {!isGuest && !isIsolatedStorefront ? (
-              <>
-                <NotificationCenter
-                  buttonClassName={cn(
-                    commerceUtilityButtonClass,
-                  )}
-                  iconClassName={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  asChild
-                  className={cn(
-                    commerceUtilityButtonClass,
-                  )}
-                  aria-label={nav("favorites")}
-                >
-                  <Link href="/favorites" prefetch className="grid place-items-center">
-                    <Heart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
-                  </Link>
-                </Button>
-              </>
-            ) : null}
-            {!sellerOwnsCurrentStore ? (
-              <Button
-                asChild
-                size="icon"
-                variant="ghost"
-                className={cn(commerceUtilityButtonClass)}
-                aria-label={common("cart")}
-              >
-                <Link href={cartHref} prefetch className="relative grid place-items-center">
-                  <ShoppingCart className={commerceUtilityIconClass} aria-hidden="true" />
-                  {cartCount > 0 ? (
-                    <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
-                      {cartCount > 99 ? "99+" : cartCount}
-                    </span>
-                  ) : null}
-                </Link>
-              </Button>
-            ) : null}
-            <div className={cn("hidden min-w-0 shrink-0 lg:block", isIsolatedStorefront && "!hidden")}>
-              <HeaderAccountActions className="shrink-0 [&_button]:h-10 [&_a]:h-10 [&_a]:text-[13px] [&_svg]:!size-5" />
-            </div>
-          </div>
-        </div>
-      </header>
-      {showMobileSearch &&
-      !shouldSuppressSearch &&
-      shouldShowCompactMobileSearch &&
-      hasSearchData &&
-      (!shouldGateMobileSearch || isMobileSearchOpen) ? (
-        <div className="mobile-performance-surface fixed inset-x-0 top-14 z-40 border-b bg-white px-3 py-2.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
-          <MarketplaceSearch
-            stores={stores}
-            defaultValue={searchDefaultValue}
-            storeSlug={searchStoreSlug ?? undefined}
-            stackOnMobile
-            compactActions
-            className="w-full"
-            inputClassName="h-12 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[16px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
-            buttonClassName="!size-12 !min-w-12 !max-w-12 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
-          />
-        </div>
-      ) : null}
-      {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-[90] overscroll-contain" role="dialog" aria-modal="true" aria-label="Menyu">
+      </div>
+      <header className="marketplace-header live-header" data-live-header>
+        <div className="live-wrap live-header-main">
           <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/45"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Menyunu bağla"
+            className="live-mobile-menu"
+            onClick={() => setMenu(true)}
+            aria-label="Kateqoriyaları aç"
+          >
+            <Menu size={23} />
+          </button>
+          <MarketplaceBrand
+            href={brandHomeHref}
+            logoUrl={logoUrl}
+            siteName={siteName}
+            showDomain={!isolatedStorefront}
           />
-          <aside className="relative flex h-full w-[min(78vw,296px)] flex-col overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50 md:w-[340px] md:px-5 md:pt-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="live-header-search">
+            <MarketplaceSearch
+              stores={stores}
+              defaultValue={searchDefaultValue}
+              placeholder="Nə axtarırsınız? Məhsul, mağaza və daha çox..."
+              storeSlug={searchStoreSlug ?? undefined}
+              searchBaseHref={productsHref.split("#")[0]}
+              resultsAnchorId={searchStoreSlug ? "products" : undefined}
+              compactActions
+              className="live-search-form"
+              inputClassName="live-search-input"
+              buttonClassName="live-search-submit"
+            />
+          </div>
+          <div className="live-header-actions">
+            {!isolatedStorefront && (
               <Link
-                href={brandHomeHref}
-                prefetch
-                className="flex min-w-0 items-center gap-3"
-                onClick={() => setIsMobileMenuOpen(false)}
+                href="/favorites"
+                className="live-utility-action live-favorites-link"
               >
-                {logoUrl ? (
-                  <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                    <img
-                      src={logoUrl}
-                      alt=""
-                      className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
-                    />
-                    {darkLogoUrl ? (
-                      <img
-                        src={darkLogoUrl}
-                        alt=""
-                        className="hidden h-full w-full object-contain p-0.5 dark:block"
-                      />
-                    ) : null}
-                  </span>
-                ) : (
-                  <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-300">
-                    {displaySiteName.slice(0, 1)}
-                  </span>
-                )}
-                <span className="min-w-0 truncate text-lg font-bold tracking-normal">
-                  {displaySiteName}
-                </span>
+                <Heart size={22} />
+                <span>Sevimlilər</span>
               </Link>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="size-10 shrink-0 rounded-lg hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50"
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Bağla"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </Button>
+            )}
+            <div className="live-header-account">
+              <HeaderAccountActions showSellerCta={false} />
             </div>
-
-            {shouldShowAddListing ? (
+            <div className="live-notifications">
+              <NotificationCenter />
+            </div>
+            {!hideCart && (
               <Link
-                href={addListingHref}
-                prefetch
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="mb-3 inline-flex min-h-11 items-center gap-2.5 border-b border-slate-200 pb-3 text-[15px] font-semibold tracking-normal text-slate-800 transition hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
+                href={
+                  isolatedStorefront
+                    ? `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`
+                    : "/cart"
+                }
+                className="live-cart-link"
+                aria-label={`Səbətim, ${count} məhsul`}
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
-                  <BadgePlus className="size-5" aria-hidden="true" />
+                <span>
+                  <ShoppingBag size={24} />
+                  <b>{count}</b>
                 </span>
-                <span>Elan yerləşdir</span>
+                <span>
+                  Səbətim<small>{count} məhsul</small>
+                </span>
               </Link>
-            ) : null}
-
-            <div className="grid border-b border-slate-200 dark:border-slate-800">
-              {mobileMenuItems.map((item) => {
-                const Icon = item.icon;
-
+            )}
+          </div>
+        </div>
+        <nav className="live-navigation" aria-label="Əsas menyu">
+          <div className="live-wrap">
+            <button
+              className="live-all-categories"
+              ref={triggerRef}
+              onClick={() => setMenu(true)}
+              aria-expanded={menu}
+              aria-controls="live-category-menu"
+            >
+              <Grid2X2 size={18} />
+              Bütün kateqoriyalar
+              <ChevronDown size={14} />
+            </button>
+            <Link
+              href={storeHomeHref}
+              aria-current={pathname === storeHomeHref ? "page" : undefined}
+            >
+              Ana səhifə
+            </Link>
+            <Link
+              href={scopedProducts}
+              aria-current={pathname === "/products" ? "page" : undefined}
+            >
+              Məhsullar
+            </Link>
+            {isolatedStorefront ? (
+              <>
+                <Link href={`${storeHomeHref}#about`}>Mağaza haqqında</Link>
+                <Link href={`${storeHomeHref}#contact`}>Əlaqə</Link>
+                {ownsStore && (
+                  <Link href="/store/dashboard">Mağazanı idarə et</Link>
+                )}
+              </>
+            ) : (
+              <>
+                <Link href="/products?discount=true">
+                  Endirimlər
+                  <span className="live-hot-dot" />
+                </Link>
+                <Link
+                  href="/stores"
+                  aria-current={pathname === "/stores" ? "page" : undefined}
+                >
+                  Mağazalar
+                </Link>
+                <Link href="/products?commerceType=rental">İcarə</Link>
+                <Link href="/products?vip=true">
+                  <Crown size={15} className="live-gold" />
+                  VIP məhsullar
+                </Link>
+              </>
+            )}
+            <Link
+              href={`${scopedProducts}?sort=newest`}
+              className="live-new-collection"
+            >
+              <i />
+              Yeni kəşflər
+              <ArrowUpRight size={14} />
+            </Link>
+          </div>
+        </nav>
+      </header>
+      {menu && (
+        <div
+          className="live-menu-overlay"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setMenu(false);
+          }}
+        >
+          <div
+            className="live-category-menu"
+            id="live-category-menu"
+            ref={menuRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Bütün kateqoriyalar"
+          >
+            <div>
+              <h2>Alış-verişə başla</h2>
+              <button
+                aria-label="Kateqoriyaları bağla"
+                onClick={() => setMenu(false)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <nav>
+              {categories.map((category) => {
+                const Icon = getCategoryIcon(category);
                 return (
                   <Link
-                    key={item.href}
-                    href={item.href}
-                    prefetch
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-11 items-center gap-2.5 border-t border-slate-200 text-[15px] font-medium tracking-normal text-slate-800 transition first:border-t-0 hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
+                    key={category.id}
+                    href={categoryHref(category.slug)}
+                    onClick={() => setMenu(false)}
                   >
-                    <Icon className="size-5 shrink-0 stroke-[2]" aria-hidden="true" />
-                    <span className="min-w-0 truncate">{item.label}</span>
+                    <Icon size={19} />
+                    {category.name}
+                    <ChevronRight size={15} />
                   </Link>
                 );
               })}
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-                <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Dil</span>
-                <LanguageSwitcher />
-              </div>
-              <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
-                <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Görünüş</span>
-                <ThemeToggle className="size-10 rounded-lg" iconClassName="size-5" />
-              </div>
-            </div>
-          </aside>
+              <Link
+                href={isolatedStorefront ? scopedProducts : "/categories"}
+                onClick={() => setMenu(false)}
+              >
+                <Grid2X2 size={19} />
+                Bütün kateqoriyalara bax
+                <ArrowRight size={15} />
+              </Link>
+              {!isolatedStorefront && (
+                <Link href="/stores" onClick={() => setMenu(false)}>
+                  <Store size={19} />
+                  Bütün mağazalar
+                  <ArrowRight size={15} />
+                </Link>
+              )}
+              <Link href="/help" onClick={() => setMenu(false)}>
+                <HelpCircle size={19} />
+                Yardım mərkəzi
+                <ArrowRight size={15} />
+              </Link>
+            </nav>
+          </div>
         </div>
-      ) : null}
-      {showBottomNav ? (
+      )}
+      {showBottomNav && (
         <MobileBottomNav
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
-          storeId={storeId}
-          isolatedStorefront={isIsolatedStorefront}
           initialRole={initialRole}
-          sellerOwnsStore={sellerOwnsCurrentStore}
+          storeId={storeId}
+          isolatedStorefront={isolatedStorefront}
+          sellerOwnsStore={ownsStore}
         />
-      ) : null}
+      )}{" "}
     </>
   );
 }
-
-export { MarketplaceHeader as PublicHeader };

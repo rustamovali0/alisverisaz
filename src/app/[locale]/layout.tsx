@@ -204,7 +204,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale as Locale} messages={messages}>
       <div
-        className="global-loader-root min-h-screen"
+        className="global-loader-root live-marketplace min-h-screen"
         data-loader-type={siteSettings.globalLoader.type}
         data-loader-palette={siteSettings.globalLoader.palette}
         data-loading-preset={siteSettings.design.loadingPreset}
