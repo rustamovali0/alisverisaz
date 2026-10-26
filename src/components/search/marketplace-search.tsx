@@ -35,6 +35,7 @@ type SearchSuggestion = {
   description: string;
   type: "store" | "product";
   href?: string;
+  imageUrl?: string | null;
 };
 
 const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
@@ -206,6 +207,7 @@ export function MarketplaceSearch({
             type: "store",
             label: store.name,
             description: marketplace("productCount", { count: store.productCount }),
+            imageUrl: store.logoUrl,
           }));
     const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
     const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
@@ -217,6 +219,7 @@ export function MarketplaceSearch({
         type: "product" as const,
         label: product.name,
         description: productStoreName,
+        imageUrl: product.imageUrl,
       };
     });
 
@@ -499,8 +502,10 @@ function SearchSuggestionGroup({
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onSelect(suggestion)}
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10">
-            {suggestionIcon(suggestion.type)}
+          <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/10 ring-1 ring-slate-200/70 dark:ring-slate-700">
+            {suggestion.imageUrl ? (
+              <img src={suggestion.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+            ) : suggestionIcon(suggestion.type)}
           </span>
           <span className="min-w-0">
             <span className="block truncate font-semibold">{suggestion.label}</span>

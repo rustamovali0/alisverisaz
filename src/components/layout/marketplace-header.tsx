@@ -327,13 +327,13 @@ export function MarketplaceHeader({
 
   return (
     <>
-      {!isIsolatedStorefront && !isSellerDashboard ? (
-        <div className="hidden border-b border-slate-800 bg-slate-950 text-white lg:block">
-          <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide text-slate-300">
+      {!isIsolatedStorefront && !isSellerDashboard && isHomePage ? (
+        <div className="hidden border-b border-slate-200 bg-slate-100 text-slate-700 lg:block dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+          <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide">
             <span>Azərbaycanın onlayn alış-veriş platforması</span>
             <div className="flex items-center gap-5">
-              <Link href="/help" className="transition hover:text-white">Kömək mərkəzi</Link>
-              <Link href="/stores" className="transition hover:text-white">Mağazalar</Link>
+              <Link href="/help" className="transition hover:text-orange-600">Kömək mərkəzi</Link>
+              <Link href="/stores" className="transition hover:text-orange-600">Mağazalar</Link>
             </div>
           </div>
         </div>

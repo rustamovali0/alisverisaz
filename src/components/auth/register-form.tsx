@@ -16,6 +16,7 @@ import { appAlert } from "@/lib/alerts/app-alert";
 import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
 import { refreshCachedClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { isRealImageFile } from "@/lib/images/client-file-validation";
+import { cn } from "@/lib/utils";
 
 type RegisterFormProps = {
   userRegistrationEnabled: boolean;
@@ -262,6 +263,7 @@ export function RegisterForm({
   const [termsRead, setTermsRead] = useState(false);
   const [privacyRead, setPrivacyRead] = useState(false);
   const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
+  const [sellerStep, setSellerStep] = useState<1 | 2>(1);
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const canRegister = customerOnly
@@ -336,6 +338,14 @@ export function RegisterForm({
       }
 
       const isSellerRegistration = !customerOnly && role === "seller";
+      if (isSellerRegistration) {
+        const avatarFile = formData.get("avatarFile");
+        const bannerFile = formData.get("bannerFile");
+        if (!(avatarFile instanceof File) || avatarFile.size === 0 || !(bannerFile instanceof File) || bannerFile.size === 0) {
+          void appAlert.error("Loqo və banner şəkillərinin hər ikisini seçin.", "Mağaza şəkilləri tələb olunur");
+          return;
+        }
+      }
       const resolvedFullName = isSellerRegistration
         ? storeName.trim()
         : `${firstName.trim()} ${lastName.trim()}`.trim();
@@ -369,7 +379,10 @@ export function RegisterForm({
         return;
       }
 
-      void appAlert.success("Qeydiyyat uğurludur", result.message);
+      void appAlert.success(
+        role === "seller" ? "Hesabınız yoxlanılır" : "Qeydiyyat uğurludur",
+        role === "seller" ? "Müraciətiniz qəbul edildi. Hesabınız qısa zamanda yoxlanılıb aktiv ediləcək." : result.message,
+      );
       if (role === "customer") {
         await refreshCachedClientAuthProfile();
       }
@@ -437,6 +450,7 @@ export function RegisterForm({
       {canRegister ? (
         <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3 lg:grid-cols-2">
           <div className="lg:col-span-2"><AuthErrorAlert message={serverError} /></div>
+          <div className={cn("contents", role === "seller" && sellerStep === 2 && "hidden")}>
           {!customerOnly ? (
             <fieldset className="grid gap-2 lg:col-span-2">
               <legend className="text-sm font-medium">Hesab tipi</legend>
@@ -446,6 +460,7 @@ export function RegisterForm({
                     type="button"
                     onClick={() => {
                       setRole("customer");
+                      setSellerStep(1);
                       setFieldErrors((current) => ({ ...current, storeName: undefined }));
                     }}
                     className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
@@ -464,6 +479,7 @@ export function RegisterForm({
                     type="button"
                     onClick={() => {
                       setRole("seller");
+                      setSellerStep(1);
                       setFieldErrors((current) => ({
                         ...current,
                         firstName: undefined,
@@ -601,25 +617,6 @@ export function RegisterForm({
               />
             </div>
           </div>
-          {!customerOnly && role === "seller" ? (
-            <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 lg:col-span-2">
-              <div>
-                <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
-                <SellerImageDropzone
-                  name="avatarFile"
-                  label="Profil şəkli / Logo"
-                  ratioClassName="aspect-square"
-                />
-                <SellerImageDropzone
-                  name="bannerFile"
-                  label="Banner şəkli"
-                  ratioClassName="aspect-[16/7]"
-                />
-              </div>
-            </div>
-          ) : null}
           <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm lg:col-span-2">
             <input
               type="checkbox"
@@ -644,9 +641,40 @@ export function RegisterForm({
           {fieldErrors.terms ? (
             <p className="text-xs font-medium text-destructive lg:col-span-2">{fieldErrors.terms}</p>
           ) : null}
-          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600 lg:col-span-2">
-            {isPending ? "Yaradılır" : "Hesab yarat"}
-          </Button>
+          </div>
+          {!customerOnly && role === "seller" && sellerStep === 2 ? (
+            <div className="grid gap-4 rounded-2xl border border-orange-100 bg-orange-50/50 p-4 lg:col-span-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">Addım 2 / 2</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-950">Mağazanızın görünüşü</h3>
+                <p className="mt-1 text-sm text-slate-500">Loqo və banner şəkillərini əlavə edin.</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                <SellerImageDropzone name="avatarFile" label="Profil şəkli / Loqo" ratioClassName="aspect-square" />
+                <SellerImageDropzone name="bannerFile" label="Banner şəkli" ratioClassName="aspect-[16/7]" />
+              </div>
+            </div>
+          ) : null}
+          {role === "seller" && sellerStep === 1 ? (
+            <Button
+              type="button"
+              onClick={() => {
+                if (validate()) setSellerStep(2);
+              }}
+              className="h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600 lg:col-span-2"
+            >
+              Növbəti <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 lg:col-span-2">
+              {role === "seller" ? (
+                <Button type="button" variant="outline" onClick={() => setSellerStep(1)} className="h-11 rounded-[10px]">Geri</Button>
+              ) : null}
+              <Button type="submit" disabled={isPending} className={cn("h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600", role !== "seller" && "sm:col-span-2")}>
+                {isPending ? "Yaradılır" : "Hesab yarat"}
+              </Button>
+            </div>
+          )}
         </form>
       ) : null}
 
