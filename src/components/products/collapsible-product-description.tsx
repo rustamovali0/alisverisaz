@@ -17,11 +17,11 @@ function FormattedDescription({ text }: { text: string }) {
           return <h2 key={index} className="mt-0.5 text-sm font-bold leading-5 text-slate-950 dark:text-slate-100 sm:mt-1 sm:text-lg sm:leading-6">{line.slice(3)}</h2>;
         }
         if (line.startsWith("• ") || line.startsWith("- ")) {
-          return <p key={index} className="flex gap-2"><span className="font-bold text-blue-600">•</span><span>{line.slice(2)}</span></p>;
+          return <p key={index} className="flex gap-2"><span className="font-bold text-orange-500">•</span><span>{line.slice(2)}</span></p>;
         }
         const numbered = line.match(/^(\d+)[.)]\s+(.+)$/);
         if (numbered) {
-          return <p key={index} className="flex gap-2"><span className="font-semibold text-blue-600">{numbered[1]}.</span><span>{numbered[2]}</span></p>;
+          return <p key={index} className="flex gap-2"><span className="font-semibold text-orange-500">{numbered[1]}.</span><span>{numbered[2]}</span></p>;
         }
         return <p key={index}>{line}</p>;
       })}
@@ -47,7 +47,7 @@ export function CollapsibleProductDescription({ text }: CollapsibleProductDescri
       {shouldCollapse ? (
         <button
           type="button"
-          className="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-blue-600 transition hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:hover:bg-blue-500/10 dark:hover:text-blue-200"
+          className="mt-1.5 inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-orange-600 transition hover:bg-orange-50 hover:text-orange-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/30 dark:text-orange-300 dark:hover:bg-orange-500/10 dark:hover:text-orange-200"
           aria-expanded={expanded}
           onClick={() => setExpanded((current) => !current)}
         >

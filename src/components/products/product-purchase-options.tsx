@@ -146,8 +146,8 @@ export function ProductPurchaseOptions({
                       className={cn(
                         "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold shadow-sm transition",
                         isSelected
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10",
+                          ? "border-orange-500 bg-orange-500 text-white"
+                          : "border-slate-200 bg-white text-slate-800 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10",
                         !isAvailable && "cursor-not-allowed opacity-40",
                       )}
                     >
@@ -182,7 +182,7 @@ export function ProductPurchaseOptions({
           disabled={isUnavailable}
           isolatedStoreSlug={isolatedStoreSlug}
           isolatedStoreBaseHref={isolatedStoreBaseHref}
-          className={cn("w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
+          className={cn("w-full rounded-xl bg-orange-500 font-bold text-white shadow-none hover:bg-orange-600", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
         />
         <AddToCartButton
           product={product}

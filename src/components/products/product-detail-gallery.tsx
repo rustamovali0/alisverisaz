@@ -158,23 +158,27 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className={cn("min-w-0 overflow-hidden border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900", compact ? "rounded-xl" : "rounded-2xl")}>
+      <div className={cn("min-w-0 overflow-hidden border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900", compact ? "rounded-2xl" : "rounded-[24px]")}>
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className={cn("group relative block w-full bg-slate-50 text-left dark:bg-slate-950/45", compact ? "aspect-[3/2] sm:aspect-square" : "aspect-[4/3]")}
+          className={cn("group relative block w-full overflow-hidden bg-slate-100 text-left dark:bg-slate-950/45", compact ? "aspect-[3/2] sm:aspect-square" : "aspect-[4/3]")}
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
-            <img
-              src={activeImage.url}
-              alt={productName}
-              className={cn("h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none", compact ? "p-3 sm:p-5" : "p-3 sm:p-4")}
-            />
+            <>
+              <img src={activeImage.url} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-20 blur-2xl" aria-hidden="true" />
+              <span className="absolute inset-0 bg-white/55 backdrop-blur-[2px] dark:bg-slate-950/55" aria-hidden="true" />
+              <img
+                src={activeImage.url}
+                alt={productName}
+                className={cn("relative z-10 h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none", compact ? "p-3 sm:p-5" : "p-3 sm:p-5")}
+              />
+            </>
           ) : (
             <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-blue-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300">
+              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-orange-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-orange-300">
                 <ShoppingCart className="size-10 stroke-[2.4]" aria-hidden="true" />
               </span>
             </div>
@@ -189,7 +193,7 @@ export function ProductDetailGallery({
                 onClick={() => setActiveIndex(index)}
                 className={cn(
                   "size-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:aspect-square sm:size-auto dark:border-slate-800 dark:bg-slate-950/45",
-                  index === activeIndex ? "border-blue-600 ring-2 ring-blue-500/20" : "",
+                  index === activeIndex ? "border-orange-500 ring-2 ring-orange-500/20" : "",
                 )}
                 aria-label={`${index + 1}. şəkil`}
               >
