@@ -195,3 +195,31 @@ test("PM2-style module loading starts the gateway and supervised backend", async
     }
   }
 });
+
+test("store subdomain homepages stay with the existing backend", async () => {
+  const response = await requestWithHost("shop.alisveris.az");
+  const data = JSON.parse(response.body);
+  assert.equal(data.url, "/");
+  assert.equal(data.host, "shop.alisveris.az");
+});
+test("www homepage uses the approved marketplace frontend", async () => {
+  const response = await requestWithHost("www.alisveris.az");
+  assert.equal(response.status, 200);
+  assert.match(response.body, /New marketplace/);
+});
+function requestWithHost(host) {
+  return new Promise((resolve, reject) => {
+    http
+      .get(base + "/", { headers: { Host: host } }, (response) => {
+        let body = "";
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+        response.on("end", () =>
+          resolve({ status: response.statusCode, body }),
+        );
+        response.on("error", reject);
+      })
+      .on("error", reject);
+  });
+}
