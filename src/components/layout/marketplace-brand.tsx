@@ -26,7 +26,7 @@ export function MarketplaceBrand({
         {name.replace(/\.az$/i, "")}
         {showDomain && (
           <span className="live-brand-domain">
-            {isMarketplace ? ",AZ" : ".az"}
+            {isMarketplace ? ".AZ" : ".az"}
           </span>
         )}
       </span>
