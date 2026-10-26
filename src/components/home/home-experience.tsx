@@ -16,6 +16,7 @@ import {
   ProductGrid,
   InfiniteProductGrid,
 } from "@/components/cart/product-marketplace";
+import { getCategoryImage } from "@/lib/categories/images";
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { OptimizedImage } from "@/components/common/optimized-image";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -380,7 +381,16 @@ export function HomeExperience({
                     <span
                       className={`live-category-art live-category-tone-${i % 8}`}
                     >
-                      <Icon strokeWidth={1.2} size={45} />
+                      {getCategoryImage(c) ? (
+                        <img
+                          src={getCategoryImage(c)!}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <Icon strokeWidth={1.2} size={45} />
+                      )}
                     </span>
                     <strong>{c.name}</strong>
                   </Link>

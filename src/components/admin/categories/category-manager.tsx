@@ -1,8 +1,10 @@
 "use client";
 
 import { Plus, Save, Trash2 } from "lucide-react";
+import { useRouter } from "@/i18n/navigation";
 import { useTransition } from "react";
 
+import { getCategoryImage } from "@/lib/categories/images";
 import { Button } from "@/components/ui/button";
 import {
   createCategoryAction,
@@ -44,6 +46,7 @@ function CategoryParentSelect({
 }
 
 export function CategoryManager({ categories }: CategoryManagerProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function handleCreate(formData: FormData) {
@@ -55,6 +58,7 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
         return;
       }
 
+      router.refresh();
       void appAlert.success("Kateqoriya yaradıldı", result.message);
     });
   }
@@ -68,6 +72,7 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
         return;
       }
 
+      router.refresh();
       void appAlert.success("Kateqoriya yeniləndi", result.message);
     });
   }
@@ -106,7 +111,9 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black tracking-normal">Yeni kateqoriya</h2>
+            <h2 className="text-lg font-black tracking-normal">
+              Yeni kateqoriya
+            </h2>
             <p className="text-sm text-muted-foreground">
               Ana və alt kateqoriyaları buradan yaradın.
             </p>
@@ -173,9 +180,9 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
             >
               <input type="hidden" name="categoryId" value={category.id} />
               <div className="h-16 w-16 overflow-hidden rounded-md border bg-card">
-                {category.imageUrl ? (
+                {getCategoryImage(category) ? (
                   <img
-                    src={category.imageUrl}
+                    src={getCategoryImage(category)!}
                     alt={category.name}
                     className="h-full w-full object-cover"
                   />
@@ -204,7 +211,11 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
                 defaultValue={category.parentId}
               />
               <label className="flex h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm">
-                <input name="isActive" type="checkbox" defaultChecked={category.isActive} />
+                <input
+                  name="isActive"
+                  type="checkbox"
+                  defaultChecked={category.isActive}
+                />
                 Aktiv
               </label>
               <div className="flex gap-2">
@@ -228,6 +239,12 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
                 placeholder="Açıqlama"
                 className="min-h-16 rounded-md border bg-card px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15 lg:col-span-full"
               />
+              {category.imageUrl && (
+                <label className="flex items-center gap-2 text-sm lg:col-span-full">
+                  <input type="checkbox" name="removeImage" /> Yüklənmiş şəkli
+                  sil və standart şəklə qayıt
+                </label>
+              )}
               <label className="grid gap-2 text-sm font-medium lg:col-span-full">
                 Şəkli dəyiş
                 <input

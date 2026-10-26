@@ -1,6 +1,7 @@
 export type ProductStatus = "draft" | "active" | "archived";
 
-export type ProductApprovalStatus = "none" | "pending" | "approved" | "rejected";
+export type ProductApprovalStatus =
+  "none" | "pending" | "approved" | "rejected";
 export type ProductCommerceType = "sale" | "rental";
 
 export type ProductVariantInput = {
@@ -89,6 +90,7 @@ export type ManagedProduct = {
 };
 
 export type CategoryOption = {
+  imageUrl?: string | null;
   id: string;
   parentId?: string | null;
   name: string;

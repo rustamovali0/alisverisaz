@@ -10,10 +10,16 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
-import { isProfitTrackingEnabled, validateProfitPrices } from "@/lib/products/profit";
+import {
+  isProfitTrackingEnabled,
+  validateProfitPrices,
+} from "@/lib/products/profit";
 import { notifyProductSubmitted } from "@/lib/products/approval-notifications";
 import { getProductApprovalSettings } from "@/lib/products/approval-settings";
-import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
+import {
+  canCreateListing,
+  getStoreEntitlements,
+} from "@/lib/subscriptions/data";
 import {
   deleteR2ImageByUrl,
   deleteR2ImagesByUrls,
@@ -42,7 +48,11 @@ function isMissingTableError(error: unknown) {
   const value = error as { code?: string; message?: string } | null | undefined;
   const message = String(value?.message ?? "");
 
-  return value?.code === "PGRST205" || value?.code === "42P01" || message.includes("schema cache");
+  return (
+    value?.code === "PGRST205" ||
+    value?.code === "42P01" ||
+    message.includes("schema cache")
+  );
 }
 
 function isMissingVariantStorageError(error: unknown) {
@@ -61,13 +71,15 @@ function isMissingVariantStorageError(error: unknown) {
   );
 }
 
-function revalidateMarketplaceSurfaces(input: {
-  productId?: string | null;
-  storeId?: string | null;
-  categoryId?: string | null;
-  storeSlug?: string | null;
-  homepage?: boolean;
-} = {}) {
+function revalidateMarketplaceSurfaces(
+  input: {
+    productId?: string | null;
+    storeId?: string | null;
+    categoryId?: string | null;
+    storeSlug?: string | null;
+    homepage?: boolean;
+  } = {},
+) {
   invalidateProductPublicData(input);
 }
 
@@ -113,7 +125,9 @@ async function readProductImageUrls(input: {
 
     urls.push(
       ...uniqueStrings(
-        ((data ?? []) as Array<{ url: string | null }>).map((image) => image.url),
+        ((data ?? []) as Array<{ url: string | null }>).map(
+          (image) => image.url,
+        ),
       ),
     );
   }
@@ -124,7 +138,9 @@ async function readProductImageUrls(input: {
 function normalizeSeoText(value: string, fallback: string, maxLength: number) {
   const text = (value || fallback).replace(/\s+/g, " ").trim();
 
-  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trim()}…` : text;
+  return text.length > maxLength
+    ? `${text.slice(0, maxLength - 1).trim()}…`
+    : text;
 }
 
 function buildSeoTitle(name: string) {
@@ -192,7 +208,10 @@ function parseVariants(value: string): ProductVariantInput[] {
 }
 
 function isOptionType(value: unknown): value is ProductOptionType {
-  return typeof value === "string" && PRODUCT_OPTION_TYPES.includes(value as ProductOptionType);
+  return (
+    typeof value === "string" &&
+    PRODUCT_OPTION_TYPES.includes(value as ProductOptionType)
+  );
 }
 
 function readJsonObject(value: string) {
@@ -239,7 +258,8 @@ function parseVariantConfig(formData: FormData) {
             return null;
           }
 
-          const name = typeof row.name === "string" ? row.name.trim().slice(0, 60) : "";
+          const name =
+            typeof row.name === "string" ? row.name.trim().slice(0, 60) : "";
           const seenValues = new Set<string>();
           const values = Array.isArray(row.values)
             ? row.values
@@ -271,7 +291,9 @@ function parseVariantConfig(formData: FormData) {
                     sortOrder: valueIndex,
                   };
                 })
-                .filter((value): value is NonNullable<typeof value> => Boolean(value))
+                .filter((value): value is NonNullable<typeof value> =>
+                  Boolean(value),
+                )
                 .slice(0, 40)
             : [];
 
@@ -313,21 +335,20 @@ function parseVariantConfig(formData: FormData) {
             row.combination && typeof row.combination === "object"
               ? (row.combination as Record<string, unknown>)
               : {};
-          const safeCombination = PRODUCT_OPTION_TYPES.reduce<Record<string, string>>(
-            (next, type) => {
-              const value =
-                typeof values[type] === "string"
-                  ? values[type].trim().slice(0, 80)
-                  : "";
+          const safeCombination = PRODUCT_OPTION_TYPES.reduce<
+            Record<string, string>
+          >((next, type) => {
+            const value =
+              typeof values[type] === "string"
+                ? values[type].trim().slice(0, 80)
+                : "";
 
-              if (value && allowedValues.get(type)?.has(value)) {
-                next[type] = value;
-              }
+            if (value && allowedValues.get(type)?.has(value)) {
+              next[type] = value;
+            }
 
-              return next;
-            },
-            {},
-          );
+            return next;
+          }, {});
 
           if (Object.keys(safeCombination).length !== enabledOptions.length) {
             return null;
@@ -347,7 +368,10 @@ function parseVariantConfig(formData: FormData) {
                 ? row.sku.trim().slice(0, 80)
                 : null,
             priceOverrideAmount: priceOverride,
-            stockQuantity: Math.max(Math.trunc(Number(row.stockQuantity) || 0), 0),
+            stockQuantity: Math.max(
+              Math.trunc(Number(row.stockQuantity) || 0),
+              0,
+            ),
             isEnabled: row.isEnabled !== false,
           };
         })
@@ -545,7 +569,9 @@ async function replaceProductImages(input: {
 
   const uploadedImages = await uploadProductImageFiles(input);
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: existingImages, error: lookupError } = await (supabaseAdmin as any)
+  const { data: existingImages, error: lookupError } = await (
+    supabaseAdmin as any
+  )
     .from("product_images")
     .select("url")
     .eq("product_id", input.productId);
@@ -595,7 +621,10 @@ async function replaceVariants(input: {
     .delete()
     .eq("product_id", input.productId);
 
-  if (deleteOptionsResult.error && !isMissingVariantStorageError(deleteOptionsResult.error)) {
+  if (
+    deleteOptionsResult.error &&
+    !isMissingVariantStorageError(deleteOptionsResult.error)
+  ) {
     throw new Error(deleteOptionsResult.error.message);
   }
 
@@ -604,7 +633,10 @@ async function replaceVariants(input: {
     .delete()
     .eq("product_id", input.productId);
 
-  if (deleteVariantsResult.error && !isMissingVariantStorageError(deleteVariantsResult.error)) {
+  if (
+    deleteVariantsResult.error &&
+    !isMissingVariantStorageError(deleteVariantsResult.error)
+  ) {
     throw new Error(deleteVariantsResult.error.message);
   }
 
@@ -654,21 +686,25 @@ async function replaceVariants(input: {
   }
 
   if (input.combinations.length > 0) {
-    const { error } = await (supabaseAdmin as any).from("product_variants").insert(
-      input.combinations.map((variant) => ({
-        product_id: input.productId,
-        name: enabledOptions
-          .map((option) => `${option.name}: ${variant.combination[option.type]}`)
-          .join(" / "),
-        value: Object.values(variant.combination).join(" / "),
-        price_delta_amount: 0,
-        stock_quantity: variant.stockQuantity,
-        combination: variant.combination,
-        sku: variant.sku ?? null,
-        price_override_amount: variant.priceOverrideAmount ?? null,
-        is_enabled: variant.isEnabled !== false,
-      })),
-    );
+    const { error } = await (supabaseAdmin as any)
+      .from("product_variants")
+      .insert(
+        input.combinations.map((variant) => ({
+          product_id: input.productId,
+          name: enabledOptions
+            .map(
+              (option) => `${option.name}: ${variant.combination[option.type]}`,
+            )
+            .join(" / "),
+          value: Object.values(variant.combination).join(" / "),
+          price_delta_amount: 0,
+          stock_quantity: variant.stockQuantity,
+          combination: variant.combination,
+          sku: variant.sku ?? null,
+          price_override_amount: variant.priceOverrideAmount ?? null,
+          is_enabled: variant.isEnabled !== false,
+        })),
+      );
 
     if (error) {
       if (isMissingVariantStorageError(error)) {
@@ -685,19 +721,21 @@ async function replaceVariants(input: {
     return;
   }
 
-  const { error } = await (supabaseAdmin as any).from("product_variants").insert(
-    input.legacyVariants.map((variant) => ({
-      product_id: input.productId,
-      name: variant.name,
-      value: variant.value,
-      price_delta_amount: variant.priceDeltaAmount,
-      stock_quantity: variant.stockQuantity,
-      combination: variant.combination ?? {},
-      sku: variant.sku ?? null,
-      price_override_amount: variant.priceOverrideAmount ?? null,
-      is_enabled: variant.isEnabled !== false,
-    })),
-  );
+  const { error } = await (supabaseAdmin as any)
+    .from("product_variants")
+    .insert(
+      input.legacyVariants.map((variant) => ({
+        product_id: input.productId,
+        name: variant.name,
+        value: variant.value,
+        price_delta_amount: variant.priceDeltaAmount,
+        stock_quantity: variant.stockQuantity,
+        combination: variant.combination ?? {},
+        sku: variant.sku ?? null,
+        price_override_amount: variant.priceOverrideAmount ?? null,
+        is_enabled: variant.isEnabled !== false,
+      })),
+    );
 
   if (error) {
     if (isMissingVariantStorageError(error)) {
@@ -715,7 +753,9 @@ async function replaceProductLocations(input: {
 }) {
   const selectedLocationIds = input.formData
     .getAll("productLocationIds")
-    .filter((value): value is string => typeof value === "string" && value.length > 0);
+    .filter(
+      (value): value is string => typeof value === "string" && value.length > 0,
+    );
   const supabaseAdmin = createSupabaseAdminClient();
   const { error: deleteError } = await (supabaseAdmin as any)
     .from("product_locations")
@@ -734,7 +774,9 @@ async function replaceProductLocations(input: {
     return;
   }
 
-  const { data: locations, error: locationsError } = await (supabaseAdmin as any)
+  const { data: locations, error: locationsError } = await (
+    supabaseAdmin as any
+  )
     .from("store_locations")
     .select("id,store_id")
     .in("id", selectedLocationIds);
@@ -759,7 +801,9 @@ async function replaceProductLocations(input: {
 
   const rows = selectedLocationIds.map((locationId) => {
     const stock = Math.max(
-      Math.trunc(Number(input.formData.get(`locationStock:${locationId}`) ?? 0) || 0),
+      Math.trunc(
+        Number(input.formData.get(`locationStock:${locationId}`) ?? 0) || 0,
+      ),
       0,
     );
 
@@ -794,8 +838,12 @@ function readProductPayload(formData: FormData) {
     discountedPriceRaw.length > 0
       ? Math.max(priceAmount - readNumber(formData, "discountedPriceAmount"), 0)
       : readNumber(formData, "discountAmount");
-  const stockQuantity = Math.max(Math.trunc(readNumber(formData, "stockQuantity")), 0);
-  const stockTrackingEnabled = !formData.has("stockTrackingPresent") ||
+  const stockQuantity = Math.max(
+    Math.trunc(readNumber(formData, "stockQuantity")),
+    0,
+  );
+  const stockTrackingEnabled =
+    !formData.has("stockTrackingPresent") ||
     formData.get("stockTrackingEnabled") === "on";
   const stockRaw = readString(formData, "stockQuantity");
   const description = readString(formData, "description");
@@ -804,7 +852,11 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "description_ru"),
   };
   const seoTitleTranslations = {
-    az: normalizeSeoText(readString(formData, "seo_title_az"), buildSeoTitle(name), 70),
+    az: normalizeSeoText(
+      readString(formData, "seo_title_az"),
+      buildSeoTitle(name),
+      70,
+    ),
     en: readString(formData, "seo_title_en"),
     ru: readString(formData, "seo_title_ru"),
   };
@@ -818,7 +870,8 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "seo_description_ru"),
   };
   const status = readStatus(readString(formData, "status"));
-  const commerceType = readString(formData, "commerceType") === "rental" ? "rental" : "sale";
+  const commerceType =
+    readString(formData, "commerceType") === "rental" ? "rental" : "sale";
   const variantConfig = parseVariantConfig(formData);
   const variants = variantConfig.legacyVariants;
   const depositEnabled = false;
@@ -834,8 +887,11 @@ function readProductPayload(formData: FormData) {
     discountAmount,
     stockQuantity,
     stockTrackingEnabled,
-    stockValid: !stockTrackingEnabled || (stockRaw !== "" &&
-      Number.isSafeInteger(Number(stockRaw)) && Number(stockRaw) >= 0),
+    stockValid:
+      !stockTrackingEnabled ||
+      (stockRaw !== "" &&
+        Number.isSafeInteger(Number(stockRaw)) &&
+        Number(stockRaw) >= 0),
     description,
     descriptionTranslations,
     seoTitleTranslations,
@@ -852,12 +908,17 @@ function readProductPayload(formData: FormData) {
 }
 
 function validatePayload(payload: ReturnType<typeof readProductPayload>) {
-  if (!payload.stockValid) return "Stok sayı sıfır və ya müsbət tam ədəd olmalıdır.";
+  if (!payload.stockValid)
+    return "Stok sayı sıfır və ya müsbət tam ədəd olmalıdır.";
   if (!payload.name) {
     return "Ad mütləqdir.";
   }
 
-  if (payload.costAmount < 0 || payload.priceAmount < 0 || payload.discountAmount < 0) {
+  if (
+    payload.costAmount < 0 ||
+    payload.priceAmount < 0 ||
+    payload.discountAmount < 0
+  ) {
     return "Maya dəyəri, qiymət və endirim mənfi ola bilməz.";
   }
 
@@ -872,7 +933,10 @@ export async function createStoreProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["seller"], "/store/dashboard/products");
-  const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+  const featureEnabled = await getSellerFeatureAccess(
+    current.user.id,
+    "products",
+  );
 
   if (!featureEnabled) {
     return {
@@ -895,9 +959,14 @@ export async function createStoreProductAction(
   const stores = await getOwnedStores(current.user.id);
   const ownsStore = stores.some((store) => store.id === storeId);
   if (stores.find((store) => store.id === storeId)?.status !== "active") {
-    return { ok: false, message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul əlavə edə bilər." };
+    return {
+      ok: false,
+      message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul əlavə edə bilər.",
+    };
   }
-  const profitTracking = isProfitTrackingEnabled(stores.find((store) => store.id === storeId)?.settings);
+  const profitTracking = isProfitTrackingEnabled(
+    stores.find((store) => store.id === storeId)?.settings,
+  );
   const profitError = validateProfitPrices(formData, profitTracking);
   if (profitError) return { ok: false, message: profitError };
   if (!profitTracking) payload.costAmount = 0;
@@ -928,12 +997,16 @@ export async function createStoreProductAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Şəkil limiti yoxlanmadı.",
+      message:
+        error instanceof Error ? error.message : "Şəkil limiti yoxlanmadı.",
     };
   }
 
-  const { requireApproval: requiresApproval } = await getProductApprovalSettings();
-  const productStatus: ProductStatus = requiresApproval ? "draft" : payload.status;
+  const { requireApproval: requiresApproval } =
+    await getProductApprovalSettings();
+  const productStatus: ProductStatus = requiresApproval
+    ? "draft"
+    : payload.status;
   const productMetadata = {
     stockTrackingEnabled: payload.stockTrackingEnabled,
     commerce_type: payload.commerceType,
@@ -985,35 +1058,38 @@ export async function createStoreProductAction(
     };
   }
 
-  const [variantsResult, locationsResult, imagesResult] = await Promise.allSettled([
-    replaceVariants({
-      productId: product.id,
-      options: payload.variantOptions,
-      combinations: payload.variantCombinations,
-      legacyVariants: payload.variants,
-    }),
-    replaceProductLocations({
-      productId: product.id,
-      storeId,
-      formData,
-    }),
-    uploadProductImages({
-      userId: current.user.id,
-      productId: product.id,
-      productName: payload.name,
-      files: imageFiles,
-    }),
-  ]);
+  const [variantsResult, locationsResult, imagesResult] =
+    await Promise.allSettled([
+      replaceVariants({
+        productId: product.id,
+        options: payload.variantOptions,
+        combinations: payload.variantCombinations,
+        legacyVariants: payload.variants,
+      }),
+      replaceProductLocations({
+        productId: product.id,
+        storeId,
+        formData,
+      }),
+      uploadProductImages({
+        userId: current.user.id,
+        productId: product.id,
+        productName: payload.name,
+        files: imageFiles,
+      }),
+    ]);
 
-  const productDetailError = [variantsResult, locationsResult]
-    .find((result): result is PromiseRejectedResult => result.status === "rejected");
+  const productDetailError = [variantsResult, locationsResult].find(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
 
   if (productDetailError) {
     return {
       ok: false,
-      message: productDetailError.reason instanceof Error
-        ? productDetailError.reason.message
-        : "Məhsul detalları saxlanmadı.",
+      message:
+        productDetailError.reason instanceof Error
+          ? productDetailError.reason.message
+          : "Məhsul detalları saxlanmadı.",
     };
   }
 
@@ -1026,14 +1102,18 @@ export async function createStoreProductAction(
       storeId,
       message: error instanceof Error ? error.message : String(error),
     });
-    imageWarning = error instanceof Error ? ` Şəkil yüklənmədi: ${error.message}` : " Şəkil yüklənmədi.";
+    imageWarning =
+      error instanceof Error
+        ? ` Şəkil yüklənmədi: ${error.message}`
+        : " Şəkil yüklənmədi.";
   }
 
   const storeSlug = stores.find((store) => store.id === storeId)?.slug ?? null;
   const sellerName =
-    typeof current.profile?.full_name === "string" && current.profile.full_name.trim()
+    typeof current.profile?.full_name === "string" &&
+    current.profile.full_name.trim()
       ? current.profile.full_name.trim()
-      : current.user.email ?? "Satıcı";
+      : (current.user.email ?? "Satıcı");
 
   revalidatePath("/store/dashboard/products");
   revalidatePath("/store/dashboard/pending-products");
@@ -1073,7 +1153,10 @@ export async function updateProductAction(
     "/dashboard/listings",
   );
   if (current.role === "seller") {
-    const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+    const featureEnabled = await getSellerFeatureAccess(
+      current.user.id,
+      "products",
+    );
 
     if (!featureEnabled) {
       return {
@@ -1104,7 +1187,9 @@ export async function updateProductAction(
   const supabase = await createSupabaseServerClient();
   const { data: existing } = await (supabase as any)
     .from("products")
-    .select("id,store_id,owner_id,category_id,listing_type,cost_amount,metadata,stores(slug,owner_id,settings,status)")
+    .select(
+      "id,store_id,owner_id,category_id,name,status,listing_type,cost_amount,metadata,stores(slug,owner_id,settings,status)",
+    )
     .eq("id", productId)
     .maybeSingle();
 
@@ -1130,17 +1215,34 @@ export async function updateProductAction(
     };
   }
 
-  if (current.role !== "admin" && (existing.listing_type !== "store" || existingStore?.status !== "active")) {
-    return { ok: false, message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul redaktə edə bilər." };
+  if (
+    current.role !== "admin" &&
+    (existing.listing_type !== "store" || existingStore?.status !== "active")
+  ) {
+    return {
+      ok: false,
+      message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul redaktə edə bilər.",
+    };
   }
-  if (current.role !== "admin" && payload.status === "active" &&
-      (existing.metadata?.admin_hidden === true || existing.metadata?.approval_status === "rejected")) {
-    return { ok: false, message: "Admin tərəfindən gizlədilmiş məhsulu aktivləşdirə bilməzsiniz." };
+  if (
+    current.role !== "admin" &&
+    payload.status === "active" &&
+    (existing.metadata?.admin_hidden === true ||
+      existing.metadata?.approval_status === "rejected")
+  ) {
+    return {
+      ok: false,
+      message: "Admin tərəfindən gizlədilmiş məhsulu aktivləşdirə bilməzsiniz.",
+    };
   }
   const profitTracking = isProfitTrackingEnabled(existingStore?.settings);
-  const profitError = validateProfitPrices(formData, profitTracking && current.role === "seller");
+  const profitError = validateProfitPrices(
+    formData,
+    profitTracking && current.role === "seller",
+  );
   if (profitError) return { ok: false, message: profitError };
-  if (!profitTracking || !formData.has("costAmount")) payload.costAmount = Number(existing.cost_amount ?? 0);
+  if (!profitTracking || !formData.has("costAmount"))
+    payload.costAmount = Number(existing.cost_amount ?? 0);
 
   const requiresApproval = false;
   const status =
@@ -1150,9 +1252,11 @@ export async function updateProductAction(
       ? "draft"
       : requiresApproval
         ? "draft"
-      : payload.status;
+        : payload.status;
   const baseMetadata =
-    existing.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
+    existing.metadata &&
+    typeof existing.metadata === "object" &&
+    !Array.isArray(existing.metadata)
       ? existing.metadata
       : {};
   if (formData.has("stockTrackingPresent")) {
@@ -1227,7 +1331,8 @@ export async function updateProductAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
+      message:
+        error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
     };
   }
 
@@ -1245,7 +1350,10 @@ export async function updateProductAction(
       productId,
       message: error instanceof Error ? error.message : String(error),
     });
-    imageWarning = error instanceof Error ? ` Şəkil yüklənmədi: ${error.message}` : " Şəkil yüklənmədi.";
+    imageWarning =
+      error instanceof Error
+        ? ` Şəkil yüklənmədi: ${error.message}`
+        : " Şəkil yüklənmədi.";
   }
 
   revalidatePath("/store/dashboard/products");
@@ -1262,12 +1370,42 @@ export async function updateProductAction(
     homepage: status === "active" || existing.metadata?.featured === true,
   });
 
+  if (current.role === "admin") {
+    revalidatePath(`/radmin/products/${productId}/edit`);
+    revalidatePath(`/radmin/stores/${existing.store_id}`);
+    await recordAdminAudit({
+      action: "product.update",
+      adminId: current.user.id,
+      entityType: "product",
+      entityId: productId,
+      metadata: {
+        store_id: existing.store_id,
+        previous: { name: existing.name, status: existing.status },
+        updated: {
+          name: payload.name,
+          price_amount: payload.priceAmount,
+          discount_amount: payload.discountAmount,
+          stock_quantity: payload.stockQuantity,
+          status,
+        },
+      },
+    });
+  }
+
   return {
     ok: true,
     message: requiresApproval
       ? `Məhsul yeniləndi, qəbul edildikdən sonra dərc olunacaq.${imageWarning}`
       : `Məhsul yeniləndi.${imageWarning}`,
   };
+}
+
+/** Explicit RAdmin entry point; seller/public sessions cannot authorize it. */
+export async function updateProductByAdminAction(
+  formData: FormData,
+): Promise<ProductActionResult> {
+  await requireRole(["admin"], "/radmin/products");
+  return updateProductAction(formData);
 }
 
 export async function deleteProductAction(
@@ -1278,7 +1416,10 @@ export async function deleteProductAction(
     "/dashboard/listings",
   );
   if (current.role === "seller") {
-    const featureEnabled = await getSellerFeatureAccess(current.user.id, "products");
+    const featureEnabled = await getSellerFeatureAccess(
+      current.user.id,
+      "products",
+    );
 
     if (!featureEnabled) {
       return {
@@ -1350,7 +1491,9 @@ export async function deleteProductAction(
     homepage: existing?.status === "active",
   });
   await deleteR2ImagesByUrls(
-    ((productImages ?? []) as Array<{ url: string | null }>).map((image) => image.url),
+    ((productImages ?? []) as Array<{ url: string | null }>).map(
+      (image) => image.url,
+    ),
   );
 
   return {
@@ -1524,7 +1667,10 @@ export async function deleteProductImageAction(
     .eq("id", image.product_id)
     .maybeSingle();
 
-  if (!product || (current.role !== "admin" && product.owner_id !== current.user.id)) {
+  if (
+    !product ||
+    (current.role !== "admin" && product.owner_id !== current.user.id)
+  ) {
     return {
       ok: false,
       message: "Bu şəkli silmək icazəniz yoxdur.",
@@ -1734,7 +1880,11 @@ export async function createPersonalListingAction(
 ): Promise<ProductActionResult> {
   const current = await requireRole(["customer"], "/dashboard/listings");
   if (!allowsPersonalListings()) {
-    return { ok: false, message: "Məhsul satmaq üçün rəsmi mağaza qeydiyyatından keçin və admin təsdiqini gözləyin." };
+    return {
+      ok: false,
+      message:
+        "Məhsul satmaq üçün rəsmi mağaza qeydiyyatından keçin və admin təsdiqini gözləyin.",
+    };
   }
   await ensureAuthProfile({
     id: current.user.id,
@@ -1784,7 +1934,9 @@ export async function createPersonalListingAction(
       .single();
 
     if (paymentError || !payment) {
-      throw new Error(paymentError?.message ?? "Ödəniş qeydi yaradıla bilmədi.");
+      throw new Error(
+        paymentError?.message ?? "Ödəniş qeydi yaradıla bilmədi.",
+      );
     }
 
     const { data: product, error: productError } = await (supabaseAdmin as any)
@@ -1842,7 +1994,8 @@ export async function createPersonalListingAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Elan yaradıla bilmədi.",
+      message:
+        error instanceof Error ? error.message : "Elan yaradıla bilmədi.",
     };
   }
 
@@ -1851,7 +2004,8 @@ export async function createPersonalListingAction(
 
   return {
     ok: true,
-    message: "Elan yaradıldı. Aktivləşməsi üçün 1 AZN ödəniş təsdiqi gözlənilir.",
+    message:
+      "Elan yaradıldı. Aktivləşməsi üçün 1 AZN ödəniş təsdiqi gözlənilir.",
   };
 }
 

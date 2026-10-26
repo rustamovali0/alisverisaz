@@ -1,8 +1,4 @@
-import {
-  CACHE_TAGS,
-  CACHE_TTL,
-  publicCache,
-} from "@/lib/cache/public-cache";
+import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
@@ -14,7 +10,10 @@ import type {
   ProductApprovalStatus,
   ProductVariantCombinationInput,
 } from "@/lib/products/types";
-import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
+import {
+  PRODUCT_OPTION_TYPES,
+  normalizeProductOptions,
+} from "@/lib/products/variant-utils";
 
 type ProductRow = {
   id: string;
@@ -105,7 +104,11 @@ const MANAGED_PRODUCT_SELECT_LEGACY =
   "id,store_id,name,name_translations,category_id,cost_amount,price_amount,discount_amount,stock_quantity,status,description,description_translations,seo_title_translations,seo_description_translations,listing_type,deposit_enabled,deposit_type,deposit_value,metadata,product_images(id,url,alt_text,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 
 function isMissingVariantSchemaError(error: unknown) {
-  const value = error as { code?: string; message?: string; details?: string } | null;
+  const value = error as {
+    code?: string;
+    message?: string;
+    details?: string;
+  } | null;
   const text = `${value?.message ?? ""} ${value?.details ?? ""}`.toLowerCase();
 
   return (
@@ -125,41 +128,40 @@ function isMissingVariantSchemaError(error: unknown) {
 function toManagedProduct(row: ProductRow): ManagedProduct {
   const optionsFromRows = (row.product_options ?? [])
     .filter((option) => PRODUCT_OPTION_TYPES.includes(option.type))
-    .map(
-      (option): ProductOptionInput => ({
-        id: option.id,
-        type: option.type,
-        name: option.name,
-        isEnabled: option.is_enabled,
-        sortOrder: option.sort_order ?? 0,
-        values: (option.product_option_values ?? []).map((value) => ({
-          id: value.id,
-          value: value.value,
-          colorHex: value.color_hex,
-          sortOrder: value.sort_order ?? 0,
-        })),
-      }),
-    );
+    .map((option): ProductOptionInput => ({
+      id: option.id,
+      type: option.type,
+      name: option.name,
+      isEnabled: option.is_enabled,
+      sortOrder: option.sort_order ?? 0,
+      values: (option.product_option_values ?? []).map((value) => ({
+        id: value.id,
+        value: value.value,
+        colorHex: value.color_hex,
+        sortOrder: value.sort_order ?? 0,
+      })),
+    }));
   const optionSource =
     optionsFromRows.length > 0
       ? optionsFromRows
-      : row.metadata?.variant_options ?? [];
+      : (row.metadata?.variant_options ?? []);
   const variantCombinations = (row.product_variants ?? [])
-    .filter((variant) => variant.combination && Object.keys(variant.combination).length > 0)
-    .map(
-      (variant): ProductVariantCombinationInput => ({
-        id: variant.id,
-        combination: variant.combination ?? {},
-        sku: variant.sku ?? null,
-        priceOverrideAmount:
-          variant.price_override_amount === null ||
-          variant.price_override_amount === undefined
-            ? null
-            : Number(variant.price_override_amount),
-        stockQuantity: Number(variant.stock_quantity ?? 0),
-        isEnabled: variant.is_enabled !== false,
-      }),
-    );
+    .filter(
+      (variant) =>
+        variant.combination && Object.keys(variant.combination).length > 0,
+    )
+    .map((variant): ProductVariantCombinationInput => ({
+      id: variant.id,
+      combination: variant.combination ?? {},
+      sku: variant.sku ?? null,
+      priceOverrideAmount:
+        variant.price_override_amount === null ||
+        variant.price_override_amount === undefined
+          ? null
+          : Number(variant.price_override_amount),
+      stockQuantity: Number(variant.stock_quantity ?? 0),
+      isEnabled: variant.is_enabled !== false,
+    }));
   const flatVariants = row.product_variants
     ? row.product_variants.map((variant) => ({
         name: variant.name,
@@ -167,7 +169,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
         priceDeltaAmount: Number(variant.price_delta_amount ?? 0),
         stockQuantity: Number(variant.stock_quantity ?? 0),
       }))
-    : row.metadata?.variants ?? [];
+    : (row.metadata?.variants ?? []);
 
   return {
     id: row.id,
@@ -218,7 +220,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     variantCombinations:
       variantCombinations.length > 0
         ? variantCombinations
-        : row.metadata?.variant_combinations ?? [],
+        : (row.metadata?.variant_combinations ?? []),
   };
 }
 
@@ -245,6 +247,7 @@ function sortPublicRootCategories(categories: CategoryOption[]) {
 }
 
 type CategoryOptionRow = {
+  image_url?: string | null;
   id: string;
   name: string;
   slug: string;
@@ -257,6 +260,7 @@ function toCategoryOption(row: CategoryOptionRow): CategoryOption {
     name: row.name,
     slug: row.slug,
     parentId: row.parent_id,
+    imageUrl: row.image_url ?? null,
   };
 }
 
@@ -265,14 +269,16 @@ const getRootCategoryOptionsCached = publicCache(
     const supabase = createSupabasePublicClient();
     const { data } = await (supabase as any)
       .from("categories")
-      .select("id,name,slug,parent_id")
+      .select("id,name,slug,parent_id,image_url")
       .eq("is_active", true)
       .is("parent_id", null)
       .order("sort_order", {
         ascending: true,
       });
 
-    return sortPublicRootCategories(((data ?? []) as CategoryOptionRow[]).map(toCategoryOption));
+    return sortPublicRootCategories(
+      ((data ?? []) as CategoryOptionRow[]).map(toCategoryOption),
+    );
   },
   ["public-root-categories"],
   {
@@ -289,7 +295,7 @@ export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
   const supabase = await createSupabaseServerClient();
   const { data } = await (supabase as any)
     .from("categories")
-    .select("id,name,slug,parent_id")
+    .select("id,name,slug,parent_id,image_url")
     .eq("is_active", true)
     .order("sort_order", {
       ascending: true,
