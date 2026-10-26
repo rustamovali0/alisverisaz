@@ -183,7 +183,12 @@ export function FavoriteToggleButton({
       const detail = (event as CustomEvent<FavoriteUpdatedDetail>).detail;
 
       if (detail?.productId === productId) {
-        if (favoriteProductCache) updateFavoriteProductCache(favoriteProductCache.userId, productId, detail.isActive);
+        if (favoriteProductCache)
+          updateFavoriteProductCache(
+            favoriteProductCache.userId,
+            productId,
+            detail.isActive,
+          );
         setFavoriteId(detail.isActive ? productId : null);
       }
     }

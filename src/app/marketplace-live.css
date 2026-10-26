@@ -2514,13 +2514,19 @@
   }
 }
 .live-marketplace .mobile-bottom-nav-stable [aria-current="page"],
-.live-marketplace .mobile-bottom-nav-stable [aria-current="page"] :is(span,svg) {
+.live-marketplace
+  .mobile-bottom-nav-stable
+  [aria-current="page"]
+  :is(span, svg) {
   color: var(--live-green) !important;
 }
-.live-marketplace .mobile-bottom-nav-stable [aria-current="page"] > span:first-child {
+.live-marketplace
+  .mobile-bottom-nav-stable
+  [aria-current="page"]
+  > span:first-child {
   background-color: var(--live-soft) !important;
 }
-.live-marketplace :is(.app-dashboard-shell,.radmin-shell) {
+.live-marketplace :is(.app-dashboard-shell, .radmin-shell) {
   --primary: 158 62% 24% !important;
   --primary-foreground: 0 0% 100% !important;
   --ring: 158 62% 24% !important;
