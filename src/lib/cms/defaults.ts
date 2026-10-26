@@ -17,7 +17,7 @@ export const homeThemeKeys = [
 
 export const defaultHomeThemeColors = {
   pageBackground: "#f8fafc",
-  heroBackground: "#f0fdfa",
+  heroBackground: "#fff7ed",
   categoriesBackground: "#ffffff",
   storesBackground: "#ffffff",
   productsBackground: "#f8fafc",
@@ -25,10 +25,10 @@ export const defaultHomeThemeColors = {
   cardBackground: "#ffffff",
   text: "#0f172a",
   mutedText: "#64748b",
-  primary: "#0891b2",
-  accent: "#f59e0b",
-  buttonBackground: "#0891b2",
-  buttonHoverBackground: "#0e7490",
+  primary: "#f97316",
+  accent: "#fb923c",
+  buttonBackground: "#f97316",
+  buttonHoverBackground: "#ea580c",
   buttonText: "#ffffff",
   buttonHoverText: "#ffffff",
   border: "#dbe3ea",
