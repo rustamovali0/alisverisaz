@@ -176,15 +176,15 @@ export const defaultDesignSettings: SiteDesignSettings = {
 
 const themeTokens = {
   "default-marketplace": {
-    primary: "#0891b2",
-    secondary: "#0f766e",
-    accent: "#f59e0b",
+    primary: "#f97316",
+    secondary: "#0f172a",
+    accent: "#fb923c",
     background: "#f8fafc",
     surface: "#ffffff",
-    text: "#0f172a",
-    mutedText: "#64748b",
-    border: "#dbe3ea",
-    shadow: "0 8px 24px rgb(15 23 42 / 0.06)",
+    text: "#1f2937",
+    mutedText: "#667085",
+    border: "#e2e8f0",
+    shadow: "0 12px 32px rgb(15 23 42 / 0.07)",
   },
   minimal: {
     primary: "#111827",

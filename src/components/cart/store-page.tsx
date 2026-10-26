@@ -1,12 +1,12 @@
 import "server-only";
 
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { BreadcrumbJsonLd, StoreJsonLd } from "@/components/seo/json-ld";
-import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
+import { getMarketplaceProductPage, getMarketplaceStoreBySlug } from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
@@ -29,12 +29,26 @@ export type StorePageProps = {
   searchParams?: Promise<{
     category?: string;
     q?: string;
+    sort?: string;
   }>;
 };
 
 type StorePageRenderOptions = {
   forceMarketplaceRoute?: boolean;
+  productsOnly?: boolean;
+  contactOnly?: boolean;
 };
+
+function publicStoreDescription(description: string | null) {
+  const value = description?.trim();
+
+  if (!value) return null;
+
+  const normalized = value.toLocaleLowerCase("az-AZ").replace(/\s+/g, " ");
+  return normalized === "satıcı mağazası" || normalized === "satici magazasi"
+    ? null
+    : value;
+}
 
 export async function generateMetadata({
   params,
@@ -51,7 +65,7 @@ export async function generateMetadata({
   });
 
   if (!store) {
-    return {};
+    notFound();
   }
 
   const requestHeaders = await headers();
@@ -74,7 +88,7 @@ export async function generateMetadata({
     ? `${store.name} (${store.slug}) | Rəsmi mağaza`
     : `${store.name} (${store.slug}) mağazası | Alışveriş.az`;
   const description =
-    store.description ||
+    publicStoreDescription(store.description) ||
     `${store.name} (${store.slug}) mağazasının Alışveriş.az səhifəsi. Yeni məhsullar, kateqoriyalar və əlaqə məlumatları.`;
 
   return {
@@ -156,7 +170,10 @@ export async function renderStorePage(
   });
 
   if (!store) {
-    redirect(marketplaceHomeRedirect);
+    if (storeSubdomainSlug) {
+      redirect(marketplaceHomeRedirect);
+    }
+    notFound();
   }
 
   const isStoreOwner =
@@ -189,6 +206,27 @@ export async function renderStorePage(
     : `${siteConfig.url}/store/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
+  const productSort =
+    search?.sort === "oldest" || search?.sort === "price_asc" || search?.sort === "price_desc"
+      ? search.sort
+      : "newest";
+  const productPage = options.productsOnly
+    ? await getMarketplaceProductPage(locale, {
+        categoryId: selectedCategory?.id,
+        searchQuery: search?.q,
+        sort: productSort,
+        storeId: store.id,
+        limit: 20,
+      })
+    : null;
+  const renderedStore = productPage
+    ? {
+        ...store,
+        sampleProducts: productPage.products,
+        productNextCursor: productPage.nextCursor,
+        productHasMore: productPage.hasMore,
+      }
+    : store;
 
   void trackActivityEvent({
     eventType: "store_view",
@@ -218,7 +256,7 @@ export async function renderStorePage(
         ]}
       />
       <Storefront
-        store={store}
+        store={renderedStore}
         categories={categories}
         locations={storeLocations}
         selectedCategoryId={selectedCategory?.id}
@@ -229,6 +267,8 @@ export async function renderStorePage(
         legacyLayout={isLegacyStoreRoute}
         storeSubdomainSlug={storeSubdomainSlug}
         isStoreOwner={isStoreOwner}
+        productsOnly={options.productsOnly}
+        contactOnly={options.contactOnly}
         footer={{
           siteName: siteSettings.shortName || siteSettings.siteName,
           logoUrl: siteSettings.logoUrl,

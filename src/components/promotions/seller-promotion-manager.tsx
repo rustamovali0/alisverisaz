@@ -49,7 +49,7 @@ function statusLabel(status: PromotionRequest["status"]) {
   if (status === "approved") return "Aktiv";
   if (status === "rejected") return "Rədd edildi";
   if (status === "canceled") return "Ləğv edildi";
-  return "Gözləyir";
+  return "Önə çıxarma təsdiqi gözləyir";
 }
 
 export function SellerPromotionManager({

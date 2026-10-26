@@ -131,7 +131,8 @@ export function CategoryManager({ categories }: CategoryManagerProps) {
           <input
             name="sortOrder"
             type="number"
-            defaultValue={0}
+            defaultValue=""
+            placeholder="0"
             className="h-11 rounded-md border bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
           />
           <CategoryParentSelect categories={categories} />

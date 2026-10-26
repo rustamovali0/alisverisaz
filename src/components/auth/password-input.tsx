@@ -62,7 +62,7 @@ export function PasswordInput({
         <button
           type="button"
           className={cn(
-            "absolute right-2 top-1/2 z-10 inline-grid size-9 shrink-0 -translate-y-1/2 place-items-center rounded-md border-0 bg-transparent text-slate-500 shadow-none transition-colors hover:bg-transparent hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:text-blue-300",
+            "absolute inset-y-0 right-2 z-10 my-auto inline-grid size-9 shrink-0 place-items-center rounded-md border-0 bg-transparent text-slate-500 shadow-none transition-colors hover:bg-transparent hover:text-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 disabled:pointer-events-none disabled:opacity-50 dark:text-slate-300 dark:hover:text-blue-300",
             toggleClassName,
           )}
           onClick={() => setIsVisible((current) => !current)}

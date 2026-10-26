@@ -9,8 +9,8 @@ type RootShellProps = {
 export function RootShell({ children }: RootShellProps) {
   return (
     <>
-      <main className="min-h-[70vh] bg-background">
-        <div className="container flex min-h-[70vh] items-center justify-center py-12">
+      <main className="page-shell">
+        <div className="page-container flex min-h-[70dvh] items-center justify-center py-8 sm:py-12">
           {children}
         </div>
       </main>

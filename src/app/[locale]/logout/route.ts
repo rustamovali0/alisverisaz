@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { trackActivityEvent } from "@/lib/activity/events";
+import { clientEnv } from "@/lib/config/env.client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type LogoutRouteContext = {
@@ -34,6 +35,20 @@ function isCrossSiteRequest(request: Request) {
   return false;
 }
 
+function getPublicOrigin() {
+  const configuredOrigin = new URL(clientEnv.appUrl).origin;
+  const hostname = new URL(configuredOrigin).hostname;
+
+  if (
+    process.env.NODE_ENV === "production" &&
+    (hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1")
+  ) {
+    return `https://${clientEnv.storeRootDomain}`;
+  }
+
+  return configuredOrigin;
+}
+
 export async function GET(request: Request, context: LogoutRouteContext) {
   await context.params;
 
@@ -55,5 +70,5 @@ export async function GET(request: Request, context: LogoutRouteContext) {
     },
   });
 
-  return NextResponse.redirect(new URL("/admin", request.url));
+  return NextResponse.redirect(new URL("/login", getPublicOrigin()));
 }

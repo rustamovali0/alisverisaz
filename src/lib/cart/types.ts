@@ -4,6 +4,7 @@ import type {
 } from "@/lib/products/types";
 
 export type CartProduct = {
+  stockTrackingEnabled?: boolean;
   id: string;
   slug: string;
   storeId: string;
@@ -13,6 +14,7 @@ export type CartProduct = {
   createdAt?: string | null;
   name: string;
   description: string | null;
+  commerceType?: "sale" | "rental";
   priceAmount: number;
   discountAmount: number;
   stockQuantity: number;
@@ -57,6 +59,8 @@ export type MarketplaceStore = {
   whatsappPhone?: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  storefrontHeroUrl?: string | null;
+  featuredCategoryIds?: string[];
   updatedAt?: string | null;
   productCount: number;
   sampleProducts: CartProduct[];
@@ -73,10 +77,19 @@ export type MarketplaceProductDetail = {
     images: ProductImage[];
   };
   store: MarketplaceStore;
+  favoriteCount: number;
+  category: {
+    id: string;
+    name: string;
+    slug: string;
+    parent: { id: string; name: string; slug: string } | null;
+  } | null;
 };
 
 export type CartItem = {
   productId: string;
+  storeId?: string;
+  storeSlug?: string | null;
   quantity: number;
   selectedOptions?: Record<string, string>;
   variantKey?: string;

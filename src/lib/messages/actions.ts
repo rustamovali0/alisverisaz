@@ -1,9 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
 
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile, requireRole } from "@/lib/auth/session";
+import { assertAuthRateLimit, getClientIp, recordAuthRateLimitAttempt } from "@/lib/auth/security";
+import { getStoreSubdomainSlug } from "@/lib/config/domains";
 import { getOwnedStores } from "@/lib/dashboard/data";
 import { normalizeAzerbaijanPhone } from "@/lib/phone";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -111,21 +115,35 @@ export async function createProductMessageAction(
   const senderNameInput = readString(formData, "senderName");
   const senderPhoneInput = normalizeAzerbaijanPhone(readString(formData, "senderPhone"));
   const message = readString(formData, "message");
+  const guestToken = readString(formData, "guestToken");
+  const guestName = readString(formData, "guestName").slice(0, 80);
   const current = await getCurrentUserProfile();
 
-  if (!current || current.role !== "customer") {
+  const requestHeaders = await headers();
+  const hostStoreSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const requestPath = requestHeaders.get("x-current-path") || requestHeaders.get("next-url") || (() => {
+    try { return new URL(requestHeaders.get("referer") ?? "").pathname; } catch { return ""; }
+  })();
+  const isGuest = !current;
+  if (current && current.role !== "customer") {
     return {
       ok: false,
       message: "Mesaj göndərmək üçün zəhmət olmasa istifadəçi hesabı ilə giriş edin.",
     };
   }
 
+  const isIsolatedRequest = hostStoreSlug === storeSlug || requestPath === `/${storeSlug}` || requestPath.startsWith(`/${storeSlug}/`);
+  if (isGuest && (!isIsolatedRequest || guestToken.length < 16 || guestToken.length > 200 || guestName.length < 2)) {
+    return { ok: false, message: "Adınızı düzgün yazın və səhifəni yenidən açıb cəhd edin." };
+  }
+  if (message.length < 2 || message.length > 2000) {
+    return { ok: false, message: "Mesaj 2-2000 simvol arasında olmalıdır." };
+  }
   const senderName =
     senderNameInput ||
-    current.profile?.full_name ||
-    current.user.email ||
-    "İstifadəçi";
-  const senderPhone = senderPhoneInput || normalizeAzerbaijanPhone(current.profile?.phone ?? "");
+    current?.profile?.full_name ||
+    current?.user.email || guestName;
+  const senderPhone = senderPhoneInput || normalizeAzerbaijanPhone(current?.profile?.phone ?? "");
 
   if (!productId || !message) {
     return {
@@ -153,25 +171,46 @@ export async function createProductMessageAction(
   const resolvedStoreId = product.store_id as string;
   const resolvedStoreSlug =
     typeof store?.slug === "string" && store.slug ? store.slug : storeSlug;
+  if (isGuest && !(hostStoreSlug === resolvedStoreSlug || requestPath === `/${resolvedStoreSlug}` || requestPath.startsWith(`/${resolvedStoreSlug}/`))) {
+    return { ok: false, message: "Qonaq mesajı yalnız mağazanın şəxsi saytından göndərilə bilər." };
+  }
+  const guestKey = isGuest ? createHash("sha256").update(guestToken).digest("hex") : null;
+  const identityKey = createHash("sha256").update(isGuest ? `guest:${guestToken}` : `user:${current!.user.id}`).digest("hex");
+  const ip = await getClientIp();
+  const rateRule = { endpoint: "support_message" as const, identifier: `${productId}:${guestKey ?? current?.user.id}`, ip, maxAttempts: 5, windowSeconds: 3600, blockSeconds: 3600 };
+  const rateLimit = await assertAuthRateLimit(rateRule);
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  const existingQuery = (supabase as any).from("product_messages").select("id").eq("product_id", productId);
+  const { data: existing } = isGuest
+    ? await existingQuery.eq("guest_key", guestKey).maybeSingle()
+    : await existingQuery.eq("sender_id", current!.user.id).maybeSingle();
+  if (existing) return { ok: false, message: "Bu məhsula artıq bir dəfə mesaj yazmısınız." };
 
   const { error } = await (supabase as any).from("product_messages").insert({
     product_id: productId,
     store_id: resolvedStoreId,
-    sender_id: current.user.id,
+    sender_id: current?.user.id ?? null,
+    guest_key: guestKey,
+    identity_key: identityKey,
     sender_name: senderName,
     sender_phone: senderPhone || null,
     message,
   });
 
   if (error) {
+    await recordAuthRateLimitAttempt(rateRule);
     return {
       ok: false,
       message:
-        error.code === "PGRST205" || error.message.includes("product_messages")
+        error.code === "23505"
+          ? "Bu məhsula artıq bir dəfə mesaj yazmısınız."
+          : error.code === "PGRST205" || error.message.includes("product_messages")
           ? "Mesaj sistemi üçün Supabase migration işlədilməyib. product_messages cədvəlini yaradın."
-          : error.message,
+          : "Mesaj göndərilmədi. Bir az sonra yenidən cəhd edin.",
     };
   }
+
+  await recordAuthRateLimitAttempt(rateRule);
 
   await trackActivityEvent({
     eventType: "message_created",

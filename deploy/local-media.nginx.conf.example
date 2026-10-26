@@ -1,0 +1,12 @@
+# Install only after reviewing the persistent directory ownership and TLS host.
+# Never serve the repository or release directories as uploads.
+location ~ ^/media/([0-9a-fA-F-]{36}\.webp)$ {
+    alias /srv/alisveris-media/$1;
+    default_type image/webp;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Content-Security-Policy "default-src 'none'" always;
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    limit_except GET HEAD { deny all; }
+    disable_symlinks on;
+}
+location /media/ { return 404; }

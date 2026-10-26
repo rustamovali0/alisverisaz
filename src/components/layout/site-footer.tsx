@@ -92,23 +92,23 @@ export function SiteFooter({
   ].filter((item) => item.href);
 
   return (
-    <footer className="w-full max-w-full overflow-x-clip bg-white px-3 py-3 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-4 md:py-5">
-      <div className="mx-auto max-w-[1220px] overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900">
+    <footer className="w-full max-w-full overflow-x-clip bg-slate-50 px-3 py-4 text-slate-900 dark:bg-slate-950 dark:text-slate-100 sm:px-4 md:py-8">
+      <div className="mx-auto max-w-[1280px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-900">
       <div className="grid grid-cols-2 gap-x-5 gap-y-5 px-4 py-5 sm:px-6 md:grid-cols-2 md:gap-8 md:px-8 md:py-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
         <div className="col-span-2 min-w-0 md:col-span-1">
           <Link href="/" className="inline-flex min-w-0 items-center gap-2">
             {logoUrl ? (
-              <span className="grid size-8 place-items-center overflow-hidden rounded-md border border-cyan-100 bg-white shadow-sm dark:border-white/10 dark:bg-slate-950 md:size-11 md:rounded-lg">
+              <span className="grid size-8 place-items-center overflow-hidden rounded-md border border-orange-100 bg-white shadow-sm dark:border-white/10 dark:bg-slate-950 md:size-11 md:rounded-lg">
                 <img
                   src={logoUrl}
-                  alt={displaySiteName}
-                  className={darkLogoUrl ? "h-full w-full object-contain p-1.5 dark:hidden" : "h-full w-full object-contain p-1.5"}
+                  alt=""
+                  className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                 />
                 {darkLogoUrl ? (
                   <img
                     src={darkLogoUrl}
-                    alt={displaySiteName}
-                    className="hidden h-full w-full object-contain p-1.5 dark:block"
+                    alt=""
+                    className="hidden h-full w-full object-contain p-0.5 dark:block"
                   />
                 ) : null}
               </span>
@@ -132,7 +132,7 @@ export function SiteFooter({
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex size-9 items-center justify-center rounded-md border border-cyan-100 bg-white text-slate-500 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-cyan-300/40 dark:hover:bg-slate-900 dark:hover:text-cyan-200 md:size-12 md:rounded-lg"
+                    className="inline-flex size-9 items-center justify-center rounded-md border border-orange-100 bg-white text-slate-500 shadow-sm transition hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-white/10 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-orange-300/40 dark:hover:bg-slate-900 dark:hover:text-orange-200 md:size-12 md:rounded-lg"
                     aria-label={item.label}
                   >
                     <Icon className="size-5 md:size-6" aria-hidden="true" />
@@ -146,14 +146,14 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("platform")}
           </h2>
-          <div className="mt-2 grid gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-3 md:text-sm">
-            <Link href="/stores" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+          <div className="mt-2 grid gap-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-2 md:text-sm">
+            <Link href="/stores" className="inline-flex min-h-8 items-center transition hover:text-orange-700 dark:hover:text-orange-200">
               {nav("stores")}
             </Link>
-            <Link href="/products" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/products" className="inline-flex min-h-8 items-center transition hover:text-orange-700 dark:hover:text-orange-200">
               {nav("products")}
             </Link>
-            <Link href="/register" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/register" className="inline-flex min-h-8 items-center transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("openStore")}
             </Link>
           </div>
@@ -162,22 +162,22 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("account")}
           </h2>
-          <div className="mt-2 grid gap-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-3 md:text-sm">
+          <div className="mt-2 grid gap-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:gap-2 md:text-sm [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center">
             {isResolved && role ? (
-              <Link href={getAccountHref(role)} className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+              <Link href={getAccountHref(role)} className="transition hover:text-orange-700 dark:hover:text-orange-200">
                 {role === "seller" ? footer("goToPanel") : nav("account")}
               </Link>
             ) : isResolved ? (
               <>
-                <Link href="/login" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+                <Link href="/login" className="transition hover:text-orange-700 dark:hover:text-orange-200">
                   {auth("login")}
                 </Link>
-                <Link href="/register" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+                <Link href="/register" className="transition hover:text-orange-700 dark:hover:text-orange-200">
                   {auth("register")}
                 </Link>
               </>
             ) : null}
-            <Link href="/cart" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/cart" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {common("cart")}
             </Link>
           </div>
@@ -186,30 +186,30 @@ export function SiteFooter({
           <h2 className="text-xs font-black uppercase tracking-normal text-slate-900 dark:text-slate-100 md:text-sm">
             {footer("support")}
           </h2>
-          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:grid-cols-1 md:gap-3 md:text-sm">
-            <Link href="/help" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+          <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 md:mt-4 md:grid-cols-1 md:gap-2 md:text-sm [&_a]:inline-flex [&_a]:min-h-8 [&_a]:items-center">
+            <Link href="/help" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("helpCenter")}
             </Link>
-            <Link href="/faq" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/faq" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               FAQ
             </Link>
-            <Link href="/contact" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/contact" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("contactSupport")}
             </Link>
-            <Link href="/terms" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/terms" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("terms")}
             </Link>
-            <Link href="/privacy" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/privacy" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("privacy")}
             </Link>
-            <Link href="/rules" className="transition hover:text-cyan-700 dark:hover:text-cyan-200">
+            <Link href="/rules" className="transition hover:text-orange-700 dark:hover:text-orange-200">
               {footer("rules")}
             </Link>
           </div>
         </div>
       </div>
       <div className="border-t border-slate-200 bg-white dark:border-white/10 dark:bg-slate-950/60">
-        <div className="flex flex-col gap-2 px-4 py-2 pb-[calc(4.6rem+env(safe-area-inset-bottom))] text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-4 md:pb-4 md:text-sm">
+        <div className="flex flex-col gap-2 px-4 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:px-6 md:px-8 md:py-4 md:pb-4 md:text-sm">
           <span>© {new Date().getFullYear()} {displaySiteName}</span>
         </div>
       </div>

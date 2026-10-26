@@ -1,4 +1,5 @@
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
+import { Link } from "@/i18n/navigation";
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { ProductList } from "@/components/products/product-list";
 import { requireRole } from "@/lib/auth/session";
@@ -52,11 +53,12 @@ export default async function StoreProductsPage() {
       title="Məhsullar"
       description="Mağazalarınıza bağlı real məhsulları redaktə edin və ya silin."
     >
+      <Link href="/store/dashboard/products/import" className="mb-4 inline-flex min-h-11 items-center underline">Excel/CSV ilə məhsul əlavə et</Link>
       <ProductList
         products={products}
         categories={[]}
         imageLimit={5}
-        editHrefBase="/store/dashboard/products"
+        editHrefBase="/sell/product"
         promotedProductIds={promotedProductIds}
         deleteAction={deleteProductAction}
         emptyTitle="Məhsul yoxdur"

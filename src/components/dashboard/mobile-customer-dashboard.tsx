@@ -95,7 +95,7 @@ export function MobileCustomerDashboard({
         </Link>
       </div>
 
-      <div id="mobile-account-sections" className="grid grid-cols-2 gap-2">
+      <nav id="mobile-account-sections" aria-label="Hesab bölmələri" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const isActive = isActiveAccountItem(pathname, item.href);
@@ -112,18 +112,18 @@ export function MobileCustomerDashboard({
               }}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "grid min-h-[72px] min-w-0 grid-cols-[32px_minmax(0,1fr)] items-center gap-2 rounded-xl border bg-card p-3 shadow-sm transition-colors",
+                "flex h-11 shrink-0 items-center gap-2 rounded-xl border bg-card px-3 shadow-sm transition-colors",
                 isActive
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border text-foreground hover:border-primary/30 hover:bg-primary/5",
               )}
             >
-              <Icon className="size-6" strokeWidth={2.1} aria-hidden="true" />
-              <span className="min-w-0 truncate text-sm font-black">{item.label}</span>
+              <Icon className="size-5" strokeWidth={2.1} aria-hidden="true" />
+              <span className="whitespace-nowrap text-sm font-bold">{item.label}</span>
             </Link>
           );
         })}
-      </div>
+      </nav>
 
       <div className="mt-3">
         <LogoutButton className="w-full justify-center rounded-xl text-sm" />

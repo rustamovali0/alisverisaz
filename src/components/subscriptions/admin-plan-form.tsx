@@ -149,7 +149,8 @@ function PlanFields({
             type="number"
             min="0"
             step="0.01"
-            defaultValue={plan?.priceAmount ?? 0}
+            defaultValue={plan?.priceAmount || ""}
+            placeholder="0"
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
           />

@@ -36,10 +36,12 @@ type ProductRow = {
   deposit_type: "fixed" | "percent";
   deposit_value: string | number;
   metadata: {
+    stockTrackingEnabled?: boolean;
     approval_status?: string;
     approval_note?: string;
     rejection_note?: string;
     payment_status?: string;
+    commerce_type?: string;
     variants?: Array<{
       name: string;
       value: string;
@@ -177,6 +179,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
     stockQuantity: row.stock_quantity,
+    stockTrackingEnabled: row.metadata?.stockTrackingEnabled !== false,
     status: row.status,
     approvalStatus: readProductApprovalStatus(row.metadata?.approval_status),
     approvalNote: readProductApprovalNote(row.metadata),
@@ -185,6 +188,7 @@ function toManagedProduct(row: ProductRow): ManagedProduct {
     seoTitleTranslations: row.seo_title_translations ?? {},
     seoDescriptionTranslations: row.seo_description_translations ?? {},
     listingType: row.listing_type,
+    commerceType: row.metadata?.commerce_type === "rental" ? "rental" : "sale",
     paymentStatus: row.metadata?.payment_status,
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,

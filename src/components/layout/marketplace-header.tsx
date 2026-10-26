@@ -1,12 +1,12 @@
 "use client";
 
 import {
+  BadgePlus,
   Heart,
   HelpCircle,
   Info,
   Menu,
   MessageCircle,
-  Plus,
   Search,
   ShoppingCart,
   X,
@@ -43,6 +43,8 @@ type MarketplaceHeaderProps = {
   mobileNavbarVariant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  storeId?: string;
+  isolatedStorefront?: boolean;
   brandHomeHref?: string;
   productsHref?: string;
   searchStoreSlug?: string | null;
@@ -62,7 +64,7 @@ function formatBrandName(value?: string) {
   return value;
 }
 
-function readCartCount() {
+function readCartCount(storeId?: string) {
   if (typeof window === "undefined") {
     return 0;
   }
@@ -70,9 +72,12 @@ function readCartCount() {
   try {
     const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
       quantity?: number;
+      storeId?: string;
     }>;
 
-    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+    return items
+      .filter((item) => !storeId || item.storeId === storeId)
+      .reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
   } catch {
     return 0;
   }
@@ -121,6 +126,8 @@ export function MarketplaceHeader({
   mobileNavbarVariant,
   storeSubdomainSlug,
   storeHomeHref = "/",
+  storeId,
+  isolatedStorefront = false,
   brandHomeHref = storeHomeHref,
   productsHref = "/products",
   searchStoreSlug,
@@ -131,7 +138,10 @@ export function MarketplaceHeader({
 }: MarketplaceHeaderProps) {
   const nav = useTranslations("nav");
   const common = useTranslations("common");
-  const displaySiteName = formatBrandName(siteName);
+  const isIsolatedStorefront = isolatedStorefront || Boolean(storeSubdomainSlug);
+  const displaySiteName = isIsolatedStorefront ? siteName : formatBrandName(siteName);
+  const isolatedBaseHref = storeHomeHref === "/" ? "" : storeHomeHref;
+  const cartHref = isIsolatedStorefront ? `${isolatedBaseHref}/cart` : "/cart";
   const pathname = usePathname();
   const { profile, isResolved } = useClientAuthProfileState();
   const isMarketplaceStoreLanding =
@@ -147,11 +157,18 @@ export function MarketplaceHeader({
         ? profile.role
         : null;
   const isSeller = resolvedRole === "seller";
+  const currentStoreSlug = searchStoreSlug ?? storeSubdomainSlug ?? null;
+  const sellerOwnsCurrentStore =
+    isSeller &&
+    (!isIsolatedStorefront ||
+      !currentStoreSlug ||
+      (profile.status === "authenticated" && profile.storeSlug === currentStoreSlug));
   const isGuest = resolvedRole === null;
   const isSellerDashboard =
     pathname === "/store/dashboard" || pathname.startsWith("/store/dashboard/");
   const shouldSuppressSearch =
     isSellerDashboard ||
+    pathname.startsWith("/sell") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/seller") ||
     pathname.startsWith("/admin") ||
@@ -168,13 +185,13 @@ export function MarketplaceHeader({
   const instagramHref = normalizeInstagramHref(instagramUrl);
   const whatsappHref = normalizeWhatsappHref(whatsappUrl);
   const commerceUtilityButtonClass =
-    "group inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-8";
+    "group inline-flex size-10 shrink-0 items-center justify-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:bg-orange-50 hover:text-orange-600 dark:border-transparent dark:text-white dark:hover:bg-orange-500/10 dark:hover:text-orange-300 [&_svg]:!size-6";
   const mobileUtilityButtonClass =
     "group inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 hover:translate-y-0 hover:!border-transparent hover:!bg-transparent hover:text-blue-600 hover:shadow-none dark:border-transparent dark:text-white dark:hover:!border-transparent dark:hover:text-blue-300 [&_svg]:!size-6";
   const commerceUtilityIconClass =
-    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
   const sellerCommerceIconClass =
-    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+    "!size-7 min-h-7 min-w-7 stroke-[2.1] transition-transform duration-200 md:group-hover:scale-105";
   const mobileCommerceIconClass =
     "!size-6 min-h-6 min-w-6 stroke-[2.15] transition-transform duration-200";
 
@@ -214,7 +231,7 @@ export function MarketplaceHeader({
 
   useEffect(() => {
     function syncCartCount() {
-      setCartCount(readCartCount());
+      setCartCount(readCartCount(isIsolatedStorefront ? storeId : undefined));
     }
 
     syncCartCount();
@@ -225,12 +242,13 @@ export function MarketplaceHeader({
       window.removeEventListener("storage", syncCartCount);
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
-  }, []);
+  }, [isIsolatedStorefront, storeId]);
 
   const hasSearchData = stores.length > 0 || categories.length > 0;
   const shouldShowCompactMobileSearch = !hasInlinePrimarySearch || !isHomeSearchVisible;
   const shouldShowDesktopSearch =
-    !shouldSuppressSearch && hasSearchData && (!hasInlinePrimarySearch || !isHomeSearchVisible);
+    !shouldSuppressSearch &&
+    hasSearchData;
   const pathnameSegments = pathname.split("/").filter(Boolean);
   const productsSegmentIndex = pathnameSegments.indexOf("products");
   const isProductDetailPage =
@@ -242,7 +260,14 @@ export function MarketplaceHeader({
       !pathname.startsWith("/seller") &&
       !pathname.startsWith("/admin") &&
       !pathname.startsWith("/radmin"));
-  const shouldGateMobileSearch = isProductDetailPage;
+  const shouldUseCompactSearchButton =
+    pathname === "/cart" ||
+    pathname.startsWith("/cart/") ||
+    pathname === "/checkout" ||
+    pathname.startsWith("/checkout/") ||
+    pathname === "/favorites" ||
+    pathname.startsWith("/favorites/");
+  const shouldGateMobileSearch = isProductDetailPage || shouldUseCompactSearchButton;
   const shouldShowMobileSearchToggle =
     showMobileSearch &&
     !shouldSuppressSearch &&
@@ -284,12 +309,17 @@ export function MarketplaceHeader({
   }, [isMobileMenuOpen]);
 
   const addListingHref = isSeller
-    ? "/store/dashboard/products/new"
+    ? "/sell/product/new"
     : isGuest
       ? "/register?role=seller&next=/store/dashboard"
       : "";
-  const shouldShowAddListing = Boolean(addListingHref);
-  const mobileMenuItems = [
+  const shouldShowAddListing = !isIsolatedStorefront && Boolean(addListingHref);
+  const mobileMenuItems = isIsolatedStorefront ? [
+    { href: storeHomeHref, label: "Əsas", icon: Info },
+    { href: `${isolatedBaseHref}/products`, label: nav("products"), icon: Search },
+    ...(!sellerOwnsCurrentStore ? [{ href: cartHref, label: common("cart"), icon: ShoppingCart }] : []),
+    { href: `${isolatedBaseHref}/contact`, label: "Əlaqə", icon: MessageCircle },
+  ] : [
     { href: "/help", label: "Yardım", icon: HelpCircle },
     { href: "/about", label: "Tətbiq haqqında", icon: Info },
     { href: "/contact", label: "Bizimlə əlaqə", icon: MessageCircle },
@@ -297,11 +327,22 @@ export function MarketplaceHeader({
 
   return (
     <>
+      {!isIsolatedStorefront && !isSellerDashboard && isHomePage ? (
+        <div className="hidden border-b border-slate-200 bg-slate-100 text-slate-700 lg:block dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+          <div className="container flex h-8 max-w-[1440px] items-center justify-between text-[11px] font-semibold tracking-wide">
+            <span>Azərbaycanın onlayn alış-veriş platforması</span>
+            <div className="flex items-center gap-5">
+              <Link href="/help" className="transition hover:text-orange-600">Kömək mərkəzi</Link>
+              <Link href="/stores" className="transition hover:text-orange-600">Mağazalar</Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <header
         className={
           sticky
             ? cn(
-                "marketplace-header sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-none backdrop-blur dark:border-slate-800 dark:bg-slate-950/95",
+                "marketplace-header sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.06)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95",
                 !isHomePage && "bg-white/95 dark:bg-slate-950/95",
               )
             : "marketplace-header relative z-40 border-b border-slate-200 bg-white/95 shadow-none dark:border-slate-800 dark:bg-slate-950/95"
@@ -309,7 +350,7 @@ export function MarketplaceHeader({
       >
         <div
           className={cn(
-            "container flex min-h-14 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1 py-1.5 sm:min-h-[68px] sm:gap-2 sm:py-2 xl:flex-nowrap",
+            "container flex min-h-16 w-full max-w-[1440px] min-w-0 flex-nowrap items-center gap-1.5 py-2 sm:min-h-[72px] sm:gap-3 xl:flex-nowrap",
             isSellerDashboard && "min-h-14 py-1.5 sm:min-h-16",
           )}
         >
@@ -317,7 +358,7 @@ export function MarketplaceHeader({
             type="button"
             size="icon"
             variant="ghost"
-            className={cn(mobileUtilityButtonClass, "md:size-11 md:[&_svg]:!size-7")}
+            className={cn(mobileUtilityButtonClass, "md:size-10 md:[&_svg]:!size-6")}
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Menyunu aç"
             aria-expanded={isMobileMenuOpen}
@@ -326,26 +367,26 @@ export function MarketplaceHeader({
           </Button>
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3 md:flex-none">
             {logoUrl ? (
-              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-10 md:rounded-md">
+              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-orange-100 bg-white shadow-sm dark:border-orange-200/20 md:size-9 md:rounded-md">
                 <img
                   src={logoUrl}
-                  alt={displaySiteName}
-                  className={darkLogoUrl ? "h-full w-full object-contain p-1.5 dark:hidden" : "h-full w-full object-contain p-1.5"}
+                  alt=""
+                  className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
                 />
                 {darkLogoUrl ? (
                   <img
                     src={darkLogoUrl}
-                    alt={displaySiteName}
-                    className="hidden h-full w-full object-contain p-1.5 dark:block"
+                    alt=""
+                    className="hidden h-full w-full object-contain p-0.5 dark:block"
                   />
                 ) : null}
               </span>
             ) : (
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-10 md:rounded-md md:text-lg">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 text-lg font-black text-white shadow-sm dark:bg-white dark:text-slate-950 md:size-9 md:rounded-md md:text-base">
                 a
               </span>
             )}
-            <span className="min-w-0 origin-left truncate text-[20px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 min-[390px]:text-[22px] md:text-xl md:font-black md:group-hover:scale-105">
+            <span className="min-w-0 origin-left truncate text-[20px] font-bold tracking-normal text-slate-950 transition-transform duration-200 dark:text-slate-100 min-[390px]:text-[22px] md:text-[19px] md:font-black md:group-hover:scale-105">
               {displaySiteName}
             </span>
           </Link>
@@ -392,7 +433,7 @@ export function MarketplaceHeader({
                 </a>
               </Button>
             ) : null}
-            {!isGuest ? (
+            {!isGuest && !isIsolatedStorefront ? (
               <>
                 <NotificationCenter
                   buttonClassName={mobileUtilityButtonClass}
@@ -414,33 +455,17 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            {isSeller && !isHomePage ? (
-              <>
-                <Button
-                  asChild
-                  size="icon"
-                  variant="ghost"
-                  className={mobileUtilityButtonClass}
-                  aria-label={common("cart")}
-                >
-                  <Link href="/cart" prefetch className="relative grid place-items-center">
-                    <ShoppingCart className={mobileCommerceIconClass} aria-hidden="true" />
-                    {cartCount > 0 ? (
-                      <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
-                        {cartCount > 99 ? "99+" : cartCount}
-                      </span>
-                    ) : null}
-                  </Link>
-                </Button>
-              </>
-            ) : null}
           </div>
-          <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
-            <Button
+          <nav className="hidden shrink-0 items-center gap-0.5 2xl:flex">
+            {isIsolatedStorefront ? <>
+              <Link href={`${isolatedBaseHref}/products`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-orange-600 dark:text-slate-200 dark:hover:text-orange-300">{nav("products")}</Link>
+              <Link href={`${isolatedBaseHref}/contact`} className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-300">Əlaqə</Link>
+            </> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant={isProductsActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group h-10 rounded-xl bg-transparent px-3 text-sm font-semibold text-slate-700 shadow-none hover:bg-orange-50 hover:text-orange-600 dark:bg-transparent dark:text-slate-200 dark:hover:bg-orange-500/10 dark:hover:text-orange-300",
                 isProductsActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -449,23 +474,23 @@ export function MarketplaceHeader({
                   {nav("products")}
                 </span>
               </Link>
-            </Button>
-            <Button
+            </Button> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant="ghost"
-              className="group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
+              className="group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300"
             >
               <Link href="/stores" prefetch>
                 <span className="inline-block transition-transform duration-200 md:group-hover:translate-y-[-1px]">
                   Mağazalar
                 </span>
               </Link>
-            </Button>
-            <Button
+            </Button> : null}
+            {!isIsolatedStorefront ? <Button
               asChild
               variant={isAboutActive ? "secondary" : "ghost"}
               className={cn(
-                "group rounded-lg bg-transparent px-2.5 text-sm font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
+                "group h-9 rounded-lg bg-transparent px-2 text-[13px] font-medium text-slate-700 shadow-none hover:!bg-transparent hover:text-blue-600 dark:bg-transparent dark:text-slate-200 dark:hover:!bg-transparent dark:hover:text-blue-300",
                 isAboutActive && "bg-transparent text-slate-900 dark:bg-transparent dark:text-slate-100",
               )}
             >
@@ -474,22 +499,23 @@ export function MarketplaceHeader({
                   {nav("about")}
                 </span>
               </Link>
-            </Button>
+            </Button> : null}
           </nav>
           {shouldShowDesktopSearch ? (
-            <div className="ml-auto hidden min-w-[220px] max-w-[300px] flex-[1_1_240px] items-center gap-2 xl:flex 2xl:max-w-[380px]">
+            <div className="ml-auto hidden min-w-[320px] max-w-[560px] flex-[1_1_460px] items-center gap-2 lg:flex 2xl:max-w-[620px]">
               <MarketplaceSearch
                 stores={stores}
                 defaultValue={searchDefaultValue}
                 storeSlug={searchStoreSlug ?? undefined}
-                className="min-w-0 flex-1 rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900"
-                inputClassName="h-10 rounded-xl border-0 bg-slate-50 pl-11 pr-4 text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:bg-slate-900 dark:text-slate-100"
-                buttonClassName="rounded-[10px] bg-blue-600 px-5 text-white hover:bg-blue-700"
+                className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                inputClassName="h-10 rounded-xl border-0 bg-slate-50 pl-10 pr-3 text-sm text-slate-800 shadow-none focus-visible:ring-2 focus-visible:ring-orange-200 dark:bg-slate-900 dark:text-slate-100"
+                buttonSize="lg"
+                buttonClassName="h-10 rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-orange-600"
               />
             </div>
           ) : null}
           <div className="ml-auto hidden min-w-0 shrink-0 items-center gap-1 md:flex">
-            {!isGuest ? (
+            {!isGuest && !isIsolatedStorefront ? (
               <>
                 <NotificationCenter
                   buttonClassName={cn(
@@ -512,26 +538,26 @@ export function MarketplaceHeader({
                 </Button>
               </>
             ) : null}
-            <Button
-              asChild
-              size="icon"
-              variant="ghost"
-              className={cn(
-                commerceUtilityButtonClass,
-              )}
-              aria-label={common("cart")}
-            >
-              <Link href="/cart" prefetch className="relative grid place-items-center">
-                <ShoppingCart className={isSeller ? sellerCommerceIconClass : commerceUtilityIconClass} aria-hidden="true" />
-                {cartCount > 0 ? (
-                  <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                ) : null}
-              </Link>
-            </Button>
-            <div className="hidden min-w-0 shrink-0 lg:block">
-              <HeaderAccountActions className="shrink-0" />
+            {!sellerOwnsCurrentStore ? (
+              <Button
+                asChild
+                size="icon"
+                variant="ghost"
+                className={cn(commerceUtilityButtonClass)}
+                aria-label={common("cart")}
+              >
+                <Link href={cartHref} prefetch className="relative grid place-items-center">
+                  <ShoppingCart className={commerceUtilityIconClass} aria-hidden="true" />
+                  {cartCount > 0 ? (
+                    <span className="absolute -right-1 top-1 z-10 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] font-black leading-none text-primary-foreground ring-2 ring-background">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  ) : null}
+                </Link>
+              </Button>
+            ) : null}
+            <div className={cn("hidden min-w-0 shrink-0 lg:block", isIsolatedStorefront && "!hidden")}>
+              <HeaderAccountActions className="shrink-0 [&_button]:h-10 [&_a]:h-10 [&_a]:text-[13px] [&_svg]:!size-5" />
             </div>
           </div>
         </div>
@@ -541,27 +567,29 @@ export function MarketplaceHeader({
       shouldShowCompactMobileSearch &&
       hasSearchData &&
       (!shouldGateMobileSearch || isMobileSearchOpen) ? (
-        <div className="mobile-performance-surface sticky top-16 z-40 border-b bg-white px-4 py-1.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
+        <div className="mobile-performance-surface fixed inset-x-0 top-14 z-40 border-b bg-white px-3 py-2.5 shadow-sm shadow-slate-950/[0.03] dark:bg-background md:hidden">
           <MarketplaceSearch
             stores={stores}
             defaultValue={searchDefaultValue}
             storeSlug={searchStoreSlug ?? undefined}
             stackOnMobile
+            compactActions
             className="w-full"
-            inputClassName="h-9 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[15px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            inputClassName="h-12 rounded-xl border-0 bg-slate-100 pl-11 pr-3 text-[16px] shadow-none placeholder:text-[16px] focus-visible:ring-2 focus-visible:ring-[hsl(var(--marketplace-primary)/0.3)] dark:bg-muted"
+            buttonClassName="!size-12 !min-w-12 !max-w-12 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
           />
         </div>
       ) : null}
       {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-[90]" role="dialog" aria-modal="true" aria-label="Menyu">
+        <div className="fixed inset-0 z-[90] overscroll-contain" role="dialog" aria-modal="true" aria-label="Menyu">
           <button
             type="button"
             className="absolute inset-0 bg-slate-950/45"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Menyunu bağla"
           />
-          <aside className="relative flex h-full w-[min(74vw,300px)] flex-col overflow-hidden bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50 md:w-[340px] md:px-5 md:pt-5">
-            <div className="mb-5 flex items-center justify-between gap-3">
+          <aside className="relative flex h-full w-[min(78vw,296px)] flex-col overflow-y-auto overscroll-contain bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 text-slate-950 shadow-2xl dark:bg-slate-950 dark:text-slate-50 md:w-[340px] md:px-5 md:pt-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <Link
                 href={brandHomeHref}
                 prefetch
@@ -569,15 +597,26 @@ export function MarketplaceHeader({
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {logoUrl ? (
-                  <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                    <img src={logoUrl} alt={displaySiteName} className="h-full w-full object-contain p-2" />
+                  <span className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+                    <img
+                      src={logoUrl}
+                      alt=""
+                      className={darkLogoUrl ? "h-full w-full object-contain p-0.5 dark:hidden" : "h-full w-full object-contain p-0.5"}
+                    />
+                    {darkLogoUrl ? (
+                      <img
+                        src={darkLogoUrl}
+                        alt=""
+                        className="hidden h-full w-full object-contain p-0.5 dark:block"
+                      />
+                    ) : null}
                   </span>
                 ) : (
-                  <span className="grid size-12 shrink-0 place-items-center rounded-full bg-slate-100 text-xl font-black text-slate-500 dark:bg-slate-900 dark:text-slate-300">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-slate-100 text-lg font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-300">
                     {displaySiteName.slice(0, 1)}
                   </span>
                 )}
-                <span className="min-w-0 truncate text-xl font-black tracking-normal">
+                <span className="min-w-0 truncate text-lg font-bold tracking-normal">
                   {displaySiteName}
                 </span>
               </Link>
@@ -585,11 +624,11 @@ export function MarketplaceHeader({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="size-12 shrink-0 rounded-full hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50"
+                className="size-10 shrink-0 rounded-lg hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-slate-800 dark:hover:text-slate-50"
                 onClick={() => setIsMobileMenuOpen(false)}
                 aria-label="Bağla"
               >
-                <X className="size-8" aria-hidden="true" />
+                <X className="size-5" aria-hidden="true" />
               </Button>
             </div>
 
@@ -598,10 +637,10 @@ export function MarketplaceHeader({
                 href={addListingHref}
                 prefetch
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="mb-4 inline-flex min-h-12 items-center gap-3 border-b border-slate-200 pb-4 text-[18px] font-semibold tracking-normal text-slate-800 transition hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
+                className="mb-3 inline-flex min-h-11 items-center gap-2.5 border-b border-slate-200 pb-3 text-[15px] font-semibold tracking-normal text-slate-800 transition hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
               >
-                <span className="grid size-11 shrink-0 place-items-center rounded-full border-2 border-slate-800 dark:border-slate-100">
-                  <Plus className="size-8" aria-hidden="true" />
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300">
+                  <BadgePlus className="size-5" aria-hidden="true" />
                 </span>
                 <span>Elan yerləşdir</span>
               </Link>
@@ -617,23 +656,23 @@ export function MarketplaceHeader({
                     href={item.href}
                     prefetch
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex min-h-14 items-center gap-3 border-t border-slate-200 text-[18px] font-semibold tracking-normal text-slate-800 transition first:border-t-0 hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
+                    className="flex min-h-11 items-center gap-2.5 border-t border-slate-200 text-[15px] font-medium tracking-normal text-slate-800 transition first:border-t-0 hover:text-blue-700 dark:border-slate-800 dark:text-slate-100 dark:hover:text-blue-300"
                   >
-                    <Icon className="size-9 shrink-0 stroke-[1.9]" aria-hidden="true" />
+                    <Icon className="size-5 shrink-0 stroke-[2]" aria-hidden="true" />
                     <span className="min-w-0 truncate">{item.label}</span>
                   </Link>
                 );
               })}
             </div>
 
-            <div className="mt-4 grid gap-2.5">
-              <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+            <div className="mt-3 grid gap-2">
+              <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
                 <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Dil</span>
                 <LanguageSwitcher />
               </div>
-              <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
+              <div className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-800">
                 <span className="text-[13px] font-black text-slate-600 dark:text-slate-300">Görünüş</span>
-                <ThemeToggle className="size-14 rounded-full" iconClassName="size-8" />
+                <ThemeToggle className="size-10 rounded-lg" iconClassName="size-5" />
               </div>
             </div>
           </aside>
@@ -644,7 +683,10 @@ export function MarketplaceHeader({
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
+          storeId={storeId}
+          isolatedStorefront={isIsolatedStorefront}
           initialRole={initialRole}
+          sellerOwnsStore={sellerOwnsCurrentStore}
         />
       ) : null}
     </>

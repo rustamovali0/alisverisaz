@@ -53,12 +53,18 @@ function writeBuyNow(items: CartItem[]) {
   sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(items));
 }
 
-function getCartQuantity(productId: string, selectedOptions?: Record<string, string>) {
+function getCartQuantity(
+  productId: string,
+  selectedOptions?: Record<string, string>,
+  isolatedStoreId?: string,
+) {
   const key = getProductVariantKey(productId, selectedOptions);
 
   return (
     readCart().find(
-      (item) => getProductVariantKey(item.productId, item.selectedOptions) === key,
+      (item) =>
+        getProductVariantKey(item.productId, item.selectedOptions) === key &&
+        (!isolatedStoreId || item.storeId === isolatedStoreId),
     )?.quantity ?? 0
   );
 }
@@ -91,6 +97,7 @@ export function AddToCartButton({
   forceDetailSelection = false,
   className,
   disabled = false,
+  isolatedStoreSlug,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
@@ -99,6 +106,7 @@ export function AddToCartButton({
   forceDetailSelection?: boolean;
   className?: string;
   disabled?: boolean;
+  isolatedStoreSlug?: string | null;
 }) {
   const t = useTranslations("marketplace");
   const [quantity, setQuantity] = useState(0);
@@ -116,16 +124,17 @@ export function AddToCartButton({
   const isUnavailable = disabled || stockLimit <= 0;
 
   useEffect(() => {
-    setQuantity(getCartQuantity(product.id, normalizedSelection));
+    const isolatedStoreId = isolatedStoreSlug ? product.storeId : undefined;
+    setQuantity(getCartQuantity(product.id, normalizedSelection, isolatedStoreId));
 
     function handleCartUpdate() {
-      setQuantity(getCartQuantity(product.id, normalizedSelection));
+      setQuantity(getCartQuantity(product.id, normalizedSelection, isolatedStoreId));
     }
 
     window.addEventListener("alisveris-cart-updated", handleCartUpdate);
 
     return () => window.removeEventListener("alisveris-cart-updated", handleCartUpdate);
-  }, [product.id, selectedOptions]);
+  }, [isolatedStoreSlug, product.id, product.storeId, selectedOptions]);
 
   function emitCartToast(isSignedIn: boolean) {
     if (!isSignedIn) {
@@ -194,12 +203,16 @@ export function AddToCartButton({
     const items = readCart();
     const itemKey = getProductVariantKey(product.id, normalizedSelection);
     const existingIndex = items.findIndex(
-      (item) => getProductVariantKey(item.productId, item.selectedOptions) === itemKey,
+      (item) =>
+        getProductVariantKey(item.productId, item.selectedOptions) === itemKey &&
+        (!isolatedStoreSlug || item.storeId === product.storeId),
     );
 
     if (safeQuantity === 0) {
       const nextItems = items.filter(
-        (item) => getProductVariantKey(item.productId, item.selectedOptions) !== itemKey,
+        (item) =>
+          getProductVariantKey(item.productId, item.selectedOptions) !== itemKey ||
+          Boolean(isolatedStoreSlug && item.storeId !== product.storeId),
       );
       writeCart(nextItems);
       setQuantity(0);
@@ -214,6 +227,8 @@ export function AddToCartButton({
     } else {
       items.push({
         productId: product.id,
+        storeId: product.storeId,
+        storeSlug: product.storeSlug ?? isolatedStoreSlug ?? null,
         quantity: safeQuantity,
         selectedOptions: normalizedSelection,
         variantKey: itemKey,
@@ -240,6 +255,10 @@ export function AddToCartButton({
 
   function handleDecrease() {
     updateQuantity(quantity - 1);
+  }
+
+  if (viewerRole === "seller") {
+    return null;
   }
 
   if (quantity > 0 && !isUnavailable) {
@@ -301,6 +320,8 @@ export function BuyNowButton({
   selectionReady = true,
   className,
   disabled = false,
+  isolatedStoreSlug,
+  isolatedStoreBaseHref,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
@@ -308,10 +329,14 @@ export function BuyNowButton({
   selectionReady?: boolean;
   className?: string;
   disabled?: boolean;
+  isolatedStoreSlug?: string | null;
+  isolatedStoreBaseHref?: string | null;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
-  const checkoutPath = "/checkout?mode=buy-now";
+  const checkoutPath = isolatedStoreSlug
+    ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}/cart?mode=buy-now`
+    : "/checkout?mode=buy-now";
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
     product.variantCombinations ?? [],
@@ -319,6 +344,10 @@ export function BuyNowButton({
   );
   const stockLimit = selectedVariant ? selectedVariant.stockQuantity : product.stockQuantity;
   const isUnavailable = disabled || stockLimit <= 0;
+
+  if (viewerRole === "seller") {
+    return null;
+  }
 
   function handleBuyNow() {
     if (isUnavailable) {
@@ -345,6 +374,8 @@ export function BuyNowButton({
     writeBuyNow([
       {
         productId: product.id,
+        storeId: product.storeId,
+        storeSlug: product.storeSlug ?? isolatedStoreSlug ?? null,
         quantity: 1,
         selectedOptions: normalizedSelection,
         variantKey: getProductVariantKey(product.id, normalizedSelection),

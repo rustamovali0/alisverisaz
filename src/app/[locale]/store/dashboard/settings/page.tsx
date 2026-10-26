@@ -5,6 +5,7 @@ import { AccountLanguageSettings } from "@/components/i18n/account-language-sett
 import { requireRole } from "@/lib/auth/session";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCategoryOptions } from "@/lib/products/data";
 
 export const dynamic = "force-dynamic";
 
@@ -29,10 +30,28 @@ export default async function StoreSettingsPage() {
     return <FeatureBlocked title="Mağaza tapılmadı" description="Mağaza yaradıldıqda ayarlar burada görünəcək." />;
   }
 
+  const [{ data: productCategories }, categories] = await Promise.all([
+    (supabase as any)
+      .from("products")
+      .select("category_id")
+      .eq("store_id", store.id)
+      .eq("status", "active")
+      .not("category_id", "is", null),
+    getCategoryOptions(),
+  ]);
+  const categoryIds = new Set(
+    ((productCategories ?? []) as Array<{ category_id: string | null }>)
+      .map((item) => item.category_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const availableCategories = categories
+    .filter((category) => categoryIds.has(category.id))
+    .map(({ id, name }) => ({ id, name }));
+
   return (
     <div className="grid gap-5">
       <AccountLanguageSettings />
-      <StoreSettingsForm store={store} />
+      <StoreSettingsForm store={store} availableCategories={availableCategories} />
       <PasswordChangeForm />
     </div>
   );

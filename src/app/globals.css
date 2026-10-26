@@ -4,78 +4,81 @@
 
 @layer base {
   :root {
-    --background: 210 33% 98%;
-    --foreground: 218 31% 12%;
+    --background: 210 29% 98%;
+    --foreground: 217 25% 16%;
     --card: 0 0% 100%;
-    --card-foreground: 218 31% 12%;
+    --card-foreground: 217 25% 16%;
     --popover: 0 0% 100%;
-    --popover-foreground: 218 31% 12%;
-    --primary: 217 91% 60%;
+    --popover-foreground: 217 25% 16%;
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 35% 94%;
-    --secondary-foreground: 216 28% 18%;
-    --muted: 214 30% 94%;
-    --muted-foreground: 216 13% 43%;
-    --accent: 38 94% 58%;
-    --accent-foreground: 220 30% 12%;
-    --destructive: 0 84.2% 60.2%;
+    --secondary: 212 25% 94%;
+    --secondary-foreground: 216 24% 20%;
+    --muted: 210 24% 95%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 35 48% 50%;
+    --accent-foreground: 217 25% 16%;
+    --destructive: 353 50% 48%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 24% 88%;
-    --input: 214 24% 88%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
-    --marketplace-primary: 217 91% 60%;
-    --marketplace-primary-hover: 221 83% 53%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 24 95% 53%;
+    --radius: 0.875rem;
+    --surface-raised: 0 18px 48px rgb(15 23 42 / 0.08);
+    --surface-hover: 0 24px 64px rgb(15 23 42 / 0.12);
+    --content-max: 90rem;
+    --marketplace-primary: 24 95% 53%;
+    --marketplace-primary-hover: 17 88% 48%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 214 100% 97%;
-    --marketplace-navy: 233 43% 19%;
-    --marketplace-muted: 240 5% 58%;
-    --marketplace-success: 151 66% 45%;
+    --marketplace-primary-soft: 33 100% 96%;
+    --marketplace-navy: 217 25% 16%;
+    --marketplace-muted: 215 14% 46%;
+    --marketplace-success: 153 42% 40%;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 220 29% 8%;
+    --background: 218 25% 10%;
     --foreground: 210 32% 96%;
-    --card: 220 25% 11%;
+    --card: 218 22% 13%;
     --card-foreground: 210 32% 96%;
-    --popover: 220 25% 11%;
+    --popover: 218 22% 13%;
     --popover-foreground: 210 32% 96%;
-    --primary: 217 91% 60%;
+    --primary: 24 95% 56%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 219 21% 18%;
+    --secondary: 216 18% 19%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 219 21% 17%;
-    --muted-foreground: 215 18% 70%;
-    --accent: 42 91% 58%;
-    --accent-foreground: 220 29% 8%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 216 17% 18%;
+    --muted-foreground: 214 15% 70%;
+    --accent: 37 50% 55%;
+    --accent-foreground: 218 25% 10%;
+    --destructive: 353 43% 38%;
     --destructive-foreground: 210 40% 98%;
-    --border: 218 17% 22%;
-    --input: 218 17% 22%;
-    --ring: 217 91% 60%;
-    --marketplace-primary: 217 91% 60%;
-    --marketplace-primary-hover: 221 83% 53%;
+    --border: 216 15% 24%;
+    --input: 216 15% 24%;
+    --ring: 24 95% 56%;
+    --marketplace-primary: 24 95% 56%;
+    --marketplace-primary-hover: 24 95% 62%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
-    --marketplace-primary-soft: 217 45% 18%;
+    --marketplace-primary-soft: 24 42% 18%;
     --marketplace-navy: 210 32% 96%;
     --marketplace-muted: 215 18% 70%;
     --marketplace-success: 151 60% 52%;
   }
 
   .dark .global-loader-root {
-    --background: 220 29% 8% !important;
+    --background: 218 25% 10% !important;
     --foreground: 210 32% 96% !important;
-    --card: 220 25% 11% !important;
+    --card: 218 22% 13% !important;
     --card-foreground: 210 32% 96% !important;
-    --popover: 220 25% 11% !important;
+    --popover: 218 22% 13% !important;
     --popover-foreground: 210 32% 96% !important;
-    --secondary: 219 21% 18% !important;
+    --secondary: 216 18% 19% !important;
     --secondary-foreground: 210 40% 98% !important;
-    --muted: 219 21% 17% !important;
-    --muted-foreground: 215 18% 70% !important;
-    --border: 218 17% 22% !important;
-    --input: 218 17% 22% !important;
+    --muted: 216 17% 18% !important;
+    --muted-foreground: 214 15% 70% !important;
+    --border: 216 15% 24% !important;
+    --input: 216 15% 24% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }
@@ -83,23 +86,23 @@
   /* Homepage presets provide light brand colors inline; dark mode must retain the
      semantic dark surface tokens instead of inheriting those preset surfaces. */
   .dark [data-homepage-preset] {
-    --background: 220 29% 8% !important;
+    --background: 218 25% 10% !important;
     --foreground: 210 32% 96% !important;
-    --card: 220 25% 11% !important;
+    --card: 218 22% 13% !important;
     --card-foreground: 210 32% 96% !important;
-    --popover: 220 25% 11% !important;
+    --popover: 218 22% 13% !important;
     --popover-foreground: 210 32% 96% !important;
-    --primary: 178 70% 42% !important;
-    --primary-foreground: 220 29% 8% !important;
-    --secondary: 219 21% 18% !important;
+    --primary: 24 95% 56% !important;
+    --primary-foreground: 0 0% 100% !important;
+    --secondary: 216 18% 19% !important;
     --secondary-foreground: 210 40% 98% !important;
-    --muted: 219 21% 17% !important;
-    --muted-foreground: 215 18% 70% !important;
-    --accent: 42 91% 58% !important;
-    --accent-foreground: 220 29% 8% !important;
-    --border: 218 17% 22% !important;
-    --input: 218 17% 22% !important;
-    --ring: 178 70% 42% !important;
+    --muted: 216 17% 18% !important;
+    --muted-foreground: 214 15% 70% !important;
+    --accent: 37 50% 55% !important;
+    --accent-foreground: 218 25% 10% !important;
+    --border: 216 15% 24% !important;
+    --input: 216 15% 24% !important;
+    --ring: 24 95% 56% !important;
     --home-hero-bg: hsl(var(--background)) !important;
     --home-categories-bg: hsl(var(--background)) !important;
     --home-stores-bg: hsl(var(--background)) !important;
@@ -108,9 +111,9 @@
     --home-button-bg: hsl(var(--primary)) !important;
     --home-button-text: hsl(var(--primary-foreground)) !important;
     --home-border: hsl(var(--border)) !important;
-    --marketplace-primary: 217 91% 60% !important;
-    --marketplace-primary-hover: 221 83% 53% !important;
-    --marketplace-primary-soft: 217 45% 18% !important;
+    --marketplace-primary: 24 95% 56% !important;
+    --marketplace-primary-hover: 24 95% 62% !important;
+    --marketplace-primary-soft: 24 42% 18% !important;
     --marketplace-navy: 210 32% 96% !important;
     --marketplace-muted: 215 18% 70% !important;
   }
@@ -131,6 +134,22 @@
     background:
       linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.72) 42%, hsl(var(--background)) 100%),
       hsl(var(--background));
+    min-height: 100dvh;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   input,
@@ -271,39 +290,112 @@
 }
 
 @layer components {
+  .page-shell {
+    @apply min-h-[70dvh] bg-background text-foreground;
+  }
+
+  .page-container {
+    width: min(100% - 2rem, var(--content-max));
+    margin-inline: auto;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-3 border-b border-border/80 pb-5 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-black tracking-[-0.035em] text-foreground sm:text-3xl;
+  }
+
+  .page-description {
+    @apply max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base;
+  }
+
+  .ui-surface {
+    @apply border border-border/80 bg-card text-card-foreground;
+    border-radius: var(--design-card-radius, 1rem);
+    box-shadow: var(--surface-raised);
+  }
+
+  .ui-surface-interactive {
+    @apply ui-surface transition-[transform,border-color,box-shadow] duration-200 motion-reduce:transition-none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ui-surface-interactive:hover {
+      transform: translateY(-3px);
+      border-color: hsl(var(--primary) / 0.34);
+      box-shadow: var(--surface-hover);
+    }
+  }
+
+  .ui-field {
+    @apply min-h-11 rounded-xl border border-input bg-background px-3.5 text-sm shadow-sm outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .ui-label {
+    @apply mb-1.5 block text-sm font-semibold text-foreground;
+  }
+
+  .ui-table-wrap {
+    @apply overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm;
+  }
+
+  .ui-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .ui-table thead {
+    @apply bg-muted/70 text-xs font-bold uppercase tracking-[0.06em] text-muted-foreground;
+  }
+
+  .ui-table th,
+  .ui-table td {
+    @apply border-b border-border/70 px-4 py-3.5 align-middle;
+  }
+
+  .ui-table tbody tr {
+    @apply transition-colors hover:bg-primary/[0.035];
+  }
+
+  .ui-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
   .glass-panel {
-    @apply border border-white/60 bg-white/90 shadow-sm dark:border-white/10 dark:bg-card;
-    border-radius: var(--design-card-radius, 0.5rem);
+    @apply border border-white/70 bg-white/95 shadow-sm dark:border-white/10 dark:bg-card;
+    border-radius: var(--design-card-radius, 1rem);
+    box-shadow: var(--surface-raised);
   }
 
   .premium-card {
-    @apply rounded-md border bg-card text-card-foreground shadow-sm shadow-slate-900/5 transition-[border-color,box-shadow] duration-200 hover:border-primary/35 hover:shadow-md dark:shadow-black/20;
-    border-radius: var(--design-card-radius, 0.5rem);
-    box-shadow: var(--design-card-shadow, 0 1px 2px rgb(15 23 42 / 0.05));
+    @apply border bg-card text-card-foreground shadow-sm shadow-slate-900/5 transition-[border-color,box-shadow,transform] duration-200 hover:border-primary/35 dark:shadow-black/20;
+    border-radius: var(--design-card-radius, 1rem);
+    box-shadow: var(--design-card-shadow, var(--surface-raised));
   }
 
   .radmin-shell {
-    --background: 195 45% 96%;
-    --foreground: 219 42% 11%;
+    --background: 210 29% 98%;
+    --foreground: 217 25% 16%;
     --card: 0 0% 100%;
     --card-foreground: 219 42% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 219 42% 11%;
-    --primary: 186 89% 31%;
+    --primary: 24 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 188 48% 92%;
-    --secondary-foreground: 204 55% 18%;
-    --muted: 190 42% 92%;
-    --muted-foreground: 210 17% 43%;
-    --accent: 40 92% 57%;
+    --secondary: 33 100% 96%;
+    --secondary-foreground: 217 25% 16%;
+    --muted: 210 24% 95%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 35 48% 50%;
     --accent-foreground: 219 42% 11%;
-    --border: 190 38% 84%;
-    --input: 190 38% 84%;
-    --ring: 186 89% 31%;
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 24 95% 53%;
     background:
-      radial-gradient(circle at 18% 0%, rgb(94 234 212 / 0.23), transparent 34rem),
-      radial-gradient(circle at 92% 18%, rgb(244 183 64 / 0.16), transparent 28rem),
-      linear-gradient(135deg, #eefdf9 0%, #f8fbff 48%, #e8f7f2 100%);
+      radial-gradient(circle at 18% 0%, rgb(249 115 22 / 0.1), transparent 34rem),
+      radial-gradient(circle at 92% 18%, rgb(251 146 60 / 0.08), transparent 28rem),
+      linear-gradient(135deg, #fffaf5 0%, #f8fafc 48%, #fff7ed 100%);
   }
 
   .dark .radmin-shell {
@@ -313,21 +405,21 @@
     --card-foreground: 210 32% 96%;
     --popover: 220 30% 12%;
     --popover-foreground: 210 32% 96%;
-    --primary: 180 72% 43%;
-    --primary-foreground: 221 39% 8%;
-    --secondary: 204 38% 17%;
+    --primary: 24 95% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 24 24% 18%;
     --secondary-foreground: 210 32% 96%;
     --muted: 208 31% 17%;
     --muted-foreground: 214 18% 72%;
-    --accent: 40 92% 58%;
+    --accent: 37 50% 55%;
     --accent-foreground: 221 39% 8%;
-    --border: 200 28% 22%;
-    --input: 200 28% 22%;
-    --ring: 180 72% 43%;
+    --border: 216 15% 24%;
+    --input: 216 15% 24%;
+    --ring: 24 95% 56%;
     background:
-      radial-gradient(circle at 18% 0%, rgb(45 212 191 / 0.14), transparent 34rem),
-      radial-gradient(circle at 92% 18%, rgb(244 183 64 / 0.09), transparent 28rem),
-      linear-gradient(135deg, #071323 0%, #0c1728 52%, #06111f 100%);
+      radial-gradient(circle at 18% 0%, rgb(249 115 22 / 0.15), transparent 34rem),
+      radial-gradient(circle at 92% 18%, rgb(251 146 60 / 0.09), transparent 28rem),
+      linear-gradient(135deg, #020617 0%, #0f172a 52%, #111827 100%);
   }
 
   .radmin-shell .premium-card {
@@ -340,7 +432,27 @@
 
   .radmin-shell .premium-card:hover {
     border-color: hsl(var(--primary) / 0.34);
-    box-shadow: 0 22px 52px rgb(8 145 178 / 0.13);
+    box-shadow: 0 22px 52px rgb(249 115 22 / 0.14);
+  }
+
+  .app-dashboard-shell {
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 24 95% 53%;
+    --marketplace-primary: 24 95% 53%;
+    --marketplace-primary-hover: 17 88% 48%;
+    background:
+      radial-gradient(circle at 100% 0%, rgb(249 115 22 / 0.07), transparent 28rem),
+      hsl(var(--background));
+  }
+
+  .dark .app-dashboard-shell {
+    --primary: 24 95% 56%;
+    --ring: 24 95% 56%;
+    --marketplace-primary: 24 95% 56%;
+    background:
+      radial-gradient(circle at 100% 0%, rgb(249 115 22 / 0.12), transparent 28rem),
+      hsl(var(--background));
   }
 
   .radmin-shell input,
@@ -431,6 +543,52 @@
   .product-card {
     border-radius: var(--design-card-radius, 0.75rem);
     box-shadow: var(--design-card-shadow, 0 1px 2px rgb(15 23 42 / 0.05));
+  }
+
+  .product-card:focus-within {
+    border-color: hsl(var(--primary) / 0.52);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12), var(--surface-raised);
+  }
+
+  .app-dashboard-shell main form,
+  .radmin-shell main form {
+    accent-color: hsl(var(--primary));
+  }
+
+  .app-dashboard-shell main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .app-dashboard-shell main textarea,
+  .app-dashboard-shell main select,
+  .radmin-shell main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .radmin-shell main textarea,
+  .radmin-shell main select {
+    @apply min-h-11 rounded-xl border border-input bg-background px-3.5 shadow-sm outline-none transition-[border-color,box-shadow,background-color] focus:border-primary focus:ring-4 focus:ring-primary/10;
+  }
+
+  .app-dashboard-shell main table,
+  .radmin-shell main table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .app-dashboard-shell main table tbody tr,
+  .radmin-shell main table tbody tr {
+    @apply transition-colors hover:bg-primary/[0.035];
+  }
+
+  @media (max-width: 639px) {
+    .page-container {
+      width: min(100% - 1rem, var(--content-max));
+    }
+
+    .ui-surface,
+    .premium-card,
+    .glass-panel {
+      border-radius: min(var(--design-card-radius, 1rem), 0.875rem);
+      box-shadow: 0 6px 20px rgb(15 23 42 / 0.06);
+    }
+
+    .page-title {
+      @apply text-xl;
+    }
   }
 
   [data-product-card-preset="minimal"] .product-card,
@@ -562,7 +720,7 @@
 
   .liquid-glass-product-image-shell {
     background:
-      linear-gradient(135deg, rgb(255 255 255 / 0.92), rgb(236 254 255 / 0.72));
+      linear-gradient(135deg, rgb(255 255 255 / 0.94), rgb(255 237 213 / 0.74));
   }
 
   .dark .liquid-glass-product-card {
@@ -582,7 +740,7 @@
 
   .dark .liquid-glass-product-image-shell {
     background:
-      linear-gradient(135deg, rgb(255 255 255 / 0.08), rgb(8 145 178 / 0.12));
+      linear-gradient(135deg, rgb(255 255 255 / 0.08), rgb(249 115 22 / 0.14));
   }
 
   @media (hover: none) and (pointer: coarse) {
@@ -618,6 +776,33 @@
 
     .liquid-glass-product-card::before {
       opacity: 0.35;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .mobile-bottom-nav-stable {
+      position: fixed !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      will-change: transform;
+    }
+
+    body:has(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus) .mobile-bottom-nav-stable,
+    body:has(textarea:focus) .mobile-bottom-nav-stable,
+    body:has(select:focus) .mobile-bottom-nav-stable,
+    body:has([contenteditable="true"]:focus) .mobile-bottom-nav-stable {
+      display: none !important;
+    }
+
+    .marketplace-header,
+    .mobile-performance-surface {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
     }
   }
 

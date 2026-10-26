@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import type { ProductLocationAvailability } from "@/lib/locations/types";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 
 type ProductLocationSectionProps = {
   locations: ProductLocationAvailability[];
@@ -18,8 +19,9 @@ type ProductLocationSectionProps = {
 function getMapUrl(item: ProductLocationAvailability) {
   const { location } = item;
 
-  if (location.mapLink) {
-    return location.mapLink;
+  const safeMapLink = normalizeGoogleMapLink(location.mapLink ?? "");
+  if (safeMapLink) {
+    return safeMapLink;
   }
 
   if (location.latitude !== null && location.longitude !== null) {
@@ -69,9 +71,6 @@ export function ProductLocationSection({
                   </p>
                 ) : null}
               </div>
-              <span className="shrink-0 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
-                Stok: {item.stockQuantity}
-              </span>
             </div>
 
             <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">

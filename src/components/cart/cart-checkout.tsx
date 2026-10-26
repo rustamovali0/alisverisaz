@@ -32,6 +32,7 @@ import type {
   DeliverySettings,
   DeliveryStoreOverride,
 } from "@/lib/delivery/types";
+import { formatAznPrice } from "@/lib/format";
 import {
   findMatchingProductVariant,
   formatProductVariantSelection,
@@ -52,6 +53,9 @@ type CartCheckoutProps = {
   checkoutOnly?: boolean;
   deliverySettings: DeliverySettings;
   deliveryStoreOverrides: DeliveryStoreOverride[];
+  isolatedStoreId?: string;
+  isolatedStoreSlug?: string;
+  isolatedStoreBaseHref?: string;
 };
 
 type DeliveryMethod = "pickup" | "courier" | "region";
@@ -63,9 +67,10 @@ type CheckoutResultState = {
   isGuest?: boolean;
 };
 
-function readCart() {
+function readCart(isolatedStoreId?: string) {
   try {
-    return JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+    const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as CartItem[];
+    return isolatedStoreId ? items.filter((item) => item.storeId === isolatedStoreId) : items;
   } catch {
     return [];
   }
@@ -87,16 +92,16 @@ function isBuyNowCheckout() {
   return new URLSearchParams(window.location.search).get("mode") === "buy-now";
 }
 
-function writeCart(items: CartItem[]) {
-  localStorage.setItem(CART_KEY, JSON.stringify(items));
+function writeCart(items: CartItem[], isolatedStoreId?: string) {
+  const nextItems = isolatedStoreId
+    ? [...readCart().filter((item) => item.storeId !== isolatedStoreId), ...items]
+    : items;
+  localStorage.setItem(CART_KEY, JSON.stringify(nextItems));
   window.dispatchEvent(new Event("alisveris-cart-updated"));
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
+  return formatAznPrice(value);
 }
 
 export function CartCheckout({
@@ -109,6 +114,9 @@ export function CartCheckout({
   checkoutOnly = false,
   deliverySettings,
   deliveryStoreOverrides,
+  isolatedStoreId,
+  isolatedStoreSlug,
+  isolatedStoreBaseHref,
 }: CartCheckoutProps) {
   const common = useTranslations("common");
   const cartUi = useTranslations("cartUi");
@@ -131,24 +139,27 @@ export function CartCheckout({
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   );
-  const visibleItems = items
-    .map((item) => ({
-      item,
-      product: productMap.get(item.productId),
-    }))
-    .filter((entry): entry is { item: CartItem; product: CartProduct } =>
-      Boolean(entry.product),
-    );
-  const total = visibleItems.reduce((sum, entry) => {
-    const unit = getProductVariantUnitPrice({
-      priceAmount: entry.product.priceAmount,
-      discountAmount: entry.product.discountAmount,
-      variants: entry.product.variantCombinations,
-      selection: entry.item.selectedOptions,
-    });
-
-    return sum + unit * entry.item.quantity;
-  }, 0);
+  const visibleItems = useMemo(
+    () =>
+      items
+        .map((item) => ({ item, product: productMap.get(item.productId) }))
+        .filter((entry): entry is { item: CartItem; product: CartProduct } =>
+          Boolean(entry.product) && (!isolatedStoreId || entry.product?.storeId === isolatedStoreId),
+        ),
+    [isolatedStoreId, items, productMap],
+  );
+  const total = useMemo(
+    () => visibleItems.reduce((sum, entry) => {
+      const unit = getProductVariantUnitPrice({
+        priceAmount: entry.product.priceAmount,
+        discountAmount: entry.product.discountAmount,
+        variants: entry.product.variantCombinations,
+        selection: entry.item.selectedOptions,
+      });
+      return sum + unit * entry.item.quantity;
+    }, 0),
+    [visibleItems],
+  );
   const storeGroups = useMemo(() => {
     const groups = new Map<
       string,
@@ -250,9 +261,15 @@ export function CartCheckout({
     };
   }, [deliveryMethod, deliverySettings, deliveryStoreOverrides, visibleItems]);
   const firstProduct = visibleItems[0]?.product;
-  const returnHref =
+  const isolatedProductsHref = isolatedStoreSlug
+    ? `${isolatedStoreBaseHref === "/" ? "" : isolatedStoreBaseHref || `/${isolatedStoreSlug}`}/products`
+    : "/products";
+  const isolatedHomeHref = isolatedStoreSlug
+    ? isolatedStoreBaseHref || `/${isolatedStoreSlug}`
+    : "/";
+  const returnHref = isolatedStoreSlug ? isolatedProductsHref :
     firstProduct?.storeSlug && firstProduct?.slug
-      ? `/${firstProduct.storeSlug}/products/${firstProduct.slug}`
+      ? `/store/${firstProduct.storeSlug}/products/${firstProduct.slug}`
       : "/products";
   const isCartReady = hasLoadedCart && !isLoadingProducts;
   const isEmptyCart = isCartReady && visibleItems.length === 0;
@@ -263,7 +280,7 @@ export function CartCheckout({
     try {
       const referrerUrl = referrer ? new URL(referrer) : null;
       const isSameOrigin = referrerUrl?.origin === window.location.origin;
-      const isCartReferrer = referrerUrl?.pathname === "/cart";
+      const isCartReferrer = referrerUrl?.pathname.endsWith("/cart");
 
       if (isSameOrigin && !isCartReferrer && window.history.length > 1) {
         router.back();
@@ -273,7 +290,7 @@ export function CartCheckout({
       // Fall back to the home page when the browser does not expose a usable referrer.
     }
 
-    router.push("/");
+    router.push(isolatedHomeHref);
   }
 
   useEffect(() => {
@@ -282,17 +299,14 @@ export function CartCheckout({
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const frame = window.requestAnimationFrame(() => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    });
-
-    return () => window.cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
     let isMounted = true;
     const nextUsesBuyNowCart = checkoutOnly && isBuyNowCheckout();
-    const cartItems = nextUsesBuyNowCart ? readBuyNowCart() : readCart();
+    const cartItems = nextUsesBuyNowCart
+      ? readBuyNowCart().filter((item) => !isolatedStoreId || item.storeId === isolatedStoreId)
+      : readCart(isolatedStoreId);
     const productIds = cartItems.map((item) => item.productId);
 
     setUsesBuyNowCart(nextUsesBuyNowCart);
@@ -319,7 +333,7 @@ export function CartCheckout({
             if (nextUsesBuyNowCart) {
               writeBuyNowCart(nextItems);
             } else {
-              writeCart(nextItems);
+              writeCart(nextItems, isolatedStoreId);
             }
           }
         }
@@ -384,7 +398,7 @@ export function CartCheckout({
     if (usesBuyNowCart) {
       writeBuyNowCart(nextItems);
     } else {
-      writeCart(nextItems);
+      writeCart(nextItems, isolatedStoreId);
     }
   }
 
@@ -460,7 +474,7 @@ export function CartCheckout({
     }
 
     const keySet = new Set(itemKeys);
-    const sourceItems = usesBuyNowCart ? readBuyNowCart() : readCart();
+    const sourceItems = usesBuyNowCart ? readBuyNowCart() : readCart(isolatedStoreId);
     const nextItems = sourceItems.filter(
       (item) => !keySet.has(getProductVariantKey(item.productId, item.selectedOptions)),
     );
@@ -575,7 +589,7 @@ export function CartCheckout({
       }
 
       updateItems([]);
-      router.replace(result.isGuest ? (usesBuyNowCart ? "/" : "/products") : "/dashboard");
+      router.replace(isolatedStoreSlug ? (isolatedStoreBaseHref || "/") : result.isGuest ? (usesBuyNowCart ? "/" : "/products") : "/dashboard");
       router.refresh();
     });
   }
@@ -704,9 +718,9 @@ export function CartCheckout({
 
             <div className="mt-5 grid gap-2 sm:flex sm:justify-end">
               <Button asChild variant="outline">
-                <Link href="/products">Məhsullara qayıt</Link>
+                <Link href={isolatedProductsHref}>Məhsullara qayıt</Link>
               </Button>
-              {!checkoutResult.isGuest ? (
+              {!checkoutResult.isGuest && !isolatedStoreSlug ? (
                 <Button asChild>
                   <Link href="/dashboard">Hesabıma keç</Link>
                 </Button>
@@ -719,41 +733,44 @@ export function CartCheckout({
   }
 
   return (
-      <main className="min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0">
+      <main className={isEmptyCart
+        ? "h-[calc(100dvh-7.5rem)] min-h-0 overflow-hidden bg-slate-50 pb-[calc(4.75rem+env(safe-area-inset-bottom))] dark:bg-background md:h-auto md:min-h-[60vh] md:overflow-visible md:pb-0"
+        : "min-h-screen bg-slate-50 pb-[calc(6rem+env(safe-area-inset-bottom))] dark:bg-background md:pb-0"}>
       <div
         className={
           checkoutOnly
             ? "container flex justify-center py-8"
             : isEmptyCart
               ? "container py-6 md:py-8"
-            : "container mx-auto grid max-w-[1280px] gap-5 py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
+            : "container mx-auto grid max-w-[1280px] gap-3 py-3 sm:gap-5 sm:py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
         }
       >
         {!checkoutOnly ? (
         <section className="rounded-none border-0 bg-transparent p-0 text-slate-950 shadow-none dark:text-slate-100 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:p-5 md:shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:md:border-slate-800 dark:md:bg-card">
-          <div className="flex flex-col gap-3 px-1 pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 px-1 pb-2 sm:gap-3 sm:pb-4 md:px-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="hidden rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 md:inline-flex"
+                className="inline-flex size-9 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-none hover:bg-slate-50 md:h-9 md:w-auto md:rounded-[10px] md:px-3"
                 onClick={goBackFromCart}
+                aria-label={common("back")}
               >
-                  <ArrowLeft className="mr-2 size-5" aria-hidden="true" />
-                  {common("back")}
+                  <ArrowLeft className="size-4 md:mr-2" aria-hidden="true" />
+                  <span className="hidden md:inline">{common("back")}</span>
               </Button>
-              <h1 className="text-center text-3xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
+              <h1 className="text-center text-2xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-left md:text-2xl">
                 {common("cart")}
               </h1>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <Button asChild variant="outline" size="sm" className="rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
-                <Link href="/products">Bütün məhsullar</Link>
+                <Link href={isolatedProductsHref}>Bütün məhsullar</Link>
               </Button>
             </div>
           </div>
-          <div className="mt-2 grid gap-3 bg-transparent md:mt-6">
+          <div className="mt-1 grid gap-2 bg-transparent sm:mt-2 sm:gap-3 md:mt-6">
             {visibleItems.length === 0 ? (
               <div className="grid place-items-center gap-3 py-12 text-center text-sm text-muted-foreground">
                 <span className="grid size-14 place-items-center rounded-full bg-muted text-primary">
@@ -784,26 +801,28 @@ export function CartCheckout({
                 return (
                   <div
                   key={itemKey}
-                  className="grid grid-cols-[92px_minmax(0,1fr)] gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex sm:flex-row sm:items-center sm:p-4"
+                  className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-xl border border-slate-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:flex sm:flex-row sm:items-center sm:gap-4 sm:rounded-2xl sm:p-4"
                 >
-                  <div className="size-[92px] overflow-hidden rounded-[12px] border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 sm:size-20">
+                  <div className="size-[72px] overflow-hidden rounded-[10px] border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900 sm:size-20 sm:rounded-[12px]">
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.name}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-contain"
                       />
                     ) : null}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-base font-semibold leading-6 text-slate-950 dark:text-slate-100 sm:truncate">
+                    <h2 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-950 dark:text-slate-100 sm:truncate sm:text-base sm:leading-6">
                       {product.name}
                     </h2>
-                    <p className="mt-2 text-base font-semibold text-blue-700 dark:text-blue-300 sm:mt-1">
+                    <p className="mt-1 text-sm font-semibold text-blue-700 dark:text-blue-300 sm:text-base">
                       {formatMoney(unitPrice)}
                     </p>
                     {selectedVariantLabel.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1">
+                      <div className="mt-1 flex flex-wrap gap-1 sm:mt-2">
                         {selectedVariantLabel.map((label) => (
                           <span
                             key={label}
@@ -820,7 +839,7 @@ export function CartCheckout({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
+                      className="size-9 rounded-[9px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11 sm:rounded-[10px]"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -836,17 +855,19 @@ export function CartCheckout({
                           ),
                         );
                       }}
+                      disabled={item.quantity <= 1}
+                      aria-label={`${product.name} sayını azalt`}
                     >
-                      <Minus className="size-5" aria-hidden="true" />
+                      <Minus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
-                    <span className="w-10 text-center text-lg font-semibold sm:text-base">
+                    <span className="w-8 text-center text-base font-semibold sm:w-10">
                       {item.quantity}
                     </span>
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="size-10 rounded-[10px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11"
+                      className="size-9 rounded-[9px] border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:size-11 sm:rounded-[10px]"
                       onClick={() => {
                         updateItems(
                           items.map((nextItem) =>
@@ -865,18 +886,24 @@ export function CartCheckout({
                           ),
                         );
                       }}
+                      disabled={stockLimit <= 0 || item.quantity >= stockLimit}
+                      aria-label={`${product.name} sayını artır`}
+                      title={item.quantity >= stockLimit ? `Stokda maksimum ${stockLimit} ədəd var` : undefined}
                     >
-                      <Plus className="size-5" aria-hidden="true" />
+                      <Plus className="size-4 sm:size-5" aria-hidden="true" />
                     </Button>
+                    {item.quantity >= stockLimit ? (
+                      <span className="sr-only" role="status">Stok həddinə çatdınız.</span>
+                    ) : null}
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="ml-auto size-12 rounded-[10px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/45 sm:ml-0 sm:size-11"
+                      className="ml-auto size-9 rounded-[9px] bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/45 sm:ml-0 sm:size-11 sm:rounded-[10px]"
                       onClick={() => void removeCartItem(itemKey, product.name)}
                       aria-label={`${product.name} məhsulunu səbətdən sil`}
                     >
-                      <Trash2 className="size-7 stroke-[2.2] sm:size-6" aria-hidden="true" />
+                      <Trash2 className="size-5 stroke-[2.2] sm:size-6" aria-hidden="true" />
                     </Button>
                   </div>
                   </div>
@@ -885,7 +912,7 @@ export function CartCheckout({
             )}
           </div>
           {visibleItems.length > 0 ? (
-            <div className="flex justify-end bg-transparent px-1 py-4">
+            <div className="flex justify-end bg-transparent px-1 py-2.5 sm:py-4">
               <Button
                 type="button"
                 variant="outline"
@@ -893,7 +920,7 @@ export function CartCheckout({
                 className="rounded-[10px] border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900/50 dark:bg-transparent dark:hover:bg-rose-950/30"
                 onClick={() => void clearCart()}
               >
-                <Trash2 className="mr-2 size-6 stroke-[2.2]" aria-hidden="true" />
+                <Trash2 className="mr-2 size-4 stroke-[2.2] sm:size-5" aria-hidden="true" />
                 Səbəti boşalt
               </Button>
             </div>
@@ -908,7 +935,7 @@ export function CartCheckout({
               {cartUi("addProductFirst")}
             </p>
             <Button asChild className="mt-5">
-              <Link href="/products">{cartUi("browseProducts")}</Link>
+              <Link href={isolatedProductsHref}>{cartUi("browseProducts")}</Link>
             </Button>
           </section>
         ) : null}
@@ -919,7 +946,7 @@ export function CartCheckout({
           className={
             checkoutOnly
               ? "h-fit w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100"
-              : "h-fit rounded-2xl border border-slate-200 bg-white p-4 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:p-5"
+              : "h-fit rounded-xl border border-slate-200 bg-white p-3 text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card dark:text-slate-100 sm:rounded-2xl sm:p-4 md:p-5"
           }
         >
           {checkoutOnly ? (
@@ -930,11 +957,11 @@ export function CartCheckout({
               </Link>
             </Button>
           ) : null}
-          <h2 className="text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100">{cartUi("confirmOrder")}</h2>
+          <h2 className="text-base font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-lg">{cartUi("confirmOrder")}</h2>
           <input type="hidden" name="items" value="" />
           <input type="hidden" name="checkoutRequestId" value={checkoutRequestId} />
           <input type="hidden" name="promoCodes" value="" />
-          <div className="mt-4 grid gap-4">
+          <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4">
             {promoEligibleGroups.length > 0 ? (
               <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/30">
                 <div>
@@ -1047,24 +1074,28 @@ export function CartCheckout({
             ) : (
               <input type="hidden" name="deliveryRegion" value="" />
             )}
-            <label className="grid gap-2 text-sm font-medium">
-              Ünvan
-              <textarea
-                name="address"
-                defaultValue={defaultAddress}
-                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required={deliveryMethod !== "pickup"}
-              />
-            </label>
+            {deliveryMethod === "pickup" ? (
+              <input type="hidden" name="address" value="" />
+            ) : (
+              <label className="grid gap-2 text-sm font-medium">
+                Ünvan
+                <textarea
+                  name="address"
+                  defaultValue={defaultAddress}
+                  className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-20"
+                  required
+                />
+              </label>
+            )}
             <label className="grid gap-2 text-sm font-medium">
               Qeyd
               <textarea
                 name="note"
-                className="min-h-20 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-16 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-20"
               />
             </label>
           </div>
-          <div className="mt-5 flex items-center justify-between border-t pt-4">
+          <div className="mt-4 flex items-center justify-between border-t pt-3 sm:mt-5 sm:pt-4">
             <span className="text-sm text-muted-foreground">Məhsullar</span>
             <span className="font-semibold">{formatMoney(total)}</span>
           </div>
@@ -1099,12 +1130,12 @@ export function CartCheckout({
           </div>
           <Button
             type="submit"
-            className="mt-4 h-12 w-full rounded-[10px] bg-blue-600 text-base font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white"
+            className="mt-3 h-10 w-full rounded-[10px] bg-blue-600 text-sm font-semibold text-white shadow-none hover:bg-blue-700 hover:text-white sm:mt-4 sm:h-12 sm:text-base"
             disabled={visibleItems.length === 0 || isPending || isLoadingProducts}
           >
             {isPending ? "Sifariş yaradılır" : "Təsdiqlə"}
           </Button>
-          <Button asChild variant="outline" className="mt-3 w-full">
+          <Button asChild variant="outline" className="mt-2 h-10 w-full sm:mt-3">
             <Link href={returnHref}>Məhsula qayıt</Link>
           </Button>
         </form>

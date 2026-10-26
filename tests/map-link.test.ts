@@ -8,6 +8,8 @@ describe("Google map links", () => {
   });
   it.each(["javascript:alert(1)", "https://evil.test/maps/embed", "https://google.com.evil.test/maps", "https://user@google.com/maps", '<iframe src="https://evil.test"></iframe>', '<iframe src="https://google.com/maps"></iframe><iframe src="https://google.com/maps"></iframe>'])
     ("rejects unsafe input %s", (input) => { expect(normalizeGoogleMapLink(input)).toBeNull(); });
+  it.each(["data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)", "http://google.com/maps", "https://google.com:444/maps"])
+    ("rejects executable or downgraded map input %s", (input) => { expect(normalizeGoogleMapLink(input)).toBeNull(); });
   it("preserves the supplied Google embed", () => {
     const embed = "https://www.google.com/maps/embed?pb=!2d49.9498002!3d40.4041778";
     expect(getGoogleMapEmbedUrl(`<iframe src="${embed}"></iframe>`, "other address")).toBe(embed);

@@ -52,7 +52,7 @@ export function CustomerAddressForm({
         <div className="min-w-0">
           <h2 className="truncate text-base font-black">Əsas ünvan</h2>
           <p className="truncate text-sm text-muted-foreground">
-            Sifariş zamanı ünvan inputu avtomatik dolacaq.
+            Sifariş zamanı ünvanınız avtomatik doldurulacaq.
           </p>
         </div>
       </div>

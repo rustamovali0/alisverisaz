@@ -82,13 +82,14 @@ export default async function ProductQuestionsPage({ params }: ProductQuestionsP
             </div>
           </div>
 
-          {!isStoreOwner ? (
+          {current?.role !== "seller" ? (
             <ProductMessageForm
               productId={detail.product.id}
               storeId={detail.store.id}
               storeSlug={detail.store.slug}
               viewerRole={current?.role ?? null}
               defaultSenderName={current?.profile?.full_name ?? current?.user.email ?? ""}
+              allowGuest={!isLegacyProductRoute}
             />
           ) : null}
           <ProductMessageThread messages={messages} allowReplies={isStoreOwner} />

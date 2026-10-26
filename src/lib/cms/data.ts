@@ -1,7 +1,6 @@
 import {
   CACHE_TAGS,
   CACHE_TTL,
-  invalidateNavigationPublicData,
   publicCache,
 } from "@/lib/cache/public-cache";
 import {
@@ -612,16 +611,18 @@ const getCachedNavigationMenus = publicCache(
 );
 
 export async function getNavigationMenus(options?: { ensureDefaults?: boolean }) {
-  const menus = await getCachedNavigationMenus();
+  if (options?.ensureDefaults) {
+    const menus = await fetchNavigationMenus();
 
-  if (!options?.ensureDefaults || menus.length > 0) {
-    return menus;
+    if (menus.length > 0) {
+      return menus;
+    }
+
+    await ensureDefaultNavigationMenus();
+    return fetchNavigationMenus();
   }
 
-  await ensureDefaultNavigationMenus();
-  invalidateNavigationPublicData();
-
-  return fetchNavigationMenus();
+  return getCachedNavigationMenus();
 }
 
 async function applyDashboardFeatureFilters(

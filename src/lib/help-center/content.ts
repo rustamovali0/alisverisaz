@@ -283,15 +283,10 @@ export const helpPages: HelpPageContent[] = [
         heading: "Hüquqi məlumatlar və əlaqə",
         paragraphs: [
           "Sayt: Alışveriş.az",
-          "Hüquqi sahib, VÖEN, hüquqi ünvan, rəsmi e-poçt, telefon və məxfilik müraciətləri üçün əlaqə məlumatları platforma sahibi tərəfindən tamamlanmalıdır.",
+          "Hüquqi və məxfiliklə bağlı rəsmi müraciətləri Əlaqə və dəstək səhifəsindən göndərə bilərsiniz.",
         ],
         bullets: [
-          "Hüquqi sahib: [Şirkətin və ya fərdi sahibkarın tam adı]",
-          "VÖEN: [VÖEN]",
-          "Hüquqi ünvan: [Hüquqi ünvan]",
-          "E-poçt: [Rəsmi e-poçt ünvanı]",
-          "Telefon: [Əlaqə nömrəsi]",
-          "Məxfilik və məlumatlarla bağlı müraciətlər: [E-poçt ünvanı]",
+          "Rəsmi əlaqə kanalı: /contact",
           "Qaydaların son yenilənməsi: 25 avqust 2026",
         ],
       },

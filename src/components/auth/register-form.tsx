@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useTransition, type UIEvent } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { AuthCard } from "@/components/auth/auth-card";
@@ -14,7 +14,9 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
+import { refreshCachedClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
 import { isRealImageFile } from "@/lib/images/client-file-validation";
+import { cn } from "@/lib/utils";
 
 type RegisterFormProps = {
   userRegistrationEnabled: boolean;
@@ -33,6 +35,75 @@ type FieldErrors = {
 };
 
 const MAX_SELLER_IMAGE_SIZE = 5 * 1024 * 1024;
+
+function LegalReadDialog({
+  onClose,
+  onRead,
+}: {
+  onClose: () => void;
+  onRead: () => void;
+}) {
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const onCloseRef = useRef(onClose);
+  const title = "İstifadəçi razılaşması və məxfilik siyasəti";
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!hasReachedEnd) {
+      return;
+    }
+
+    const closeTimer = window.setTimeout(() => {
+      onCloseRef.current();
+    }, 1_000);
+
+    return () => window.clearTimeout(closeTimer);
+  }, [hasReachedEnd]);
+
+  function handleLegalScroll(event: UIEvent<HTMLDivElement>) {
+    const area = event.currentTarget;
+    if (!hasReachedEnd && area.scrollTop + area.clientHeight >= area.scrollHeight - 16) {
+      setHasReachedEnd(true);
+      onRead();
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/60 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-5">
+          <div>
+            <h2 className="font-bold text-slate-950">{title}</h2>
+            <p className="text-xs text-slate-500">Razılıq üçün sənədi sona qədər oxuyun.</p>
+          </div>
+          <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label="Pəncərəni bağla">
+            <X className="size-5" aria-hidden="true" />
+          </Button>
+        </div>
+        <div className="max-h-[360px] overflow-y-auto px-5 py-5 text-sm leading-7 text-slate-600" onScroll={handleLegalScroll}>
+          <div className="space-y-5">
+            <section><h3 className="font-bold text-slate-950">Hesab və məsuliyyət</h3><p>İstifadəçi düzgün məlumat təqdim etməli, hesab girişlərini qorumalı və platformadan qanuni məqsədlərlə istifadə etməlidir. Satıcı məhsul məlumatı, qiymət, stok və çatdırılma şərtlərinin düzgünlüyünə cavabdehdir.</p></section>
+            <section><h3 className="font-bold text-slate-950">Platformadan istifadə</h3><p>Saxta elan, icazəsiz məlumat əldə etmə, zərərli kod, spam və digər istifadəçilərin hüquqlarını pozan fəaliyyət qadağandır. Qaydaların pozulması halında elan və hesab məhdudlaşdırıla bilər.</p></section>
+            <section><h3 className="font-bold text-slate-950">Toplanan məlumatlar</h3><p>Qeydiyyat və sifariş zamanı ad, e-poçt, telefon, ünvan və hesabın işləməsi üçün lazım olan texniki məlumatlar toplanır. Mağaza hesabında mağaza adı, loqo, banner və əlaqə məlumatları saxlanıla bilər.</p></section>
+            <section><h3 className="font-bold text-slate-950">Məlumatların istifadəsi və cookie-lər</h3><p>Məlumatlar hesabı yaratmaq, sifarişi icra etmək, təhlükəsizliyi qorumaq və dəstək göstərmək üçün istifadə olunur; icazəsiz satılmır. Sayt sessiya, səbət və təhlükəsizlik üçün zəruri cookie-lərdən istifadə edir.</p></section>
+            <section><h3 className="font-bold text-slate-950">Saxlanma və təhlükəsizlik</h3><p>Məlumatlara giriş rol və icazələrlə məhdudlaşdırılır. Profil məlumatlarının yenilənməsi və ya silinməsi üçün dəstək mərkəzinə müraciət edilə bilər.</p></section>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-3 sm:px-5">
+          <span className={hasReachedEnd ? "text-sm font-semibold text-emerald-700" : "text-sm text-slate-500"}>
+            {hasReachedEnd ? "Oxundu" : "Sonadək aşağı sürüşdürün"}
+          </span>
+          <Button type="button" onClick={onClose} disabled={!hasReachedEnd} className="bg-primary text-white hover:bg-orange-600">
+            Tamam
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SellerImageDropzone({
   name,
@@ -192,6 +263,9 @@ export function RegisterForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [legalRead, setLegalRead] = useState(false);
+  const [legalDialogOpen, setLegalDialogOpen] = useState(false);
+  const [sellerStep, setSellerStep] = useState<1 | 2>(1);
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const canRegister = customerOnly
@@ -202,6 +276,13 @@ export function RegisterForm({
   const loginHref = next
     ? `/login?${new URLSearchParams({ next }).toString()}`
     : "/login";
+
+  useEffect(() => {
+    if (legalRead) {
+      setTermsAccepted(true);
+      setFieldErrors((current) => ({ ...current, terms: undefined }));
+    }
+  }, [legalRead]);
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -259,6 +340,14 @@ export function RegisterForm({
       }
 
       const isSellerRegistration = !customerOnly && role === "seller";
+      if (isSellerRegistration) {
+        const avatarFile = formData.get("avatarFile");
+        const bannerFile = formData.get("bannerFile");
+        if (!(avatarFile instanceof File) || avatarFile.size === 0 || !(bannerFile instanceof File) || bannerFile.size === 0) {
+          void appAlert.error("Loqo və banner şəkillərinin hər ikisini seçin.", "Mağaza şəkilləri tələb olunur");
+          return;
+        }
+      }
       const resolvedFullName = isSellerRegistration
         ? storeName.trim()
         : `${firstName.trim()} ${lastName.trim()}`.trim();
@@ -292,8 +381,15 @@ export function RegisterForm({
         return;
       }
 
-      void appAlert.success("Qeydiyyat uğurludur", result.message);
+      void appAlert.success(
+        role === "seller" ? "Hesabınız yoxlanılır" : "Qeydiyyat uğurludur",
+        role === "seller" ? "Müraciətiniz qəbul edildi. Hesabınız qısa zamanda yoxlanılıb aktiv ediləcək." : result.message,
+      );
+      if (role === "customer") {
+        await refreshCachedClientAuthProfile();
+      }
       router.replace(result.redirectTo);
+      router.refresh();
     });
   }
 
@@ -321,7 +417,7 @@ export function RegisterForm({
 
   return (
     <AuthCard
-      className="mx-auto max-w-[560px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="mx-auto max-w-[680px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] [&>div.mb-7]:mb-5"
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
@@ -338,8 +434,8 @@ export function RegisterForm({
           </Link>
         </Button>
       }
-      title="Qeydiyyat"
-      description={canRegister ? undefined : "Qeydiyyat hazırda bağlıdır."}
+      title="Hesabınızı yaradın"
+      description={canRegister ? "Alıcı və ya satıcı kimi bir neçə addımda başlayın." : "Qeydiyyat hazırda bağlıdır."}
       footer={
         <div className="space-y-3">
           <Link className="font-medium text-primary hover:underline" href="/">
@@ -354,10 +450,11 @@ export function RegisterForm({
         </div>
       ) : null}
       {canRegister ? (
-        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3">
-          <AuthErrorAlert message={serverError} />
+        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3 lg:grid-cols-2">
+          <div className="lg:col-span-2"><AuthErrorAlert message={serverError} /></div>
+          <div className={cn("contents", role === "seller" && sellerStep === 2 && "hidden")}>
           {!customerOnly ? (
-            <fieldset className="grid gap-2">
+            <fieldset className="grid gap-2 lg:col-span-2">
               <legend className="text-sm font-medium">Hesab tipi</legend>
               <div className="grid gap-2 sm:grid-cols-2">
                 {userRegistrationEnabled ? (
@@ -365,6 +462,7 @@ export function RegisterForm({
                     type="button"
                     onClick={() => {
                       setRole("customer");
+                      setSellerStep(1);
                       setFieldErrors((current) => ({ ...current, storeName: undefined }));
                     }}
                     className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition ${
@@ -383,6 +481,7 @@ export function RegisterForm({
                     type="button"
                     onClick={() => {
                       setRole("seller");
+                      setSellerStep(1);
                       setFieldErrors((current) => ({
                         ...current,
                         firstName: undefined,
@@ -416,10 +515,11 @@ export function RegisterForm({
                 setFieldErrors((current) => ({ ...current, storeName: undefined }));
               }}
               error={fieldErrors.storeName}
+              className="lg:col-span-2"
               required
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 lg:col-span-2">
               <AuthField
                 id="firstName"
                 name="firstName"
@@ -484,12 +584,26 @@ export function RegisterForm({
             minLength={8}
             required
           />
-          <div className="space-y-2">
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Şifrənin təkrarı"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onValueChange={(value) => {
+              setConfirmPassword(value);
+              setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
+            }}
+            error={fieldErrors.confirmPassword}
+            minLength={8}
+            required
+          />
+          <div className="space-y-2 lg:col-span-2">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
               <span>Şifrə gücü</span>
               <span>{passwordStrength.label || "Seçilməyib"}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full transition-all duration-200 ${passwordStrength.className}`}
                 style={{
@@ -505,66 +619,63 @@ export function RegisterForm({
               />
             </div>
           </div>
-          <PasswordInput
-            id="confirmPassword"
-            name="confirmPassword"
-            label="Şifrənin təkrarı"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onValueChange={(value) => {
-              setConfirmPassword(value);
-              setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
-            }}
-            error={fieldErrors.confirmPassword}
-            minLength={8}
-            required
-          />
-          {!customerOnly && role === "seller" ? (
-            <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
-              <div>
-                <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-[140px_1fr]">
-                <SellerImageDropzone
-                  name="avatarFile"
-                  label="Profil şəkli / Logo"
-                  ratioClassName="aspect-square"
-                />
-                <SellerImageDropzone
-                  name="bannerFile"
-                  label="Banner şəkli"
-                  ratioClassName="aspect-[16/7]"
-                />
-              </div>
-            </div>
-          ) : null}
-          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm">
+          <div className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm lg:col-span-2">
             <input
               type="checkbox"
               checked={termsAccepted}
-              onChange={(event) => {
-                setTermsAccepted(event.target.checked);
-                setFieldErrors((current) => ({ ...current, terms: undefined }));
-              }}
-              className="mt-1 size-4 rounded border-input"
+              readOnly
+              onClick={() => setLegalDialogOpen(true)}
+              className="mt-1 size-4 cursor-pointer rounded border-input"
+              aria-label="Razılaşma mətnini aç"
             />
             <span className="leading-6">
-              <Link href="/terms" className="font-medium text-foreground underline-offset-4 hover:underline">
+              <Link href="/terms" className="font-medium text-foreground underline underline-offset-4">
                 İstifadəçi razılaşması
               </Link>{" "}
               və{" "}
-              <Link href="/privacy" className="font-medium text-foreground underline-offset-4 hover:underline">
+              <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4">
                 məxfilik siyasəti
               </Link>{" "}
-              ilə tanış oldum və qəbul edirəm.
+              sona qədər oxunduqdan sonra avtomatik qəbul edilir.
             </span>
-          </label>
+          </div>
           {fieldErrors.terms ? (
-            <p className="text-xs font-medium text-destructive">{fieldErrors.terms}</p>
+            <p className="text-xs font-medium text-destructive lg:col-span-2">{fieldErrors.terms}</p>
           ) : null}
-          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700">
-            {isPending ? "Yaradılır" : "Hesab yarat"}
-          </Button>
+          </div>
+          {!customerOnly && role === "seller" && sellerStep === 2 ? (
+            <div className="grid gap-4 rounded-2xl border border-orange-100 bg-orange-50/50 p-4 lg:col-span-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">Addım 2 / 2</p>
+                <h3 className="mt-1 text-lg font-bold text-slate-950">Mağazanızın görünüşü</h3>
+                <p className="mt-1 text-sm text-slate-500">Loqo və banner şəkillərini əlavə edin.</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
+                <SellerImageDropzone name="avatarFile" label="Profil şəkli / Loqo" ratioClassName="aspect-square" />
+                <SellerImageDropzone name="bannerFile" label="Banner şəkli" ratioClassName="aspect-[16/7]" />
+              </div>
+            </div>
+          ) : null}
+          {role === "seller" && sellerStep === 1 ? (
+            <Button
+              type="button"
+              onClick={() => {
+                if (validate()) setSellerStep(2);
+              }}
+              className="h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600 lg:col-span-2"
+            >
+              Növbəti <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+            </Button>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 lg:col-span-2">
+              {role === "seller" ? (
+                <Button type="button" variant="outline" onClick={() => setSellerStep(1)} className="h-11 rounded-[10px]">Geri</Button>
+              ) : null}
+              <Button type="submit" disabled={isPending} className={cn("h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600", role !== "seller" && "sm:col-span-2")}>
+                {isPending ? "Yaradılır" : "Hesab yarat"}
+              </Button>
+            </div>
+          )}
         </form>
       ) : null}
 
@@ -586,6 +697,14 @@ export function RegisterForm({
           </form>
         ) : null}
       </div>
+      {legalDialogOpen ? (
+        <LegalReadDialog
+          onClose={() => setLegalDialogOpen(false)}
+          onRead={() => {
+            setLegalRead(true);
+          }}
+        />
+      ) : null}
     </AuthCard>
   );
 }

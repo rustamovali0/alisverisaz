@@ -7,7 +7,8 @@ export function isOptimizableImage(src: ImageProps["src"]) {
   if (src.startsWith("/") && !src.startsWith("//")) return true;
   try {
     const url = new URL(src);
-    return url.protocol === "https:" && url.hostname === "images.alisveris.az";
+    return url.protocol === "https:" &&
+      (url.hostname === "images.alisveris.az" || url.hostname.endsWith(".r2.dev"));
   } catch {
     return false;
   }

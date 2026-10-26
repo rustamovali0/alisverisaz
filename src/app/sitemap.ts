@@ -11,7 +11,6 @@ const staticPaths = [
   "/products",
   "/stores",
   "/categories",
-  "/map",
   "/about",
   "/contact",
   "/privacy",

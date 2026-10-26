@@ -98,22 +98,12 @@ export function PublicNavigationShell({
       pathname.startsWith(`/store/${store.slug}/`),
   )?.slug;
   const pathStoreSlug = matchedStoreSlug;
+  const activeStore = stores.find((store) => store.slug === (storeSubdomainSlug ?? pathStoreSlug));
   const searchStoreSlug = storeSubdomainSlug ?? pathStoreSlug;
   const isLegacyStorePath = Boolean(
     pathStoreSlug &&
       (pathname === `/store/${pathStoreSlug}` ||
         pathname.startsWith(`/store/${pathStoreSlug}/`)),
-  );
-  const isStoreSubdomainStorefrontPath = Boolean(
-    storeSubdomainSlug &&
-      (pathname === "/" ||
-        pathname === "/products" ||
-        pathname.startsWith("/products/") ||
-        pathname === `/${storeSubdomainSlug}` ||
-        pathname.startsWith(`/${storeSubdomainSlug}/products/`)),
-  );
-  const isCustomStorefrontPath = Boolean(
-    isStoreSubdomainStorefrontPath || (pathStoreSlug && !isLegacyStorePath),
   );
   const storeHomeHref = storeSubdomainSlug
     ? "/"
@@ -124,14 +114,17 @@ export function PublicNavigationShell({
       : "/";
   const productsHref = searchStoreSlug ? `${storeHomeHref === "/" ? "/" : storeHomeHref}#products` : "/products";
   const brandHomeHref = isLegacyStorePath ? "/" : storeHomeHref;
+  const isIsolatedStorefront = Boolean(
+    storeSubdomainSlug || (pathStoreSlug && !isLegacyStorePath),
+  );
 
   return (
     <>
-      {showNavigation && !isCustomStorefrontPath ? (
+      {showNavigation ? (
         <MarketplaceHeader
-          siteName={siteName}
-          logoUrl={logoUrl}
-          darkLogoUrl={darkLogoUrl}
+          siteName={isIsolatedStorefront && activeStore ? activeStore.name : siteName}
+          logoUrl={isIsolatedStorefront && activeStore ? activeStore.logoUrl ?? logoUrl : logoUrl}
+          darkLogoUrl={isIsolatedStorefront && activeStore ? activeStore.logoUrl ?? darkLogoUrl : darkLogoUrl}
           stores={stores}
           categories={categories}
           searchDefaultValue={searchParams.get("q") ?? undefined}
@@ -140,6 +133,8 @@ export function PublicNavigationShell({
           mobileNavbarVariant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}
           storeHomeHref={storeHomeHref}
+          storeId={isIsolatedStorefront ? activeStore?.id : undefined}
+          isolatedStorefront={isIsolatedStorefront}
           brandHomeHref={brandHomeHref}
           productsHref={productsHref}
           searchStoreSlug={searchStoreSlug}

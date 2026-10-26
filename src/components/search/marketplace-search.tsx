@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
+import { getStorePath } from "@/lib/config/domains";
+import { buildMarketplaceSearchHref } from "@/lib/search/navigation";
 
 type MarketplaceSearchProps = {
   stores: MarketplaceStore[];
@@ -32,6 +34,8 @@ type SearchSuggestion = {
   label: string;
   description: string;
   type: "store" | "product";
+  href?: string;
+  imageUrl?: string | null;
 };
 
 const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
@@ -125,6 +129,7 @@ export function MarketplaceSearch({
   const [query, setQuery] = useState(defaultValue);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputId = useId();
   const resolvedButtonLabel = buttonLabel ?? common("search");
   const normalizedQuery = useMemo(() => normalize(query), [query]);
   const selectedStore = useMemo(
@@ -198,9 +203,11 @@ export function MarketplaceSearch({
           .slice(0, 4)
           .map((store) => ({
             key: `store-${store.id}`,
+            href: getStorePath(store.slug),
             type: "store",
             label: store.name,
             description: marketplace("productCount", { count: store.productCount }),
+            imageUrl: store.logoUrl,
           }));
     const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
     const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
@@ -212,6 +219,7 @@ export function MarketplaceSearch({
         type: "product" as const,
         label: product.name,
         description: productStoreName,
+        imageUrl: product.imageUrl,
       };
     });
 
@@ -282,24 +290,10 @@ export function MarketplaceSearch({
     }).catch(() => undefined);
   }
 
-  function buildSearchHref(baseHref: string, searchQuery: string) {
-    const [baseWithoutHash, existingHash = ""] = baseHref.split("#");
-    const hash = resultsAnchorId || existingHash;
-
-    if (!searchQuery) {
-      return hash ? `${baseWithoutHash}#${hash}` : baseWithoutHash;
-    }
-
-    const separator = baseWithoutHash.includes("?") ? "&" : "?";
-    const encodedQuery = encodeURIComponent(searchQuery);
-
-    return `${baseWithoutHash}${separator}q=${encodedQuery}${hash ? `#${hash}` : ""}`;
-  }
-
   function submitSearch(value: string) {
     const searchQuery = value.trim();
     const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
-    const nextHref = buildSearchHref(baseHref, searchQuery);
+    const nextHref = buildMarketplaceSearchHref(baseHref, searchQuery, resultsAnchorId);
 
     setQuery(searchQuery);
     syncSearchQuery(searchQuery);
@@ -324,6 +318,12 @@ export function MarketplaceSearch({
   }
 
   function selectSuggestion(suggestion: SearchSuggestion) {
+    if (suggestion.href) {
+      setIsFocused(false);
+      inputRef.current?.blur();
+      router.push(suggestion.href);
+      return;
+    }
     submitSearch(suggestion.label);
   }
 
@@ -362,10 +362,11 @@ export function MarketplaceSearch({
         }
       }}
     >
-      <label className="relative min-w-0 flex-1">
-        <span className="sr-only">{common("search")}</span>
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative min-w-0 flex-1">
+        <label className="sr-only" htmlFor={searchInputId}>{common("search")}</label>
+        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <input
+          id={searchInputId}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
@@ -383,10 +384,17 @@ export function MarketplaceSearch({
           type="text"
           value={query}
           onChange={(event) => {
+            setIsFocused(true);
             setQuery(event.target.value);
             syncSearchQuery(event.target.value);
           }}
           onFocus={() => setIsFocused(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              setIsFocused(false);
+              event.stopPropagation();
+            }
+          }}
         />
         {query.trim() ? (
           <button
@@ -399,13 +407,14 @@ export function MarketplaceSearch({
             <X className="size-4 stroke-[2.2]" aria-hidden="true" />
           </button>
         ) : null}
-      </label>
+      </div>
       <Button
         type="submit"
         size={buttonSize}
         className={cn(
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
           compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
+          compactActions && "text-white [&>svg]:block [&>svg]:shrink-0 [&>svg]:stroke-white",
           buttonClassName,
         )}
         onPointerDown={(event) => {
@@ -416,13 +425,13 @@ export function MarketplaceSearch({
         }}
         aria-label={resolvedButtonLabel}
       >
-        {compactActions ? <Search className="size-5" aria-hidden="true" /> : resolvedButtonLabel}
+        {compactActions ? <Search className="size-5 stroke-[2.4]" aria-hidden="true" /> : resolvedButtonLabel}
         {!compactActions && buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
       {showPopularSearches || showSuggestions || showNoResults ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] w-full max-w-full overflow-hidden rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-[90] max-h-[min(24rem,55dvh)] w-full max-w-full overflow-y-auto overscroll-contain rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
             <div className="border-b px-3 py-3 last:border-b-0">
               <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -493,8 +502,10 @@ function SearchSuggestionGroup({
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onSelect(suggestion)}
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-primary/10">
-            {suggestionIcon(suggestion.type)}
+          <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/10 ring-1 ring-slate-200/70 dark:ring-slate-700">
+            {suggestion.imageUrl ? (
+              <img src={suggestion.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+            ) : suggestionIcon(suggestion.type)}
           </span>
           <span className="min-w-0">
             <span className="block truncate font-semibold">{suggestion.label}</span>

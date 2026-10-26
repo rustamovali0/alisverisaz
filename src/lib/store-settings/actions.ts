@@ -6,7 +6,9 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
 import {
   isReservedStoreSubdomain,
+  isValidCustomDomain,
   isValidStoreSlug,
+  normalizeHostname,
 } from "@/lib/config/domains";
 import {
   deleteR2MediaAssetsByUrls,
@@ -71,7 +73,7 @@ async function uploadStoreMedia(input: {
   file: File;
   userId: string;
   storeId: string;
-  kind: "logo" | "banner";
+  kind: "logo" | "banner" | "storefront-hero";
 }) {
   const uploaded = await uploadImageToR2({
     file: input.file,
@@ -83,7 +85,12 @@ async function uploadStoreMedia(input: {
   await recordImageMediaAsset({
     uploaded,
     originalFileName: input.file.name,
-    altText: input.kind === "logo" ? "Mağaza logosu" : "Mağaza banneri",
+    altText:
+      input.kind === "logo"
+        ? "Mağaza logosu"
+        : input.kind === "storefront-hero"
+          ? "Şəxsi mağaza vitrin şəkli"
+          : "Mağaza banneri",
     userId: input.userId,
     metadata: {
       source: "store-settings",
@@ -104,11 +111,16 @@ export async function updateSellerStoreSettingsAction(
   const requestedSlug = slugify(readString(formData, "slug"));
   const heroTitle = readString(formData, "heroTitle");
   const heroSubtitle = readString(formData, "heroSubtitle");
+  const customDomain = normalizeHostname(readString(formData, "customDomain"));
   const aboutContent = readString(formData, "aboutContent");
   const socialInstagram = readString(formData, "socialInstagram");
   const socialTiktok = readString(formData, "socialTiktok");
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
+  const storefrontHeroFile = readFile(formData, "storefrontHero");
+  const featuredCategoryIds = formData
+    .getAll("featuredCategoryIds")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
   const bannerPosition: Record<string, number> = {};
   for (const key of ["bannerPositionX", "bannerPositionY"]) {
     if (!formData.has(key)) continue;
@@ -179,17 +191,49 @@ export async function updateSellerStoreSettingsAction(
     }
   }
 
+  if (formData.has("customDomain")) {
+    if (!canManageCustomStorefront) {
+      return { ok: false, message: "Şəxsi domain üçün əvvəlcə RAdmin subdomain icazəsi verməlidir." };
+    }
+
+    if (customDomain && !isValidCustomDomain(customDomain)) {
+      return { ok: false, message: "Şəxsi domain düzgün deyil. Məsələn: shop.example.com" };
+    }
+
+    if (customDomain) {
+      const { data: domainOwner } = await (supabaseAdmin as any)
+        .from("stores")
+        .select("id")
+        .eq("settings->>customDomain", customDomain)
+        .neq("id", storeId)
+        .maybeSingle();
+
+      if (domainOwner) {
+        return { ok: false, message: "Bu domain başqa mağazaya bağlıdır." };
+      }
+    }
+  }
+
   try {
     const payload: Record<string, unknown> = { name, slug: nextSlug };
 
     if (
       formData.has("heroTitle") ||
       formData.has("heroSubtitle") ||
+      formData.has("customDomain") ||
       formData.has("aboutContent") ||
       formData.has("socialInstagram") ||
-      formData.has("socialTiktok") || Object.keys(bannerPosition).length > 0
+      formData.has("socialTiktok") || formData.has("profitTrackingPresent") ||
+      formData.has("featuredCategoriesPresent") ||
+      Object.keys(bannerPosition).length > 0
     ) {
       const settings = currentSettings;
+      if (formData.has("profitTrackingPresent")) {
+        settings.profitTrackingEnabled = formData.get("profitTrackingEnabled") === "on";
+      }
+      if (formData.has("featuredCategoriesPresent")) {
+        settings.featuredCategoryIds = [...new Set(featuredCategoryIds)].slice(0, 4);
+      }
       Object.assign(settings, bannerPosition);
 
       if (formData.has("heroTitle") && heroTitle) {
@@ -202,6 +246,12 @@ export async function updateSellerStoreSettingsAction(
         settings.heroSubtitle = heroSubtitle;
       } else if (formData.has("heroSubtitle")) {
         delete settings.heroSubtitle;
+      }
+
+      if (formData.has("customDomain") && customDomain) {
+        settings.customDomain = customDomain;
+      } else if (formData.has("customDomain")) {
+        delete settings.customDomain;
       }
 
       if (formData.has("aboutContent") && aboutContent) {
@@ -245,6 +295,22 @@ export async function updateSellerStoreSettingsAction(
       });
     }
 
+    if (storefrontHeroFile && canManageCustomStorefront) {
+      const previousHeroUrl =
+        typeof currentSettings.storefrontHeroUrl === "string"
+          ? currentSettings.storefrontHeroUrl
+          : "";
+      if (previousHeroUrl) replacedUrls.push(previousHeroUrl);
+      const settings = readSettings(payload.settings ?? currentSettings);
+      settings.storefrontHeroUrl = await uploadStoreMedia({
+        file: storefrontHeroFile,
+        userId: current.user.id,
+        storeId,
+        kind: "storefront-hero",
+      });
+      payload.settings = settings;
+    }
+
     const { error } = await (supabaseAdmin as any)
       .from("stores")
       .update(payload)
@@ -265,6 +331,8 @@ export async function updateSellerStoreSettingsAction(
   }
 
   revalidatePath("/store/dashboard/settings");
+  revalidatePath("/store/dashboard", "layout");
+  revalidatePath("/sell/product", "layout");
   revalidatePath("/admin/settings");
   invalidateStorePublicData({
     storeId,

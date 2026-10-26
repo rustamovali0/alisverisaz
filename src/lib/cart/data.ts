@@ -23,6 +23,7 @@ import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/va
 import { getActivePromotionMaps } from "@/lib/promotions/data";
 
 type ProductRow = {
+  metadata?: { stockTrackingEnabled?: boolean; commerce_type?: string } | null;
   id: string;
   store_id: string;
   slug: string | null;
@@ -75,17 +76,17 @@ type ProductRow = {
 };
 
 const PUBLIC_PRODUCT_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 const PRODUCT_DETAIL_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 const PRODUCT_DETAIL_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
@@ -132,6 +133,16 @@ function readOriginalContentText(fallback: string | null) {
   return fallback || "";
 }
 
+function readPublicStoreDescription(value: string | null) {
+  const description = value?.trim();
+  if (!description) return null;
+
+  const normalized = description.toLocaleLowerCase("az-AZ").replace(/\s+/g, " ");
+  return normalized === "satıcı mağazası" || normalized === "satici magazasi"
+    ? null
+    : description;
+}
+
 function toCartProduct(row: ProductRow): CartProduct {
   const primary = row.product_images?.find((image) => image.is_primary);
   const first = row.product_images?.[0];
@@ -176,7 +187,7 @@ function toCartProduct(row: ProductRow): CartProduct {
           variant.price_override_amount === undefined
             ? null
             : Number(variant.price_override_amount),
-        stockQuantity: Number(variant.stock_quantity ?? 0),
+        stockQuantity: row.metadata?.stockTrackingEnabled === false ? Number.MAX_SAFE_INTEGER : Number(variant.stock_quantity ?? 0),
         isEnabled: variant.is_enabled !== false,
       }),
     );
@@ -191,9 +202,11 @@ function toCartProduct(row: ProductRow): CartProduct {
     createdAt: row.created_at ?? null,
     name: readOriginalContentText(row.name),
     description: readOriginalContentText(row.description),
+    commerceType: row.metadata?.commerce_type === "rental" ? "rental" : "sale",
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
-    stockQuantity: row.stock_quantity,
+    stockQuantity: row.metadata?.stockTrackingEnabled === false ? Number.MAX_SAFE_INTEGER : row.stock_quantity,
+    stockTrackingEnabled: row.metadata?.stockTrackingEnabled !== false,
     imageUrl: primary?.url ?? first?.url ?? null,
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,
@@ -261,6 +274,11 @@ function readBooleanSetting(settings: Record<string, unknown> | null | undefined
   return settings?.[key] === true;
 }
 
+function readStringArraySetting(settings: Record<string, unknown> | null | undefined, key: string) {
+  const value = settings?.[key];
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
 function normalizeSearchValue(value: string) {
   return value
     .slice(0, MAX_SEARCH_LENGTH)
@@ -272,6 +290,33 @@ function normalizeSearchValue(value: string) {
 
 function normalizeRawSearchValue(value: string | null | undefined) {
   return (value ?? "").trim().slice(0, MAX_SEARCH_LENGTH);
+}
+
+function getSearchCandidates(value: string) {
+  const source = value.toLocaleLowerCase("az-AZ");
+  const candidates = new Set([source, normalizeSearchValue(source)]);
+  const substitutions: Record<string, string> = {
+    c: "ç",
+    g: "ğ",
+    i: "ı",
+    o: "ö",
+    s: "ş",
+    u: "ü",
+    e: "ə",
+  };
+
+  for (let index = 0; index < source.length && candidates.size < 16; index += 1) {
+    const replacement = substitutions[source[index]];
+    if (replacement) {
+      candidates.add(`${source.slice(0, index)}${replacement}${source.slice(index + 1)}`);
+    }
+  }
+
+  candidates.add(
+    Array.from(source, (character) => substitutions[character] ?? character).join(""),
+  );
+
+  return Array.from(candidates).filter(Boolean).slice(0, 16);
 }
 
 function isUuid(value: string) {
@@ -504,12 +549,14 @@ export async function getSimilarMarketplaceProductPage(
   input: {
     productId: string;
     categoryId: string;
+    storeId?: string;
     limit?: number;
     cursor?: string | null;
   },
 ): Promise<MarketplaceProductPage> {
   const productId = isUuid(input.productId) ? input.productId : "";
   const categoryId = isUuid(input.categoryId) ? input.categoryId : "";
+  const storeId = input.storeId && isUuid(input.storeId) ? input.storeId : "";
 
   if (!productId || !categoryId) {
     return { products: [], nextCursor: null, hasMore: false };
@@ -520,13 +567,15 @@ export async function getSimilarMarketplaceProductPage(
   const supabase = createSupabasePublicClient();
 
   async function runQuery(selectColumns: string) {
-    const query = (supabase as any)
+    let query = (supabase as any)
       .from("products")
       .select(selectColumns)
       .eq("status", "active")
       .eq("stores.status", "active")
       .eq("category_id", categoryId)
       .neq("id", productId);
+
+    if (storeId) query = query.eq("store_id", storeId);
 
     return applyProductSort(
       applyProductCursor(query, cursor, "newest"),
@@ -575,6 +624,21 @@ async function getMarketplaceProductPageUncached(
   const supabase = createSupabasePublicClient();
   const cursor = decodeProductCursor(input.cursor);
   const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
+  let matchingStoreIds: string[] = [];
+
+  if (normalizedSearch && !input.storeId) {
+    const storeFilters = getSearchCandidates(input.searchQuery ?? "").flatMap((candidate) => {
+      const escaped = candidate.replace(/[%_]/g, "\\$&");
+      return [`name.ilike.%${escaped}%`, `slug.ilike.%${escaped}%`];
+    });
+    const { data: matchingStores } = await (supabase as any)
+      .from("stores")
+      .select("id")
+      .eq("status", "active")
+      .or(storeFilters.join(","))
+      .limit(50);
+    matchingStoreIds = (matchingStores ?? []).map((store: { id: string }) => store.id);
+  }
 
   async function runQuery(selectColumns: string) {
     let query = (supabase as any)
@@ -598,8 +662,14 @@ async function getMarketplaceProductPageUncached(
     }
 
     if (normalizedSearch) {
-      const escaped = normalizedSearch.replace(/[%_]/g, "\\$&");
-      query = query.or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+      const filters = getSearchCandidates(input.searchQuery ?? "").flatMap((candidate) => {
+        const escaped = candidate.replace(/[%_]/g, "\\$&");
+        return [`name.ilike.%${escaped}%`, `description.ilike.%${escaped}%`];
+      });
+      if (matchingStoreIds.length > 0) {
+        filters.push(`store_id.in.(${matchingStoreIds.join(",")})`);
+      }
+      query = query.or(filters.join(","));
     }
 
     return applyProductSort(
@@ -770,7 +840,7 @@ async function getMarketplaceStoresUncached(
         id: store.id,
         name: store.name,
         slug: store.slug,
-        description: store.description,
+        description: readPublicStoreDescription(store.description),
         aboutContent: readSetting(store.settings, "aboutContent"),
         address: readSetting(store.settings, "address"),
         phone: readSetting(store.settings, "phone"),
@@ -779,6 +849,8 @@ async function getMarketplaceStoresUncached(
         socialTiktok: readSetting(store.settings, "socialTiktok"),
         logoUrl: store.logo_url,
         coverUrl: store.cover_url,
+        storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+        featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
@@ -905,7 +977,7 @@ export async function getMarketplaceStoreCards(input: {
             id: store.id,
             name: store.name,
             slug: store.slug,
-            description: store.description,
+            description: readPublicStoreDescription(store.description),
             aboutContent: readSetting(store.settings, "aboutContent"),
             address: readSetting(store.settings, "address"),
             phone: readSetting(store.settings, "phone"),
@@ -914,6 +986,8 @@ export async function getMarketplaceStoreCards(input: {
             socialTiktok: readSetting(store.settings, "socialTiktok"),
             logoUrl: store.logo_url,
             coverUrl: store.cover_url,
+            storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+            featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
             updatedAt: store.updated_at ?? null,
             productCount: productCounts.get(store.id) ?? 0,
             sampleProducts: [],
@@ -1002,7 +1076,9 @@ async function getMarketplaceStoreBySlugUncached(input: {
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
     .map((product) => toCartProduct(product));
   const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
-  const promotedPageProducts = markPromotedProducts(pageProducts, promotedProductIds);
+  const promotedPageProducts = sortPromotedFirst(
+    markPromotedProducts(pageProducts, promotedProductIds),
+  );
   const lastProduct = promotedPageProducts.at(-1);
 
   return {
@@ -1010,7 +1086,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     ownerId: store.owner_id ?? null,
     name: store.name,
     slug: store.slug,
-    description: store.description,
+    description: readPublicStoreDescription(store.description),
     aboutContent: readSetting(store.settings, "aboutContent"),
     heroTitle: readSetting(store.settings, "heroTitle"),
     heroSubtitle: readSetting(store.settings, "heroSubtitle"),
@@ -1023,6 +1099,8 @@ async function getMarketplaceStoreBySlugUncached(input: {
     whatsappPhone: readSetting(store.settings, "whatsappPhone"),
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
+    storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+    featuredCategoryIds: readStringArraySetting(store.settings, "featuredCategoryIds"),
     updatedAt: store.updated_at ?? null,
     productCount: count ?? promotedPageProducts.length,
     sampleProducts: promotedPageProducts,
@@ -1136,14 +1214,39 @@ async function getMarketplaceProductByIdUncached(input: {
   const row = data as ProductRow & {
     stores: StoreRow;
   };
-  const { count: storeProductCount } = await (supabase as any)
-    .from("products")
-    .select("id", {
-      count: "exact",
-      head: true,
-    })
-    .eq("store_id", row.stores.id)
-    .eq("status", "active");
+  const [{ count: storeProductCount }, categoryResult, { count: favoriteCount }] = await Promise.all([
+    (supabase as any)
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", row.stores.id)
+      .eq("status", "active"),
+    row.category_id
+      ? (supabase as any)
+          .from("categories")
+          .select("id,name,slug,parent_id")
+          .eq("id", row.category_id)
+          .eq("is_active", true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    (createSupabaseAdminClient() as any)
+      .from("favorites")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", row.id),
+  ]);
+  const categoryRow = categoryResult.data as {
+    id: string;
+    name: string;
+    slug: string;
+    parent_id: string | null;
+  } | null;
+  const parentResult = categoryRow?.parent_id
+    ? await (supabase as any)
+        .from("categories")
+        .select("id,name,slug")
+        .eq("id", categoryRow.parent_id)
+        .eq("is_active", true)
+        .maybeSingle()
+    : { data: null };
 
   return {
     product: {
@@ -1164,12 +1267,29 @@ async function getMarketplaceProductByIdUncached(input: {
       whatsappPhone: readSetting(row.stores.settings, "whatsappPhone"),
       logoUrl: row.stores.logo_url,
       coverUrl: row.stores.cover_url,
+      storefrontHeroUrl: readSetting(row.stores.settings, "storefrontHeroUrl"),
+      featuredCategoryIds: readStringArraySetting(row.stores.settings, "featuredCategoryIds"),
       updatedAt: row.stores.updated_at ?? null,
       productCount: storeProductCount ?? 0,
       sampleProducts: [],
       categoryIds: row.category_id ? [row.category_id] : [],
       customStorefrontEnabled: readBooleanSetting(row.stores.settings, "customStorefrontEnabled"),
     },
+    favoriteCount: favoriteCount ?? 0,
+    category: categoryRow
+      ? {
+          id: categoryRow.id,
+          name: categoryRow.name,
+          slug: categoryRow.slug,
+          parent: parentResult.data
+            ? {
+                id: String(parentResult.data.id),
+                name: String(parentResult.data.name),
+                slug: String(parentResult.data.slug),
+              }
+            : null,
+        }
+      : null,
   };
 }
 
@@ -1219,7 +1339,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   let { data, error } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
     )
     .eq("status", "active")
     .eq("stores.status", "active")
@@ -1229,7 +1349,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
     const fallback = await (supabase as any)
       .from("products")
       .select(
-        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
+        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
       )
       .eq("status", "active")
       .eq("stores.status", "active")

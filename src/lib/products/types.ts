@@ -1,6 +1,7 @@
 export type ProductStatus = "draft" | "active" | "archived";
 
 export type ProductApprovalStatus = "none" | "pending" | "approved" | "rejected";
+export type ProductCommerceType = "sale" | "rental";
 
 export type ProductVariantInput = {
   name: string;
@@ -43,6 +44,7 @@ export type ProductVariantCombinationInput = {
 export type ProductActionResult =
   | {
       ok: true;
+      productId?: string;
       message: string;
     }
   | {
@@ -51,6 +53,7 @@ export type ProductActionResult =
     };
 
 export type ManagedProduct = {
+  stockTrackingEnabled?: boolean;
   id: string;
   storeId: string;
   name: string;
@@ -68,6 +71,7 @@ export type ManagedProduct = {
   seoTitleTranslations: Record<string, string>;
   seoDescriptionTranslations: Record<string, string>;
   listingType: "store" | "personal";
+  commerceType: ProductCommerceType;
   paymentStatus?: string;
   depositEnabled: boolean;
   depositType: "fixed" | "percent";

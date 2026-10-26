@@ -5,10 +5,14 @@ import {
   getDeliverySettings,
   getDeliveryStoreOverrides,
 } from "@/lib/delivery/data";
+import { headers } from "next/headers";
+import { getStoreSubdomainSlug } from "@/lib/config/domains";
+import { getMarketplaceStoreBySlug } from "@/lib/cart/data";
 
 type CartPageProps = {
   params: Promise<{
     locale: string;
+    storeSlug?: string;
   }>;
   searchParams?: Promise<{
     mode?: string;
@@ -24,11 +28,17 @@ function formatDefaultAddress(addresses: CustomerAddress[]) {
 }
 
 export default async function CartPage({ params, searchParams }: CartPageProps) {
-  const { locale } = await params;
+  const { locale, storeSlug } = await params;
   const query = await searchParams;
+  const requestHeaders = await headers();
+  const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const isolatedStoreSlug = storeSubdomainSlug ?? storeSlug;
+  const isolatedStore = isolatedStoreSlug
+    ? await getMarketplaceStoreBySlug({ slug: isolatedStoreSlug, locale })
+    : null;
   const checkoutOnly = query?.mode === "checkout";
   const [current, deliverySettings, deliveryStoreOverrides] = await Promise.all([
-    checkoutOnly ? getCurrentUserProfile() : Promise.resolve(null),
+    getCurrentUserProfile(),
     getDeliverySettings(),
     getDeliveryStoreOverrides(),
   ]);
@@ -44,6 +54,9 @@ export default async function CartPage({ params, searchParams }: CartPageProps) 
       isAuthenticated={Boolean(current)}
       deliverySettings={deliverySettings}
       deliveryStoreOverrides={deliveryStoreOverrides}
+      isolatedStoreId={isolatedStore?.id}
+      isolatedStoreSlug={isolatedStore?.slug}
+      isolatedStoreBaseHref={isolatedStore ? (storeSubdomainSlug ? "/" : `/${isolatedStore.slug}`) : undefined}
     />
   );
 }

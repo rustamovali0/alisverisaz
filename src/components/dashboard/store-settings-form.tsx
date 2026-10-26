@@ -1,10 +1,9 @@
 "use client";
 
-import { Copy, ExternalLink, ImagePlus } from "lucide-react";
+import { Copy, ExternalLink, ImagePlus, Loader2, Save } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { PhoneInput } from "@/components/ui/phone-input";
 import { updateSellerStoreSettingsAction } from "@/lib/store-settings/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { getStorefrontUrl, getStorePath } from "@/lib/config/domains";
@@ -22,6 +21,7 @@ type StoreSettingsFormProps = {
     cover_url: string | null;
     settings: Record<string, unknown> | null;
   };
+  availableCategories?: Array<{ id: string; name: string }>;
 };
 
 function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
@@ -164,16 +164,21 @@ function MediaPicker({
   );
 }
 
-export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
+export function StoreSettingsForm({ store, availableCategories = [] }: StoreSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isOrderMethodPending, startOrderMethodTransition] = useTransition();
   const customStorefrontEnabled = readBooleanSetting(store.settings, "customStorefrontEnabled");
   const publicUrl = customStorefrontEnabled ? getStorefrontUrl(store.slug) : getStorePath(store.slug);
   const heroTitle = readSetting(store.settings, "heroTitle");
   const heroSubtitle = readSetting(store.settings, "heroSubtitle");
+  const customDomain = readSetting(store.settings, "customDomain");
   const aboutContent = readSetting(store.settings, "aboutContent");
   const orderMethod = normalizeOrderMethod(store.settings?.orderMethod);
-  const whatsappPhone = readSetting(store.settings, "whatsappPhone");
+  const whatsappPhone = readSetting(store.settings, "whatsappPhone") || readSetting(store.settings, "phone");
+  const storefrontHeroUrl = readSetting(store.settings, "storefrontHeroUrl");
+  const featuredCategoryIds = Array.isArray(store.settings?.featuredCategoryIds)
+    ? store.settings.featuredCategoryIds.filter((item): item is string => typeof item === "string")
+    : [];
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -201,6 +206,13 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
       void appAlert.success("Sifariş üsulu saxlandı", result.message);
     });
   }
+
+  const saveButton = (label = "Yadda saxla") => (
+    <Button type="submit" disabled={isPending} className="w-full sm:w-fit">
+      {isPending ? <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" /> : <Save className="mr-2 size-4" aria-hidden="true" />}
+      {isPending ? "Saxlanılır" : label}
+    </Button>
+  );
 
   return (
     <div className="grid gap-5">
@@ -234,27 +246,35 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             WhatsApp üzərindən
           </label>
         </div>
-        <label className="grid gap-2 text-sm font-medium">
-          WhatsApp nömrəsi
-          <PhoneInput name="whatsappPhone" defaultValue={whatsappPhone} />
-          <span className="text-xs text-muted-foreground">
-            WhatsApp üzərindən sifariş qəbul etmək üçün nömrə mütləqdir.
-          </span>
-        </label>
+        <div className="rounded-lg border bg-background p-4 text-sm">
+          <p className="font-semibold">WhatsApp nömrəsi</p>
+          <p className="mt-1 text-muted-foreground">
+            {whatsappPhone || "Qeydiyyat zamanı daxil etdiyiniz telefon nömrəsi istifadə olunur."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Bu nömrəni dəyişmək üçün profilinizdəki telefon nömrəsini yeniləyin.
+          </p>
+        </div>
         <Button type="submit" disabled={isOrderMethodPending} className="w-fit">
           {isOrderMethodPending ? "Saxlanılır" : "Sifariş üsulunu saxla"}
         </Button>
       </form>
 
-      <form action={handleSubmit} className="premium-card grid gap-5 p-5">
+      <form action={handleSubmit} className="grid gap-4">
         <input type="hidden" name="storeId" value={store.id} />
+        <input type="hidden" name="profitTrackingPresent" value="1" />
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
         <div>
-          <h2 className="text-xl font-black tracking-normal">Əsas ayarlar</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Mağaza adı, logo və banner şəklini buradan yeniləyin.
-          </p>
+          <h2 className="text-xl font-black tracking-normal">Mağaza məlumatları</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Ad, mağaza ünvanı və əsas iş ayarlarını idarə edin.</p>
         </div>
-        <div className="rounded-lg border bg-background p-3">
+        <label className="flex items-center gap-3 text-sm font-medium">
+          <input type="checkbox" name="profitTrackingEnabled" className="size-4"
+            defaultChecked={readBooleanSetting(store.settings, "profitTrackingEnabled")}
+            disabled={isPending} />
+          Qazanc hesablaması
+        </label>
+        {customStorefrontEnabled ? <div className="rounded-lg border bg-background p-3">
           <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
             Public mağaza URL
           </p>
@@ -283,7 +303,7 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
               </Button>
             </div>
           </div>
-        </div>
+        </div> : null}
         <label className="grid gap-2 text-sm font-medium">
           Mağaza adı
           <input
@@ -294,40 +314,77 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             required
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        {customStorefrontEnabled ? <label className="grid gap-2 text-sm font-medium">
           Mağaza URL-i
           <input
             name="slug"
             defaultValue={store.slug}
             placeholder="magazaadi"
             className="premium-input h-11"
-            readOnly={!customStorefrontEnabled}
             required
           />
           <span className="text-xs text-muted-foreground">
-            {customStorefrontEnabled
-              ? `RAdmin icazəsi aktivdir: /${store.slug} və subdomain işləyir, bu adı dəyişə bilərsiniz.`
-              : `RAdmin icazəsi yoxdur: bu ad dəyişmir və mağaza yalnız /store/${store.slug} ilə açılır.`}
+            RAdmin icazəsi aktivdir: /{store.slug} və subdomain işləyir, bu adı dəyişə bilərsiniz.
           </span>
-        </label>
+        </label> : <input type="hidden" name="slug" value={store.slug} />}
         <label className="grid gap-2 text-sm font-medium">
-          Mağaza səhifəsində title
+          Vitrin başlığı
           <input
             name="heroTitle"
             defaultValue={heroTitle}
-            placeholder={`${store.name} mağazası`}
+            placeholder="Seçilmiş məhsulları kəşf edin"
             className="premium-input h-11"
           />
         </label>
         <label className="grid gap-2 text-sm font-medium">
-          Mağaza səhifəsində alt mətn
+          Vitrin alt mətni
           <input
             name="heroSubtitle"
             defaultValue={heroSubtitle}
-            placeholder="390 məhsul • Elektronika və daha çox"
+            placeholder="Məhsullarınız haqqında qısa təqdimat"
             className="premium-input h-11"
           />
         </label>
+        {customStorefrontEnabled ? (
+          <label className="grid gap-2 text-sm font-medium">
+            Şəxsi domain
+            <input
+              name="customDomain"
+              defaultValue={customDomain}
+              placeholder="shop.example.com"
+              inputMode="url"
+              autoCapitalize="none"
+              className="premium-input h-11"
+            />
+            <span className="text-xs leading-5 text-muted-foreground">
+              Protokol yazmadan domaini daxil edin. Domainin DNS A qeydini 178.208.187.209 ünvanına yönəldin. SSL aktivləşməsi üçün domain saxlandıqdan sonra administrator yoxlaması tələb olunur.
+            </span>
+          </label>
+        ) : null}
+        {saveButton("Mağaza məlumatlarını saxla")}
+        </section>
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
+          <div>
+            <h2 className="text-xl font-black tracking-normal">Vitrin məzmunu</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Başlıq, təqdimat və önə çıxan kateqoriyaları yeniləyin.</p>
+          </div>
+        {customStorefrontEnabled && availableCategories.length > 0 ? (
+          <fieldset className="grid gap-3 rounded-xl border bg-background p-4">
+            <input type="hidden" name="featuredCategoriesPresent" value="1" />
+            <div>
+              <legend className="font-bold">Önə çıxan kateqoriyalar</legend>
+              <p className="mt-1 text-xs text-muted-foreground">Yalnız aktiv məhsulu olan kateqoriyalar göstərilir. Ən çox 4 seçim edin.</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {availableCategories.map((category) => (
+                <label key={category.id} className="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium">
+                  <input type="checkbox" name="featuredCategoryIds" value={category.id} defaultChecked={featuredCategoryIds.includes(category.id)} className="size-4" />
+                  {category.name}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
         <label className="grid gap-2 text-sm font-medium">
           Haqqında məlumatı
           <textarea
@@ -340,6 +397,13 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             Bu mətn /{store.slug} və {store.slug}.alisveris.az mağaza səhifəsində “Haqqında” bölməsində görünəcək.
           </span>
         </label>
+        {saveButton("Vitrin məzmununu saxla")}
+        </section>
+        <section className="premium-card grid gap-4 p-4 sm:p-5">
+          <div>
+            <h2 className="text-xl font-black tracking-normal">Logo və banner</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Mağazanın əsas vizual görünüşünü dəyişin.</p>
+          </div>
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <MediaPicker
             name="logo"
@@ -356,9 +420,25 @@ export function StoreSettingsForm({ store }: StoreSettingsFormProps) {
             positionY={typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50}
           />
         </div>
-        <Button type="submit" disabled={isPending} className="w-fit">
-          {isPending ? "Saxlanılır" : "Yadda saxla"}
-        </Button>
+        {saveButton("Logo və banneri saxla")}
+        </section>
+        {customStorefrontEnabled ? (
+          <section className="premium-card grid gap-4 border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/20 sm:p-5">
+            <div>
+              <h3 className="font-bold text-slate-950 dark:text-slate-100">Subdomain vitrin şəkli</h3>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Bu şəkil yalnız /{store.slug} və subdomain mağaza səhifəsində görünür. Seçilməyibsə banner, banner də yoxdursa standart şəkil göstərilir.
+              </p>
+            </div>
+            <MediaPicker
+              name="storefrontHero"
+              label="Şəxsi mağaza vitrin şəkli"
+              currentUrl={storefrontHeroUrl || store.cover_url || "/auth/auth-banner.webp"}
+              ratio="aspect-[16/9] max-w-2xl"
+            />
+            {saveButton("Vitrin şəklini saxla")}
+          </section>
+        ) : null}
       </form>
     </div>
   );

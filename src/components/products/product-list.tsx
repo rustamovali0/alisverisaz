@@ -177,7 +177,7 @@ export function ProductList({
                     : ""}
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Stok: {product.stockQuantity} · Status: {getStatusLabel(product)}
+                  {product.stockTrackingEnabled !== false ? `Stok: ${product.stockQuantity} · ` : ""}Status: {getStatusLabel(product)}
                   {product.paymentStatus ? ` · Ödəniş: ${product.paymentStatus}` : ""}
                 </p>
                 {product.approvalStatus === "pending" ? (

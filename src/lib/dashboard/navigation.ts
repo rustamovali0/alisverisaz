@@ -82,7 +82,7 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
     },
     {
       title: "Yeni məhsul əlavə et",
-      href: "/store/dashboard/products/new",
+      href: "/sell/product/new",
       icon: "package",
     },
     {
@@ -175,6 +175,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       titleKey: "products",
       href: "/radmin/products",
       icon: "box",
+    },
+    {
+      title: "Məhsul köçürmə",
+      href: "/radmin/product-transfer",
+      icon: "package",
     },
     {
       title: "Yeni məhsullar",

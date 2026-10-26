@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronDown, Heading2, List, ListOrdered, Pilcrow, Sparkles } from "lucide-react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,134 @@ type ProductFormProps = {
   disabled?: boolean;
   imageLimit?: number | null;
   successRedirect?: string;
+  standalone?: boolean;
+  profitTrackingEnabled?: boolean;
 };
+
+const CATEGORY_KEYWORD_GROUPS = [
+  { category: ["moda"], words: ["geyim", "paltar", "köynək", "koynek", "şalvar", "salvar", "jeans", "ayaqqabı", "ayaqqabi", "çanta", "canta", "kostyum"] },
+  { category: ["elektronika"], words: ["telefon", "iphone", "samsung", "noutbuk", "laptop", "kompüter", "komputer", "qulaqcıq", "qulaqciq", "televizor", "kamera"] },
+  { category: ["gözəllik", "baxım"], words: ["ətir", "etir", "parfum", "krem", "şampun", "sampun", "makiyaj", "kosmetika", "saç", "sac"] },
+  { category: ["ana", "uşaq"], words: ["uşaq", "usaq", "körpə", "korpe", "oyuncaq", "beşik", "besik"] },
+  { category: ["avto"], words: ["avtomobil", "maşın", "masin", "mühərrik", "muherrik", "təkər", "teker", "yağ", "yag"] },
+  { category: ["ev", "bağ"], words: ["mebel", "divan", "masa", "stul", "yataq", "mətbəx", "metbex", "bağ", "bag"] },
+  { category: ["idman", "outdoor"], words: ["idman", "fitness", "trenajor", "velosiped", "top", "çadır", "cadir"] },
+  { category: ["kitab"], words: ["kitab", "roman", "dərslik", "derslik", "jurnal"] },
+  { category: ["qida", "içki"], words: ["qida", "yemək", "yemek", "içki", "icki", "qəhvə", "qehve", "çay", "cay"] },
+  { category: ["tikinti", "alət"], words: ["alət", "alet", "drel", "mişar", "misar", "tikinti", "vintaçan", "vintacan"] },
+  { category: ["heyvan"], words: ["it", "pişik", "pisik", "heyvan", "yem", "akvarium"] },
+  { category: ["səyahət", "baqaj", "çanta"], words: ["çamadan", "camadan", "baqaj", "səyahət", "seyahat", "yol çantası", "noutbuk çantası"] },
+  { category: ["hobbi", "yaradıcılıq"], words: ["musiqi", "gitara", "piano", "rəsm", "resm", "pazl", "model", "əl işi", "el isi"] },
+  { category: ["hədiyyə", "bayram"], words: ["hədiyyə", "hediyye", "gül", "gul", "buket", "şar", "sar", "suvenir", "bayram"] },
+];
+
+const PRODUCT_FIELD_LABELS: Record<string, string> = {
+  name: "Ad",
+  costAmount: "Maya dəyəri",
+  priceAmount: "Qiymət",
+  discountedPriceAmount: "Endirimli qiymət",
+  stockQuantity: "Stok sayı",
+};
+
+function normalizeCategoryText(value: string) {
+  return value.trim().toLocaleLowerCase("az-AZ");
+}
+
+function suggestedCategories(productName: string, categories: CategoryOption[]) {
+  const name = normalizeCategoryText(productName);
+  if (name.length < 2) return [];
+
+  return categories
+    .map((category) => {
+      const categoryName = normalizeCategoryText(category.name);
+      let score = categoryName.split(/\s+/).filter((word) => word.length > 2 && name.includes(word)).length * 4;
+
+      CATEGORY_KEYWORD_GROUPS.forEach((group) => {
+        if (
+          group.category.some((word) => categoryName.includes(word)) &&
+          group.words.some((word) => name.includes(word))
+        ) {
+          score += 6;
+        }
+      });
+
+      return { category, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.category.name.localeCompare(right.category.name, "az"))
+    .slice(0, 3)
+    .map((item) => item.category);
+}
+
+function ProductDescriptionEditor({
+  initialValue,
+  disabled,
+}: {
+  initialValue: string;
+  disabled?: boolean;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  function insertText(text: string) {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const nextValue = `${value.slice(0, start)}${text}${value.slice(end)}`;
+    setValue(nextValue);
+    window.requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + text.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
+  }
+
+  const tools = [
+    { label: "Başlıq", icon: Heading2, text: `${value.trim() ? "\n\n" : ""}## Başlıq\n` },
+    { label: "Abzas", icon: Pilcrow, text: "\n\n" },
+    { label: "Maddə", icon: List, text: `${value.trim() ? "\n" : ""}• ` },
+    { label: "Nömrə", icon: ListOrdered, text: `${value.trim() ? "\n" : ""}1. ` },
+  ];
+
+  return (
+    <label className="grid gap-2 text-sm font-medium">
+      Açıqlama
+      <div className="overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+        <div className="flex gap-1.5 overflow-x-auto border-b bg-muted/45 p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {tools.map((tool) => {
+            const Icon = tool.icon;
+            return (
+              <button
+                key={tool.label}
+                type="button"
+                disabled={disabled}
+                onClick={() => insertText(tool.text)}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border bg-background px-3 text-xs font-semibold text-foreground shadow-sm disabled:opacity-50"
+              >
+                <Icon className="size-3.5" aria-hidden="true" />
+                {tool.label}
+              </button>
+            );
+          })}
+        </div>
+        <textarea
+          ref={textareaRef}
+          name="description"
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Məhsulu hissələrə bölərək təsvir edin..."
+          className="min-h-40 w-full resize-y border-0 bg-transparent px-3.5 py-3 text-sm leading-6 outline-none"
+          disabled={disabled}
+        />
+      </div>
+      <span className="text-xs font-normal text-muted-foreground">
+        Başlıq, abzas və siyahılar məhsul səhifəsində eyni quruluşda göstərilir.
+      </span>
+    </label>
+  );
+}
 
 function variantsToText(product?: ManagedProduct) {
   return (product?.variants ?? [])
@@ -415,7 +543,7 @@ function ExistingProductImages({
               type="button"
               variant="secondary"
               size="icon"
-              className="absolute right-1 top-1 size-7 rounded-md border border-white/80 bg-destructive text-destructive-foreground opacity-100 shadow-sm hover:bg-destructive/90"
+              className="absolute right-1 top-1 z-10 size-9 rounded-md border border-white bg-red-600 text-white shadow-sm hover:bg-red-700 hover:text-white"
               onClick={() => runImageAction("delete", image.id)}
               disabled={disabled || isPending}
               aria-label="Şəkli sil"
@@ -441,9 +569,24 @@ export function ProductForm({
   disabled = false,
   imageLimit = 5,
   successRedirect,
+  standalone = false,
+  profitTrackingEnabled = false,
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [trackStock, setTrackStock] = useState(product?.stockTrackingEnabled ?? false);
+  const [productName, setProductName] = useState(product?.name ?? "");
+  const [commerceType, setCommerceType] = useState<"sale" | "rental">(
+    product?.commerceType ?? "sale",
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState(product?.categoryId ?? "");
+  const initialCategory = categories.find((category) => category.id === product?.categoryId);
+  const [selectedRootCategoryId, setSelectedRootCategoryId] = useState(
+    initialCategory?.parentId ?? initialCategory?.id ?? "",
+  );
+  const [isRootCategoryOpen, setIsRootCategoryOpen] = useState(false);
+  const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
+  const categoryPickerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
   const selectedLocationMap = new Map(
@@ -453,10 +596,77 @@ export function ProductForm({
   const existingImageCount = mode === "edit" ? product?.images.length ?? 0 : 0;
   const newImageLimit =
     imageLimit === null ? null : Math.max(imageLimit - existingImageCount, 0);
+  const categorySuggestions = useMemo(
+    () => suggestedCategories(productName, categories),
+    [categories, productName],
+  );
+  const rootCategories = useMemo(
+    () => categories.filter((category) => !category.parentId),
+    [categories],
+  );
+  const subcategories = useMemo(
+    () => categories.filter((category) => category.parentId === selectedRootCategoryId),
+    [categories, selectedRootCategoryId],
+  );
+  const selectedRootCategory = rootCategories.find(
+    (category) => category.id === selectedRootCategoryId,
+  );
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+
+  useEffect(() => {
+    if (!isRootCategoryOpen && !isSubcategoryOpen) return;
+
+    function closeCategoryMenus(event: PointerEvent | KeyboardEvent) {
+      if (event instanceof KeyboardEvent) {
+        if (event.key !== "Escape") return;
+      } else if (categoryPickerRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      setIsRootCategoryOpen(false);
+      setIsSubcategoryOpen(false);
+    }
+
+    document.addEventListener("pointerdown", closeCategoryMenus);
+    document.addEventListener("keydown", closeCategoryMenus);
+    return () => {
+      document.removeEventListener("pointerdown", closeCategoryMenus);
+      document.removeEventListener("keydown", closeCategoryMenus);
+    };
+  }, [isRootCategoryOpen, isSubcategoryOpen]);
+
+  function selectCategory(category: CategoryOption) {
+    const rootId = category.parentId ?? category.id;
+    setSelectedRootCategoryId(rootId);
+    setSelectedCategoryId(category.id);
+    setIsRootCategoryOpen(false);
+    setIsSubcategoryOpen(false);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const invalidField = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+      ":invalid",
+    );
+
+    if (invalidField) {
+      const fieldLabel = PRODUCT_FIELD_LABELS[invalidField.name] ?? "Bu sahə";
+      const message = invalidField.validity.valueMissing
+        ? `${fieldLabel} sahəsini doldurun.`
+        : invalidField.validity.rangeUnderflow
+          ? `${fieldLabel} üçün icazə verilən minimum dəyəri daxil edin.`
+          : invalidField.validity.rangeOverflow
+            ? `${fieldLabel} üçün icazə verilən maksimum dəyəri daxil edin.`
+            : `${fieldLabel} sahəsində düzgün dəyər daxil edin.`;
+
+      void appAlert.info("Məlumatları yoxlayın", message);
+      invalidField.focus({ preventScroll: true });
+      invalidField.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const formData = new FormData(form);
     formData.delete("images");
     imageFiles.forEach((file) => {
       formData.append("images", file);
@@ -481,7 +691,14 @@ export function ProductForm({
       void queryClient.invalidateQueries({ queryKey: ["related-products"] });
       setImageFiles([]);
 
-      if (successRedirect) {
+      if (standalone) {
+        if (mode === "store-create") {
+          router.replace("/store/dashboard/products");
+          router.refresh();
+          return;
+        }
+        router.refresh();
+      } else if (successRedirect) {
         router.replace(successRedirect);
         router.refresh();
       }
@@ -491,72 +708,203 @@ export function ProductForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid min-w-0 gap-4 overflow-hidden rounded-md border bg-card p-4 text-card-foreground shadow-sm [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
+      noValidate
+      className="grid min-w-0 gap-5 overflow-hidden rounded-xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5 [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
       {product ? <input type="hidden" name="productId" value={product.id} /> : null}
       {mode === "store-create" ? (
-        <label className="grid gap-2 text-sm font-medium">
-          Mağaza
-          <select
-            name="storeId"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-            disabled={disabled || stores.length === 0}
-          >
-            {stores.map((store) => (
-              <option key={store.id} value={store.id}>
-                {store.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <input type="hidden" name="storeId" value={stores[0]?.id ?? ""} />
       ) : null}
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
-        <label className="grid min-w-0 gap-2 text-sm font-medium">
+      <div className="grid min-w-0 items-start gap-4 lg:grid-cols-2">
+        <label className="grid min-w-0 content-start gap-2 text-sm font-medium">
           Ad
           <input
             name="name"
-            defaultValue={product?.name}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={productName}
+            onChange={(event) => setProductName(event.target.value)}
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             required
             disabled={disabled}
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-medium">
-          Kateqoriya
-          <select
-            name="categoryId"
-            defaultValue={product?.categoryId ?? ""}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            disabled={disabled}
-          >
-            <option value="">Kateqoriyasız</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div ref={categoryPickerRef} className="grid min-w-0 gap-3 text-sm font-medium">
+          <span>Kateqoriya</span>
+          <input type="hidden" name="categoryId" value={selectedCategoryId} />
+          {categorySuggestions.length > 0 ? (
+            <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {categorySuggestions.map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700"
+                  onClick={() => selectCategory(category)}
+                >
+                  <Sparkles className="size-3.5" aria-hidden="true" />
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <div className="relative grid gap-1.5">
+            <span className="text-xs font-semibold text-muted-foreground">Əsas kateqoriya</span>
+            <button
+              type="button"
+              className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
+              disabled={disabled}
+              aria-expanded={isRootCategoryOpen}
+              onClick={() => {
+                setIsRootCategoryOpen((current) => !current);
+                setIsSubcategoryOpen(false);
+              }}
+            >
+              <span className={selectedRootCategory ? "text-foreground" : "text-muted-foreground"}>
+                {selectedRootCategory?.name ?? "Əsas kateqoriya seçin"}
+              </span>
+              <ChevronDown className={`size-4 transition-transform ${isRootCategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
+            {isRootCategoryOpen ? (
+              <div className="absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
+                <button
+                  type="button"
+                  className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                  onClick={() => {
+                    setSelectedRootCategoryId("");
+                    setSelectedCategoryId("");
+                    setIsRootCategoryOpen(false);
+                  }}
+                >
+                  Kateqoriyasız
+                  {!selectedRootCategoryId ? <Check className="size-4 text-primary" /> : null}
+                </button>
+                {rootCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                    onClick={() => {
+                      setSelectedRootCategoryId(category.id);
+                      setSelectedCategoryId(category.id);
+                      setIsRootCategoryOpen(false);
+                    }}
+                  >
+                    <span>{category.name}</span>
+                    {selectedRootCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {selectedRootCategoryId && subcategories.length > 0 ? (
+            <div className="relative grid gap-1.5">
+              <span className="text-xs font-semibold text-muted-foreground">Alt kateqoriya</span>
+              <button
+                type="button"
+                className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
+                disabled={disabled}
+                aria-expanded={isSubcategoryOpen}
+                onClick={() => setIsSubcategoryOpen((current) => !current)}
+              >
+                <span className={selectedCategory?.parentId ? "text-foreground" : "text-muted-foreground"}>
+                  {selectedCategory?.parentId ? selectedCategory.name : "Alt kateqoriya seçin"}
+                </span>
+                <ChevronDown className={`size-4 transition-transform ${isSubcategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              {isSubcategoryOpen ? (
+                <div className="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
+                  {subcategories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                      onClick={() => selectCategory(category)}
+                    >
+                      <span>{category.name}</span>
+                      {selectedCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <label className="grid gap-2 text-sm font-medium">
-          Stok sayı
-          <input
-            name="stockQuantity"
-            type="number"
-            min="0"
-            step="1"
-            defaultValue={product?.stockQuantity ?? undefined}
-            placeholder="Stok sayı"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-            disabled={disabled}
-          />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
+      <section className="grid min-w-0 gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <label className="flex min-w-0 items-start gap-3 text-sm font-semibold">
+            <input
+              type="checkbox"
+              name="stockTrackingEnabled"
+              checked={trackStock}
+              onChange={(event) => setTrackStock(event.target.checked)}
+              disabled={disabled}
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+            />
+            <span className="grid gap-1">
+              <span>Stok sayını izləmək</span>
+              <span className="text-xs font-normal leading-5 text-muted-foreground">
+                Aktiv olduqda sifarişlər stok sayı ilə məhdudlaşır.
+              </span>
+            </span>
+          </label>
+          {trackStock ? (
+            <label className="grid w-full gap-1.5 text-sm font-medium sm:w-44">
+              Stok sayı
+              <input
+                name="stockQuantity"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={product?.stockQuantity ?? undefined}
+                placeholder="Məsələn, 25"
+                className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                required
+                disabled={disabled}
+              />
+            </label>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground sm:pr-1">
+              Limitsiz sifariş
+            </span>
+          )}
+        </div>
+        <input type="hidden" name="stockTrackingPresent" value="1" />
+      </section>
+
+      <fieldset className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
+        <legend className="px-1 text-sm font-semibold">Elan növü</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {(["sale", "rental"] as const).map((type) => (
+            <label
+              key={type}
+              className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border px-3 text-sm font-semibold transition ${
+                commerceType === type
+                  ? "border-blue-500 bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/15 dark:bg-blue-500"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+              }`}
+            >
+              <input
+                type="radio"
+                name="commerceType"
+                value={type}
+                checked={commerceType === type}
+                onChange={() => setCommerceType(type)}
+                disabled={disabled}
+                className="sr-only"
+              />
+              {type === "sale" ? "Satış" : "İcarə"}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div
+        className={`grid min-w-0 gap-4 sm:grid-cols-2 ${
+          profitTrackingEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3"
+        }`}
+      >
+        {profitTrackingEnabled ? <label className="grid min-w-0 gap-2 text-sm font-medium">
           Maya dəyəri
           <input
             name="costAmount"
@@ -565,12 +913,13 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.costAmount ?? undefined}
             placeholder="Maya dəyəri"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            required
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           />
-        </label>
-        <label className="grid gap-2 text-sm font-medium">
-          Əsas qiymət
+        </label> : null}
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
+          {commerceType === "rental" ? "İcarə qiyməti" : "Satış qiyməti"}
           <input
             name="priceAmount"
             type="number"
@@ -578,12 +927,12 @@ export function ProductForm({
             step="0.01"
             defaultValue={product?.priceAmount ?? undefined}
             placeholder="Əsas qiymət"
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             required
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Endirimli qiymət
           <input
             name="discountedPriceAmount"
@@ -592,19 +941,20 @@ export function ProductForm({
             step="0.01"
             defaultValue={
               product
-                ? Math.max(product.priceAmount - product.discountAmount, 0)
-                : undefined
+                ? Math.max(product.priceAmount - product.discountAmount, 0) || ""
+                : ""
             }
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="Endirim yoxdursa boş saxlayın"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           />
         </label>
-        <label className="grid gap-2 text-sm font-medium">
+        <label className="grid min-w-0 gap-2 text-sm font-medium">
           Status
           <select
             name="status"
             defaultValue={product?.status ?? "active"}
-            className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             disabled={disabled}
           >
             <option value="draft">Qaralama</option>
@@ -614,15 +964,7 @@ export function ProductForm({
         </label>
       </div>
 
-      <label className="grid gap-2 text-sm font-medium">
-        Açıqlama
-        <textarea
-          name="description"
-          defaultValue={product?.description ?? ""}
-          className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          disabled={disabled}
-        />
-      </label>
+      <ProductDescriptionEditor initialValue={product?.description ?? ""} disabled={disabled} />
 
       <input type="hidden" name="depositEnabled" value="off" />
       <input type="hidden" name="depositType" value="fixed" />
@@ -635,7 +977,7 @@ export function ProductForm({
           <div>
             <p className="text-sm font-medium">Satış nöqtələri və mövcudluq</p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Məhsulun göründüyü filialları və həmin filialdakı stoku seçin.
+              Məhsulun mövcud olduğu satış nöqtələri
             </p>
           </div>
           <div className="grid gap-3">
@@ -652,7 +994,7 @@ export function ProductForm({
                       name="productLocationIds"
                       type="checkbox"
                       value={location.id}
-                      defaultChecked={Boolean(selected)}
+                      defaultChecked={locations.length === 1 || Boolean(selected)}
                       disabled={disabled}
                       className="mt-1 size-4 rounded border-input"
                     />
@@ -664,19 +1006,6 @@ export function ProductForm({
                         {location.district ? `, ${location.district}` : ""}
                       </span>
                     </span>
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Bu nöqtədə stok
-                    <input
-                      name={`locationStock:${location.id}`}
-                      type="number"
-                      min="0"
-                      step="1"
-                      defaultValue={selected?.stockQuantity ?? undefined}
-                      placeholder="Stok"
-                      disabled={disabled}
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
                   </label>
                 </div>
               );
