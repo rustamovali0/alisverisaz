@@ -382,21 +382,20 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
 
   if (role === "seller") {
     try {
-      if (avatarFile) {
-        avatarUrl = await uploadAuthMediaFile({
+      const [uploadedAvatarUrl, uploadedBannerUrl] = await Promise.all([
+        avatarFile ? uploadAuthMediaFile({
           file: avatarFile,
           userId: data.user.id,
           kind: "avatar",
-        });
-      }
-
-      if (bannerFile) {
-        bannerUrl = await uploadAuthMediaFile({
+        }) : Promise.resolve(null),
+        bannerFile ? uploadAuthMediaFile({
           file: bannerFile,
           userId: data.user.id,
           kind: "banner",
-        });
-      }
+        }) : Promise.resolve(null),
+      ]);
+      avatarUrl = uploadedAvatarUrl;
+      bannerUrl = uploadedBannerUrl;
 
       if (avatarUrl || bannerUrl) {
         await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
@@ -431,19 +430,40 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     };
   }
 
-  await trackActivityEvent({
-    eventType: "user_register",
-    actorId: data.user.id,
-    metadata: {
-      title: "Yeni qeydiyyat",
-      description:
-        role === "seller"
-          ? `${fullName} (${role}) · admin təsdiqi gözlənilir`
-          : `${fullName} (${role})`,
-      email,
-      role: accountRole,
-      requestedRole: role,
-    },
+  after(async () => {
+    await trackActivityEvent({
+      eventType: "user_register",
+      actorId: data.user.id,
+      metadata: {
+        title: "Yeni qeydiyyat",
+        description:
+          role === "seller"
+            ? `${fullName} (${role}) · admin təsdiqi gözlənilir`
+            : `${fullName} (${role})`,
+        email,
+        role: accountRole,
+        requestedRole: role,
+      },
+    });
+
+    if (serverEnv.hasSmtpConfig) {
+      try {
+        await sendWelcomeRegistrationEmail({
+          to: email,
+          fullName,
+          role,
+          loginUrl: new URL("/login", await getPublicRequestOrigin()).toString(),
+        });
+      } catch (error) {
+        console.error("Welcome registration email failed", {
+          message: error instanceof Error ? error.message : String(error),
+          email,
+          role,
+        });
+      }
+    } else {
+      console.warn("Welcome registration email skipped because SMTP is not configured");
+    }
   });
 
   if (role === "seller") {
@@ -464,25 +484,6 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       email,
       createdAt: data.user.created_at,
     });
-  }
-
-  if (serverEnv.hasSmtpConfig) {
-    try {
-      await sendWelcomeRegistrationEmail({
-        to: email,
-        fullName,
-        role,
-        loginUrl: new URL("/login", await getPublicRequestOrigin()).toString(),
-      });
-    } catch (error) {
-      console.error("Welcome registration email failed", {
-        message: error instanceof Error ? error.message : String(error),
-        email,
-        role,
-      });
-    }
-  } else {
-    console.warn("Welcome registration email skipped because SMTP is not configured");
   }
 
   if (role === "customer") {

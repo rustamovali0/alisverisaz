@@ -36,19 +36,15 @@ type FieldErrors = {
 
 const MAX_SELLER_IMAGE_SIZE = 5 * 1024 * 1024;
 
-type LegalDocument = "terms" | "privacy";
-
 function LegalReadDialog({
-  document,
   onClose,
   onRead,
 }: {
-  document: LegalDocument;
   onClose: () => void;
   onRead: () => void;
 }) {
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
-  const title = document === "terms" ? "İstifadəçi razılaşması" : "Məxfilik siyasəti";
+  const title = "İstifadəçi razılaşması və məxfilik siyasəti";
 
   function handleLegalScroll(event: UIEvent<HTMLDivElement>) {
     const area = event.currentTarget;
@@ -71,23 +67,14 @@ function LegalReadDialog({
           </Button>
         </div>
         <div className="max-h-[360px] overflow-y-auto px-5 py-5 text-sm leading-7 text-slate-600" onScroll={handleLegalScroll}>
-          {document === "privacy" ? (
-            <div className="space-y-5">
-              <section><h3 className="font-bold text-slate-950">Toplanan məlumatlar</h3><p>Qeydiyyat və sifariş zamanı ad, e-poçt, telefon, ünvan və hesabın işləməsi üçün lazım olan texniki məlumatlar toplanır. Mağaza hesabında mağaza adı, loqo, banner və əlaqə məlumatları da saxlanıla bilər.</p></section>
-              <section><h3 className="font-bold text-slate-950">İstifadə məqsədi</h3><p>Məlumatlar hesabı yaratmaq, sifarişi icra etmək, satıcı ilə əlaqəni təmin etmək, təhlükəsizliyi qorumaq və istifadəçi dəstəyi göstərmək üçün istifadə olunur. Məlumatlar reklam məqsədilə icazəsiz satılmır.</p></section>
-              <section><h3 className="font-bold text-slate-950">Cookie-lər</h3><p>Sayt sessiyanı açıq saxlamaq, səbəti qorumaq, təhlükəsizlik yoxlamalarını aparmaq və əsas funksiyaları işlətmək üçün zəruri cookie-lərdən istifadə edir. Brauzer ayarlarından cookie-ləri silmək mümkündür, lakin bəzi funksiyalar işləməyə bilər.</p></section>
-              <section><h3 className="font-bold text-slate-950">Saxlanma və təhlükəsizlik</h3><p>Məlumatlara giriş rol və icazələrlə məhdudlaşdırılır. İstifadəçi profil məlumatlarının yenilənməsi və ya silinməsi üçün dəstək mərkəzinə müraciət edə bilər.</p></section>
-              <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Mətni oxuduğunuzu təsdiqləmək üçün bu hissənin sonuna çatmısınız.</p>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              <section><h3 className="font-bold text-slate-950">Hesab və məsuliyyət</h3><p>İstifadəçi düzgün məlumat təqdim etməli, hesab girişlərini qorumalı və platformadan qanuni məqsədlərlə istifadə etməlidir.</p></section>
-              <section><h3 className="font-bold text-slate-950">Elan və sifarişlər</h3><p>Satıcı məhsul məlumatı, qiymət, stok və çatdırılma şərtlərinin düzgünlüyünə cavabdehdir. Alıcı sifariş məlumatlarını yoxlamalı və tərəflər qarşılıqlı razılaşmaya əməl etməlidir.</p></section>
-              <section><h3 className="font-bold text-slate-950">Qadağan olunan istifadə</h3><p>Saxta elan, icazəsiz məlumat əldə etmə, zərərli kod, spam və digər istifadəçilərin hüquqlarını pozan fəaliyyət qadağandır.</p></section>
-              <section><h3 className="font-bold text-slate-950">Platformanın rolu</h3><p>Alisveris.az alıcı və satıcını birləşdirən platformadır. Qaydaların pozulması halında elan və hesab məhdudlaşdırıla bilər.</p></section>
-              <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Mətni oxuduğunuzu təsdiqləmək üçün bu hissənin sonuna çatmısınız.</p>
-            </div>
-          )}
+          <div className="space-y-5">
+            <section><h3 className="font-bold text-slate-950">Hesab və məsuliyyət</h3><p>İstifadəçi düzgün məlumat təqdim etməli, hesab girişlərini qorumalı və platformadan qanuni məqsədlərlə istifadə etməlidir. Satıcı məhsul məlumatı, qiymət, stok və çatdırılma şərtlərinin düzgünlüyünə cavabdehdir.</p></section>
+            <section><h3 className="font-bold text-slate-950">Platformadan istifadə</h3><p>Saxta elan, icazəsiz məlumat əldə etmə, zərərli kod, spam və digər istifadəçilərin hüquqlarını pozan fəaliyyət qadağandır. Qaydaların pozulması halında elan və hesab məhdudlaşdırıla bilər.</p></section>
+            <section><h3 className="font-bold text-slate-950">Toplanan məlumatlar</h3><p>Qeydiyyat və sifariş zamanı ad, e-poçt, telefon, ünvan və hesabın işləməsi üçün lazım olan texniki məlumatlar toplanır. Mağaza hesabında mağaza adı, loqo, banner və əlaqə məlumatları saxlanıla bilər.</p></section>
+            <section><h3 className="font-bold text-slate-950">Məlumatların istifadəsi və cookie-lər</h3><p>Məlumatlar hesabı yaratmaq, sifarişi icra etmək, təhlükəsizliyi qorumaq və dəstək göstərmək üçün istifadə olunur; icazəsiz satılmır. Sayt sessiya, səbət və təhlükəsizlik üçün zəruri cookie-lərdən istifadə edir.</p></section>
+            <section><h3 className="font-bold text-slate-950">Saxlanma və təhlükəsizlik</h3><p>Məlumatlara giriş rol və icazələrlə məhdudlaşdırılır. Profil məlumatlarının yenilənməsi və ya silinməsi üçün dəstək mərkəzinə müraciət edilə bilər.</p></section>
+            <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Sənədlərin birləşdirilmiş mətnini sona qədər oxudunuz. Razılıq avtomatik seçiləcək.</p>
+          </div>
         </div>
         <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-3 sm:px-5">
           <span className={hasReachedEnd ? "text-sm font-semibold text-emerald-700" : "text-sm text-slate-500"}>
@@ -260,9 +247,8 @@ export function RegisterForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [termsRead, setTermsRead] = useState(false);
-  const [privacyRead, setPrivacyRead] = useState(false);
-  const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
+  const [legalRead, setLegalRead] = useState(false);
+  const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [sellerStep, setSellerStep] = useState<1 | 2>(1);
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -276,11 +262,11 @@ export function RegisterForm({
     : "/login";
 
   useEffect(() => {
-    if (termsRead && privacyRead) {
+    if (legalRead) {
       setTermsAccepted(true);
       setFieldErrors((current) => ({ ...current, terms: undefined }));
     }
-  }, [privacyRead, termsRead]);
+  }, [legalRead]);
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -617,27 +603,26 @@ export function RegisterForm({
               />
             </div>
           </div>
-          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm lg:col-span-2">
+          <div className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm lg:col-span-2">
             <input
               type="checkbox"
               checked={termsAccepted}
-              disabled={!termsRead || !privacyRead}
-              onChange={(event) => setTermsAccepted(event.target.checked)}
-              className="mt-1 size-4 rounded border-input"
+              readOnly
+              onClick={() => setLegalDialogOpen(true)}
+              className="mt-1 size-4 cursor-pointer rounded border-input"
+              aria-label="Razılaşma mətnini aç"
             />
             <span className="leading-6">
-              <button type="button" onClick={() => setLegalDocument("terms")} className="font-medium text-foreground underline underline-offset-4">
+              <Link href="/terms" className="font-medium text-foreground underline underline-offset-4">
                 İstifadəçi razılaşması
-                {termsRead ? " ✓" : ""}
-              </button>{" "}
+              </Link>{" "}
               və{" "}
-              <button type="button" onClick={() => setLegalDocument("privacy")} className="font-medium text-foreground underline underline-offset-4">
+              <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4">
                 məxfilik siyasəti
-                {privacyRead ? " ✓" : ""}
-              </button>{" "}
+              </Link>{" "}
               sona qədər oxunduqdan sonra avtomatik qəbul edilir.
             </span>
-          </label>
+          </div>
           {fieldErrors.terms ? (
             <p className="text-xs font-medium text-destructive lg:col-span-2">{fieldErrors.terms}</p>
           ) : null}
@@ -696,13 +681,11 @@ export function RegisterForm({
           </form>
         ) : null}
       </div>
-      {legalDocument ? (
+      {legalDialogOpen ? (
         <LegalReadDialog
-          document={legalDocument}
-          onClose={() => setLegalDocument(null)}
+          onClose={() => setLegalDialogOpen(false)}
           onRead={() => {
-            if (legalDocument === "terms") setTermsRead(true);
-            if (legalDocument === "privacy") setPrivacyRead(true);
+            setLegalRead(true);
           }}
         />
       ) : null}
