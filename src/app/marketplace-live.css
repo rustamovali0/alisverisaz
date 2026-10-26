@@ -2520,3 +2520,11 @@
 .live-marketplace .mobile-bottom-nav-stable [aria-current="page"] > span:first-child {
   background-color: var(--live-soft) !important;
 }
+.live-marketplace :is(.app-dashboard-shell,.radmin-shell) {
+  --primary: 158 62% 24% !important;
+  --primary-foreground: 0 0% 100% !important;
+  --ring: 158 62% 24% !important;
+  --marketplace-primary: 158 62% 24% !important;
+  --marketplace-primary-hover: 157 65% 18% !important;
+  --marketplace-primary-soft: 93 31% 94% !important;
+}
