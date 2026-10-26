@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type UIEvent } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { AuthCard } from "@/components/auth/auth-card";
@@ -46,40 +46,20 @@ function LegalReadDialog({
   onClose: () => void;
   onRead: () => void;
 }) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
   const [hasReachedEnd, setHasReachedEnd] = useState(false);
   const title = document === "terms" ? "İstifadəçi razılaşması" : "Məxfilik siyasəti";
 
-  useEffect(() => () => cleanupRef.current?.(), []);
-
-  function attachScrollTracking() {
-    cleanupRef.current?.();
-    const frameWindow = iframeRef.current?.contentWindow;
-    const frameDocument = frameWindow?.document;
-
-    if (!frameWindow || !frameDocument) return;
-
-    const checkPosition = () => {
-      const root = frameDocument.documentElement;
-      const body = frameDocument.body;
-      const scrollTop = frameWindow.scrollY || root.scrollTop || body.scrollTop;
-      const viewportHeight = frameWindow.innerHeight || root.clientHeight;
-      const scrollHeight = Math.max(root.scrollHeight, body.scrollHeight);
-
-      if (scrollTop + viewportHeight >= scrollHeight - 24) {
-        setHasReachedEnd(true);
-        onRead();
-      }
-    };
-
-    frameWindow.addEventListener("scroll", checkPosition, { passive: true });
-    cleanupRef.current = () => frameWindow.removeEventListener("scroll", checkPosition);
+  function handleLegalScroll(event: UIEvent<HTMLDivElement>) {
+    const area = event.currentTarget;
+    if (area.scrollTop + area.clientHeight >= area.scrollHeight - 16) {
+      setHasReachedEnd(true);
+      onRead();
+    }
   }
 
   return (
     <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/60 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="flex h-[min(760px,88dvh)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-5">
           <div>
             <h2 className="font-bold text-slate-950">{title}</h2>
@@ -89,13 +69,25 @@ function LegalReadDialog({
             <X className="size-5" aria-hidden="true" />
           </Button>
         </div>
-        <iframe
-          ref={iframeRef}
-          src={`/${document}?embedded=1`}
-          title={title}
-          className="min-h-0 flex-1 bg-white"
-          onLoad={attachScrollTracking}
-        />
+        <div className="max-h-[360px] overflow-y-auto px-5 py-5 text-sm leading-7 text-slate-600" onScroll={handleLegalScroll}>
+          {document === "privacy" ? (
+            <div className="space-y-5">
+              <section><h3 className="font-bold text-slate-950">Toplanan məlumatlar</h3><p>Qeydiyyat və sifariş zamanı ad, e-poçt, telefon, ünvan və hesabın işləməsi üçün lazım olan texniki məlumatlar toplanır. Mağaza hesabında mağaza adı, loqo, banner və əlaqə məlumatları da saxlanıla bilər.</p></section>
+              <section><h3 className="font-bold text-slate-950">İstifadə məqsədi</h3><p>Məlumatlar hesabı yaratmaq, sifarişi icra etmək, satıcı ilə əlaqəni təmin etmək, təhlükəsizliyi qorumaq və istifadəçi dəstəyi göstərmək üçün istifadə olunur. Məlumatlar reklam məqsədilə icazəsiz satılmır.</p></section>
+              <section><h3 className="font-bold text-slate-950">Cookie-lər</h3><p>Sayt sessiyanı açıq saxlamaq, səbəti qorumaq, təhlükəsizlik yoxlamalarını aparmaq və əsas funksiyaları işlətmək üçün zəruri cookie-lərdən istifadə edir. Brauzer ayarlarından cookie-ləri silmək mümkündür, lakin bəzi funksiyalar işləməyə bilər.</p></section>
+              <section><h3 className="font-bold text-slate-950">Saxlanma və təhlükəsizlik</h3><p>Məlumatlara giriş rol və icazələrlə məhdudlaşdırılır. İstifadəçi profil məlumatlarının yenilənməsi və ya silinməsi üçün dəstək mərkəzinə müraciət edə bilər.</p></section>
+              <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Mətni oxuduğunuzu təsdiqləmək üçün bu hissənin sonuna çatmısınız.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <section><h3 className="font-bold text-slate-950">Hesab və məsuliyyət</h3><p>İstifadəçi düzgün məlumat təqdim etməli, hesab girişlərini qorumalı və platformadan qanuni məqsədlərlə istifadə etməlidir.</p></section>
+              <section><h3 className="font-bold text-slate-950">Elan və sifarişlər</h3><p>Satıcı məhsul məlumatı, qiymət, stok və çatdırılma şərtlərinin düzgünlüyünə cavabdehdir. Alıcı sifariş məlumatlarını yoxlamalı və tərəflər qarşılıqlı razılaşmaya əməl etməlidir.</p></section>
+              <section><h3 className="font-bold text-slate-950">Qadağan olunan istifadə</h3><p>Saxta elan, icazəsiz məlumat əldə etmə, zərərli kod, spam və digər istifadəçilərin hüquqlarını pozan fəaliyyət qadağandır.</p></section>
+              <section><h3 className="font-bold text-slate-950">Platformanın rolu</h3><p>Alisveris.az alıcı və satıcını birləşdirən platformadır. Qaydaların pozulması halında elan və hesab məhdudlaşdırıla bilər.</p></section>
+              <p className="rounded-xl bg-orange-50 p-3 font-medium text-orange-800">Mətni oxuduğunuzu təsdiqləmək üçün bu hissənin sonuna çatmısınız.</p>
+            </div>
+          )}
+        </div>
         <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-3 sm:px-5">
           <span className={hasReachedEnd ? "text-sm font-semibold text-emerald-700" : "text-sm text-slate-500"}>
             {hasReachedEnd ? "Oxundu" : "Sonadək aşağı sürüşdürün"}
