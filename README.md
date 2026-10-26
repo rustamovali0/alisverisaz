@@ -27,3 +27,7 @@ Supabase deyerleri `.env.local` faylinda qurulub. Yeni muhitlerde `.env.example`
 - `src/components` - UI, common state ve layout komponentleri
 - `src/lib` - config, Supabase clients, error handling ve utilities
 - `src/types` - paylasilan TypeScript tipleri
+
+## Yeni marketplace frontend-i
+
+Təsdiqlənmiş yeni dizayn `frontend/` qovluğundadır. Lokal önizləmə: `npm ci --prefix frontend && npm run dev --prefix frontend`. VDS-də əsas səhifəyə qoşulma, mövcud backend marşrutları və geri qaytarma qaydası üçün [deployment qeydlərinə](docs/marketplace-frontend-vds.md) baxın.
