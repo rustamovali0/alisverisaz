@@ -48,3 +48,5 @@ PM2 keeps the name `alisveris-vds`; the gateway listens on `127.0.0.1:3004`, and
 6. Replace only the `alisveris-vds` PM2 entry with `deploy/marketplace-vds.config.cjs` from the new release. Verify local port 3004, HTTPS, backend routes and stable PM2 uptime; then `pm2 save`.
 
 The previous release stays intact. If health checks fail, remove the new `alisveris-vds` entry and start the saved rollback configuration, then verify HTTPS and save PM2 state. Do not remove old releases as part of a frontend rollout.
+
+PM2 loads `.mjs` files through its own container, so the gateway recognizes `pm_exec_path` as its entrypoint as well as a normal Node CLI entrypoint. A launcher integration test reproduces this loading mode. Always stage the final command under PM2 on ports 3104/3105 before replacing the production PM2 entry.

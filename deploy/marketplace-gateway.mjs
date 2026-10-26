@@ -69,7 +69,18 @@ export function createMarketplaceGateway({
       errorResponse(res, 400, "Invalid URL");
       return;
     }
+    const hostname = String(req.headers.host || "localhost")
+      .toLowerCase()
+      .replace(/:\d+$/, "");
+    const isMarketplaceHost = [
+      "alisveris.az",
+      "www.alisveris.az",
+      "localhost",
+      "127.0.0.1",
+      "[::1]",
+    ].includes(hostname);
     const isDocument =
+      isMarketplaceHost &&
       url.pathname === "/" &&
       (req.method === "GET" || req.method === "HEAD") &&
       !req.headers.rsc &&
@@ -225,7 +236,11 @@ async function start() {
   // localhost and treating locale rewrites as external requests.
   const child = spawn(process.execPath, ["server.js"], {
     cwd: resolve(cwd, "backend"),
-    env: { ...process.env, HOSTNAME: "::ffff:127.0.0.1", PORT: String(backendPort) },
+    env: {
+      ...process.env,
+      HOSTNAME: "::ffff:127.0.0.1",
+      PORT: String(backendPort),
+    },
     stdio: "inherit",
   });
   const server = createMarketplaceGateway({
@@ -274,10 +289,8 @@ async function start() {
     shutdown(1);
   }
 }
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
+const entrypoint = process.env.pm_exec_path || process.argv[1];
+if (entrypoint && resolve(entrypoint) === fileURLToPath(import.meta.url)) {
   start().catch((error) => {
     console.error(error.message);
     process.exitCode = 1;
