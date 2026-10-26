@@ -29,7 +29,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
   const copy = visualCopy[variant];
 
   return (
-    <aside className="relative h-full min-h-56 overflow-hidden bg-slate-950 lg:min-h-[620px]">
+    <aside className="relative h-full min-h-52 overflow-hidden bg-slate-950 lg:min-h-[560px]">
       <Image
         src="/auth/auth-marketplace-panel.webp"
         alt="Alisveris marketplace auth banner"
@@ -39,18 +39,18 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
         className="object-cover object-center"
       />
       <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(15,23,42,0.20),rgba(15,23,42,0.92))]" />
-      <div className="absolute right-8 top-8 hidden rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md sm:block">
+      <div className="absolute right-6 top-6 hidden rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-orange-200 backdrop-blur-md sm:block">
         Alış-veriş daha rahat
       </div>
-      <div className="absolute inset-x-0 bottom-0 max-h-full overflow-y-auto p-6 text-white sm:p-8 lg:p-12">
+      <div className="absolute inset-x-0 bottom-0 max-h-full overflow-y-auto p-5 text-white sm:p-7 lg:p-9">
         <div className="mb-2 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/80">
           <span className="h-px w-12 bg-orange-400" />
           Alisveris.az
         </div>
-        <h2 className="max-w-lg text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+        <h2 className="max-w-lg text-3xl font-black leading-tight tracking-tight lg:text-4xl">
           {copy.title}
         </h2>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-white/80 sm:text-base">
+        <p className="mt-3 max-w-xl text-sm leading-5 text-white/80 sm:text-[15px]">
           {copy.description}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -67,7 +67,7 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
             Təhlükəsiz giriş
           </Link>
         </div>
-        <Link href="/help" className="mt-6 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-950/20 transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300">
+        <Link href="/help" className="mt-4 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-950/20 transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300">
           Təhlükəsiz davam et
           <ArrowRight className="size-4" aria-hidden="true" />
         </Link>
