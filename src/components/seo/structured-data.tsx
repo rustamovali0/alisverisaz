@@ -54,11 +54,13 @@ const structuredData = {
 };
 
 export function StructuredData() {
+  const serializedData = JSON.stringify(structuredData).replace(/</g, "\\u003c");
+
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData),
+        __html: serializedData,
       }}
     />
   );

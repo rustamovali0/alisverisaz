@@ -37,6 +37,7 @@ import {
   getPublicProductLocations,
 } from "@/lib/locations/data";
 import type { ProductLocationAvailability } from "@/lib/locations/types";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 import {
   getProductReviews,
   getReviewSummary,
@@ -52,8 +53,9 @@ type ProductDetailPageProps = {
 };
 
 function getLocationMapUrl(location: ProductLocationAvailability["location"]) {
-  if (location.mapLink) {
-    return location.mapLink;
+  const safeMapLink = normalizeGoogleMapLink(location.mapLink ?? "");
+  if (safeMapLink) {
+    return safeMapLink;
   }
 
   if (location.latitude !== null && location.longitude !== null) {

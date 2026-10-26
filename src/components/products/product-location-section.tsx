@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import type { ProductLocationAvailability } from "@/lib/locations/types";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 
 type ProductLocationSectionProps = {
   locations: ProductLocationAvailability[];
@@ -18,8 +19,9 @@ type ProductLocationSectionProps = {
 function getMapUrl(item: ProductLocationAvailability) {
   const { location } = item;
 
-  if (location.mapLink) {
-    return location.mapLink;
+  const safeMapLink = normalizeGoogleMapLink(location.mapLink ?? "");
+  if (safeMapLink) {
+    return safeMapLink;
   }
 
   if (location.latitude !== null && location.longitude !== null) {
