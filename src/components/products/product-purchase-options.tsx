@@ -25,6 +25,9 @@ type ProductPurchaseOptionsProps = {
   buyerName?: string;
   buyerPhone?: string;
   disabled?: boolean;
+  isolatedStoreSlug?: string | null;
+  isolatedStoreBaseHref?: string | null;
+  compact?: boolean;
 };
 
 function isSelectionReady(product: CartProduct, selection: Record<string, string>) {
@@ -77,6 +80,9 @@ export function ProductPurchaseOptions({
   buyerName = "",
   buyerPhone = "",
   disabled = false,
+  isolatedStoreSlug,
+  isolatedStoreBaseHref,
+  compact = false,
 }: ProductPurchaseOptionsProps) {
   const initialSelection = useMemo(
     () => getAutoProductVariantSelection(product.options ?? []),
@@ -102,7 +108,7 @@ export function ProductPurchaseOptions({
   const isUnavailable = disabled || stockLimit <= 0;
 
   return (
-    <div className="mt-6 grid min-w-0 gap-4">
+    <div className={cn("grid min-w-0", compact ? "mt-3 gap-2 sm:mt-5 sm:gap-3" : "mt-4 gap-2.5 sm:mt-4 sm:gap-3")}>
       {visibleOptions.length > 0 ? (
         <div className="grid gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45">
           <div className="flex min-w-0 items-center justify-between gap-3">
@@ -140,8 +146,8 @@ export function ProductPurchaseOptions({
                       className={cn(
                         "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold shadow-sm transition",
                         isSelected
-                          ? "border-blue-600 bg-blue-600 text-white"
-                          : "border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10",
+                          ? "border-orange-500 bg-orange-500 text-white"
+                          : "border-slate-200 bg-white text-slate-800 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10",
                         !isAvailable && "cursor-not-allowed opacity-40",
                       )}
                     >
@@ -174,7 +180,9 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-[52px] w-full rounded-xl bg-blue-600 text-white shadow-none hover:bg-blue-700"
+          isolatedStoreSlug={isolatedStoreSlug}
+          isolatedStoreBaseHref={isolatedStoreBaseHref}
+          className={cn("w-full rounded-xl bg-orange-500 font-bold text-white shadow-none hover:bg-orange-600", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
         />
         <AddToCartButton
           product={product}
@@ -182,7 +190,8 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-[52px] w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200"
+          isolatedStoreSlug={isolatedStoreSlug}
+          className={cn("w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
         />
       </div>
       {showWhatsappOrderButton ? (
@@ -196,7 +205,7 @@ export function ProductPurchaseOptions({
           selectedOptions={normalizedSelection}
           selectionReady={selectionReady}
           disabled={isUnavailable}
-          className="h-[52px] w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300"
+          className={cn("w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
         />
       ) : null}
     </div>

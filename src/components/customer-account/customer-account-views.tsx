@@ -1,4 +1,4 @@
-import { Bell, CheckCircle2, MapPin, Package, PackageCheck, UserRound } from "lucide-react";
+import { Bell, CheckCircle2, Heart, MapPin, Package, PackageCheck, UserRound } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { EmptyState } from "@/components/common/empty-state";
@@ -142,7 +142,7 @@ function ProfileOverview({ profile }: { profile: CustomerProfileSummary }) {
   const name = profile.fullName || profile.email || "Hesabım";
 
   return (
-    <section className="hidden min-w-0 rounded-lg border bg-card p-4 shadow-sm md:block">
+    <section className="hidden min-w-0 rounded-2xl border bg-card p-5 shadow-sm md:block">
       <div className="flex min-w-0 items-center gap-3">
         <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-primary/10 text-primary">
           {profile.avatarUrl ? (
@@ -210,9 +210,10 @@ export async function CustomerAccountHome({
     <div className="min-w-0 space-y-5 overflow-x-clip">
       <ProfileOverview profile={profile} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <MetricCard label={t("stats.orders")} value={overview.stats.orders} icon={Package} href="/dashboard/orders" />
         <MetricCard label={t("stats.activeOrders")} value={overview.stats.activeOrders} icon={Package} href="/dashboard/orders" />
         <MetricCard label={t("stats.completedOrders")} value={overview.stats.completedOrders} icon={PackageCheck} href="/dashboard/orders" />
-        <MetricCard label={t("stats.notifications")} value={overview.stats.unreadNotifications} icon={Bell} href="/dashboard/notifications" />
+        <MetricCard label={t("stats.favorites")} value={overview.stats.favorites} icon={Heart} href="/dashboard/favorites" />
       </div>
       <section className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-lg border bg-card p-4 shadow-sm">

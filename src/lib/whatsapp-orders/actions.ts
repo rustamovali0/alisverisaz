@@ -47,7 +47,7 @@ export async function updateSellerOrderMethodAction(
   const current = await requireRole(["seller"], "/store/dashboard/settings");
   const storeId = readString(formData, "storeId");
   const orderMethod = readOrderMethod(formData);
-  const whatsappPhone = normalizeAzerbaijanPhone(readString(formData, "whatsappPhone"));
+  const whatsappPhone = normalizeAzerbaijanPhone(current.profile?.phone ?? "");
 
   if (!storeId) {
     return { ok: false, message: "Mağaza ID tapılmadı." };

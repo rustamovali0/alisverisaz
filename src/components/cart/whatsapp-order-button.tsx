@@ -1,6 +1,5 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
 
 import { WhatsAppIcon } from "@/components/icons/social-icons";
@@ -54,10 +53,10 @@ function toWhatsAppPhone(value: string) {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("az-AZ", {
-    style: "currency",
-    currency: "AZN",
-  }).format(value);
+  return `${new Intl.NumberFormat("az-AZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)} ₼`;
 }
 
 export function WhatsAppOrderButton({
@@ -96,32 +95,63 @@ export function WhatsAppOrderButton({
     normalizedSelection,
   );
 
-  function buildMessage(orderNumber: string) {
+  function buildMessage() {
+    const isRental = product.commerceType === "rental";
+    const orderDate = new Intl.DateTimeFormat("az-AZ", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date());
+    const productUrl = typeof window !== "undefined"
+      ? window.location.href.split("#")[0]
+      : "";
+    const formattedVariants = variantLabels.map((label) => `• ${label}`);
     const lines = [
-      "Salam. Alisveris.az yeni sifaris.",
-      orderNumber ? `Sifariş: ${orderNumber}` : "",
-      `Məhsul: ${product.name}`,
-      ...variantLabels,
-      `Say: ${quantity}`,
-      `Qiymət: ${formatMoney(unitPrice)}`,
-      `Cəmi: ${formatMoney(total)}`,
-      `Mağaza: ${sellerName}`,
-      buyerName ? `Alıcı: ${buyerName}` : "",
-      buyerPhone ? `Alıcı nömrəsi: ${buyerPhone}` : "",
-      typeof window !== "undefined" ? `Link: ${window.location.href}` : "",
-    ].filter(Boolean);
+      "*Alisveris.az — Yeni sifariş*",
+      "",
+      "Salam! Mağazanıza yeni sifariş sorğusu göndərildi.",
+      "",
+      "*Sifariş məlumatları*",
+      `• Tarix: ${orderDate}`,
+      `• Elan növü: ${isRental ? "İcarə" : "Satış"}`,
+      "",
+      "*Məhsul məlumatları*",
+      `• Məhsul: ${product.name}`,
+      ...formattedVariants,
+      `• Say: ${quantity}`,
+      `• ${isRental ? "İcarə qiyməti" : "Vahid qiymət"}: ${formatMoney(unitPrice)}`,
+      product.discountAmount > 0 ? `• Endirim: ${formatMoney(product.discountAmount)}` : null,
+      `• Ümumi məbləğ: *${formatMoney(total)}*`,
+      product.depositEnabled && product.depositAmount > 0
+        ? `• Depozit: ${formatMoney(product.depositAmount)}`
+        : null,
+      "",
+      "*Alıcı məlumatları*",
+      `• Ad: ${buyerName.trim() || "Qeyd edilməyib"}`,
+      `• Telefon: ${buyerPhone.trim() || "Qeyd edilməyib"}`,
+      "",
+      "*Mağaza*",
+      `• ${sellerName}`,
+      "",
+      productUrl ? `*Məhsula bax:* ${productUrl}` : null,
+      "",
+      "Zəhmət olmasa sifarişi təsdiqləmək üçün alıcı ilə əlaqə saxlayın.",
+    ].filter((line): line is string => line !== null);
 
     return lines.join("\n");
   }
 
-  function getWhatsAppUrl(orderNumber = "") {
-    const message = buildMessage(orderNumber);
+  function getWhatsAppUrl() {
+    const message = buildMessage();
 
     return `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
   }
 
-  function openWhatsApp(orderNumber = "", popup?: Window | null) {
-    const url = getWhatsAppUrl(orderNumber);
+  function openWhatsApp(popup?: Window | null) {
+    const url = getWhatsAppUrl();
 
     if (popup) {
       popup.location.href = url;
@@ -204,16 +234,16 @@ export function WhatsAppOrderButton({
 
         if (!result.ok) {
           isSubmittingRef.current = false;
-          openWhatsApp("", popup);
+          openWhatsApp(popup);
           return;
         }
 
         setCheckoutRequestId(crypto.randomUUID());
         isSubmittingRef.current = false;
-        openWhatsApp(result.orderNumber, popup);
+        openWhatsApp(popup);
       } catch {
         isSubmittingRef.current = false;
-        openWhatsApp("", popup);
+        openWhatsApp(popup);
       }
     });
   }
@@ -230,7 +260,6 @@ export function WhatsAppOrderButton({
       <span className="truncate">
         {isPending ? "Sifariş yaradılır" : "WhatsApp ilə sifariş et"}
       </span>
-      <MessageCircle className="ml-2 hidden size-4 shrink-0 sm:block" aria-hidden="true" />
     </Button>
   );
 }

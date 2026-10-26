@@ -201,6 +201,21 @@ export async function getSellerProductMessages(storeIds: string[]) {
   return mapRows(data);
 }
 
+export async function getCustomerProductMessages(userId: string) {
+  if (!userId) return [];
+  const supabase = createSupabaseAdminClient();
+  const query = buildProductMessagesQuery(supabase)
+    .eq("sender_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const fallbackQuery = buildProductMessagesQuery(supabase, false)
+    .eq("sender_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  (query as any).__fallbackQuery = fallbackQuery;
+  return mapRows(await loadProductMessages(query), true);
+}
+
 export async function getAdminProductMessages() {
   const supabase = createSupabaseAdminClient();
   const query = buildProductMessagesQuery(supabase).order("created_at", {

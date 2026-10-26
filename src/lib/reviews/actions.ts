@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { getCurrentUserProfile, requireRole } from "@/lib/auth/session";
+import { assertAuthRateLimit, getClientIp, recordAuthRateLimitAttempt } from "@/lib/auth/security";
+import { getStoreSubdomainSlug } from "@/lib/config/domains";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 type ActionResult =
@@ -75,15 +79,21 @@ export async function upsertProductReviewAction(
   const storeSlug = readString(formData, "storeSlug");
   const rating = Number(readString(formData, "rating"));
   const comment = readString(formData, "comment");
+  const guestToken = readString(formData, "guestToken");
+  const guestName = readString(formData, "guestName").slice(0, 80);
+  const requestHeaders = await headers();
+  const hostStoreSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
+  const requestPath = requestHeaders.get("x-current-path") || requestHeaders.get("next-url") || (() => {
+    try { return new URL(requestHeaders.get("referer") ?? "").pathname; } catch { return ""; }
+  })();
+  const isGuest = !current;
 
-  if (!current) {
-    return {
-      ok: false,
-      message: "Rəy yazmaq üçün əvvəlcə daxil olun.",
-    };
+  const isIsolatedRequest = hostStoreSlug === storeSlug || requestPath === `/${storeSlug}` || requestPath.startsWith(`/${storeSlug}/`);
+  if (isGuest && (!isIsolatedRequest || guestToken.length < 16 || guestToken.length > 200 || guestName.length < 2)) {
+    return { ok: false, message: "Adınızı düzgün yazın və səhifəni yenidən açıb cəhd edin." };
   }
 
-  if (current.role !== "customer" && current.role !== "seller") {
+  if (current && current.role !== "customer" && current.role !== "seller") {
     return {
       ok: false,
       message: "Rəy yazmaq üçün alıcı və ya satıcı hesabı ilə daxil olun.",
@@ -97,7 +107,7 @@ export async function upsertProductReviewAction(
     };
   }
 
-  await ensureAuthProfile({
+  if (current) await ensureAuthProfile({
     id: current.user.id,
     email: current.user.email ?? null,
     fullName: current.profile?.full_name ?? null,
@@ -120,7 +130,7 @@ export async function upsertProductReviewAction(
   }
 
   const store = Array.isArray(product.stores) ? product.stores[0] : product.stores;
-  if (store?.owner_id === current.user.id) {
+  if (current && store?.owner_id === current.user.id) {
     return {
       ok: false,
       message: "Öz məhsulunuza rəy yaza bilməzsiniz.",
@@ -129,30 +139,49 @@ export async function upsertProductReviewAction(
   const resolvedStoreSlug =
     typeof store?.slug === "string" && store.slug ? store.slug : storeSlug;
 
-  const { error } = await (supabase as any)
-    .from("reviews")
-    .upsert(
+  if (isGuest && !(hostStoreSlug === resolvedStoreSlug || requestPath === `/${resolvedStoreSlug}` || requestPath.startsWith(`/${resolvedStoreSlug}/`))) {
+    return { ok: false, message: "Qonaq rəyi yalnız mağazanın şəxsi saytından yazıla bilər." };
+  }
+  const guestKey = isGuest ? createHash("sha256").update(guestToken).digest("hex") : null;
+  const ip = await getClientIp();
+  const rateRule = { endpoint: "support_message" as const, identifier: `review:${productId}:${guestKey ?? current?.user.id}`, ip, maxAttempts: 5, windowSeconds: 3600, blockSeconds: 3600 };
+  const rateLimit = await assertAuthRateLimit(rateRule);
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  if (isGuest) {
+    const { data: existing } = await (supabase as any).from("reviews").select("id").eq("product_id", productId).eq("guest_key", guestKey).maybeSingle();
+    if (existing) return { ok: false, message: "Bu məhsula artıq bir dəfə rəy yazmısınız." };
+  }
+
+  const reviewPayload =
       {
         product_id: productId,
-        user_id: current.user.id,
+        user_id: current?.user.id ?? null,
+        guest_key: guestKey,
+        guest_name: isGuest ? guestName : null,
         rating,
         comment: comment.slice(0, 2000) || null,
         status: "approved",
-      },
+      };
+  const { error } = isGuest
+    ? await (supabase as any).from("reviews").insert(reviewPayload)
+    : await (supabase as any).from("reviews").upsert(reviewPayload,
       {
         onConflict: "product_id,user_id",
       },
     );
 
   if (error) {
+    await recordAuthRateLimitAttempt(rateRule);
     return {
       ok: false,
       message:
         error.code === "23505"
-          ? "Rəy cədvəlində təkrar rəy məhdudiyyəti hələ silinməyib. Reviews SQL migration işlədin."
-          : error.message,
+          ? "Bu məhsula artıq bir dəfə rəy yazmısınız."
+          : "Rəy saxlanmadı. Bir az sonra yenidən cəhd edin.",
     };
   }
+
+  await recordAuthRateLimitAttempt(rateRule);
 
   if (resolvedStoreSlug) {
     revalidatePath(`/${resolvedStoreSlug}/products/${productId}`);

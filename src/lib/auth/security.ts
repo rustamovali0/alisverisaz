@@ -147,7 +147,7 @@ function getBucketInputs(input: {
   const identifierHash = hashValue(input.identifier || "unknown");
   const ipHash = hashValue(input.ip || "unknown");
 
-  return [
+  const buckets = [
     {
       endpoint: input.endpoint,
       bucketType: "ip" as const,
@@ -161,6 +161,11 @@ function getBucketInputs(input: {
       ipHash: null,
     },
   ];
+
+  // Public users often share one mobile-provider or office IP. Login attempts are
+  // therefore limited per account identifier; a previous user's failures must
+  // never block another user's first valid attempt on the same public IP.
+  return input.endpoint === "login" ? buckets.slice(1) : buckets;
 }
 
 function isWindowExpired(bucket: RateLimitBucket, now: Date, windowSeconds: number) {

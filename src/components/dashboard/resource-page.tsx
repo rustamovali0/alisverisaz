@@ -40,13 +40,13 @@ export function ResourcePage({
           <EmptyState
             className="min-h-56"
             title="Məlumat yoxdur"
-            description="Bu bölmə real Supabase məlumatları ilə dolacaq."
+            description="Qeydlər əlavə olunduqca bu bölmədə görünəcək."
           />
         ) : (
           <RecentList
             items={items}
             emptyTitle="Siyahı boşdur"
-            emptyDescription="Say tapıldı, amma göstəriləcək son qeyd yoxdur."
+            emptyDescription="Göstəriləcək qeyd yoxdur."
           />
         )}
       </DashboardPanel>

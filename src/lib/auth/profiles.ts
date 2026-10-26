@@ -71,11 +71,12 @@ export async function ensureSellerStore(input: {
   description?: string | null;
   logoUrl?: string | null;
   coverUrl?: string | null;
+  phone?: string | null;
 }) {
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: existingStore, error: existingError } = await (supabaseAdmin as any)
     .from("stores")
-    .select("id,logo_url,cover_url")
+    .select("id,logo_url,cover_url,settings")
     .eq("owner_id", input.userId)
     .maybeSingle();
 
@@ -84,7 +85,7 @@ export async function ensureSellerStore(input: {
   }
 
   if (existingStore) {
-    const payload: Record<string, string> = {};
+    const payload: Record<string, unknown> = {};
 
     if (!existingStore.logo_url && input.logoUrl) {
       payload.logo_url = input.logoUrl;
@@ -92,6 +93,18 @@ export async function ensureSellerStore(input: {
 
     if (!existingStore.cover_url && input.coverUrl) {
       payload.cover_url = input.coverUrl;
+    }
+
+    const currentSettings =
+      existingStore.settings && typeof existingStore.settings === "object" && !Array.isArray(existingStore.settings)
+        ? { ...(existingStore.settings as Record<string, unknown>) }
+        : {};
+    if (input.phone) {
+      payload.settings = {
+        ...currentSettings,
+        phone: input.phone,
+        whatsappPhone: input.phone,
+      };
     }
 
     if (Object.keys(payload).length > 0) {
@@ -116,10 +129,13 @@ export async function ensureSellerStore(input: {
       owner_id: input.userId,
       name: storeName,
       slug: storeSlug,
-      description: input.description ?? "Satıcı mağazası",
+      description: input.description?.trim() || null,
       logo_url: input.logoUrl ?? null,
       cover_url: input.coverUrl ?? null,
       status: "active",
+      settings: input.phone
+        ? { phone: input.phone, whatsappPhone: input.phone }
+        : {},
     })
     .select("id")
     .single();

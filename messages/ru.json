@@ -1,7 +1,7 @@
 {
   "seo": {
     "title": "alisveris.az",
-    "description": "Marketplace SaaS платформа"
+    "description": "Выбирайте товары местных магазинов, сравнивайте цены и оформляйте заказы."
   },
   "common": {
     "brand": "alisveris.az",
@@ -39,10 +39,10 @@
     "maxPrice": "Макс. цена",
     "inStockOnly": "Только в наличии",
     "clearFilters": "Очистить фильтры",
-    "heroEyebrow": "Новый адрес для покупок",
-    "defaultHeroTitle": "Все, что вы ищете,\nв одном месте.",
-    "defaultHeroDescription": "Легко ищите, сравнивайте и покупайте среди тысяч товаров и надежных магазинов.",
-    "heroSearchPlaceholder": "Искать товар, бренд или магазин...",
+    "heroEyebrow": "Покупки в Азербайджане",
+    "defaultHeroTitle": "Найдите то, что ищете.",
+    "defaultHeroDescription": "Выбирайте товары, сравнивайте цены и заказывайте в местных магазинах.",
+    "heroSearchPlaceholder": "Найти товар",
     "marketplaceImageCaption": "Открывайте магазины и товары в одном месте",
     "exploreCategories": "Изучить категории",
     "featuredStores": "Избранные магазины",
@@ -53,15 +53,16 @@
     "recentlyListed": "Недавно добавленные",
     "secureStructure": "Безопасная структура",
     "storePanel": "Панель магазина",
-    "quickShopping": "Быстрая покупка"
+    "quickShopping": "Быстрая покупка",
+    "createListing": "Разместить объявление"
   },
   "marketplace": {
     "title": "Товары",
-    "description": "Реальные товары из Supabase",
+    "description": "Выбирайте товары местных магазинов, сравнивайте цены и оформляйте заказы.",
     "emptyTitle": "Активных товаров нет",
     "emptyDescription": "Товары появятся здесь после добавления продавцами.",
     "loadMore": "Показать ещё",
-    "loadingMore": "Загрузка",
+    "loadingMore": "Загружаются товары",
     "searchPlaceholder": "Искать товары, магазины или категории",
     "category": "Категория",
     "productCount": "{count} товаров",
@@ -101,7 +102,6 @@
     "buyNow": "Купить сейчас",
     "sendDeposit": "Отправить аванс",
     "allProductsShown": "Показаны все товары",
-    "loadingMore": "Загружаются товары",
     "sortNewest": "Сначала новые",
     "sortOldest": "Сначала старые",
     "sortPriceAsc": "Цена: по возрастанию",
@@ -134,6 +134,7 @@
     "onlineStore": "Онлайн-магазин",
     "marketplaceStore": "Магазин Alışveriş",
     "browseProducts": "Смотреть товары",
+    "heroTitle": "Откройте для себя избранные товары",
     "aboutStore": "О магазине",
     "learnAboutStore": "О магазине",
     "featuredCategories": "Избранные категории",
@@ -316,6 +317,7 @@
     "passwordResetHelp": "Для смены пароля используйте существующий поток восстановления. Ссылка будет отправлена на email.",
     "resetPassword": "Сбросить пароль",
     "stats": {
+      "orders": "Всего заказов",
       "activeOrders": "Активные",
       "completedOrders": "Завершенные",
       "favorites": "Избранное",

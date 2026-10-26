@@ -45,6 +45,7 @@ type UploadImageInput = {
   folder: string;
   maxSizeBytes: number;
   allowedMimeTypes?: string[];
+  watermarkText?: string;
 };
 
 export type UploadedR2Image = {
@@ -116,10 +117,31 @@ function publicUrlForKey(key: string) {
   return `${baseUrl}/${encodedKey}`;
 }
 
-async function convertImageToWebp(input: Buffer, fileName: string): Promise<ProcessedImage> {
+function watermarkSvg(text: string, width: number, height: number) {
+  const fontSize = Math.max(18, Math.min(96, Math.round(width * 0.075)));
+  const overlayWidth = Math.min(width, Math.max(120, Math.round(width * 0.72)));
+  const overlayHeight = Math.min(height, Math.max(44, Math.round(fontSize * 1.8)));
+  const safeText = text.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&apos;",
+  })[character] ?? character);
+
+  return Buffer.from(
+    `<svg width="${overlayWidth}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="${fontSize}" font-weight="700" fill="rgba(255,255,255,0.38)" stroke="rgba(15,23,42,0.24)" stroke-width="1.5">${safeText}</text></svg>`,
+  );
+}
+
+async function convertImageToWebp(
+  input: Buffer,
+  fileName: string,
+  watermarkText?: string,
+): Promise<ProcessedImage> {
   try {
     const sharp = (await import("sharp")).default;
-    const converted = await sharp(input, {
+    const resized = await sharp(input, {
       failOn: "none",
       limitInputPixels: MAX_INPUT_PIXELS,
     })
@@ -131,6 +153,13 @@ async function convertImageToWebp(input: Buffer, fileName: string): Promise<Proc
         withoutEnlargement: true,
       })
       .toColorspace("srgb")
+      .toBuffer({ resolveWithObject: true });
+    const converted = await sharp(resized.data)
+      .composite(
+        watermarkText && resized.info.width && resized.info.height
+          ? [{ input: watermarkSvg(watermarkText, resized.info.width, resized.info.height), gravity: "centre" }]
+          : [],
+      )
       .webp({ quality: DEFAULT_WEBP_QUALITY })
       .toBuffer({ resolveWithObject: true });
 
@@ -156,13 +185,20 @@ async function convertImageToWebp(input: Buffer, fileName: string): Promise<Proc
         .flatten({ background: "#ffffff" })
         .jpeg({ quality: 92, mozjpeg: true })
         .toBuffer();
-      const converted = await sharp(normalized)
+      const resized = await sharp(normalized)
         .resize({
           width: MAX_IMAGE_DIMENSION,
           height: MAX_IMAGE_DIMENSION,
           fit: "inside",
           withoutEnlargement: true,
         })
+        .toBuffer({ resolveWithObject: true });
+      const converted = await sharp(resized.data)
+        .composite(
+          watermarkText && resized.info.width && resized.info.height
+            ? [{ input: watermarkSvg(watermarkText, resized.info.width, resized.info.height), gravity: "centre" }]
+            : [],
+        )
         .webp({ quality: DEFAULT_WEBP_QUALITY })
         .toBuffer({ resolveWithObject: true });
 
@@ -249,6 +285,7 @@ export async function uploadImageToR2({
   folder,
   maxSizeBytes,
   allowedMimeTypes = DEFAULT_ALLOWED_IMAGE_TYPES,
+  watermarkText,
 }: UploadImageInput): Promise<UploadedR2Image> {
   if (file.size > maxSizeBytes) {
     throw new Error(`${file.name} maksimum ${Math.floor(maxSizeBytes / 1024 / 1024)}MB ola bilər.`);
@@ -267,7 +304,7 @@ export async function uploadImageToR2({
   let processed: ProcessedImage;
 
   try {
-    processed = await convertImageToWebp(input, file.name);
+    processed = await convertImageToWebp(input, file.name, watermarkText);
   } catch (error) {
     if (isPixelLimitError(error)) {
       throw new Error("Şəkil ölçüsü çox böyükdür.");

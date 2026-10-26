@@ -35,13 +35,13 @@ const editableFields: Array<{
 }> = [
   {
     key: "heroTitle",
-    label: "Başlıq",
-    placeholder: (storeName) => `${storeName} mağazası`,
+    label: "Vitrin başlığı",
+    placeholder: () => "Seçilmiş məhsulları kəşf edin",
   },
   {
     key: "heroSubtitle",
-    label: "Alt mətn",
-    placeholder: () => "390 məhsul • Elektronika və daha çox",
+    label: "Vitrin alt mətni",
+    placeholder: () => "Məhsullarınız haqqında qısa təqdimat",
   },
   {
     key: "socialInstagram",
@@ -137,7 +137,7 @@ export function StoreBrandingQuickEdit({ store }: StoreBrandingQuickEditProps) {
               const isEditing = editingField === field.key;
 
               return (
-                <div key={field.key} className="min-w-0 rounded-lg border border-cyan-100 bg-[#f6fbfa] px-3 py-2 dark:border-cyan-200/15 dark:bg-slate-900/70">
+                <div key={field.key} className="min-w-0 rounded-lg border border-orange-100 bg-[#f6fbfa] px-3 py-2 dark:border-orange-200/15 dark:bg-slate-900/70">
                   <p className="text-[11px] font-black uppercase text-muted-foreground">{field.label}</p>
                   {isEditing ? (
                     <form action={updateTitle} className="mt-2 grid gap-2">

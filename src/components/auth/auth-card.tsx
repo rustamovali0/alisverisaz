@@ -24,26 +24,26 @@ export function AuthCard({
   return (
     <section
       className={cn(
-        "w-full rounded-xl border border-border/80 bg-card p-3.5 text-card-foreground shadow-xl shadow-slate-900/10 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 sm:p-4",
+        "w-full rounded-2xl border-0 bg-transparent p-0 text-card-foreground dark:text-slate-100",
         className,
       )}
     >
       {(topStart || topEnd) ? (
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <div className="min-w-0">{topStart}</div>
           <div className="shrink-0">{topEnd}</div>
         </div>
       ) : null}
-      <div className="mb-3 space-y-1">
-        <h1 className="text-[1.45rem] font-semibold leading-tight tracking-normal sm:text-[1.7rem]">
+      <div className="mb-5 space-y-1.5">
+        <h1 className="text-3xl font-black leading-tight tracking-tight">
           {title}
         </h1>
         {description ? (
-          <p className="text-sm leading-5 text-muted-foreground">{description}</p>
+          <p className="text-sm leading-5 text-muted-foreground sm:text-[15px]">{description}</p>
         ) : null}
       </div>
       {children}
-      <div className="mt-3 text-center text-sm text-muted-foreground">
+      <div className="mt-4 border-t border-slate-200 pt-4 text-center text-sm text-muted-foreground dark:border-slate-800">
         {footer}
       </div>
     </section>

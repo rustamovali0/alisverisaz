@@ -3,12 +3,16 @@
 import {
   Heart,
   Home,
+  House,
   LayoutDashboard,
+  Boxes,
   Package,
   Plus,
+  ShoppingBag,
   ShoppingCart,
   Store,
   UserRound,
+  MapPinned,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
@@ -27,7 +31,10 @@ type MobileBottomNavProps = {
   variant?: MobileNavbarVariant;
   storeSubdomainSlug?: string | null;
   storeHomeHref?: string;
+  storeId?: string;
+  isolatedStorefront?: boolean;
   initialRole?: AuthRole | null;
+  sellerOwnsStore?: boolean;
 };
 
 const CART_KEY = "alisveris_cart";
@@ -68,7 +75,7 @@ const itemVariantClass: Record<MobileNavbarVariant, string> = {
   rail: "rounded-lg",
 };
 
-function readCartCount() {
+function readCartCount(storeId?: string) {
   if (typeof window === "undefined") {
     return 0;
   }
@@ -76,9 +83,12 @@ function readCartCount() {
   try {
     const items = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]") as Array<{
       quantity?: number;
+      storeId?: string;
     }>;
 
-    return items.reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
+    return items
+      .filter((item) => !storeId || item.storeId === storeId)
+      .reduce((sum, item) => sum + Math.max(Number(item.quantity) || 0, 0), 0);
   } catch {
     return 0;
   }
@@ -152,6 +162,9 @@ export function MobileBottomNav({
   storeSubdomainSlug,
   storeHomeHref = "/",
   initialRole,
+  storeId,
+  isolatedStorefront = false,
+  sellerOwnsStore = false,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
   const nav = useTranslations("nav");
@@ -160,7 +173,9 @@ export function MobileBottomNav({
   const pathname = usePathname();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
+  const [currentHash, setCurrentHash] = useState("");
   const [sellerStoreHref, setSellerStoreHref] = useState<string | null>(null);
+  const [isMobileKeyboardOpen, setIsMobileKeyboardOpen] = useState(false);
   const isAuthLoading = !isResolved && !initialRole;
   const actualRole =
     !isResolved && initialRole
@@ -175,15 +190,23 @@ export function MobileBottomNav({
         ? "customer"
         : null;
   const role = actualRole === "admin" ? null : actualRole ?? routeRole;
-  const accountHref = isAuthLoading ? null : accountPath(role);
+  const navigationRole = isolatedStorefront && role === "seller" && !sellerOwnsStore
+    ? "customer"
+    : role;
+  const accountHref = isAuthLoading ? null : accountPath(navigationRole);
   const accountText = isAuthLoading
     ? nav("account")
-    : role === "seller"
+    : navigationRole === "seller"
         ? "Panel"
-        : role
+        : navigationRole
           ? nav("account")
           : auth("login");
-  const isAuthenticated = Boolean(role);
+  const isAuthenticated = Boolean(navigationRole);
+  const isProductDetailRoute = /\/products\/[^/]+\/?$/.test(pathname);
+  const marketplaceProductStoreMatch = pathname.match(/^\/store\/([^/]+)\/products\/[^/]+\/?$/);
+  const sellerProductListHref = marketplaceProductStoreMatch
+    ? `/store/${marketplaceProductStoreMatch[1]}#products`
+    : null;
   const isStorefrontHome = Boolean(
     storeSubdomainSlug
       ? pathname === "/" || pathname === `/${storeSubdomainSlug}`
@@ -211,6 +234,11 @@ export function MobileBottomNav({
       return;
     }
 
+    if ("storeSlug" in profile && profile.storeSlug) {
+      setSellerStoreHref(getStorePath(profile.storeSlug));
+      return;
+    }
+
     let active = true;
     const supabase = createSupabaseBrowserClient();
     const ownerId = profile.userId;
@@ -235,10 +263,55 @@ export function MobileBottomNav({
     return () => {
       active = false;
     };
-  }, [profile.status, profile.role, profile.userId, role]);
+  }, [profile, role]);
 
-  const items =
-    role === "seller"
+  useEffect(() => {
+    let closeTimer: number | undefined;
+    const isEditableTarget = (target: EventTarget | null) =>
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      (target instanceof HTMLElement && target.isContentEditable);
+
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!isEditableTarget(event.target)) return;
+      window.clearTimeout(closeTimer);
+      setIsMobileKeyboardOpen(true);
+    };
+    const handleFocusOut = (event: FocusEvent) => {
+      if (!isEditableTarget(event.target)) return;
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        setIsMobileKeyboardOpen(false);
+        window.requestAnimationFrame(() => window.scrollTo(window.scrollX, window.scrollY));
+      }, 350);
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+    return () => {
+      window.clearTimeout(closeTimer);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
+
+  const isolatedItems = isolatedStorefront || storeSubdomainSlug
+    ? navigationRole === "seller"
+      ? [
+          { href: storeHomeHref, label: isProductDetailRoute ? "Mağaza" : nav("home"), icon: House },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
+          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
+          { href: "/store/dashboard", label: "Panel", icon: Store },
+        ]
+      : [
+          { href: storeHomeHref, label: isProductDetailRoute ? "Mağaza" : nav("home"), icon: House },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`, label: nav("products"), icon: Boxes },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`, label: common("cart"), icon: ShoppingBag, badge: cartCount },
+          { href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`, label: "Ünvan", icon: MapPinned },
+        ]
+    : null;
+  const items = isolatedItems ?? (navigationRole === "seller"
       ? [
           {
             href: "/",
@@ -246,16 +319,16 @@ export function MobileBottomNav({
             icon: Home,
           },
           {
-            href: sellerStoreHref ?? "/store/dashboard/products",
-            label: "Mağazam",
-            icon: Store,
+            href: sellerProductListHref ?? sellerStoreHref ?? "#storefront-loading",
+            label: sellerProductListHref ? nav("products") : "Mağazam",
+            icon: sellerProductListHref ? Boxes : Store,
           },
           {
-            href: "/store/dashboard/products/new",
+            href: "/sell/product/new",
             label: nav("addProduct"),
             icon: Plus,
           },
-          { href: "/store/dashboard/orders", label: "Sifarişlər", icon: Package },
+          { href: "/seller/orders", label: "Sifarişlər", icon: Package },
         ]
       : [
           storefrontItem,
@@ -264,9 +337,15 @@ export function MobileBottomNav({
             ? [{ href: "/favorites", label: nav("favorites"), icon: Heart }]
             : [{ href: sellerRegisterPath(pathname), label: "Satıcı ol", icon: Store }]),
           { href: "/cart", label: common("cart"), icon: ShoppingCart, badge: cartCount },
-        ];
-  const totalNavItems = items.length + 1;
+        ]);
+  const totalNavItems = items.length + (isolatedItems ? 0 : 1);
   const navGridClass = totalNavItems >= 5 ? "grid-cols-5" : "grid-cols-4";
+  const isolatedNavPrefetchKey = isolatedItems?.map((item) => item.href).join("|") ?? "";
+
+  useEffect(() => {
+    if (!isolatedNavPrefetchKey) return;
+    isolatedNavPrefetchKey.split("|").forEach((href) => router.prefetch(href));
+  }, [isolatedNavPrefetchKey, router]);
 
   const isCurrentRoute = useCallback(
     (href: string) => {
@@ -281,22 +360,41 @@ export function MobileBottomNav({
 
   const navigate = useCallback(
     (href: string) => {
-      const [, hash] = href.split("#");
+      const [targetHref, hash] = href.split("#");
+      const targetPath = targetHref.split("?")[0] || "/";
 
-      if (isCurrentRoute(href)) {
+      if (pathname === targetPath) {
         if (hash) {
+          window.history.replaceState(null, "", `#${hash}`);
+          setCurrentHash(`#${hash}`);
           scrollToHash(hash);
+        } else {
+          window.history.replaceState(null, "", targetPath);
+          setCurrentHash("");
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
         return;
       }
 
       router.push(href, { scroll: !hash });
+      setCurrentHash(hash ? `#${hash}` : "");
       if (hash) {
         window.setTimeout(() => scrollToHash(hash), 80);
       }
     },
-    [isCurrentRoute, router],
+    [pathname, router],
   );
+
+  useEffect(() => {
+    const syncHash = () => setCurrentHash(window.location.hash);
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    window.addEventListener("popstate", syncHash);
+    return () => {
+      window.removeEventListener("hashchange", syncHash);
+      window.removeEventListener("popstate", syncHash);
+    };
+  }, [pathname]);
 
   const handleItemNavigation = useCallback(
     (href: string) => {
@@ -316,16 +414,32 @@ export function MobileBottomNav({
 
   const isNavItemActive = useCallback(
     (href: string) => {
-      if (href === "/") {
-        return pathname === "/";
+      const [targetHref, targetHash] = href.split("#");
+      const targetPath = targetHref.split("?")[0] || "/";
+
+      if (isolatedItems) {
+        if (targetHash) {
+          const nestedProducts = targetHash === "products" && pathname.startsWith(`${targetPath === "/" ? "" : targetPath}/products/`);
+          return nestedProducts || (pathname === targetPath && currentHash === `#${targetHash}`);
+        }
+        const isProductDetail = targetPath.endsWith("/products") && pathname.startsWith(`${targetPath}/`);
+        const isExactNestedSection = pathname === targetPath || isProductDetail;
+        return isExactNestedSection && !currentHash;
       }
 
-      return pathname === href || pathname.startsWith(`${href}/`);
+      if (targetPath === "/products" && isProductDetailRoute) {
+        return true;
+      }
+
+      return targetPath === "/"
+        ? pathname === "/"
+        : pathname === targetPath || pathname.startsWith(`${targetPath}/`);
     },
-    [pathname],
+    [currentHash, isProductDetailRoute, isolatedItems, pathname],
   );
 
   const isAccountRoute =
+    (!role && (pathname === "/login" || pathname.startsWith("/login/"))) ||
     (role === "seller" && pathname === "/store/dashboard") ||
     (role !== "seller" && pathname.startsWith("/dashboard"));
   const currentItemHref = items.find((item) => isNavItemActive(item.href))?.href ?? null;
@@ -333,7 +447,7 @@ export function MobileBottomNav({
 
   useEffect(() => {
     function syncCartCount() {
-      setCartCount(readCartCount());
+      setCartCount(readCartCount(isolatedStorefront || storeSubdomainSlug ? storeId : undefined));
     }
 
     syncCartCount();
@@ -344,13 +458,14 @@ export function MobileBottomNav({
       window.removeEventListener("storage", syncCartCount);
       window.removeEventListener("alisveris-cart-updated", syncCartCount);
     };
-  }, []);
+  }, [isolatedStorefront, storeId, storeSubdomainSlug]);
 
-  if (isAuthLoading) {
+  if (isAuthLoading && !isolatedItems) {
     return (
       <nav
         className={cn(
-          "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+          "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
+          isMobileKeyboardOpen && "!hidden",
           navVariantClass[variant],
           className,
         )}
@@ -373,7 +488,8 @@ export function MobileBottomNav({
   return (
     <nav
       className={cn(
-        "mobile-performance-surface fixed z-50 max-w-full overflow-x-clip md:hidden",
+        "mobile-bottom-nav-stable mobile-performance-surface fixed z-[200] max-w-full overflow-x-clip md:hidden",
+        isMobileKeyboardOpen && "!hidden",
         navVariantClass[variant],
         className,
       )}
@@ -390,10 +506,12 @@ export function MobileBottomNav({
               key={item.href}
               type="button"
               onClick={() => handleItemNavigation(item.href)}
+              disabled={item.href === "#storefront-loading"}
               className={cn(
                 "relative grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
                 itemVariantClass[variant],
                 isActive && "text-blue-600 dark:text-blue-300",
+                item.href === "#storefront-loading" && "cursor-wait opacity-60",
               )}
               aria-current={isActive ? "page" : undefined}
               aria-label={item.label}
@@ -419,7 +537,7 @@ export function MobileBottomNav({
             </button>
           );
         })}
-        <button
+        {!isolatedItems ? <button
           type="button"
           onClick={() => {
             if (accountHref) {
@@ -446,7 +564,7 @@ export function MobileBottomNav({
             <AccountIcon role={role} />
           </span>
           <span className="max-w-full whitespace-normal leading-[1.05]">{accountText}</span>
-        </button>
+        </button> : null}
       </div>
     </nav>
   );

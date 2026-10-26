@@ -1,11 +1,18 @@
 "use client";
 
+import {
+  readPendingFavorites,
+  savePendingFavorite,
+} from "@/lib/catalog/pending-favorites";
 import { Heart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { getClientAuthProfileOnce } from "@/lib/auth/use-client-auth-profile";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  getFavoriteProductIdsAction,
+  setFavoriteProductStateAction,
+} from "@/lib/customer-account/actions";
 import { showToast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +21,7 @@ type FavoriteToggleButtonProps = {
   productName?: string;
   className?: string;
   compact?: boolean;
+  favoriteCount?: number;
 };
 
 type FavoriteProductCache = {
@@ -22,7 +30,8 @@ type FavoriteProductCache = {
 };
 
 let favoriteProductCache: FavoriteProductCache | null = null;
-let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null = null;
+let favoriteProductCachePromise: Promise<FavoriteProductCache | null> | null =
+  null;
 let favoriteProductCachePromiseUserId: string | null = null;
 const FAVORITE_UPDATED_EVENT = "alisveris-favorite-updated";
 
@@ -33,7 +42,11 @@ type FavoriteUpdatedDetail = {
 
 function emitFavoriteUpdate(detail: FavoriteUpdatedDetail) {
   if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent<FavoriteUpdatedDetail>(FAVORITE_UPDATED_EVENT, { detail }));
+    window.dispatchEvent(
+      new CustomEvent<FavoriteUpdatedDetail>(FAVORITE_UPDATED_EVENT, {
+        detail,
+      }),
+    );
   }
 }
 
@@ -58,23 +71,13 @@ async function loadFavoriteProductCache() {
   if (!favoriteProductCachePromise) {
     favoriteProductCachePromiseUserId = authProfile.userId;
     favoriteProductCachePromise = (async () => {
-      const supabase = createSupabaseBrowserClient();
-
-      const { data, error } = await (supabase as any)
-        .from("favorites")
-        .select("product_id")
-        .eq("user_id", authProfile.userId);
-
-      if (error) {
+      const result = await getFavoriteProductIdsAction();
+      if (!result.ok) {
         return null;
       }
 
       const productIds = new Set<string>();
-      for (const item of data ?? []) {
-        if (typeof item?.product_id === "string") {
-          productIds.add(item.product_id);
-        }
-      }
+      for (const productId of result.productIds) productIds.add(productId);
 
       favoriteProductCache = {
         userId: authProfile.userId,
@@ -91,7 +94,11 @@ async function loadFavoriteProductCache() {
   return favoriteProductCachePromise;
 }
 
-function updateFavoriteProductCache(userId: string, productId: string, isActive: boolean) {
+function updateFavoriteProductCache(
+  userId: string,
+  productId: string,
+  isActive: boolean,
+) {
   if (!favoriteProductCache || favoriteProductCache.userId !== userId) {
     return;
   }
@@ -109,12 +116,16 @@ export function FavoriteToggleButton({
   productName = "Məhsul",
   className,
   compact = false,
+  favoriteCount,
 }: FavoriteToggleButtonProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [favoriteId, setFavoriteId] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
+  const [displayCount, setDisplayCount] = useState(
+    Math.max(0, favoriteCount ?? 0),
+  );
   const isMutatingRef = useRef(false);
   const isActive = Boolean(favoriteId);
 
@@ -126,7 +137,12 @@ export function FavoriteToggleButton({
         const cache = await loadFavoriteProductCache();
 
         if (mounted) {
-          setFavoriteId(cache?.productIds.has(productId) ? productId : null);
+          setFavoriteId(
+            cache?.productIds.has(productId) ||
+              (!cache && readPendingFavorites().includes(productId))
+              ? productId
+              : null,
+          );
           setIsReady(true);
         }
 
@@ -137,21 +153,20 @@ export function FavoriteToggleButton({
 
       if (authProfile.status !== "authenticated") {
         if (mounted) {
+          setFavoriteId(
+            readPendingFavorites().includes(productId) ? productId : null,
+          );
           setIsReady(true);
         }
         return;
       }
 
-      const supabase = createSupabaseBrowserClient();
-      const { data } = await (supabase as any)
-        .from("favorites")
-        .select("id")
-        .eq("user_id", authProfile.userId)
-        .eq("product_id", productId)
-        .maybeSingle();
+      const result = await getFavoriteProductIdsAction();
 
       if (mounted) {
-        setFavoriteId(data?.id ?? null);
+        setFavoriteId(
+          result.ok && result.productIds.includes(productId) ? productId : null,
+        );
         setIsReady(true);
       }
     }
@@ -168,12 +183,19 @@ export function FavoriteToggleButton({
       const detail = (event as CustomEvent<FavoriteUpdatedDetail>).detail;
 
       if (detail?.productId === productId) {
+        if (favoriteProductCache)
+          updateFavoriteProductCache(
+            favoriteProductCache.userId,
+            productId,
+            detail.isActive,
+          );
         setFavoriteId(detail.isActive ? productId : null);
       }
     }
 
     window.addEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
-    return () => window.removeEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
+    return () =>
+      window.removeEventListener(FAVORITE_UPDATED_EVENT, handleFavoriteUpdate);
   }, [productId]);
 
   function toggleFavorite(event: React.MouseEvent<HTMLButtonElement>) {
@@ -181,35 +203,40 @@ export function FavoriteToggleButton({
     event.stopPropagation();
 
     if (isMutatingRef.current) {
-      showToast({ title: "Bir az gözləyin...", description: "Əməliyyat davam edir.", variant: "info" });
+      showToast({
+        title: "Bir az gözləyin...",
+        description: "Əməliyyat davam edir.",
+        variant: "info",
+      });
       return;
     }
 
     const previousFavoriteId = favoriteId;
+    const previousCount = displayCount;
     const wasActive = Boolean(previousFavoriteId);
     isMutatingRef.current = true;
     setIsMutating(true);
     setFavoriteId(wasActive ? null : productId);
+    setDisplayCount(Math.max(0, previousCount + (wasActive ? -1 : 1)));
     emitFavoriteUpdate({ productId, isActive: !wasActive });
 
     void (async () => {
       const authProfile = await getClientAuthProfileOnce();
 
       if (authProfile.status !== "authenticated") {
-        setFavoriteId(previousFavoriteId);
-        emitFavoriteUpdate({ productId, isActive: wasActive });
+        savePendingFavorite(productId, !wasActive);
         setIsMutating(false);
         isMutatingRef.current = false;
         showToast({
           title: "Giriş tələb olunur",
-          description: "Seçilmişlərə əlavə etmək üçün zəhmət olmasa giriş edin.",
+          description:
+            "Seçiminiz saxlanıldı. Hesabınıza əlavə etmək üçün giriş edin.",
           variant: "info",
         });
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
         return;
       }
 
-      const supabase = createSupabaseBrowserClient();
       const userId = authProfile.userId;
 
       if (favoriteProductCache && favoriteProductCache.userId !== userId) {
@@ -219,50 +246,29 @@ export function FavoriteToggleButton({
       updateFavoriteProductCache(userId, productId, !wasActive);
 
       try {
+        const result = await setFavoriteProductStateAction(
+          productId,
+          !wasActive,
+        );
+        if (!result.ok) throw new Error(result.message);
+
         if (wasActive) {
-        let deleteQuery = (supabase as any)
-          .from("favorites")
-          .delete()
-          .eq("user_id", userId);
+          showToast({
+            title: "Məhsul seçilmişlərdən çıxarıldı.",
+            variant: "info",
+          });
+          return;
+        }
 
-        deleteQuery = compact
-          ? deleteQuery.eq("product_id", productId)
-          : deleteQuery.eq("id", previousFavoriteId);
-
-        const { error } = await deleteQuery;
-
-          if (error) {
-            throw error;
-          }
-
+        setFavoriteId(productId);
+        updateFavoriteProductCache(userId, productId, true);
         showToast({
-          title: "Məhsul seçilmişlərdən çıxarıldı.",
-          variant: "info",
+          title: "Məhsul seçilmişlərə əlavə edildi.",
+          variant: "success",
         });
-        return;
-        }
-
-      const { data, error } = await (supabase as any)
-        .from("favorites")
-        .insert({
-          user_id: userId,
-          product_id: productId,
-        })
-        .select("id")
-        .single();
-
-        if (error) {
-          throw error;
-        }
-
-      setFavoriteId(data.id);
-      updateFavoriteProductCache(userId, productId, true);
-      showToast({
-        title: "Məhsul seçilmişlərə əlavə edildi.",
-        variant: "success",
-      });
       } catch {
         setFavoriteId(previousFavoriteId);
+        setDisplayCount(previousCount);
         updateFavoriteProductCache(userId, productId, wasActive);
         emitFavoriteUpdate({ productId, isActive: wasActive });
         showToast({
@@ -277,7 +283,7 @@ export function FavoriteToggleButton({
     })();
   }
 
-  return (
+  const button = (
     <button
       type="button"
       aria-label={
@@ -291,7 +297,8 @@ export function FavoriteToggleButton({
       className={cn(
         "inline-flex items-center justify-center rounded-full border bg-background/95 text-foreground shadow-sm transition-colors duration-200 hover:border-primary/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 md:hover:shadow-md",
         compact ? "size-10" : "size-11",
-        isActive && "border-foreground/25 bg-background text-foreground hover:text-foreground",
+        isActive &&
+          "border-foreground/25 bg-background text-foreground hover:text-foreground",
         className,
       )}
     >
@@ -300,5 +307,18 @@ export function FavoriteToggleButton({
         aria-hidden="true"
       />
     </button>
+  );
+
+  if (favoriteCount === undefined) {
+    return button;
+  }
+
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      {button}
+      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+        {displayCount} nəfər
+      </span>
+    </div>
   );
 }

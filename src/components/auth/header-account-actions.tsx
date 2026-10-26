@@ -166,7 +166,7 @@ export function HeaderAccountActions({
         <Button
           asChild
           variant="ghost"
-          className="group shrink-0 whitespace-nowrap rounded-full border border-cyan-200 bg-cyan-50/90 px-3 text-sm text-slate-900 shadow-sm shadow-cyan-950/[0.04] hover:!bg-cyan-50 hover:text-slate-900 dark:border-cyan-400/25 dark:bg-cyan-400/10 dark:text-slate-100 dark:hover:!bg-cyan-400/10 dark:hover:text-slate-100"
+          className="group shrink-0 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50/90 px-3 text-sm text-slate-900 shadow-sm shadow-orange-950/[0.04] hover:!bg-orange-50 hover:text-slate-900 dark:border-orange-400/25 dark:bg-orange-400/10 dark:text-slate-100 dark:hover:!bg-orange-400/10 dark:hover:text-slate-100"
         >
           <Link href={createNextHref(pathname, "/register", { customerOnlyRegister })}>
             <UserPlus className="mr-1.5 size-6 shrink-0 stroke-[2.1]" aria-hidden="true" />
@@ -179,7 +179,7 @@ export function HeaderAccountActions({
           <Button
             asChild
             variant="ghost"
-            className="group shrink-0 whitespace-nowrap rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-slate-950 shadow-sm shadow-cyan-950/[0.04] hover:!bg-primary/15 hover:text-slate-950 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:text-white"
+            className="group shrink-0 whitespace-nowrap rounded-full border border-primary/30 bg-primary/10 px-3 text-sm text-slate-950 shadow-sm shadow-orange-950/[0.04] hover:!bg-primary/15 hover:text-slate-950 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:text-white"
           >
             <Link href={`${createNextHref(pathname, "/register")}&role=seller`}>
               <Plus className="mr-1.5 size-6 shrink-0 stroke-[2.1]" aria-hidden="true" />
@@ -210,7 +210,19 @@ export function HeaderAccountActions({
       .toLocaleUpperCase("az-AZ") || "A";
 
   return (
-    <div ref={menuRef} className={cn("relative", className)}>
+    <div ref={menuRef} className={cn("relative flex items-center gap-2", className)}>
+      {role === "seller" ? (
+        <Button
+          asChild
+          variant="outline"
+          className="h-11 shrink-0 gap-1.5 rounded-full border-primary/30 bg-primary/10 px-3 text-sm font-semibold text-slate-900 hover:!bg-primary/15 hover:!text-slate-900 dark:border-primary/40 dark:bg-primary/15 dark:text-white dark:hover:!bg-primary/20 dark:hover:!text-white"
+        >
+          <Link href="/store/dashboard/products/new">
+            <Plus className="size-5" aria-hidden="true" />
+            <span className="hidden sm:inline">Məhsul əlavə et</span>
+          </Link>
+        </Button>
+      ) : null}
       <Button
         type="button"
         variant="outline"

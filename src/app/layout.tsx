@@ -5,6 +5,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import { siteConfig } from "@/lib/config/site";
 
 import "./globals.css";
+import "./marketplace-live.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -71,8 +72,9 @@ type RootLayoutProps = {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html suppressHydrationWarning>
+    <html lang="az" suppressHydrationWarning>
       <head>
+        <link rel="stylesheet" href="/marketplace/fonts/manrope.css" />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{var t=localStorage.getItem("alisveris-theme");var d=window.matchMedia("(prefers-color-scheme: dark)").matches;if(t==="dark"||(!t&&d)){document.documentElement.classList.add("dark")}}catch(e){}`,

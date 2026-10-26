@@ -81,7 +81,7 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
                 </Link>
                 {children.length > 0 ? (
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {children.slice(0, 8).map((child) => (
+                    {children.map((child) => (
                       <Link
                         key={child.id}
                         href={`/products?category=${child.slug}`}

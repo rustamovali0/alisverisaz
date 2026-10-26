@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import {
   CustomStoreFooter,
-  CustomStorefrontHeader,
 } from "@/components/cart/product-marketplace";
 import { FavoriteToggleButton } from "@/components/favorites/favorite-toggle-button";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
@@ -21,6 +20,7 @@ import {
   ProductDetailGallery,
 } from "@/components/products/product-detail-gallery";
 import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
+import { CollapsibleProductDescription } from "@/components/products/collapsible-product-description";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ import {
   getPublicProductLocations,
 } from "@/lib/locations/data";
 import type { ProductLocationAvailability } from "@/lib/locations/types";
+import { normalizeGoogleMapLink } from "@/lib/locations/map-link";
 import {
   getProductReviews,
   getReviewSummary,
@@ -52,8 +53,9 @@ type ProductDetailPageProps = {
 };
 
 function getLocationMapUrl(location: ProductLocationAvailability["location"]) {
-  if (location.mapLink) {
-    return location.mapLink;
+  const safeMapLink = normalizeGoogleMapLink(location.mapLink ?? "");
+  if (safeMapLink) {
+    return safeMapLink;
   }
 
   if (location.latitude !== null && location.longitude !== null) {
@@ -217,7 +219,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const canBuy = detail.product.stockQuantity > 0;
   const viewerRole = current?.role ?? null;
   const isStoreOwner = current?.role === "seller" && current.user.id === detail.store.ownerId;
-  const canWriteReview = !isStoreOwner && (current?.role === "customer" || current?.role === "seller");
   const currentReview =
     current?.user.id ? reviews.find((review) => review.userId === current.user.id) ?? null : null;
   const visibleProductLocations: ProductLocationAvailability[] =
@@ -238,7 +239,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     visibleProductLocations[0]?.location ??
     null;
   const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
-  const sellerPhone = sellerLocation?.phone?.trim() || detail.store.phone?.trim() || "";
+  const sellerPhone =
+    detail.store.whatsappPhone?.trim() ||
+    sellerLocation?.phone?.trim() ||
+    detail.store.phone?.trim() ||
+    "";
   const sellerMapUrl = sellerLocation
     ? getLocationMapUrl(sellerLocation)
     : sellerAddress
@@ -263,6 +268,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   }
 
   const isCustomStorefrontProduct = !isLegacyProductRoute;
+  const isSellerViewer = isStoreOwner;
+  const canWriteReview = !isStoreOwner &&
+    (current?.role === "customer" || current?.role === "seller" || isCustomStorefrontProduct);
   const storeBaseHref =
     storeSubdomainSlug === detail.store.slug
       ? "/"
@@ -276,10 +284,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     ? getStorefrontUrl(detail.store.slug)
     : `${siteConfig.url}/store/${detail.store.slug}`;
   const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
-  const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/products";
+  const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/stores";
 
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(96px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-8">
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-0 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
@@ -300,55 +308,85 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ]}
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
-      {isCustomStorefrontProduct ? (
-        <CustomStorefrontHeader
-          store={detail.store}
-          storeHomeHref={storeBaseHref}
-        />
-      ) : null}
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-3 sm:px-6 md:py-6 lg:px-8">
-        <nav className="mb-5 min-w-0 text-sm text-slate-500 dark:text-slate-400 md:mb-6">
-          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
-            <ProductBackButton />
-            <div className="flex min-w-0 items-center overflow-hidden">
-              <Link href={breadcrumbHomeHref} className="hover:text-blue-600 dark:hover:text-blue-300">
-                {breadcrumbHomeLabel}
-              </Link>
-              <span className="mx-2">·</span>
-              <Link href={storeBaseHref} className="min-w-0 truncate hover:text-blue-600 dark:hover:text-blue-300">
-                {detail.store.name}
-              </Link>
-              <span className="mx-2">·</span>
-              <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
-                {detail.product.name}
-              </span>
-            </div>
+      <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-6" : "px-3 py-2 sm:px-6 sm:py-3 md:py-5 lg:px-8"}`}>
+        {isCustomStorefrontProduct ? (
+          <div className="mb-2 sm:mb-3">
+            <ProductBackButton compact />
           </div>
-        </nav>
+        ) : null}
+        {!isCustomStorefrontProduct ? (
+          <nav className="mb-3 min-w-0 text-sm text-slate-500 dark:text-slate-400 sm:mb-4 md:mb-5">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+              <ProductBackButton />
+              <div className="flex min-w-0 items-center overflow-hidden">
+                <Link href={breadcrumbHomeHref} className="hover:text-orange-600 dark:hover:text-orange-300">
+                  {breadcrumbHomeLabel}
+                </Link>
+                <span className="mx-2">·</span>
+                <Link href={storeBaseHref} className="min-w-0 truncate hover:text-orange-600 dark:hover:text-orange-300">
+                  {detail.store.name}
+                </Link>
+                <span className="mx-2">·</span>
+                <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
+                  {detail.product.name}
+                </span>
+              </div>
+            </div>
+          </nav>
+        ) : null}
 
-        <section className="grid min-w-0 gap-5 md:gap-6 lg:grid-cols-[minmax(0,0.54fr)_minmax(380px,0.46fr)] lg:items-start">
+        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-3 sm:gap-5" : "gap-3 sm:gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.56fr)_minmax(360px,0.44fr)] lg:items-start`}>
           <ProductDetailGallery
             images={detail.product.images}
             fallbackImageUrl={detail.product.imageUrl}
             product={detail.product}
             productName={detail.product.name}
             viewerRole={viewerRole}
+            compact={isCustomStorefrontProduct}
           />
-          <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-6">
-            <p className="truncate text-sm font-medium text-slate-500 dark:text-slate-400">{detail.store.name}</p>
-            <div className="mt-2 flex min-w-0 items-start justify-between gap-3">
-              <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 md:text-[34px]">
+          <div className={`min-w-0 border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-2xl p-3 sm:p-5" : "rounded-2xl p-3 sm:rounded-[24px] sm:p-5 md:p-6"}`}>
+            <p className={`${isCustomStorefrontProduct ? "text-xs" : "text-sm"} truncate font-medium text-slate-500 dark:text-slate-400`}>{detail.store.name}</p>
+            <div className={`${isCustomStorefrontProduct ? "mt-1" : "mt-2"} flex min-w-0 items-start justify-between gap-3`}>
+              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-xl sm:text-[28px]" : "text-[22px] sm:text-[26px] md:text-[30px]"}`}>
                 {detail.product.name}
               </h1>
-              {!isStoreOwner ? (
+              {!isStoreOwner && !isCustomStorefrontProduct ? (
                 <FavoriteToggleButton
                   productId={detail.product.id}
                   productName={detail.product.name}
+                  favoriteCount={detail.favoriteCount}
                   className="shrink-0"
                 />
               ) : null}
             </div>
-            <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2">
+            {detail.product.commerceType === "rental" ? (
+              <span className="mt-2 inline-flex w-fit rounded-full bg-orange-500 px-2.5 py-1 text-xs font-black text-white">
+                İcarə məhsulu
+              </span>
+            ) : null}
+            {detail.category ? (
+              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span>Kateqoriya:</span>
+                {detail.category.parent ? (
+                  <>
+                    <Link
+                      href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.parent.slug}`}
+                      className="rounded-md bg-slate-100 px-2 py-1 text-slate-700 hover:text-orange-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-orange-300"
+                    >
+                      {detail.category.parent.name}
+                    </Link>
+                    <span aria-hidden="true">›</span>
+                  </>
+                ) : null}
+                <Link
+                  href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.slug}`}
+                  className="rounded-md bg-orange-50 px-2 py-1 text-orange-700 hover:bg-orange-100 dark:bg-orange-500/10 dark:text-orange-200"
+                >
+                  {detail.category.name}
+                </Link>
+              </div>
+            ) : null}
+            <div className={`${isCustomStorefrontProduct ? "mt-2.5" : "mt-4"} flex min-w-0 flex-wrap items-center gap-2`}>
               {reviewSummary.count ? (
                 <>
                   <div className="flex">
@@ -357,8 +395,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                         key={value}
                         className={
                           value <= Math.round(reviewSummary.average)
-                            ? "size-5 fill-amber-400 text-amber-400"
-                            : "size-5 text-muted-foreground"
+                            ? "size-4 fill-amber-400 text-amber-400"
+                            : "size-4 text-muted-foreground"
                         }
                         aria-hidden="true"
                       />
@@ -369,53 +407,58 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   </span>
                 </>
               ) : (
-                <span className="text-sm text-slate-500 dark:text-slate-400">Hələ rəy yoxdur</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Hələ rəy yoxdur</span>
               )}
             </div>
-            <p className="mt-6 break-words text-[32px] font-semibold leading-none text-slate-950 dark:text-slate-50 md:text-[36px]">
+            <p className={`${isCustomStorefrontProduct ? "mt-3 text-2xl sm:mt-4 sm:text-[30px]" : "mt-3 text-[26px] sm:mt-4 sm:text-[28px] md:text-[30px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
               {formatAznDiscountedPrice(
                 detail.product.priceAmount,
                 detail.product.discountAmount,
               )}
             </p>
-            <p className={canBuy ? "mt-3 text-sm text-slate-500 dark:text-slate-400" : "mt-3 text-sm font-semibold text-destructive"}>
+            {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-2 text-xs text-slate-500 dark:text-slate-400 sm:mt-3 sm:text-sm" : "mt-2 text-xs font-semibold text-destructive sm:mt-3 sm:text-sm"}>
               {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
-            </p>
+            </p> : null}
             {detail.product.description ? (
-              <p className="mt-5 break-words text-[15px] leading-7 text-slate-600 dark:text-slate-300">
-                {detail.product.description}
-              </p>
+              <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-4"}>
+                <CollapsibleProductDescription text={detail.product.description} />
+              </div>
             ) : null}
             {isStoreOwner ? (
-              <Button asChild className="mt-6 h-[52px] w-full rounded-xl bg-blue-600 text-white hover:bg-blue-700">
-                <Link href={`/store/dashboard/products/${detail.product.id}/edit`}>
+              <Button asChild className="mt-3 h-10 w-full rounded-xl bg-orange-500 text-white hover:bg-orange-600 sm:mt-4 sm:h-11">
+                <Link href={`/sell/product/${detail.product.id}/edit`}>
                   <Pencil className="mr-2 size-4" aria-hidden="true" />
                   Redaktə et
                 </Link>
               </Button>
-            ) : (
+            ) : !isSellerViewer ? (
               <ProductPurchaseOptions
                 product={detail.product}
                 viewerRole={viewerRole}
-                showWhatsappOrderButton={siteSettings.showWhatsappOrderButton}
+                showWhatsappOrderButton
                 sellerPhone={sellerPhone}
                 sellerName={detail.store.name}
                 buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
                 buyerPhone={current?.profile?.phone ?? ""}
                 disabled={!canBuy}
+                isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : null}
+                isolatedStoreBaseHref={isCustomStorefrontProduct ? storeBaseHref : null}
+                compact={isCustomStorefrontProduct}
               />
-            )}
-            <Button asChild variant="outline" className="mt-3 h-[52px] w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10 dark:hover:text-blue-200">
-              <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
-                <MessageCircle className="mr-2 size-4" aria-hidden="true" />
-                Sual & Cavablar
-              </Link>
-            </Button>
+            ) : null}
+            {!isSellerViewer ? (
+              <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-11"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10 dark:hover:text-orange-200`}>
+                <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
+                  <MessageCircle className="mr-2 size-4" aria-hidden="true" />
+                  Sual & Cavablar
+                </Link>
+              </Button>
+            ) : null}
             {!isStoreOwner ? (
-              <div className="mt-5 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/45">
+              <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-4 rounded-xl p-3"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
                 <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+                    <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
                       {detail.store.logoUrl ? (
                         <img
                           src={detail.store.logoUrl}
@@ -437,26 +480,26 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   </div>
                   <div className="grid min-w-0 gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                      <Package className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+                      <Package className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
                       <span className="min-w-0 break-words">{detail.store.productCount} məhsul</span>
                     </span>
                     <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                      <Clock3 className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+                      <Clock3 className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
                       <span className="min-w-0 break-words">{formatLastActive(detail.store.updatedAt)}</span>
                     </span>
                     {sellerAddress ? (
                       <span className="inline-flex min-h-9 w-full min-w-0 items-start gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                        <MapPin className="size-3.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden="true" />
+                        <MapPin className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
                         <span className="min-w-0 break-words leading-5">{sellerAddress}</span>
                       </span>
                     ) : null}
                   </div>
                   <div className="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:col-span-2">
-                    <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10">
+                    <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10">
                       <Link href={storeBaseHref}>Mağazaya keç</Link>
                     </Button>
                     {sellerMapUrl ? (
-                      <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-blue-600 shadow-none hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 dark:hover:border-blue-400/50 dark:hover:bg-blue-500/10">
+                      <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-orange-600 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-orange-300 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10">
                         <a href={sellerMapUrl} target="_blank" rel="noreferrer">
                           Xəritəni göstər
                           <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
@@ -471,23 +514,25 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </section>
 
         {detail.product.categoryId ? (
-          <div className="mt-8 scroll-mt-28 md:mt-10">
+          <div className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} scroll-mt-28`}>
             <RelatedProductList
               initialProducts={[]}
               initialCursor={null}
               initialHasMore
               productId={detail.product.id}
               categoryId={detail.product.categoryId}
+              storeId={isCustomStorefrontProduct ? detail.store.id : undefined}
+              isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : undefined}
               locale={locale}
             />
           </div>
         ) : null}
 
-        <section className="mt-8 min-w-0 md:mt-10">
-          <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 md:p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Star className="size-5 fill-amber-400 text-amber-400" aria-hidden="true" />
-              <h2 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-50">Məhsul dəyərləndirməsi</h2>
+        <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} min-w-0`}>
+          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-4" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-5"}`}>
+            <div className={`${isCustomStorefrontProduct ? "mb-3" : "mb-4"} flex items-center gap-2`}>
+              <Star className="size-4 fill-amber-400 text-amber-400 sm:size-5" aria-hidden="true" />
+              <h2 className={`${isCustomStorefrontProduct ? "text-base sm:text-lg" : "text-base sm:text-xl"} min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
             </div>
             {canWriteReview ? (
               <ProductReviewForm
@@ -497,6 +542,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 reviewId={currentReview?.id ?? null}
                 initialRating={currentReview?.rating ?? 0}
                 initialComment={currentReview?.comment ?? ""}
+                allowGuest={isCustomStorefrontProduct}
               />
             ) : null}
             <ProductReviewList reviews={reviews} />
@@ -509,6 +555,9 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <MobileBottomNav
             storeHomeHref={storeBaseHref}
             storeSubdomainSlug={storeSubdomainSlug}
+            storeId={detail.store.id}
+            isolatedStorefront={isCustomStorefrontProduct}
+            sellerOwnsStore={isStoreOwner}
           />
         </>
       ) : (

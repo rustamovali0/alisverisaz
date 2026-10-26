@@ -1,5 +1,7 @@
 "use server";
 
+import { allowsPersonalListings } from "@/lib/products/marketplace-policy";
+
 import { revalidatePath } from "next/cache";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
@@ -8,6 +10,7 @@ import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
 import { getSellerFeatureAccess } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
+import { isProfitTrackingEnabled, validateProfitPrices } from "@/lib/products/profit";
 import { notifyProductSubmitted } from "@/lib/products/approval-notifications";
 import { getProductApprovalSettings } from "@/lib/products/approval-settings";
 import { canCreateListing, getStoreEntitlements } from "@/lib/subscriptions/data";
@@ -387,6 +390,7 @@ async function uploadProductImageFiles(input: {
         folder: `products/${input.userId}/${input.productId}`,
         maxSizeBytes: MAX_PRODUCT_IMAGE_SIZE,
         allowedMimeTypes: ALLOWED_PRODUCT_IMAGE_TYPES,
+        watermarkText: "alisveris.az",
       }),
     ),
   );
@@ -763,7 +767,7 @@ async function replaceProductLocations(input: {
       product_id: input.productId,
       location_id: locationId,
       stock_quantity: stock,
-      is_available: stock > 0,
+      is_available: true,
     };
   });
 
@@ -791,6 +795,9 @@ function readProductPayload(formData: FormData) {
       ? Math.max(priceAmount - readNumber(formData, "discountedPriceAmount"), 0)
       : readNumber(formData, "discountAmount");
   const stockQuantity = Math.max(Math.trunc(readNumber(formData, "stockQuantity")), 0);
+  const stockTrackingEnabled = !formData.has("stockTrackingPresent") ||
+    formData.get("stockTrackingEnabled") === "on";
+  const stockRaw = readString(formData, "stockQuantity");
   const description = readString(formData, "description");
   const descriptionTranslations = {
     en: readString(formData, "description_en"),
@@ -811,6 +818,7 @@ function readProductPayload(formData: FormData) {
     ru: readString(formData, "seo_description_ru"),
   };
   const status = readStatus(readString(formData, "status"));
+  const commerceType = readString(formData, "commerceType") === "rental" ? "rental" : "sale";
   const variantConfig = parseVariantConfig(formData);
   const variants = variantConfig.legacyVariants;
   const depositEnabled = false;
@@ -825,11 +833,15 @@ function readProductPayload(formData: FormData) {
     priceAmount,
     discountAmount,
     stockQuantity,
+    stockTrackingEnabled,
+    stockValid: !stockTrackingEnabled || (stockRaw !== "" &&
+      Number.isSafeInteger(Number(stockRaw)) && Number(stockRaw) >= 0),
     description,
     descriptionTranslations,
     seoTitleTranslations,
     seoDescriptionTranslations,
     status,
+    commerceType,
     variants,
     variantOptions: variantConfig.options,
     variantCombinations: variantConfig.combinations,
@@ -840,6 +852,7 @@ function readProductPayload(formData: FormData) {
 }
 
 function validatePayload(payload: ReturnType<typeof readProductPayload>) {
+  if (!payload.stockValid) return "Stok sayı sıfır və ya müsbət tam ədəd olmalıdır.";
   if (!payload.name) {
     return "Ad mütləqdir.";
   }
@@ -881,6 +894,13 @@ export async function createStoreProductAction(
 
   const stores = await getOwnedStores(current.user.id);
   const ownsStore = stores.some((store) => store.id === storeId);
+  if (stores.find((store) => store.id === storeId)?.status !== "active") {
+    return { ok: false, message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul əlavə edə bilər." };
+  }
+  const profitTracking = isProfitTrackingEnabled(stores.find((store) => store.id === storeId)?.settings);
+  const profitError = validateProfitPrices(formData, profitTracking);
+  if (profitError) return { ok: false, message: profitError };
+  if (!profitTracking) payload.costAmount = 0;
 
   if (!ownsStore) {
     return {
@@ -912,10 +932,11 @@ export async function createStoreProductAction(
     };
   }
 
-  const approvalSettings = await getProductApprovalSettings();
-  const requiresApproval = approvalSettings.requireApproval;
+  const { requireApproval: requiresApproval } = await getProductApprovalSettings();
   const productStatus: ProductStatus = requiresApproval ? "draft" : payload.status;
   const productMetadata = {
+    stockTrackingEnabled: payload.stockTrackingEnabled,
+    commerce_type: payload.commerceType,
     variants: payload.variants,
     variant_options: payload.variantOptions,
     variant_combinations: payload.variantCombinations,
@@ -964,35 +985,42 @@ export async function createStoreProductAction(
     };
   }
 
-  try {
-    await replaceVariants({
+  const [variantsResult, locationsResult, imagesResult] = await Promise.allSettled([
+    replaceVariants({
       productId: product.id,
       options: payload.variantOptions,
       combinations: payload.variantCombinations,
       legacyVariants: payload.variants,
-    });
-    await replaceProductLocations({
+    }),
+    replaceProductLocations({
       productId: product.id,
       storeId,
       formData,
-    });
-  } catch (error) {
+    }),
+    uploadProductImages({
+      userId: current.user.id,
+      productId: product.id,
+      productName: payload.name,
+      files: imageFiles,
+    }),
+  ]);
+
+  const productDetailError = [variantsResult, locationsResult]
+    .find((result): result is PromiseRejectedResult => result.status === "rejected");
+
+  if (productDetailError) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Məhsul detalları saxlanmadı.",
+      message: productDetailError.reason instanceof Error
+        ? productDetailError.reason.message
+        : "Məhsul detalları saxlanmadı.",
     };
   }
 
   let imageWarning = "";
 
-  try {
-    await uploadProductImages({
-      userId: current.user.id,
-      productId: product.id,
-      productName: payload.name,
-      files: imageFiles,
-    });
-  } catch (error) {
+  if (imagesResult.status === "rejected") {
+    const error = imagesResult.reason;
     console.error("Product image upload failed after product create", {
       productId: product.id,
       storeId,
@@ -1033,6 +1061,7 @@ export async function createStoreProductAction(
     message: requiresApproval
       ? `Məhsul əlavə edildi, qəbul edildikdən sonra dərc olunacaq.${imageWarning}`
       : `Məhsul yaradıldı.${imageWarning}`,
+    productId: product.id,
   };
 }
 
@@ -1075,7 +1104,7 @@ export async function updateProductAction(
   const supabase = await createSupabaseServerClient();
   const { data: existing } = await (supabase as any)
     .from("products")
-    .select("id,store_id,owner_id,category_id,listing_type,metadata,stores(slug,owner_id)")
+    .select("id,store_id,owner_id,category_id,listing_type,cost_amount,metadata,stores(slug,owner_id,settings,status)")
     .eq("id", productId)
     .maybeSingle();
 
@@ -1101,15 +1130,19 @@ export async function updateProductAction(
     };
   }
 
-  const approvalSettings =
-    current.role === "seller" && existing.listing_type === "store"
-      ? await getProductApprovalSettings()
-      : { requireApproval: false };
-  const requiresApproval =
-    current.role === "seller" &&
-    existing.listing_type === "store" &&
-    approvalSettings.requireApproval &&
-    payload.status === "active";
+  if (current.role !== "admin" && (existing.listing_type !== "store" || existingStore?.status !== "active")) {
+    return { ok: false, message: "Yalnız təsdiqlənmiş aktiv mağaza məhsul redaktə edə bilər." };
+  }
+  if (current.role !== "admin" && payload.status === "active" &&
+      (existing.metadata?.admin_hidden === true || existing.metadata?.approval_status === "rejected")) {
+    return { ok: false, message: "Admin tərəfindən gizlədilmiş məhsulu aktivləşdirə bilməzsiniz." };
+  }
+  const profitTracking = isProfitTrackingEnabled(existingStore?.settings);
+  const profitError = validateProfitPrices(formData, profitTracking && current.role === "seller");
+  if (profitError) return { ok: false, message: profitError };
+  if (!profitTracking || !formData.has("costAmount")) payload.costAmount = Number(existing.cost_amount ?? 0);
+
+  const requiresApproval = false;
   const status =
     existing.listing_type === "personal" &&
     payload.status === "active" &&
@@ -1122,6 +1155,10 @@ export async function updateProductAction(
     existing.metadata && typeof existing.metadata === "object" && !Array.isArray(existing.metadata)
       ? existing.metadata
       : {};
+  if (formData.has("stockTrackingPresent")) {
+    baseMetadata.stockTrackingEnabled = payload.stockTrackingEnabled;
+  }
+  baseMetadata.commerce_type = payload.commerceType;
   const metadata =
     existing.listing_type === "personal"
       ? {
@@ -1696,6 +1733,9 @@ export async function createPersonalListingAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["customer"], "/dashboard/listings");
+  if (!allowsPersonalListings()) {
+    return { ok: false, message: "Məhsul satmaq üçün rəsmi mağaza qeydiyyatından keçin və admin təsdiqini gözləyin." };
+  }
   await ensureAuthProfile({
     id: current.user.id,
     email: current.user.email ?? null,
@@ -1772,6 +1812,8 @@ export async function createPersonalListingAction(
         activation_payment_id: payment.id,
         metadata: {
           payment_status: "pending",
+          stockTrackingEnabled: payload.stockTrackingEnabled,
+          commerce_type: payload.commerceType,
           listing_fee_amount: 1,
           variants: payload.variants,
           variant_options: payload.variantOptions,

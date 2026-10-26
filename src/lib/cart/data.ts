@@ -1,3 +1,9 @@
+import { createHash } from "node:crypto";
+import {
+  filterCatalog,
+  type CatalogCandidate,
+  type CatalogFilters,
+} from "@/lib/catalog/filters";
 import {
   CACHE_TAGS,
   CACHE_TTL,
@@ -19,10 +25,14 @@ import type {
   ProductOptionType,
   ProductVariantCombinationInput,
 } from "@/lib/products/types";
-import { PRODUCT_OPTION_TYPES, normalizeProductOptions } from "@/lib/products/variant-utils";
+import {
+  PRODUCT_OPTION_TYPES,
+  normalizeProductOptions,
+} from "@/lib/products/variant-utils";
 import { getActivePromotionMaps } from "@/lib/promotions/data";
 
 type ProductRow = {
+  metadata?: { stockTrackingEnabled?: boolean; commerce_type?: string } | null;
   id: string;
   store_id: string;
   slug: string | null;
@@ -75,17 +85,17 @@ type ProductRow = {
 };
 
 const PUBLIC_PRODUCT_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled)";
 const PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity)";
 const PRODUCT_DETAIL_SELECT =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 const PRODUCT_DETAIL_SELECT_LEGACY =
-  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
+  "id,store_id,category_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(id,owner_id,name,slug,status,description,logo_url,cover_url,updated_at,settings)";
 
 type StoreRow = {
   id: string;
@@ -111,7 +121,11 @@ type ProductCursor = {
 };
 
 function isMissingVariantSchemaError(error: unknown) {
-  const value = error as { code?: string; message?: string; details?: string } | null;
+  const value = error as {
+    code?: string;
+    message?: string;
+    details?: string;
+  } | null;
   const text = `${value?.message ?? ""} ${value?.details ?? ""}`.toLowerCase();
 
   return (
@@ -132,6 +146,18 @@ function readOriginalContentText(fallback: string | null) {
   return fallback || "";
 }
 
+function readPublicStoreDescription(value: string | null) {
+  const description = value?.trim();
+  if (!description) return null;
+
+  const normalized = description
+    .toLocaleLowerCase("az-AZ")
+    .replace(/\s+/g, " ");
+  return normalized === "satıcı mağazası" || normalized === "satici magazasi"
+    ? null
+    : description;
+}
+
 function toCartProduct(row: ProductRow): CartProduct {
   const primary = row.product_images?.find((image) => image.is_primary);
   const first = row.product_images?.[0];
@@ -148,38 +174,40 @@ function toCartProduct(row: ProductRow): CartProduct {
   const options = normalizeProductOptions(
     (row.product_options ?? [])
       .filter((option) => PRODUCT_OPTION_TYPES.includes(option.type))
-      .map(
-        (option): ProductOptionInput => ({
-          id: option.id,
-          type: option.type,
-          name: option.name,
-          isEnabled: option.is_enabled,
-          sortOrder: option.sort_order ?? 0,
-          values: (option.product_option_values ?? []).map((value) => ({
-            id: value.id,
-            value: value.value,
-            colorHex: value.color_hex,
-            sortOrder: value.sort_order ?? 0,
-          })),
-        }),
-      ),
+      .map((option): ProductOptionInput => ({
+        id: option.id,
+        type: option.type,
+        name: option.name,
+        isEnabled: option.is_enabled,
+        sortOrder: option.sort_order ?? 0,
+        values: (option.product_option_values ?? []).map((value) => ({
+          id: value.id,
+          value: value.value,
+          colorHex: value.color_hex,
+          sortOrder: value.sort_order ?? 0,
+        })),
+      })),
   );
   const variantCombinations = (row.product_variants ?? [])
-    .filter((variant) => variant.combination && Object.keys(variant.combination).length > 0)
-    .map(
-      (variant): ProductVariantCombinationInput => ({
-        id: variant.id,
-        combination: variant.combination ?? {},
-        sku: variant.sku ?? null,
-        priceOverrideAmount:
-          variant.price_override_amount === null ||
-          variant.price_override_amount === undefined
-            ? null
-            : Number(variant.price_override_amount),
-        stockQuantity: Number(variant.stock_quantity ?? 0),
-        isEnabled: variant.is_enabled !== false,
-      }),
-    );
+    .filter(
+      (variant) =>
+        variant.combination && Object.keys(variant.combination).length > 0,
+    )
+    .map((variant): ProductVariantCombinationInput => ({
+      id: variant.id,
+      combination: variant.combination ?? {},
+      sku: variant.sku ?? null,
+      priceOverrideAmount:
+        variant.price_override_amount === null ||
+        variant.price_override_amount === undefined
+          ? null
+          : Number(variant.price_override_amount),
+      stockQuantity:
+        row.metadata?.stockTrackingEnabled === false
+          ? Number.MAX_SAFE_INTEGER
+          : Number(variant.stock_quantity ?? 0),
+      isEnabled: variant.is_enabled !== false,
+    }));
 
   return {
     id: row.id,
@@ -191,9 +219,14 @@ function toCartProduct(row: ProductRow): CartProduct {
     createdAt: row.created_at ?? null,
     name: readOriginalContentText(row.name),
     description: readOriginalContentText(row.description),
+    commerceType: row.metadata?.commerce_type === "rental" ? "rental" : "sale",
     priceAmount: Number(row.price_amount),
     discountAmount: Number(row.discount_amount ?? 0),
-    stockQuantity: row.stock_quantity,
+    stockQuantity:
+      row.metadata?.stockTrackingEnabled === false
+        ? Number.MAX_SAFE_INTEGER
+        : row.stock_quantity,
+    stockTrackingEnabled: row.metadata?.stockTrackingEnabled !== false,
     imageUrl: primary?.url ?? first?.url ?? null,
     depositEnabled: row.deposit_enabled,
     depositType: row.deposit_type,
@@ -237,7 +270,10 @@ function markPromotedStores(
   return stores.map((store) => ({
     ...store,
     isPromoted: promotedStoreIds.has(store.id),
-    sampleProducts: markPromotedProducts(store.sampleProducts, promotedProductIds),
+    sampleProducts: markPromotedProducts(
+      store.sampleProducts,
+      promotedProductIds,
+    ),
   }));
 }
 
@@ -251,14 +287,30 @@ function sortPromotedFirst<T extends { isPromoted?: boolean }>(values: T[]) {
   });
 }
 
-function readSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+function readSetting(
+  settings: Record<string, unknown> | null | undefined,
+  key: string,
+) {
   const value = settings?.[key];
 
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function readBooleanSetting(settings: Record<string, unknown> | null | undefined, key: string) {
+function readBooleanSetting(
+  settings: Record<string, unknown> | null | undefined,
+  key: string,
+) {
   return settings?.[key] === true;
+}
+
+function readStringArraySetting(
+  settings: Record<string, unknown> | null | undefined,
+  key: string,
+) {
+  const value = settings?.[key];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 function normalizeSearchValue(value: string) {
@@ -272,6 +324,42 @@ function normalizeSearchValue(value: string) {
 
 function normalizeRawSearchValue(value: string | null | undefined) {
   return (value ?? "").trim().slice(0, MAX_SEARCH_LENGTH);
+}
+
+function getSearchCandidates(value: string) {
+  const source = value.toLocaleLowerCase("az-AZ");
+  const candidates = new Set([source, normalizeSearchValue(source)]);
+  const substitutions: Record<string, string> = {
+    c: "ç",
+    g: "ğ",
+    i: "ı",
+    o: "ö",
+    s: "ş",
+    u: "ü",
+    e: "ə",
+  };
+
+  for (
+    let index = 0;
+    index < source.length && candidates.size < 16;
+    index += 1
+  ) {
+    const replacement = substitutions[source[index]];
+    if (replacement) {
+      candidates.add(
+        `${source.slice(0, index)}${replacement}${source.slice(index + 1)}`,
+      );
+    }
+  }
+
+  candidates.add(
+    Array.from(
+      source,
+      (character) => substitutions[character] ?? character,
+    ).join(""),
+  );
+
+  return Array.from(candidates).filter(Boolean).slice(0, 16);
 }
 
 function isUuid(value: string) {
@@ -291,7 +379,9 @@ function clampProductLimit(limit: number | undefined) {
   );
 }
 
-function normalizeProductSort(sort: string | null | undefined): MarketplaceProductSort {
+function normalizeProductSort(
+  sort: string | null | undefined,
+): MarketplaceProductSort {
   if (sort === "oldest" || sort === "price_asc" || sort === "price_desc") {
     return sort;
   }
@@ -299,7 +389,10 @@ function normalizeProductSort(sort: string | null | undefined): MarketplaceProdu
   return "newest";
 }
 
-function encodeProductCursor(product: CartProduct, sort: MarketplaceProductSort) {
+function encodeProductCursor(
+  product: CartProduct,
+  sort: MarketplaceProductSort,
+) {
   const cursor: ProductCursor = {
     createdAt: product.createdAt,
     id: product.id,
@@ -312,7 +405,9 @@ function encodeProductCursor(product: CartProduct, sort: MarketplaceProductSort)
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
-function decodeProductCursor(cursor: string | null | undefined): ProductCursor | null {
+function decodeProductCursor(
+  cursor: string | null | undefined,
+): ProductCursor | null {
   if (!cursor) {
     return null;
   }
@@ -322,7 +417,9 @@ function decodeProductCursor(cursor: string | null | undefined): ProductCursor |
   }
 
   try {
-    const parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8")) as ProductCursor;
+    const parsed = JSON.parse(
+      Buffer.from(cursor, "base64url").toString("utf8"),
+    ) as ProductCursor;
 
     if (!parsed || !isUuid(parsed.id)) {
       return null;
@@ -377,7 +474,11 @@ function applyProductSort(query: any, sort: MarketplaceProductSort) {
     .order("id", { ascending: false });
 }
 
-function applyProductCursor(query: any, cursor: ProductCursor | null, sort: MarketplaceProductSort) {
+function applyProductCursor(
+  query: any,
+  cursor: ProductCursor | null,
+  sort: MarketplaceProductSort,
+) {
   if (!cursor) {
     return query;
   }
@@ -432,6 +533,7 @@ export async function getMarketplaceProducts(
 export async function getMarketplaceProductPage(
   locale = "az",
   input: {
+    filters?: CatalogFilters;
     categoryId?: string;
     categoryIds?: string[];
     searchQuery?: string;
@@ -442,10 +544,16 @@ export async function getMarketplaceProductPage(
   } = {},
 ): Promise<MarketplaceProductPage> {
   const normalizedLocale = normalizeCacheLocale(locale);
-  const categoryId = input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
+  const categoryId =
+    input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
   const categoryIds = Array.from(
     new Set(
-      (input.categoryIds?.length ? input.categoryIds : categoryId ? [categoryId] : [])
+      (input.categoryIds?.length
+        ? input.categoryIds
+        : categoryId
+          ? [categoryId]
+          : []
+      )
         .filter((id) => isUuid(id))
         .slice(0, 40),
     ),
@@ -460,6 +568,7 @@ export async function getMarketplaceProductPage(
     return publicCache(
       () =>
         getMarketplaceProductPageUncached(normalizedLocale, {
+          filters: input.filters,
           categoryId,
           categoryIds,
           searchQuery: "",
@@ -475,6 +584,9 @@ export async function getMarketplaceProductPage(
         categoryIds.join(",") || "all-descendants",
         storeId || "all-stores",
         String(limit),
+        createHash("sha256")
+          .update(JSON.stringify(input.filters ?? {}))
+          .digest("hex"),
       ],
       {
         revalidate: CACHE_TTL.SHORT,
@@ -489,6 +601,7 @@ export async function getMarketplaceProductPage(
   }
 
   return getMarketplaceProductPageUncached(normalizedLocale, {
+    filters: input.filters,
     categoryId,
     categoryIds,
     searchQuery: rawSearch,
@@ -504,12 +617,14 @@ export async function getSimilarMarketplaceProductPage(
   input: {
     productId: string;
     categoryId: string;
+    storeId?: string;
     limit?: number;
     cursor?: string | null;
   },
 ): Promise<MarketplaceProductPage> {
   const productId = isUuid(input.productId) ? input.productId : "";
   const categoryId = isUuid(input.categoryId) ? input.categoryId : "";
+  const storeId = input.storeId && isUuid(input.storeId) ? input.storeId : "";
 
   if (!productId || !categoryId) {
     return { products: [], nextCursor: null, hasMore: false };
@@ -520,13 +635,15 @@ export async function getSimilarMarketplaceProductPage(
   const supabase = createSupabasePublicClient();
 
   async function runQuery(selectColumns: string) {
-    const query = (supabase as any)
+    let query = (supabase as any)
       .from("products")
       .select(selectColumns)
       .eq("status", "active")
       .eq("stores.status", "active")
       .eq("category_id", categoryId)
       .neq("id", productId);
+
+    if (storeId) query = query.eq("store_id", storeId);
 
     return applyProductSort(
       applyProductCursor(query, cursor, "newest"),
@@ -563,6 +680,7 @@ export async function getSimilarMarketplaceProductPage(
 async function getMarketplaceProductPageUncached(
   locale: string,
   input: {
+    filters?: CatalogFilters;
     categoryId?: string;
     categoryIds?: string[];
     searchQuery?: string;
@@ -573,10 +691,29 @@ async function getMarketplaceProductPageUncached(
   },
 ): Promise<MarketplaceProductPage> {
   const supabase = createSupabasePublicClient();
-  const cursor = decodeProductCursor(input.cursor);
-  const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
 
-  async function runQuery(selectColumns: string) {
+  const normalizedSearch = normalizeSearchValue(input.searchQuery ?? "");
+  let matchingStoreIds: string[] = [];
+
+  if (normalizedSearch && !input.storeId) {
+    const storeFilters = getSearchCandidates(input.searchQuery ?? "").flatMap(
+      (candidate) => {
+        const escaped = candidate.replace(/[%_]/g, "\\$&");
+        return [`name.ilike.%${escaped}%`, `slug.ilike.%${escaped}%`];
+      },
+    );
+    const { data: matchingStores } = await (supabase as any)
+      .from("stores")
+      .select("id")
+      .eq("status", "active")
+      .or(storeFilters.join(","))
+      .limit(50);
+    matchingStoreIds = (matchingStores ?? []).map(
+      (store: { id: string }) => store.id,
+    );
+  }
+
+  function candidateQuery(selectColumns: string) {
     let query = (supabase as any)
       .from("products")
       .select(selectColumns)
@@ -584,7 +721,14 @@ async function getMarketplaceProductPageUncached(
       .eq("stores.status", "active");
 
     const categoryIds = Array.from(
-      new Set((input.categoryIds?.length ? input.categoryIds : input.categoryId ? [input.categoryId] : []).filter((id) => isUuid(id))),
+      new Set(
+        (input.categoryIds?.length
+          ? input.categoryIds
+          : input.categoryId
+            ? [input.categoryId]
+            : []
+        ).filter((id) => isUuid(id)),
+      ),
     );
 
     if (categoryIds.length > 1) {
@@ -598,49 +742,114 @@ async function getMarketplaceProductPageUncached(
     }
 
     if (normalizedSearch) {
-      const escaped = normalizedSearch.replace(/[%_]/g, "\\$&");
-      query = query.or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+      const filters = getSearchCandidates(input.searchQuery ?? "").flatMap(
+        (candidate) => {
+          const escaped = candidate.replace(/[%_]/g, "\\$&");
+          return [`name.ilike.%${escaped}%`, `description.ilike.%${escaped}%`];
+        },
+      );
+      if (matchingStoreIds.length > 0) {
+        filters.push(`store_id.in.(${matchingStoreIds.join(",")})`);
+      }
+      query = query.or(filters.join(","));
     }
 
-    return applyProductSort(
-      applyProductCursor(query, cursor, input.sort),
-      input.sort,
-    ).limit(input.limit + 1);
+    return query;
   }
 
-  let { data, error } = await runQuery(PUBLIC_PRODUCT_SELECT);
-
-  if (error && isMissingVariantSchemaError(error)) {
-    const fallback = await runQuery(PUBLIC_PRODUCT_SELECT_LEGACY);
-    data = fallback.data;
-    error = fallback.error;
-  }
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
+  // Read only compact, public candidate fields in bounded database batches.
+  // Prices and VIP priority are evaluated before pagination, never on a loaded client page.
+  const loadCandidates = async () => {
+    const rows: CatalogCandidate[] = [];
+    const columns =
+      "id,created_at,price_amount,discount_amount,stock_quantity,metadata,stores!inner(status)" +
+      (input.filters?.color || input.filters?.size
+        ? ",product_options(type,is_enabled,product_option_values(value))"
+        : "");
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await candidateQuery(columns)
+        .order("id")
+        .range(offset, offset + 499);
+      if (error) throw new Error(error.message);
+      rows.push(...(data ?? []));
+      if ((data ?? []).length < 500) break;
+    }
+    return rows;
+  };
+  const candidates = normalizedSearch
+    ? await loadCandidates()
+    : await publicCache(
+        loadCandidates,
+        [
+          "catalog-candidates-v1",
+          input.storeId || "all",
+          createHash("sha256")
+            .update(
+              (input.categoryIds ?? [input.categoryId ?? "all"]).join(":"),
+            )
+            .digest("hex"),
+          input.filters?.color || input.filters?.size ? "options" : "basic",
+        ],
+        {
+          revalidate: CACHE_TTL.SHORT,
+          tags: [CACHE_TAGS.products, CACHE_TAGS.categories],
+        },
+      )();
   const { promotedProductIds } = await getActivePromotionMaps();
-  const rows = sortPromotedFirst(
-    markPromotedProducts(
-      ((data ?? []) as ProductRow[]).map((row) => toCartProduct(row)),
-      promotedProductIds,
-    ),
+  const ordered = filterCatalog(
+    candidates,
+    input.filters ?? {},
+    promotedProductIds,
+    input.sort,
   );
-  const products = rows.slice(0, input.limit);
-  const lastProduct = products.at(-1);
-
+  let afterId = "";
+  try {
+    afterId =
+      JSON.parse(Buffer.from(input.cursor ?? "", "base64url").toString())
+        .afterId ?? "";
+  } catch {
+    /* First page. */
+  }
+  const offset = afterId
+    ? Math.max(0, ordered.findIndex((row) => row.id === afterId) + 1)
+    : 0;
+  const pageIds = ordered
+    .slice(offset, offset + input.limit)
+    .map((row) => row.id);
+  if (!pageIds.length)
+    return { products: [], hasMore: false, nextCursor: null };
+  const hydrate = (columns: string) =>
+    (supabase as any)
+      .from("products")
+      .select(columns)
+      .eq("status", "active")
+      .eq("stores.status", "active")
+      .in("id", pageIds);
+  let { data, error } = await hydrate(PUBLIC_PRODUCT_SELECT);
+  if (error && isMissingVariantSchemaError(error))
+    ({ data, error } = await hydrate(PUBLIC_PRODUCT_SELECT_LEGACY));
+  if (error) throw new Error(error.message);
+  const order = new Map(pageIds.map((id, index) => [id, index]));
+  const products = markPromotedProducts(
+    ((data ?? []) as ProductRow[]).map(toCartProduct),
+    promotedProductIds,
+  ).sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  const hasMore = offset + input.limit < ordered.length;
   return {
     products,
-    hasMore: rows.length > input.limit,
-    nextCursor:
-      rows.length > input.limit && lastProduct
-        ? encodeProductCursor(lastProduct, input.sort)
-        : null,
+    hasMore,
+    nextCursor: hasMore
+      ? Buffer.from(JSON.stringify({ afterId: pageIds.at(-1) })).toString(
+          "base64url",
+        )
+      : null,
   };
 }
 
-export async function getFavoriteMarketplaceProducts(locale = "az", userId: string) {
+export async function getFavoriteMarketplaceProducts(
+  locale = "az",
+  userId: string,
+) {
   const supabase = createSupabaseAdminClient();
   const { data: favorites } = await (supabase as any)
     .from("favorites")
@@ -658,7 +867,9 @@ export async function getFavoriteMarketplaceProducts(locale = "az", userId: stri
     return [];
   }
 
-  const favoriteOrder = new Map(productIds.map((productId, index) => [productId, index]));
+  const favoriteOrder = new Map(
+    productIds.map((productId, index) => [productId, index]),
+  );
   let { data, error } = await (supabase as any)
     .from("products")
     .select(PUBLIC_PRODUCT_SELECT)
@@ -742,7 +953,9 @@ async function getMarketplaceStoresUncached(
   );
 
   if (productsError && isMissingVariantSchemaError(productsError)) {
-    const fallback = await runStoreProductsQuery(PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY);
+    const fallback = await runStoreProductsQuery(
+      PUBLIC_PRODUCT_SELECT_NO_STORE_LEGACY,
+    );
     products = fallback.data;
     productsError = fallback.error;
   }
@@ -760,7 +973,8 @@ async function getMarketplaceStoresUncached(
   });
 
   const normalizedSearch = normalizeSearchValue(searchQuery);
-  const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
+  const { promotedStoreIds, promotedProductIds } =
+    await getActivePromotionMaps();
 
   const marketplaceStores = storeRows
     .map((store): MarketplaceStore => {
@@ -770,7 +984,7 @@ async function getMarketplaceStoresUncached(
         id: store.id,
         name: store.name,
         slug: store.slug,
-        description: store.description,
+        description: readPublicStoreDescription(store.description),
         aboutContent: readSetting(store.settings, "aboutContent"),
         address: readSetting(store.settings, "address"),
         phone: readSetting(store.settings, "phone"),
@@ -779,6 +993,11 @@ async function getMarketplaceStoresUncached(
         socialTiktok: readSetting(store.settings, "socialTiktok"),
         logoUrl: store.logo_url,
         coverUrl: store.cover_url,
+        storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+        featuredCategoryIds: readStringArraySetting(
+          store.settings,
+          "featuredCategoryIds",
+        ),
         productCount: storeProducts.length,
         sampleProducts: storeProducts
           .slice(0, 4)
@@ -790,7 +1009,10 @@ async function getMarketplaceStoresUncached(
               .filter((value): value is string => Boolean(value)),
           ),
         ),
-        customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
+        customStorefrontEnabled: readBooleanSetting(
+          store.settings,
+          "customStorefrontEnabled",
+        ),
       };
     })
     .filter((store) => {
@@ -823,26 +1045,46 @@ async function getMarketplaceStoresUncached(
   );
 }
 
-export async function getMarketplaceStores(input: {
-  locale?: string;
-  categoryId?: string;
-  searchQuery?: string;
-  limit?: number;
-  offset?: number;
-} = {}) {
+export async function getMarketplaceStores(
+  input: {
+    locale?: string;
+    categoryId?: string;
+    searchQuery?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+) {
   const locale = normalizeCacheLocale(input.locale);
-  const categoryId = input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
+  const categoryId =
+    input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
   const searchQuery = normalizeSearchValue(input.searchQuery ?? "");
-  const limit = Math.min(Math.max(Math.trunc(input.limit ?? 24), 1), MAX_PUBLIC_LIST_LIMIT);
-  const offset = Number.isFinite(input.offset) ? Math.max(0, Math.min(Math.trunc(input.offset!), 24000)) : 0;
+  const limit = Math.min(
+    Math.max(Math.trunc(input.limit ?? 24), 1),
+    MAX_PUBLIC_LIST_LIMIT,
+  );
+  const offset = Number.isFinite(input.offset)
+    ? Math.max(0, Math.min(Math.trunc(input.offset!), 24000))
+    : 0;
 
   if (searchQuery) {
-    return getMarketplaceStoresUncached(locale, categoryId, searchQuery, limit, offset);
+    return getMarketplaceStoresUncached(
+      locale,
+      categoryId,
+      searchQuery,
+      limit,
+      offset,
+    );
   }
 
   return publicCache(
     () => getMarketplaceStoresUncached(locale, categoryId, "", limit, offset),
-    ["marketplace-stores", locale, categoryId || "all", String(limit), String(offset)],
+    [
+      "marketplace-stores",
+      locale,
+      categoryId || "all",
+      String(limit),
+      String(offset),
+    ],
     {
       revalidate: CACHE_TTL.SHORT,
       tags: [
@@ -855,17 +1097,24 @@ export async function getMarketplaceStores(input: {
   )();
 }
 
-export async function getMarketplaceStoreCards(input: {
-  limit?: number;
-} = {}): Promise<MarketplaceStore[]> {
-  const limit = Math.min(Math.max(Math.trunc(input.limit ?? 16), 1), MAX_PUBLIC_LIST_LIMIT);
+export async function getMarketplaceStoreCards(
+  input: {
+    limit?: number;
+  } = {},
+): Promise<MarketplaceStore[]> {
+  const limit = Math.min(
+    Math.max(Math.trunc(input.limit ?? 16), 1),
+    MAX_PUBLIC_LIST_LIMIT,
+  );
 
   return publicCache(
     async () => {
       const supabase = createSupabaseAdminClient();
       const { data: stores, error: storesError } = await (supabase as any)
         .from("stores")
-        .select("id,name,slug,description,logo_url,cover_url,updated_at,settings")
+        .select(
+          "id,name,slug,description,logo_url,cover_url,updated_at,settings",
+        )
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -879,7 +1128,9 @@ export async function getMarketplaceStoreCards(input: {
       const productCounts = new Map<string, number>();
 
       if (storeIds.length > 0) {
-        const { data: productRows, error: productsError } = await (supabase as any)
+        const { data: productRows, error: productsError } = await (
+          supabase as any
+        )
           .from("products")
           .select("store_id")
           .eq("status", "active")
@@ -890,14 +1141,20 @@ export async function getMarketplaceStoreCards(input: {
           throw new Error(productsError.message);
         }
 
-        for (const product of (productRows ?? []) as Array<{ store_id: string | null }>) {
+        for (const product of (productRows ?? []) as Array<{
+          store_id: string | null;
+        }>) {
           if (product.store_id) {
-            productCounts.set(product.store_id, (productCounts.get(product.store_id) ?? 0) + 1);
+            productCounts.set(
+              product.store_id,
+              (productCounts.get(product.store_id) ?? 0) + 1,
+            );
           }
         }
       }
 
-      const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
+      const { promotedStoreIds, promotedProductIds } =
+        await getActivePromotionMaps();
 
       return sortPromotedFirst(
         markPromotedStores(
@@ -905,7 +1162,7 @@ export async function getMarketplaceStoreCards(input: {
             id: store.id,
             name: store.name,
             slug: store.slug,
-            description: store.description,
+            description: readPublicStoreDescription(store.description),
             aboutContent: readSetting(store.settings, "aboutContent"),
             address: readSetting(store.settings, "address"),
             phone: readSetting(store.settings, "phone"),
@@ -914,11 +1171,19 @@ export async function getMarketplaceStoreCards(input: {
             socialTiktok: readSetting(store.settings, "socialTiktok"),
             logoUrl: store.logo_url,
             coverUrl: store.cover_url,
+            storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+            featuredCategoryIds: readStringArraySetting(
+              store.settings,
+              "featuredCategoryIds",
+            ),
             updatedAt: store.updated_at ?? null,
             productCount: productCounts.get(store.id) ?? 0,
             sampleProducts: [],
             categoryIds: [],
-            customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
+            customStorefrontEnabled: readBooleanSetting(
+              store.settings,
+              "customStorefrontEnabled",
+            ),
           })),
           promotedStoreIds,
           promotedProductIds,
@@ -928,7 +1193,11 @@ export async function getMarketplaceStoreCards(input: {
     ["marketplace-store-cards", String(limit)],
     {
       revalidate: CACHE_TTL.SHORT,
-      tags: [CACHE_TAGS.marketplaceStores, CACHE_TAGS.products, CACHE_TAGS.homepage],
+      tags: [
+        CACHE_TAGS.marketplaceStores,
+        CACHE_TAGS.products,
+        CACHE_TAGS.homepage,
+      ],
     },
   )();
 }
@@ -941,7 +1210,9 @@ async function getMarketplaceStoreBySlugUncached(input: {
   const supabase = createSupabaseAdminClient();
   const { data: store, error: storeError } = await (supabase as any)
     .from("stores")
-    .select("id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings")
+    .select(
+      "id,owner_id,name,slug,description,logo_url,cover_url,updated_at,settings",
+    )
     .eq("slug", input.slug)
     .eq("status", "active")
     .maybeSingle();
@@ -974,8 +1245,11 @@ async function getMarketplaceStoreBySlugUncached(input: {
     return productQuery.limit(DEFAULT_PRODUCT_PAGE_LIMIT + 1);
   }
 
-  let { data: products, error: productsError, count } =
-    await runStorePageProductsQuery(PUBLIC_PRODUCT_SELECT_NO_STORE);
+  let {
+    data: products,
+    error: productsError,
+    count,
+  } = await runStorePageProductsQuery(PUBLIC_PRODUCT_SELECT_NO_STORE);
 
   if (productsError && isMissingVariantSchemaError(productsError)) {
     const fallback = await runStorePageProductsQuery(
@@ -991,7 +1265,9 @@ async function getMarketplaceStoreBySlugUncached(input: {
   }
 
   const productRows = (products ?? []) as ProductRow[];
-  const { data: categoryRows, error: categoryRowsError } = await (supabase as any)
+  const { data: categoryRows, error: categoryRowsError } = await (
+    supabase as any
+  )
     .from("products")
     .select("category_id")
     .eq("store_id", store.id)
@@ -1001,8 +1277,11 @@ async function getMarketplaceStoreBySlugUncached(input: {
   const pageProducts = productRows
     .slice(0, DEFAULT_PRODUCT_PAGE_LIMIT)
     .map((product) => toCartProduct(product));
-  const { promotedStoreIds, promotedProductIds } = await getActivePromotionMaps();
-  const promotedPageProducts = markPromotedProducts(pageProducts, promotedProductIds);
+  const { promotedStoreIds, promotedProductIds } =
+    await getActivePromotionMaps();
+  const promotedPageProducts = sortPromotedFirst(
+    markPromotedProducts(pageProducts, promotedProductIds),
+  );
   const lastProduct = promotedPageProducts.at(-1);
 
   return {
@@ -1010,12 +1289,18 @@ async function getMarketplaceStoreBySlugUncached(input: {
     ownerId: store.owner_id ?? null,
     name: store.name,
     slug: store.slug,
-    description: store.description,
+    description: readPublicStoreDescription(store.description),
     aboutContent: readSetting(store.settings, "aboutContent"),
     heroTitle: readSetting(store.settings, "heroTitle"),
     heroSubtitle: readSetting(store.settings, "heroSubtitle"),
-    bannerPositionX: typeof store.settings?.bannerPositionX === "number" ? store.settings.bannerPositionX : 50,
-    bannerPositionY: typeof store.settings?.bannerPositionY === "number" ? store.settings.bannerPositionY : 50,
+    bannerPositionX:
+      typeof store.settings?.bannerPositionX === "number"
+        ? store.settings.bannerPositionX
+        : 50,
+    bannerPositionY:
+      typeof store.settings?.bannerPositionY === "number"
+        ? store.settings.bannerPositionY
+        : 50,
     socialInstagram: readSetting(store.settings, "socialInstagram"),
     socialTiktok: readSetting(store.settings, "socialTiktok"),
     address: readSetting(store.settings, "address"),
@@ -1023,6 +1308,11 @@ async function getMarketplaceStoreBySlugUncached(input: {
     whatsappPhone: readSetting(store.settings, "whatsappPhone"),
     logoUrl: store.logo_url,
     coverUrl: store.cover_url,
+    storefrontHeroUrl: readSetting(store.settings, "storefrontHeroUrl"),
+    featuredCategoryIds: readStringArraySetting(
+      store.settings,
+      "featuredCategoryIds",
+    ),
     updatedAt: store.updated_at ?? null,
     productCount: count ?? promotedPageProducts.length,
     sampleProducts: promotedPageProducts,
@@ -1033,13 +1323,19 @@ async function getMarketplaceStoreBySlugUncached(input: {
         : null,
     categoryIds: Array.from(
       new Set(
-        (categoryRowsError ? productRows : ((categoryRows ?? []) as Array<{ category_id: string | null }>))
+        (categoryRowsError
+          ? productRows
+          : ((categoryRows ?? []) as Array<{ category_id: string | null }>)
+        )
           .map((product) => product.category_id)
           .filter((value): value is string => Boolean(value)),
       ),
     ),
     isPromoted: promotedStoreIds.has(store.id),
-    customStorefrontEnabled: readBooleanSetting(store.settings, "customStorefrontEnabled"),
+    customStorefrontEnabled: readBooleanSetting(
+      store.settings,
+      "customStorefrontEnabled",
+    ),
   } satisfies MarketplaceStore;
 }
 
@@ -1050,7 +1346,8 @@ export async function getMarketplaceStoreBySlug(input: {
 }) {
   const slug = input.slug.trim().toLowerCase();
   const locale = normalizeCacheLocale(input.locale);
-  const categoryId = input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
+  const categoryId =
+    input.categoryId && isUuid(input.categoryId) ? input.categoryId : "";
 
   if (!/^[a-z0-9-]{1,120}$/.test(slug)) {
     return null;
@@ -1136,14 +1433,43 @@ async function getMarketplaceProductByIdUncached(input: {
   const row = data as ProductRow & {
     stores: StoreRow;
   };
-  const { count: storeProductCount } = await (supabase as any)
-    .from("products")
-    .select("id", {
-      count: "exact",
-      head: true,
-    })
-    .eq("store_id", row.stores.id)
-    .eq("status", "active");
+  const [
+    { count: storeProductCount },
+    categoryResult,
+    { count: favoriteCount },
+  ] = await Promise.all([
+    (supabase as any)
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", row.stores.id)
+      .eq("status", "active"),
+    row.category_id
+      ? (supabase as any)
+          .from("categories")
+          .select("id,name,slug,parent_id")
+          .eq("id", row.category_id)
+          .eq("is_active", true)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    (createSupabaseAdminClient() as any)
+      .from("favorites")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", row.id),
+  ]);
+  const categoryRow = categoryResult.data as {
+    id: string;
+    name: string;
+    slug: string;
+    parent_id: string | null;
+  } | null;
+  const parentResult = categoryRow?.parent_id
+    ? await (supabase as any)
+        .from("categories")
+        .select("id,name,slug")
+        .eq("id", categoryRow.parent_id)
+        .eq("is_active", true)
+        .maybeSingle()
+    : { data: null };
 
   return {
     product: {
@@ -1164,12 +1490,35 @@ async function getMarketplaceProductByIdUncached(input: {
       whatsappPhone: readSetting(row.stores.settings, "whatsappPhone"),
       logoUrl: row.stores.logo_url,
       coverUrl: row.stores.cover_url,
+      storefrontHeroUrl: readSetting(row.stores.settings, "storefrontHeroUrl"),
+      featuredCategoryIds: readStringArraySetting(
+        row.stores.settings,
+        "featuredCategoryIds",
+      ),
       updatedAt: row.stores.updated_at ?? null,
       productCount: storeProductCount ?? 0,
       sampleProducts: [],
       categoryIds: row.category_id ? [row.category_id] : [],
-      customStorefrontEnabled: readBooleanSetting(row.stores.settings, "customStorefrontEnabled"),
+      customStorefrontEnabled: readBooleanSetting(
+        row.stores.settings,
+        "customStorefrontEnabled",
+      ),
     },
+    favoriteCount: favoriteCount ?? 0,
+    category: categoryRow
+      ? {
+          id: categoryRow.id,
+          name: categoryRow.name,
+          slug: categoryRow.slug,
+          parent: parentResult.data
+            ? {
+                id: String(parentResult.data.id),
+                name: String(parentResult.data.name),
+                slug: String(parentResult.data.slug),
+              }
+            : null,
+        }
+      : null,
   };
 }
 
@@ -1219,7 +1568,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
   let { data, error } = await (supabase as any)
     .from("products")
     .select(
-      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
+      "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_options(id,name,type,is_enabled,sort_order,product_option_values(id,value,color_hex,sort_order)),product_variants(id,name,value,price_delta_amount,stock_quantity,combination,sku,price_override_amount,is_enabled),stores!inner(name,slug,status)",
     )
     .eq("status", "active")
     .eq("stores.status", "active")
@@ -1229,7 +1578,7 @@ export async function getCartProducts(productIds: string[], locale = "az") {
     const fallback = await (supabase as any)
       .from("products")
       .select(
-        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
+        "id,store_id,slug,created_at,name,description,name_translations,description_translations,price_amount,discount_amount,metadata,stock_quantity,deposit_enabled,deposit_type,deposit_value,product_images(url,is_primary,sort_order),product_variants(name,value,price_delta_amount,stock_quantity),stores!inner(name,slug,status)",
       )
       .eq("status", "active")
       .eq("stores.status", "active")

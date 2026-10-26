@@ -83,6 +83,18 @@ async function getSiteSearchOverrides() {
   );
 }
 
+async function hasPublicSearchResult(term: string) {
+  const supabase = createSupabaseAdminClient();
+  const escaped = term.replace(/[%_]/g, "\\$&");
+  const [{ data: products }, { data: stores }] = await Promise.all([
+    (supabase as any).from("products").select("id").eq("status", "active")
+      .or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`).limit(1),
+    (supabase as any).from("stores").select("id").eq("status", "active")
+      .or(`name.ilike.%${escaped}%,slug.ilike.%${escaped}%`).limit(1),
+  ]);
+  return Boolean(products?.length || stores?.length);
+}
+
 const getCachedPopularMarketplaceSearches = publicCache(
   async () => {
     const [overrides, automaticTerms] = await Promise.all([
@@ -92,7 +104,7 @@ const getCachedPopularMarketplaceSearches = publicCache(
 
     const seen = new Set<string>();
 
-    return [...overrides, ...automaticTerms.map((item) => item.term)].filter((term) => {
+    const candidates = [...overrides, ...automaticTerms.map((item) => item.term)].filter((term) => {
       const key = term.toLocaleLowerCase("az-AZ");
 
       if (seen.has(key)) {
@@ -101,7 +113,9 @@ const getCachedPopularMarketplaceSearches = publicCache(
 
       seen.add(key);
       return true;
-    }).slice(0, 4);
+    }).slice(0, 12);
+    const resultChecks = await Promise.all(candidates.map(hasPublicSearchResult));
+    return candidates.filter((_, index) => resultChecks[index]).slice(0, 4);
   },
   ["public-popular-marketplace-searches"],
   {

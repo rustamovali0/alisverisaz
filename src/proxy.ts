@@ -3,10 +3,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { routing } from "@/i18n/routing";
 import {
   getSharedCookieDomain,
+  getStoreRootDomain,
   getStoreSubdomainSlug,
+  isValidCustomDomain,
   isReservedStoreSubdomain,
   isValidStoreSlug,
+  normalizeHostname,
 } from "@/lib/config/domains";
+import { clientEnv } from "@/lib/config/env.client";
+import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlagsForProxy } from "@/lib/platform/system-settings-proxy";
 import { updateSession } from "@/lib/supabase/middleware";
 
@@ -151,8 +156,15 @@ function createLocalizedRewrite(
   locale: string,
   shouldSetLocaleCookie: boolean,
   currentPathHeader = pathname,
+  virtualStoreSlug?: string | null,
 ) {
   const url = request.nextUrl.clone();
+  // Behind nginx the public request is HTTPS while the standalone Next server
+  // listens on local HTTP. Keep internal rewrites on HTTP so Next does not try
+  // to open a TLS connection to its own plain-text port.
+  if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+    url.protocol = "http:";
+  }
 
   if (
     (pathname === "/radmin" || pathname.startsWith("/radmin/")) &&
@@ -171,12 +183,21 @@ function createLocalizedRewrite(
   requestHeaders.set("X-NEXT-INTL-LOCALE", locale);
   requestHeaders.set("x-current-path", currentPathHeader);
   requestHeaders.set("x-current-url", `${currentPathHeader}${request.nextUrl.search}`);
+  if (virtualStoreSlug) {
+    const virtualHost = `${virtualStoreSlug}.${getStoreRootDomain()}`;
+    requestHeaders.set("host", virtualHost);
+    requestHeaders.set("x-forwarded-host", virtualHost);
+    requestHeaders.set("x-custom-domain", normalizeHostname(request.headers.get("host")));
+  }
 
   const response = NextResponse.rewrite(url, {
     request: {
       headers: requestHeaders,
     },
   });
+  if (request.method === "GET" || request.method === "HEAD") {
+    response.headers.set("Cache-Control", "private, max-age=0, must-revalidate");
+  }
   if (shouldSetLocaleCookie) {
     setLocaleCookie(response, locale, request.headers.get("host"));
   }
@@ -194,19 +215,115 @@ function createCleanLocaleRedirect(request: NextRequest, pathname: string, local
 }
 
 function resolveSubdomainPath(pathname: string, storeSlug: string) {
-  if (pathname === "/" || pathname === `/${storeSlug}` || pathname === "/products") {
+  if (pathname === "/" || pathname === `/${storeSlug}`) {
     return `/${storeSlug}`;
   }
 
-  if (pathname.startsWith("/products/")) {
+  if (
+    pathname === "/products" ||
+    pathname === "/contact" ||
+    pathname === "/cart" ||
+    pathname.startsWith("/products/")
+  ) {
     return `/${storeSlug}${pathname}`;
   }
 
-  if (pathname.startsWith(`/${storeSlug}/products/`)) {
+  if (pathname.startsWith(`/${storeSlug}/`)) {
     return pathname;
   }
 
   return pathname;
+}
+
+const customDomainCache = new Map<string, { slug: string | null; expiresAt: number }>();
+const storeSlugCache = new Map<string, { exists: boolean; expiresAt: number }>();
+
+async function storeSlugExists(slug: string) {
+  const cached = storeSlugCache.get(slug);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.exists;
+  }
+
+  if (!serverEnv.supabaseSecretKey) {
+    return true;
+  }
+
+  const url = new URL("/rest/v1/stores", clientEnv.supabaseUrl);
+  url.searchParams.set("select", "id");
+  url.searchParams.set("slug", `eq.${slug}`);
+  url.searchParams.set("limit", "1");
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        apikey: serverEnv.supabaseSecretKey,
+        authorization: `Bearer ${serverEnv.supabaseSecretKey}`,
+      },
+      cache: "no-store",
+    });
+    const rows = response.ok ? await response.json() as Array<{ id?: string }> : [];
+    const exists = rows.length > 0;
+    storeSlugCache.set(slug, { exists, expiresAt: Date.now() + 60_000 });
+    return exists;
+  } catch {
+    return true;
+  }
+}
+
+function createNotFoundResponse() {
+  return new NextResponse(
+    '<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Səhifə tapılmadı | Alışveriş.az</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font-family:Inter,system-ui,sans-serif}.card{max-width:520px;margin:24px;padding:32px;text-align:center;border:1px solid #e2e8f0;border-radius:20px;background:#fff}h1{margin:0 0 10px;font-size:28px}p{margin:0 0 22px;color:#64748b;line-height:1.6}a{display:inline-flex;min-height:44px;align-items:center;padding:0 18px;border-radius:12px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700}</style></head><body><main class="card"><h1>Səhifə tapılmadı</h1><p>Axtardığınız səhifə mövcud deyil və ya silinib.</p><a href="/">Ana səhifəyə qayıt</a></main></body></html>',
+    { status: 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "private, max-age=0, must-revalidate" } },
+  );
+}
+
+function createMarketplaceHomeRedirect(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.protocol = "https:";
+  url.hostname = getStoreRootDomain();
+  url.port = "";
+  url.pathname = "/";
+  url.search = "";
+  url.hash = "";
+
+  return NextResponse.redirect(url, 308);
+}
+
+async function getCustomDomainStoreSlug(hostname: string | null | undefined) {
+  const host = normalizeHostname(hostname);
+
+  if (!isValidCustomDomain(host) || !serverEnv.supabaseSecretKey) {
+    return null;
+  }
+
+  const cached = customDomainCache.get(host);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.slug;
+  }
+
+  const url = new URL("/rest/v1/stores", clientEnv.supabaseUrl);
+  url.searchParams.set("select", "slug");
+  url.searchParams.set("settings->>customDomain", `eq.${host}`);
+  url.searchParams.set("settings->>customStorefrontEnabled", "eq.true");
+  url.searchParams.set("limit", "1");
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        apikey: serverEnv.supabaseSecretKey,
+        authorization: `Bearer ${serverEnv.supabaseSecretKey}`,
+      },
+      cache: "no-store",
+    });
+    const rows = response.ok ? await response.json() as Array<{ slug?: string }> : [];
+    const slug = rows[0]?.slug && isValidStoreSlug(rows[0].slug) ? rows[0].slug : null;
+    customDomainCache.set(host, { slug, expiresAt: Date.now() + 60_000 });
+
+    return slug;
+  } catch {
+    customDomainCache.set(host, { slug: null, expiresAt: Date.now() + 10_000 });
+    return null;
+  }
 }
 
 function resolveStorePath(pathname: string) {
@@ -239,7 +356,44 @@ export async function proxy(request: NextRequest) {
     return createCleanLocaleRedirect(request, visiblePathname, safeLocale);
   }
 
-  const storeSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
+  const nativeStoreSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
+  const customDomainStoreSlug = nativeStoreSubdomainSlug
+    ? null
+    : await getCustomDomainStoreSlug(request.headers.get("host"));
+  const storeSubdomainSlug = nativeStoreSubdomainSlug ?? customDomainStoreSlug;
+  const firstPathSegment = visiblePathname.split("/").filter(Boolean)[0] ?? "";
+  const possibleStoreSlug = storeSubdomainSlug ?? firstPathSegment;
+  if (
+    possibleStoreSlug &&
+    isValidStoreSlug(possibleStoreSlug) &&
+    !isReservedStoreSubdomain(possibleStoreSlug) &&
+    !(await storeSlugExists(possibleStoreSlug))
+  ) {
+    if (nativeStoreSubdomainSlug) {
+      return createMarketplaceHomeRedirect(request);
+    }
+
+    return createNotFoundResponse();
+  }
+  if (
+    !storeSubdomainSlug &&
+    firstPathSegment &&
+    isValidStoreSlug(firstPathSegment) &&
+    !isReservedStoreSubdomain(firstPathSegment) &&
+    await storeSlugExists(firstPathSegment)
+  ) {
+    const storePrefix = `/${firstPathSegment}`;
+    const isSupportedStorefrontPath =
+      visiblePathname === storePrefix ||
+      visiblePathname === `${storePrefix}/products` ||
+      visiblePathname === `${storePrefix}/contact` ||
+      visiblePathname === `${storePrefix}/cart` ||
+      visiblePathname.startsWith(`${storePrefix}/products/`);
+
+    if (!isSupportedStorefrontPath) {
+      return createMarketplaceHomeRedirect(request);
+    }
+  }
   const effectivePathname = storeSubdomainSlug
     ? resolveSubdomainPath(visiblePathname, storeSubdomainSlug)
     : resolveStorePath(visiblePathname);
@@ -255,6 +409,7 @@ export async function proxy(request: NextRequest) {
     safeLocale,
     shouldSetLocaleCookie,
     visiblePathname,
+    customDomainStoreSlug,
   );
 
   if (!needsSessionCheck(effectivePathname)) {

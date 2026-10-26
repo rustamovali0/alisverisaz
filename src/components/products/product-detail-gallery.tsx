@@ -18,9 +18,10 @@ type ProductDetailGalleryProps = {
   product: CartProduct;
   productName: string;
   viewerRole?: AuthRole | null;
+  compact?: boolean;
 };
 
-export function ProductBackButton() {
+export function ProductBackButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
 
   return (
@@ -28,10 +29,14 @@ export function ProductBackButton() {
       type="button"
       variant="outline"
       onClick={() => router.back()}
-      className="inline-flex h-10 rounded-lg border-slate-200 bg-white px-3 text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      className={cn(
+        "inline-flex border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
+        compact ? "size-9 rounded-full p-0" : "h-9 self-start rounded-lg px-3 sm:h-10",
+      )}
+      aria-label="Geri"
     >
-      <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-      Geri
+      <ArrowLeft className={cn("size-4", !compact && "mr-2")} aria-hidden="true" />
+      {!compact ? "Geri" : null}
     </Button>
   );
 }
@@ -42,6 +47,7 @@ export function ProductDetailGallery({
   product,
   productName,
   viewerRole,
+  compact = false,
 }: ProductDetailGalleryProps) {
   const galleryImages = useMemo(() => {
     if (images.length > 0) {
@@ -152,23 +158,27 @@ export function ProductDetailGallery({
 
   return (
     <>
-      <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900">
+      <div className={cn("min-w-0 overflow-hidden border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900", compact ? "rounded-2xl" : "rounded-[24px]")}>
         <button
           type="button"
           disabled={!activeImage}
           onClick={() => activeImage && setIsOpen(true)}
-          className="group relative block aspect-square w-full bg-slate-50 text-left dark:bg-slate-950/45"
+          className={cn("group relative block w-full overflow-hidden bg-slate-100 text-left dark:bg-slate-950/45", compact ? "aspect-[3/2] sm:aspect-square" : "aspect-[4/3]")}
           aria-label="Şəkli böyüt"
         >
           {activeImage ? (
-            <img
-              src={activeImage.url}
-              alt={productName}
-              className="h-full w-full object-contain p-4 transition-transform duration-300 ease-out group-hover:scale-[1.015] motion-reduce:transition-none sm:p-6"
-            />
+            <>
+              <img src={activeImage.url} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-20 blur-2xl" aria-hidden="true" />
+              <span className="absolute inset-0 bg-white/55 backdrop-blur-[2px] dark:bg-slate-950/55" aria-hidden="true" />
+              <img
+                src={activeImage.url}
+                alt={productName}
+                className={cn("relative z-10 h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none", compact ? "p-3 sm:p-5" : "p-3 sm:p-5")}
+              />
+            </>
           ) : (
             <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-blue-600 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-blue-300">
+              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-orange-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-orange-300">
                 <ShoppingCart className="size-10 stroke-[2.4]" aria-hidden="true" />
               </span>
             </div>
@@ -183,7 +193,7 @@ export function ProductDetailGallery({
                 onClick={() => setActiveIndex(index)}
                 className={cn(
                   "size-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:aspect-square sm:size-auto dark:border-slate-800 dark:bg-slate-950/45",
-                  index === activeIndex ? "border-blue-600 ring-2 ring-blue-500/20" : "",
+                  index === activeIndex ? "border-orange-500 ring-2 ring-orange-500/20" : "",
                 )}
                 aria-label={`${index + 1}. şəkil`}
               >
@@ -233,13 +243,15 @@ export function ProductDetailGallery({
                   </p>
                 ) : null}
               </div>
-              <AddToCartButton
-                product={product}
-                viewerRole={viewerRole}
-                selectionReady={cartSelectionReady}
-                disabled={product.stockQuantity <= 0}
-                className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
-              />
+              {viewerRole !== "seller" ? (
+                <AddToCartButton
+                  product={product}
+                  viewerRole={viewerRole}
+                  selectionReady={cartSelectionReady}
+                  disabled={product.stockQuantity <= 0}
+                  className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
+                />
+              ) : null}
               <button
                 type="button"
                 className="grid size-12 shrink-0 place-items-center rounded-xl border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

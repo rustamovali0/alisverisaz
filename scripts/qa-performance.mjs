@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = "https://www.alisveris.az";
+const DEFAULT_BASE_URL = "https://alisveris.az";
 const SAMPLE_COUNT = 5;
 
 const checks = [
@@ -7,11 +7,6 @@ const checks = [
   { path: "/stores", budgetMs: 900 },
   { path: "/cart", budgetMs: 1100 },
   { path: "/login", budgetMs: 900 },
-  { path: "/store/ali-rustamov", budgetMs: 1100 },
-  {
-    path: "/store/ali-rustamov/products/kisi-ucun-cins-salvar-b2ef04ab",
-    budgetMs: 1100,
-  },
 ];
 
 function percentile(samples, p) {
@@ -34,6 +29,7 @@ async function measure(baseUrl, check) {
     const startedAt = performance.now();
     const response = await fetch(url, {
       redirect: "manual",
+      signal: AbortSignal.timeout(30000),
       headers: {
         "user-agent": "alisveris-performance-check/1.0",
       },
@@ -48,7 +44,7 @@ async function measure(baseUrl, check) {
 
   const medianMs = percentile(samples, 0.5);
   const p90Ms = percentile(samples, 0.9);
-  const okStatus = statuses.every((status) => (status >= 200 && status < 400) || status === 404);
+  const okStatus = statuses.every((status) => status === 200);
   const okBudget = medianMs <= check.budgetMs;
 
   return {
@@ -65,6 +61,20 @@ async function measure(baseUrl, check) {
 async function main() {
   const baseUrl = process.argv[2] ?? DEFAULT_BASE_URL;
   const results = [];
+  // Discover a current product instead of treating stale sample URLs/404s as success.
+  const response = await fetch(new URL("/api/marketplace/products?limit=1", baseUrl), {
+    signal: AbortSignal.timeout(30000),
+  });
+  if (!response.ok) throw new Error(`Product discovery failed: ${response.status}`);
+  const { products } = await response.json();
+  const product = products?.[0];
+  if (product?.storeSlug && product?.slug) {
+    const storePath = `/store/${encodeURIComponent(product.storeSlug)}`;
+    checks.push({ path: storePath, budgetMs: 1100 });
+    checks.push({ path: `${storePath}/products/${encodeURIComponent(product.slug)}`, budgetMs: 1100 });
+  } else {
+    console.warn("No public product available; store/product timing checks skipped.");
+  }
 
   for (const check of checks) {
     results.push(await measure(baseUrl, check));

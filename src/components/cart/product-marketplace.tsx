@@ -1,4 +1,5 @@
 "use client";
+import type { CatalogFilters } from "@/lib/catalog/filters";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { productQueryOptions } from "@/lib/query/product-options";
 import dynamic from "next/dynamic";
@@ -9,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type MouseEvent,
 } from "react";
 import { useTranslations } from "next-intl";
@@ -24,8 +26,15 @@ import { PublicStoreLocationSection } from "@/components/locations/public-store-
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { StoreWhatsAppButton } from "@/components/store/store-whatsapp-button";
-const StoreBrandingQuickEdit = dynamic(() => import("@/components/store/store-branding-quick-edit").then((module) => module.StoreBrandingQuickEdit));
-import { InstagramBrandIcon, TikTokIcon } from "@/components/icons/social-icons";
+const StoreBrandingQuickEdit = dynamic(() =>
+  import("@/components/store/store-branding-quick-edit").then(
+    (module) => module.StoreBrandingQuickEdit,
+  ),
+);
+import {
+  InstagramBrandIcon,
+  TikTokIcon,
+} from "@/components/icons/social-icons";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -60,7 +69,6 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
-  Star,
   Store,
   Truck,
   Utensils,
@@ -77,7 +85,33 @@ type MarketplaceLabels = {
   cart: string;
 };
 
+function updateFilterQuery(key: string, value: string | boolean) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (value === "" || value === false) url.searchParams.delete(key);
+  else url.searchParams.set(key, value === true ? "1" : value);
+  window.history.replaceState(
+    null,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
+function readFilterQuery() {
+  if (typeof window === "undefined") return null;
+  const query = new URL(window.location.href).searchParams;
+  return {
+    color: query.get("color") ?? "",
+    size: query.get("size") ?? "",
+    minPrice: query.get("minPrice") ?? "",
+    maxPrice: query.get("maxPrice") ?? "",
+    inStockOnly: query.get("inStock") === "1",
+  };
+}
+
 type ProductMarketplaceProps = {
+  initialFilters?: CatalogFilters;
+  initialFilterError?: string;
   products: CartProduct[];
   nextCursor?: string | null;
   hasMore?: boolean;
@@ -105,6 +139,8 @@ type StorefrontProps = {
   isStoreOwner?: boolean;
   legacyLayout?: boolean;
   storeSubdomainSlug?: string | null;
+  productsOnly?: boolean;
+  contactOnly?: boolean;
 };
 
 const DEFAULT_MARKETPLACE_BANNER_URL = "/auth/auth-banner.webp";
@@ -122,11 +158,20 @@ type FooterProps = {
   };
 };
 
-function StoreLogo({ store, className }: { store: MarketplaceStore; className?: string }) {
+function StoreLogo({
+  store,
+  className,
+}: {
+  store: MarketplaceStore;
+  className?: string;
+}) {
   return store.logoUrl ? (
-    <img
+    <OptimizedImage
       src={store.logoUrl}
       alt={store.name}
+      width={160}
+      height={160}
+      sizes="(max-width: 640px) 64px, 112px"
       className={cn("rounded-lg border bg-background object-cover", className)}
     />
   ) : (
@@ -141,26 +186,47 @@ function StoreLogo({ store, className }: { store: MarketplaceStore; className?: 
   );
 }
 
-function StoreHeroCover({ store }: { store: MarketplaceStore }) {
+function StoreHeroCover({
+  store,
+  isolated = false,
+}: {
+  store: MarketplaceStore;
+  isolated?: boolean;
+}) {
   const [hasError, setHasError] = useState(false);
-  const coverUrl = store.coverUrl || DEFAULT_MARKETPLACE_BANNER_URL;
+  const coverUrl =
+    (isolated ? store.storefrontHeroUrl : null) ||
+    store.coverUrl ||
+    DEFAULT_MARKETPLACE_BANNER_URL;
 
   if (hasError) {
     return (
       <div className="grid h-full w-full place-items-center bg-[linear-gradient(135deg,#eff6ff,#f8fafc)] dark:bg-[linear-gradient(135deg,#111827,#020617)]">
-        <Store className="size-12 text-blue-300 dark:text-blue-500/60" aria-hidden="true" />
+        <Store
+          className="size-12 text-blue-300 dark:text-blue-500/60"
+          aria-hidden="true"
+        />
       </div>
     );
   }
 
   return (
-    <img
+    <OptimizedImage
       src={coverUrl}
       alt={store.name}
-      style={{ objectPosition: `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%` }}
+      fill
+      sizes="(max-width: 1024px) 100vw, 60vw"
+      fetchPriority="high"
+      style={
+        {
+          "--store-banner-position": `${store.bannerPositionX ?? 50}% ${store.bannerPositionY ?? 50}%`,
+        } as CSSProperties
+      }
       className={cn(
-        "h-full w-full object-cover object-center",
-        store.coverUrl ? "bg-slate-950" : "",
+        "h-full w-full object-contain object-top sm:object-cover sm:object-[var(--store-banner-position)]",
+        coverUrl !== DEFAULT_MARKETPLACE_BANNER_URL
+          ? "bg-slate-100 dark:bg-slate-950"
+          : "",
       )}
       onError={() => setHasError(true)}
     />
@@ -172,9 +238,16 @@ function getStickyScrollOffset() {
     return DEFAULT_STICKY_SCROLL_OFFSET;
   }
 
-  const header = document.querySelector<HTMLElement>("[data-storefront-header]");
+  const header = document.querySelector<HTMLElement>(
+    "[data-storefront-header]",
+  );
 
-  return Math.max(header?.offsetHeight ?? DEFAULT_STICKY_SCROLL_OFFSET, DEFAULT_STICKY_SCROLL_OFFSET) + 18;
+  return (
+    Math.max(
+      header?.offsetHeight ?? DEFAULT_STICKY_SCROLL_OFFSET,
+      DEFAULT_STICKY_SCROLL_OFFSET,
+    ) + 18
+  );
 }
 
 function scrollToPageSection(sectionId: string, updateHash = false) {
@@ -188,7 +261,10 @@ function scrollToPageSection(sectionId: string, updateHash = false) {
     return;
   }
 
-  const top = section.getBoundingClientRect().top + window.scrollY - getStickyScrollOffset();
+  const top =
+    section.getBoundingClientRect().top +
+    window.scrollY -
+    getStickyScrollOffset();
 
   window.scrollTo({
     top: Math.max(top, 0),
@@ -198,7 +274,11 @@ function scrollToPageSection(sectionId: string, updateHash = false) {
   if (updateHash) {
     const url = new URL(window.location.href);
     url.hash = sectionId;
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }
 }
 
@@ -244,7 +324,10 @@ function scrollToPageTop(updateUrl?: string) {
   }
 }
 
-function normalizeStoreSocialHref(kind: "instagram" | "tiktok", value?: string | null) {
+function normalizeStoreSocialHref(
+  kind: "instagram" | "tiktok",
+  value?: string | null,
+) {
   const cleanValue = value?.trim();
 
   if (!cleanValue) {
@@ -267,25 +350,46 @@ export function CustomStorefrontHeader({
   storeHomeHref,
   searchQuery,
   onNavigateSection,
+  storeSubdomainSlug,
+  isolatedStorefront = false,
 }: {
   store: MarketplaceStore;
   storeHomeHref: string;
   searchQuery?: string;
   onNavigateSection?: (sectionId: string) => void;
+  storeSubdomainSlug?: string | null;
+  isolatedStorefront?: boolean;
 }) {
   const storefront = useTranslations("storefront");
+  const cartHref = isolatedStorefront
+    ? `${storeHomeHref === "/" ? "" : storeHomeHref}/cart`
+    : "/cart";
   const { profile } = useClientAuthProfileState();
   const isAuthenticated = profile.status === "authenticated";
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const aboutContent = getStoreAboutContent(store);
   const navItems = [
     { href: storeHomeHref, label: storefront("home") },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#products`, label: storefront("products") },
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`, label: storefront("categories") },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}/products`,
+      label: storefront("products"),
+    },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}#store-categories`,
+      label: storefront("categories"),
+    },
     ...(aboutContent
-      ? [{ href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`, label: storefront("about") }]
+      ? [
+          {
+            href: `${storeHomeHref === "/" ? "" : storeHomeHref}#about`,
+            label: storefront("about"),
+          },
+        ]
       : []),
-    { href: `${storeHomeHref === "/" ? "" : storeHomeHref}#contact`, label: storefront("contact") },
+    {
+      href: `${storeHomeHref === "/" ? "" : storeHomeHref}/contact`,
+      label: storefront("contact"),
+    },
   ];
   const socialLinks = [
     {
@@ -303,17 +407,32 @@ export function CustomStorefrontHeader({
   ].filter((item) => item.href);
   const iconButtonClass =
     "group grid size-12 shrink-0 place-items-center rounded-xl border border-transparent bg-transparent p-0 text-slate-950 shadow-none transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 md:hover:!border-transparent md:hover:!bg-transparent md:hover:text-blue-600 md:hover:shadow-none dark:border-transparent dark:text-white dark:md:hover:!border-transparent dark:md:hover:text-blue-300 [&_svg]:!size-8";
-  const storefrontIconClass = "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
+  const storefrontIconClass =
+    "!size-8 min-h-8 min-w-8 stroke-[2.15] transition-transform duration-200 md:group-hover:scale-105";
 
   useEffect(() => {
+    let frameId = 0;
+
     function updateHeaderSearchVisibility() {
-      setShowHeaderSearch(window.scrollY > 160);
+      if (frameId) return;
+
+      frameId = window.requestAnimationFrame(() => {
+        frameId = 0;
+        setShowHeaderSearch((isVisible) =>
+          isVisible ? window.scrollY > 80 : window.scrollY > 200,
+        );
+      });
     }
 
     updateHeaderSearchVisibility();
-    window.addEventListener("scroll", updateHeaderSearchVisibility, { passive: true });
+    window.addEventListener("scroll", updateHeaderSearchVisibility, {
+      passive: true,
+    });
 
-    return () => window.removeEventListener("scroll", updateHeaderSearchVisibility);
+    return () => {
+      window.removeEventListener("scroll", updateHeaderSearchVisibility);
+      if (frameId) window.cancelAnimationFrame(frameId);
+    };
   }, []);
 
   return (
@@ -325,52 +444,70 @@ export function CustomStorefrontHeader({
         <Link
           href={storeHomeHref}
           prefetch
-          className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_300px] xl:flex-[0_1_340px] 2xl:flex-[0_1_420px]"
+          className="flex min-w-0 flex-[1_1_auto] items-center gap-2.5 sm:gap-3 lg:flex-[0_1_250px] xl:flex-[0_1_280px] 2xl:flex-[0_1_320px]"
         >
-          <StoreLogo store={store} className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11" />
+          <StoreLogo
+            store={store}
+            className="size-10 shrink-0 rounded-xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)] dark:border-slate-800 dark:bg-slate-900 sm:size-11"
+          />
           <span className="min-w-0 truncate text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl 2xl:text-[27px]">
             {store.name}
           </span>
         </Link>
-        <nav
-          className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex"
-        >
+        <nav className="ml-2 hidden shrink-0 items-center gap-0.5 lg:flex">
           {navItems.map((item) => {
             const hashIndex = item.href.indexOf("#");
-            const sectionId = hashIndex >= 0 ? item.href.slice(hashIndex + 1) : null;
+            const sectionId =
+              hashIndex >= 0 ? item.href.slice(hashIndex + 1) : null;
 
             return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
-              className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
-              onClick={(event) => {
-                if (typeof window === "undefined") {
-                  return;
-                }
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                className="whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium text-slate-600 transition md:hover:bg-slate-50 md:hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-slate-300 dark:md:hover:bg-slate-900 dark:md:hover:text-white 2xl:px-3"
+                onClick={(event) => {
+                  if (typeof window === "undefined") {
+                    return;
+                  }
 
-                const targetUrl = new URL(item.href, window.location.href);
-                if (targetUrl.pathname !== window.location.pathname) {
-                  return;
-                }
+                  const targetUrl = new URL(item.href, window.location.href);
+                  if (targetUrl.pathname !== window.location.pathname) {
+                    return;
+                  }
 
-                event.preventDefault();
-                if (sectionId) {
-                  onNavigateSection?.(sectionId);
-                  scheduleScrollToPageSection(sectionId, true);
-                } else {
-                  scrollToPageTop(item.href);
-                }
-              }}
-            >
-              {item.label}
-            </Link>
+                  event.preventDefault();
+                  if (sectionId) {
+                    onNavigateSection?.(sectionId);
+                    scheduleScrollToPageSection(sectionId, true);
+                  } else {
+                    scrollToPageTop(item.href);
+                  }
+                }}
+              >
+                {item.label}
+              </Link>
             );
           })}
         </nav>
+        <div className="hidden min-w-[250px] flex-1 lg:block xl:min-w-[300px]">
+          <MarketplaceSearch
+            stores={[store]}
+            defaultValue={searchQuery}
+            storeSlug={store.slug}
+            searchBaseHref={storeHomeHref}
+            resultsAnchorId="products"
+            compactActions
+            className="rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-none dark:border-slate-800 dark:bg-slate-900"
+            inputClassName="h-10 rounded-lg border-0 bg-transparent pl-10 text-sm text-slate-900 focus-visible:ring-2 focus-visible:ring-blue-200 dark:text-slate-100"
+            buttonClassName="!size-10 !min-w-10 rounded-lg bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+            buttonSize="lg"
+          />
+        </div>
         <div className="hidden shrink-0 lg:block">
-          <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
+          {!isolatedStorefront ? (
+            <HeaderAccountActions showSellerCta={false} customerOnlyRegister />
+          ) : null}
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-1.5 2xl:ml-0">
           {socialLinks.length > 0 ? (
@@ -388,30 +525,51 @@ export function CustomStorefrontHeader({
                     aria-label={item.label}
                   >
                     <a href={item.href} target="_blank" rel="noreferrer">
-                      <Icon className={storefrontIconClass} aria-hidden="true" />
+                      <Icon
+                        className={storefrontIconClass}
+                        aria-hidden="true"
+                      />
                     </a>
                   </Button>
                 );
               })}
             </div>
           ) : null}
-          {isAuthenticated ? (
-            <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("favorites")}>
+          {isAuthenticated && !isolatedStorefront ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className={iconButtonClass}
+              aria-label={storefront("favorites")}
+            >
               <Link href="/favorites" prefetch>
                 <Heart className={storefrontIconClass} aria-hidden="true" />
               </Link>
             </Button>
           ) : null}
-          <Button asChild variant="ghost" size="icon" className={iconButtonClass} aria-label={storefront("cart")}>
-            <Link href="/cart" prefetch>
-              <ShoppingCart className={storefrontIconClass} aria-hidden="true" />
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className={iconButtonClass}
+            aria-label={storefront("cart")}
+          >
+            <Link href={cartHref} prefetch>
+              <ShoppingCart
+                className={storefrontIconClass}
+                aria-hidden="true"
+              />
             </Link>
           </Button>
-          <ThemeToggle className={iconButtonClass} iconClassName={storefrontIconClass} />
+          <ThemeToggle
+            className={iconButtonClass}
+            iconClassName={storefrontIconClass}
+          />
         </div>
       </div>
       {showHeaderSearch ? (
-        <div className="border-t border-slate-200 bg-white/95 px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 lg:px-8">
+        <div className="border-t border-slate-200 bg-white/95 px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.03)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/95 sm:px-6 lg:hidden lg:px-8">
           <div className="mx-auto w-full max-w-[680px]">
             <MarketplaceSearch
               stores={[store]}
@@ -443,9 +601,14 @@ function getDisplayStoreDescription(store: MarketplaceStore) {
   const normalizedDescription = description
     .toLocaleLowerCase("az-AZ")
     .replace(/\s+/g, " ");
-  const hiddenDefaultDescriptions = new Set(["satıcı mağazası", "satici magazasi"]);
+  const hiddenDefaultDescriptions = new Set([
+    "satıcı mağazası",
+    "satici magazasi",
+  ]);
 
-  return hiddenDefaultDescriptions.has(normalizedDescription) ? null : description;
+  return hiddenDefaultDescriptions.has(normalizedDescription)
+    ? null
+    : description;
 }
 
 function getStoreAboutContent(store: MarketplaceStore) {
@@ -466,10 +629,13 @@ export function CustomStoreFooter({
 
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
+      <div className="mx-auto grid w-full max-w-[1280px] gap-8 px-4 pb-6 pt-10 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-8">
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-3">
-            <StoreLogo store={store} className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900" />
+            <StoreLogo
+              store={store}
+              className="size-11 shrink-0 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            />
             <h2 className="truncate text-2xl font-semibold text-slate-950 dark:text-slate-100">
               {store.name}
             </h2>
@@ -481,30 +647,61 @@ export function CustomStoreFooter({
           ) : null}
         </div>
         <nav className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm font-medium text-slate-600 dark:text-slate-300 sm:flex sm:items-center">
-          <Link href={storeHomeHref} prefetch className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={storeHomeHref}
+            prefetch
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("home")}
           </Link>
-          <Link href={`${baseHref}#products`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}/products`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("products")}
           </Link>
-          <Link href={`${baseHref}#store-categories`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}#store-categories`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("categories")}
           </Link>
           {aboutContent ? (
-            <Link href={`${baseHref}#about`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+            <Link
+              href={`${baseHref}#about`}
+              className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+            >
               {storefront("about")}
             </Link>
           ) : null}
-          <Link href={`${baseHref}#contact`} className="md:hover:text-blue-700 dark:md:hover:text-blue-300">
+          <Link
+            href={`${baseHref}/contact`}
+            className="md:hover:text-blue-700 dark:md:hover:text-blue-300"
+          >
             {storefront("contact")}
           </Link>
         </nav>
+      </div>
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-4 border-t border-slate-200 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-5 text-center dark:border-slate-800 sm:px-6 md:pb-6 lg:px-8">
+        <a
+          href="https://alisveris.az"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-slate-950 px-5 text-sm font-semibold text-white transition md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-200"
+        >
+          alisveris.az saytına keç
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </a>
+        <p className="text-xs leading-5 text-slate-500 dark:text-slate-400">
+          © {new Date().getFullYear()} {store.name}. Bütün hüquqlar qorunur.
+        </p>
       </div>
     </footer>
   );
 }
 
-function getStoreHeroSubtitle(store: MarketplaceStore, primaryCategoryName?: string) {
+function getStoreHeroSubtitle(
+  store: MarketplaceStore,
+  primaryCategoryName?: string,
+) {
   if (store.heroSubtitle?.trim()) {
     return store.heroSubtitle.trim();
   }
@@ -536,19 +733,30 @@ function ProductListLoader({ show }: { show: boolean }) {
   }
 
   return (
-    <div className="flex justify-center py-5" aria-live="polite" aria-busy="true">
+    <div
+      className="flex justify-center py-5"
+      aria-live="polite"
+      aria-busy="true"
+    >
       <GlobalLoader />
     </div>
   );
 }
 
-function buildStoreProductHref(storeSlug: string, productSlug: string, storeBaseHref?: string) {
+function buildStoreProductHref(
+  storeSlug: string,
+  productSlug: string,
+  storeBaseHref?: string,
+) {
   const baseHref = storeBaseHref ?? getStorePath(storeSlug);
 
   return `${baseHref === "/" ? "" : baseHref}/products/${productSlug}`;
 }
 
-function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: string) {
+function getDescendantCategoryIds(
+  categories: CategoryOption[],
+  categoryId?: string,
+) {
   if (!categoryId) {
     return [];
   }
@@ -559,7 +767,11 @@ function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: str
   while (changed) {
     changed = false;
     categories.forEach((category) => {
-      if (category.parentId && ids.has(category.parentId) && !ids.has(category.id)) {
+      if (
+        category.parentId &&
+        ids.has(category.parentId) &&
+        !ids.has(category.id)
+      ) {
         ids.add(category.id);
         changed = true;
       }
@@ -569,8 +781,13 @@ function getDescendantCategoryIds(categories: CategoryOption[], categoryId?: str
   return [...ids];
 }
 
-function getScopedCategoryOptions(categories: CategoryOption[], selectedCategoryId?: string) {
-  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+function getScopedCategoryOptions(
+  categories: CategoryOption[],
+  selectedCategoryId?: string,
+) {
+  const selectedCategory = categories.find(
+    (category) => category.id === selectedCategoryId,
+  );
   const children = selectedCategory
     ? categories.filter((category) => category.parentId === selectedCategory.id)
     : [];
@@ -580,7 +797,9 @@ function getScopedCategoryOptions(categories: CategoryOption[], selectedCategory
   }
 
   if (selectedCategory?.parentId) {
-    return categories.filter((category) => category.parentId === selectedCategory.parentId);
+    return categories.filter(
+      (category) => category.parentId === selectedCategory.parentId,
+    );
   }
 
   return categories.filter((category) => !category.parentId);
@@ -604,7 +823,9 @@ function CategoryFilters({
   }
 
   const renderFilterButton = (category?: CategoryOption) => {
-    const isSelected = category ? selectedCategoryId === category.id : !selectedCategoryId;
+    const isSelected = category
+      ? selectedCategoryId === category.id
+      : !selectedCategoryId;
     const label = category?.name ?? allLabel;
 
     if (onSelect) {
@@ -628,7 +849,9 @@ function CategoryFilters({
         variant={isSelected ? "default" : "outline"}
         className="shrink-0 justify-start lg:w-full"
       >
-        <Link href={category ? `${baseHref}?category=${category.slug}` : baseHref}>
+        <Link
+          href={category ? `${baseHref}?category=${category.slug}` : baseHref}
+        >
           {label}
         </Link>
       </Button>
@@ -665,7 +888,8 @@ function MarketplaceDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const selectedOption = options.find((option) => option.value === value) ?? options[0];
+  const selectedOption =
+    options.find((option) => option.value === value) ?? options[0];
 
   useEffect(() => {
     if (!open) {
@@ -673,7 +897,10 @@ function MarketplaceDropdown({
     }
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -697,15 +924,20 @@ function MarketplaceDropdown({
         type="button"
         className={cn(
           "flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white text-left font-semibold text-slate-900 transition md:hover:border-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
-          compact ? "h-9 px-2.5 text-xs" : "h-10 px-3 text-sm",
+          compact ? "h-9 px-2.5 text-sm sm:h-10 sm:px-3" : "h-10 px-3 text-sm",
         )}
-        aria-label={label}
         aria-expanded={open}
         aria-haspopup="listbox"
         onClick={() => setOpen((current) => !current)}
       >
         <span className="truncate">{selectedOption?.label ?? label}</span>
-        <ChevronDown className={cn("size-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} aria-hidden="true" />
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden="true"
+        />
       </button>
       {open ? (
         <div
@@ -726,8 +958,9 @@ function MarketplaceDropdown({
                 aria-selected={selected}
                 className={cn(
                   "flex w-full items-center justify-between gap-2 rounded-md text-left text-slate-800 transition md:hover:bg-blue-50 dark:text-slate-100 dark:md:hover:bg-blue-950/30",
-                  compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-sm",
-                  selected && "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
+                  compact ? "px-3 py-2 text-sm" : "px-3 py-2 text-sm",
+                  selected &&
+                    "bg-blue-50 font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-300",
                 )}
                 onClick={() => {
                   onChange(option.value);
@@ -735,7 +968,9 @@ function MarketplaceDropdown({
                 }}
               >
                 <span className="truncate">{option.label}</span>
-                {selected ? <Check className="size-4 shrink-0" aria-hidden="true" /> : null}
+                {selected ? (
+                  <Check className="size-4 shrink-0" aria-hidden="true" />
+                ) : null}
               </button>
             );
           })}
@@ -761,6 +996,7 @@ function MarketplaceFilterBar({
   onMinPrice,
   onMaxPrice,
   onStockOnly,
+  priceError,
   layout = "stacked",
 }: {
   categories: CategoryOption[];
@@ -778,23 +1014,47 @@ function MarketplaceFilterBar({
   onMinPrice: (value: string) => void;
   onMaxPrice: (value: string) => void;
   onStockOnly: (value: boolean) => void;
+  priceError?: string;
   layout?: "stacked" | "wide";
 }) {
   const t = useTranslations("marketplace");
   const isWide = layout === "wide";
 
   return (
-    <section className={cn("relative z-20 w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card", isWide ? "p-3 md:p-4" : "p-2.5")}>
-      <h2 className={cn("text-xs font-bold text-slate-950 dark:text-slate-100", isWide ? "mb-3" : "mb-2")}>{t("filters")}</h2>
-      <div className={cn(isWide ? "grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(12rem,0.9fr)] lg:items-center" : "space-y-2")}>
+    <section
+      className={cn(
+        "relative z-20 w-full rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-card",
+        isWide ? "p-3 md:p-4" : "p-2.5",
+      )}
+    >
+      <h2
+        className={cn(
+          "text-xs font-bold text-slate-950 dark:text-slate-100",
+          isWide ? "mb-3" : "mb-2",
+        )}
+      >
+        {t("filters")}
+      </h2>
+      <div
+        className={cn(
+          isWide
+            ? "grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(12rem,0.9fr)] lg:items-center"
+            : "space-y-2",
+        )}
+      >
         <MarketplaceDropdown
           label={t("categoryFilter")}
           value={selectedCategoryId ?? ""}
           options={[
             { value: "", label: t("allCategories") },
-            ...categories.map((category) => ({ value: category.id, label: category.name })),
+            ...categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })),
           ]}
-          onChange={(value) => onCategory(categories.find((category) => category.id === value))}
+          onChange={(value) =>
+            onCategory(categories.find((category) => category.id === value))
+          }
           compact
         />
 
@@ -825,23 +1085,41 @@ function MarketplaceFilterBar({
             type="number"
             min="0"
             inputMode="decimal"
-            value={minPrice}
-            onChange={(event) => onMinPrice(event.target.value)}
+            value={minPrice === "0" ? "" : minPrice}
+            onChange={(event) =>
+              onMinPrice(event.target.value === "0" ? "" : event.target.value)
+            }
             placeholder={t("minPrice")}
             aria-label={t("minPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
+            className={cn(
+              "h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+              !isWide && "sm:w-24",
+            )}
           />
           <input
             type="number"
             min="0"
             inputMode="decimal"
-            value={maxPrice}
-            onChange={(event) => onMaxPrice(event.target.value)}
+            value={maxPrice === "0" ? "" : maxPrice}
+            onChange={(event) =>
+              onMaxPrice(event.target.value === "0" ? "" : event.target.value)
+            }
             placeholder={t("maxPrice")}
             aria-label={t("maxPrice")}
-            className={cn("h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100", !isWide && "sm:w-24")}
+            className={cn(
+              "h-9 min-w-0 w-1/2 rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100",
+              !isWide && "sm:w-24",
+            )}
           />
         </div>
+        {priceError ? (
+          <p
+            className="text-xs font-medium text-rose-600 lg:col-span-5"
+            role="alert"
+          >
+            {priceError}
+          </p>
+        ) : null}
 
         <label className="flex min-h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           <input
@@ -852,7 +1130,6 @@ function MarketplaceFilterBar({
           />
           {t("inStockOnly")}
         </label>
-
       </div>
     </section>
   );
@@ -913,7 +1190,8 @@ function MobileCategoryCatalog({
       <div className="grid grid-cols-2 gap-2">
         {categories.map((category, index) => {
           const Icon = getCategoryIcon(category);
-          const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
+          const iconStyle =
+            CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
 
           return (
             <button
@@ -922,14 +1200,19 @@ function MobileCategoryCatalog({
               onClick={() => onSelect(category)}
               className="group flex min-h-[52px] min-w-0 touch-manipulation items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out active:scale-[0.98] dark:border-slate-800 dark:bg-card"
             >
-              <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+              <span
+                className={cn(
+                  "grid size-8 shrink-0 place-items-center rounded-lg ring-1",
+                  iconStyle,
+                )}
+              >
                 <Icon className="size-4 stroke-[2.2]" aria-hidden="true" />
               </span>
-                <span className="grid min-w-0 flex-1 gap-0.5">
-                  <span className="truncate text-[13px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
-                    {category.name}
-                  </span>
+              <span className="grid min-w-0 flex-1 gap-0.5">
+                <span className="truncate text-[13px] font-semibold leading-5 text-slate-700 dark:text-muted-foreground">
+                  {category.name}
                 </span>
+              </span>
             </button>
           );
         })}
@@ -947,8 +1230,10 @@ export function ProductGrid({
   labels,
   layout = "grid",
   isStoreOwner = false,
+  sellerOwnsStore = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
+  isolatedStoreSlug,
 }: {
   products: CartProduct[];
   storeSlug?: string;
@@ -958,11 +1243,19 @@ export function ProductGrid({
   labels: Pick<MarketplaceLabels, "stock">;
   layout?: "grid" | "related";
   isStoreOwner?: boolean;
+  sellerOwnsStore?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
+  isolatedStoreSlug?: string;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
+  const { profile, isResolved } = useClientAuthProfileState();
+  const isSellerViewer =
+    sellerOwnsStore &&
+    isResolved &&
+    profile.status === "authenticated" &&
+    profile.role === "seller";
   const isLiquidGlass = productCardVariant === "liquid-glass";
   const [clientNow, setClientNow] = useState<number | null>(null);
 
@@ -984,10 +1277,10 @@ export function ProductGrid({
     <div
       className={cn(
         layout === "related"
-          ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
+          ? "grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
           : forceMobileTwoColumns
-            ? "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4"
-            : "grid min-w-0 grid-cols-2 gap-2.5 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4",
+            ? "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+            : "grid min-w-0 grid-cols-2 gap-2 min-[400px]:gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5",
       )}
     >
       {products.map((product) => {
@@ -1004,7 +1297,9 @@ export function ProductGrid({
         const detailHref = detailStoreSlug
           ? buildStoreProductHref(detailStoreSlug, product.slug, storeBaseHref)
           : "/products";
-        const createdTime = product.createdAt ? new Date(product.createdAt).getTime() : 0;
+        const createdTime = product.createdAt
+          ? new Date(product.createdAt).getTime()
+          : 0;
         const isNewProduct =
           clientNow !== null &&
           Number.isFinite(createdTime) &&
@@ -1014,7 +1309,9 @@ export function ProductGrid({
         function openDetail(event: MouseEvent<HTMLElement>) {
           const target = event.target as HTMLElement;
 
-          if (target.closest("a,button,input,textarea,select,[role='button']")) {
+          if (
+            target.closest("a,button,input,textarea,select,[role='button']")
+          ) {
             return;
           }
 
@@ -1022,176 +1319,224 @@ export function ProductGrid({
         }
 
         return (
-        <article
-          key={product.id}
-          role="link"
-          tabIndex={0}
-          onClick={openDetail}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              router.push(detailHref, { scroll: true });
-            }
-          }}
-          className={cn(
-            "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[14px] border border-slate-200 bg-white text-slate-950 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:340px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-0.5 md:hover:border-slate-300 md:hover:shadow-[0_8px_30px_rgba(15,23,42,0.07)]",
-            compactMobileCards && "max-sm:rounded-xl",
-            isLiquidGlass &&
-              "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
-          )}
-        >
-          <Link
-            href={detailHref}
-            className="block"
-            aria-label={t("productDetailAria", { name: product.name })}
-            prefetch={false}
-            scroll
+          <article
+            key={product.id}
+            onClick={openDetail}
+            className={cn(
+              "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
+              compactMobileCards && "max-sm:rounded-xl",
+              isLiquidGlass &&
+                "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-orange-200/80",
+            )}
           >
-            <div
-              data-product-card-image
-              className={cn(
-                "relative aspect-[4/3] overflow-hidden bg-slate-50 dark:bg-slate-900",
-                isLiquidGlass && "liquid-glass-product-image-shell",
-              )}
-            >
-              {product.imageUrl ? (
-                <OptimizedImage
-                  src={product.imageUrl}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
-                  loading="lazy"
-                  decoding="async"
-                  className={cn(
-                    "h-full w-full object-contain p-1.5 transition-transform duration-200 ease-out motion-reduce:transition-none sm:p-2 md:group-hover:scale-[1.025]",
-                  )}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
-                  <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
-                    <ShoppingCart className="size-7 stroke-[2.4]" aria-hidden="true" />
-                  </span>
-                </div>
-              )}
-              <div className="absolute left-2 top-2 flex flex-wrap gap-1.5">
-                {product.isPromoted ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-1 text-[11px] font-black text-slate-950 shadow-sm">
-                    <Crown className="size-3" aria-hidden="true" />
-                    Önə çıxarılıb
-                  </span>
-                ) : null}
-                {hasDiscount ? (
-                  <span className="rounded-full bg-rose-500 px-2 py-1 text-[11px] font-black text-white">
-                    -{discountPercent}%
-                  </span>
-                ) : null}
-                {isNewProduct ? (
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">
-                    {t("newLabel")}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </Link>
-          <FavoriteToggleButton
-            productId={product.id}
-            productName={product.name}
-            compact
-            className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
-          />
-          <div data-product-card-body className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3">
-            <div className="mb-1.5 hidden min-w-0 text-xs text-muted-foreground sm:block">
-              {displayStoreName ? (
-                <span className="block min-w-0 truncate">{displayStoreName}</span>
-              ) : (
-                <span>{t("store")}</span>
-              )}
-            </div>
-            <h2
-              className={cn(
-                "line-clamp-2 min-h-9 break-words text-[13px] font-semibold leading-[18px] tracking-normal text-slate-950 dark:text-slate-100 sm:min-h-10 sm:text-sm sm:leading-5 md:group-hover:text-blue-700 md:dark:group-hover:text-blue-300",
-                isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
-              )}
-            >
-              {product.name}
-            </h2>
-            <div className="mt-1.5 flex items-center gap-0.5 text-amber-400 sm:gap-1" aria-label="Rəy yoxdur">
-              {[1, 2, 3, 4, 5].map((value) => (
-                <Star key={value} className="size-3 sm:size-3.5" aria-hidden="true" />
-              ))}
-              <span className="ml-1 text-xs text-muted-foreground">(0)</span>
-            </div>
-            <div className="mt-1.5 min-w-0 sm:mt-2">
-              <p className="truncate text-base font-bold text-slate-950 dark:text-slate-100 sm:text-lg">
-                {formatAznDiscountedPrice(product.priceAmount, product.discountAmount)}
-              </p>
-              {hasDiscount ? (
-                <p className="truncate text-sm font-medium text-muted-foreground line-through">
-                  {formatAznPrice(product.priceAmount)}
-                </p>
-              ) : null}
-            </div>
-            <p
-              className={cn(
-                "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
-                isOutOfStock
-                  ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
-                  : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
-              )}
-            >
-              <span className="truncate">
-                {isOutOfStock
-                  ? t("outOfStock")
-                  : t("stockWithCount", { count: product.stockQuantity })}
-              </span>
-            </p>
-            <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
-              <Truck className="size-3.5 shrink-0 text-primary" aria-hidden="true" />
-              {t("deliveryWithStore")}
-            </p>
-            <div className={cn("relative z-10 mt-auto grid gap-2", compactMobileCards ? "pt-2.5 sm:pt-3" : "pt-3")}>
+            <Link href={detailHref} className="block" prefetch={false} scroll>
               <div
-                onClick={(event) => event.stopPropagation()}
-                onKeyDown={(event) => event.stopPropagation()}
+                data-product-card-image
+                className={cn(
+                  "relative aspect-[5/4] overflow-hidden bg-slate-50 dark:bg-slate-900 sm:aspect-[4/3]",
+                  isLiquidGlass && "liquid-glass-product-image-shell",
+                )}
               >
-                {isStoreOwner ? (
-                  <Button asChild className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm">
-                    <Link href={`/store/dashboard/products/${product.id}/edit`}>
-                      <Pencil className="mr-2 size-4" aria-hidden="true" />
-                      Redaktə et
-                    </Link>
-                  </Button>
-                ) : requiresDetailSelection ? (
-                  <Button
-                    asChild
+                {product.imageUrl ? (
+                  <>
+                    <OptimizedImage
+                      src={product.imageUrl}
+                      alt=""
+                      fill
+                      sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                      loading="lazy"
+                      decoding="async"
+                      aria-hidden="true"
+                      className="scale-110 object-cover opacity-45 blur-xl saturate-125 dark:opacity-35"
+                    />
+                    <OptimizedImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
+                      loading="lazy"
+                      decoding="async"
+                      className={cn(
+                        "z-[1] h-full w-full object-contain transition-transform duration-200 ease-out motion-reduce:transition-none md:group-hover:scale-[1.015]",
+                      )}
+                    />
+                  </>
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-muted/60 text-primary">
+                    <span className="grid size-14 place-items-center rounded-full border border-primary/15 bg-background/85 shadow-sm">
+                      <ShoppingCart
+                        className="size-7 stroke-[2.4]"
+                        aria-hidden="true"
+                      />
+                    </span>
+                  </div>
+                )}
+                {product.isPromoted || isNewProduct ? (
+                  <div
                     className={cn(
-                      "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold leading-none text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
-                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
-                      isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
+                      "absolute left-1.5 top-1.5 z-10 flex items-center gap-1 overflow-hidden sm:left-2 sm:top-2 sm:gap-1.5",
+                      isolatedStoreSlug ? "right-1.5 sm:right-2" : "right-12",
                     )}
                   >
-                    <Link href={detailHref} prefetch={false} scroll className="inline-flex items-center justify-center">
-                      <PackageSearch className="mr-2 size-5 shrink-0 stroke-[2.2]" aria-hidden="true" />
-                      {t("viewDetails")}
-                    </Link>
-                  </Button>
+                    {product.isPromoted ? (
+                      <span className="inline-flex shrink-0 items-center gap-0.5 whitespace-nowrap rounded-full bg-amber-400 px-1.5 py-1 text-[9px] font-black leading-none text-slate-950 shadow-sm sm:gap-1 sm:px-2 sm:text-[11px]">
+                        <Crown
+                          className="size-2.5 sm:size-3"
+                          aria-hidden="true"
+                        />
+                        VIP
+                      </span>
+                    ) : null}
+                    {isNewProduct ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full border border-orange-200 bg-orange-50 px-1.5 py-1 text-[9px] font-bold leading-none text-orange-700 shadow-sm sm:px-2 sm:text-[11px]">
+                        {t("newLabel")}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+                {product.commerceType === "rental" || hasDiscount ? (
+                  <div className="absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 sm:bottom-2 sm:left-2">
+                    {product.commerceType === "rental" ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-orange-600 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                        İcarə
+                      </span>
+                    ) : null}
+                    {hasDiscount ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-rose-500 px-1.5 py-1 text-[9px] font-black leading-none text-white shadow-sm sm:px-2 sm:text-[11px]">
+                        -{discountPercent}%
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </Link>
+            {!isolatedStoreSlug ? (
+              <FavoriteToggleButton
+                productId={product.id}
+                productName={product.name}
+                compact
+                className="absolute right-2 top-2 z-20 size-9 border-border bg-card/95 text-foreground shadow-sm"
+              />
+            ) : null}
+            <div
+              data-product-card-body
+              className="relative z-0 flex min-w-0 flex-1 flex-col p-2.5 sm:p-3"
+            >
+              <div className="mb-1.5 min-w-0 text-[9px] font-bold uppercase tracking-[0.08em] text-orange-600 sm:mb-2 sm:text-xs">
+                {displayStoreName ? (
+                  <span className="block min-w-0 truncate">
+                    {displayStoreName}
+                  </span>
                 ) : (
-                  <AddToCartButton
-                    product={product}
-                    disabled={isOutOfStock}
-                    className={cn(
-                      "!h-11 min-h-11 w-full rounded-xl border-0 bg-blue-600 px-2 text-[12px] font-semibold text-white shadow-none transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-blue-700 md:hover:text-white md:hover:shadow-[0_8px_22px_rgba(37,99,235,0.18)] disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm sm:font-medium",
-                      compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
-                      isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
-                    )}
-                  />
+                  <span>{t("store")}</span>
                 )}
               </div>
+              <h2
+                className={cn(
+                  "line-clamp-2 min-h-9 break-words text-[12px] font-bold leading-[18px] tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
+                  isLiquidGlass &&
+                    "font-black md:group-hover:text-orange-700 md:dark:group-hover:text-orange-200",
+                )}
+              >
+                {product.name}
+              </h2>
+              <div className="mt-2 min-w-0 border-t border-slate-100 pt-2 dark:border-slate-800 sm:mt-3 sm:pt-3">
+                <p className="truncate text-base font-black tracking-[-0.02em] text-slate-950 dark:text-slate-100 sm:text-lg">
+                  {formatAznDiscountedPrice(
+                    product.priceAmount,
+                    product.discountAmount,
+                  )}
+                </p>
+                {hasDiscount ? (
+                  <p className="truncate text-sm font-medium text-muted-foreground line-through">
+                    {formatAznPrice(product.priceAmount)}
+                  </p>
+                ) : null}
+              </div>
+              <p
+                className={cn(
+                  "mt-1.5 inline-flex w-fit max-w-full rounded-md px-2 py-0.5 text-[11px] font-medium sm:mt-2 sm:py-1 sm:text-xs",
+                  product.stockTrackingEnabled === false && "hidden",
+                  isOutOfStock
+                    ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
+                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300",
+                )}
+              >
+                <span className="truncate">
+                  {isOutOfStock
+                    ? t("outOfStock")
+                    : t("stockWithCount", { count: product.stockQuantity })}
+                </span>
+              </p>
+              <p className="mt-2 hidden items-center gap-1 text-xs text-muted-foreground sm:inline-flex">
+                <Truck
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                {t("deliveryWithStore")}
+              </p>
+              <div
+                className={cn(
+                  "relative z-10 mt-auto grid gap-2",
+                  compactMobileCards ? "pt-2.5 sm:pt-3" : "pt-3",
+                )}
+              >
+                <div
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  {isStoreOwner ? (
+                    <Button
+                      asChild
+                      className="h-10 w-full rounded-lg px-2 text-sm font-semibold shadow-sm"
+                    >
+                      <Link href={`/sell/product/${product.id}/edit`}>
+                        <Pencil className="mr-2 size-4" aria-hidden="true" />
+                        Redaktə et
+                      </Link>
+                    </Button>
+                  ) : isSellerViewer ? null : requiresDetailSelection ? (
+                    <Button
+                      asChild
+                      className={cn(
+                        "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-primary px-2 text-[12px] font-bold leading-none text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
+                        compactMobileCards &&
+                          "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
+                        isLiquidGlass &&
+                          "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25",
+                      )}
+                    >
+                      <Link
+                        href={detailHref}
+                        prefetch={false}
+                        scroll
+                        className="inline-flex items-center justify-center"
+                      >
+                        <PackageSearch
+                          className="mr-2 size-5 shrink-0 stroke-[2.2]"
+                          aria-hidden="true"
+                        />
+                        {t("viewDetails")}
+                      </Link>
+                    </Button>
+                  ) : (
+                    <AddToCartButton
+                      product={product}
+                      isolatedStoreSlug={isolatedStoreSlug}
+                      disabled={isOutOfStock}
+                      className={cn(
+                        "!h-11 min-h-11 w-full rounded-xl border-0 bg-primary px-2 text-[12px] font-bold text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
+                        compactMobileCards &&
+                          "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
+                        isLiquidGlass &&
+                          "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                      )}
+                    />
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </article>
+          </article>
         );
       })}
     </div>
@@ -1199,9 +1544,19 @@ export function ProductGrid({
 }
 
 function useInfiniteProducts({
-  initialProducts, initialCursor, initialHasMore, locale,
-  categoryId, categoryIds, storeId, searchQuery, sort,
+  initialProducts,
+  initialCursor,
+  initialHasMore,
+  locale,
+  categoryId,
+  categoryIds,
+  storeId,
+  searchQuery,
+  sort,
+  pageSize,
+  filters,
 }: {
+  filters?: CatalogFilters;
   initialProducts: CartProduct[];
   initialCursor?: string | null;
   initialHasMore?: boolean;
@@ -1211,22 +1566,50 @@ function useInfiniteProducts({
   storeId?: string;
   searchQuery?: string;
   sort?: MarketplaceProductSort;
+  pageSize?: number;
 }) {
-  const options = productQueryOptions({ locale, categoryId, categoryIds, storeId, searchQuery, sort });
+  const options = productQueryOptions({
+    locale,
+    categoryId,
+    categoryIds,
+    storeId,
+    searchQuery,
+    sort,
+    pageSize,
+    filters,
+  });
   const key = JSON.stringify(options.queryKey);
   // Server data belongs only to the filters active when this view first mounted.
   const initialKey = useRef(key);
   const query = useInfiniteQuery({
     ...options,
-    initialData: key === initialKey.current ? {
-      pages: [{ products: initialProducts, nextCursor: initialCursor ?? null, hasMore: Boolean(initialHasMore) }],
-      pageParams: [null],
-    } : undefined,
+    initialData:
+      key === initialKey.current
+        ? {
+            pages: [
+              {
+                products: initialProducts,
+                nextCursor: initialCursor ?? null,
+                hasMore: Boolean(initialHasMore),
+              },
+            ],
+            pageParams: [null],
+          }
+        : undefined,
   });
   return {
-    products: (query.data?.pages ?? []).reduce<CartProduct[]>((all, page) => mergeProducts(all, page.products), []),
+    products: (query.data?.pages ?? []).reduce<CartProduct[]>(
+      (all, page) => mergeProducts(all, page.products),
+      [],
+    ),
     hasMore: Boolean(query.hasNextPage),
+    isError: query.isError,
+    retry: () => {
+      void query.refetch();
+    },
     isLoadingNext: query.isPending || query.isFetchingNextPage,
+    isRefreshing:
+      query.isPending || (query.isFetching && !query.isFetchingNextPage),
     loadNext: () => {
       if (query.hasNextPage && !query.isFetching) void query.fetchNextPage();
     },
@@ -1244,8 +1627,10 @@ export function ProductInfiniteGrid({
   productCardVariant,
   labels,
   isStoreOwner = false,
+  sellerOwnsStore = false,
   forceMobileTwoColumns = false,
   compactMobileCards = false,
+  isolatedStoreSlug,
 }: {
   products: CartProduct[];
   hasMore: boolean;
@@ -1257,8 +1642,10 @@ export function ProductInfiniteGrid({
   productCardVariant?: string;
   labels: Pick<MarketplaceLabels, "stock">;
   isStoreOwner?: boolean;
+  sellerOwnsStore?: boolean;
   forceMobileTwoColumns?: boolean;
   compactMobileCards?: boolean;
+  isolatedStoreSlug?: string;
 }) {
   const t = useTranslations("marketplace");
 
@@ -1272,8 +1659,10 @@ export function ProductInfiniteGrid({
         productCardVariant={productCardVariant}
         labels={labels}
         isStoreOwner={isStoreOwner}
+        sellerOwnsStore={sellerOwnsStore}
         forceMobileTwoColumns={forceMobileTwoColumns}
         compactMobileCards={compactMobileCards}
+        isolatedStoreSlug={isolatedStoreSlug}
       />
       {hasMore ? (
         <div className="mb-10 mt-7 flex justify-center md:mb-0">
@@ -1358,6 +1747,8 @@ export function InfiniteProductGrid({
 }
 
 export function ProductMarketplace({
+  initialFilters = {},
+  initialFilterError = "",
   products,
   nextCursor,
   hasMore,
@@ -1374,11 +1765,15 @@ export function ProductMarketplace({
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const [activeSort, setActiveSort] = useState<MarketplaceProductSort>(sort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [colorFilter, setColorFilter] = useState("");
-  const [sizeFilter, setSizeFilter] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
-  const [inStockOnly, setInStockOnly] = useState(false);
+  const [colorFilter, setColorFilter] = useState(initialFilters.color ?? "");
+  const [sizeFilter, setSizeFilter] = useState(initialFilters.size ?? "");
+  const [minPrice, setMinPrice] = useState(initialFilters.minPrice ?? "");
+  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice ?? "");
+  const [inStockOnly, setInStockOnly] = useState(
+    Boolean(initialFilters.inStock),
+  );
+  const [remoteFilters, setRemoteFilters] =
+    useState<CatalogFilters>(initialFilters);
   const categoryQueryIds = useMemo(
     () => getDescendantCategoryIds(categories, activeCategoryId),
     [activeCategoryId, categories],
@@ -1396,6 +1791,7 @@ export function ProductMarketplace({
     categoryIds: categoryQueryIds,
     searchQuery,
     sort: activeSort,
+    filters: remoteFilters,
   });
   const variantFilterValues = useMemo(() => {
     const values = {
@@ -1421,49 +1817,62 @@ export function ProductMarketplace({
 
     return {
       colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
-      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+      sizes: [...values.size].sort((a, b) =>
+        a.localeCompare(b, "az", { numeric: true }),
+      ),
     };
   }, [infinite.products]);
-  const visibleProducts = useMemo(() => {
-    const min = minPrice.trim() ? Number(minPrice) : null;
-    const max = maxPrice.trim() ? Number(maxPrice) : null;
-
-    return infinite.products.filter((product) => {
-      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
-      const values = product.options?.flatMap((option) => option.values.map((value) => ({
-        type: option.type,
-        value: value.value,
-      }))) ?? [];
-
-      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
-        return false;
-      }
-
-      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
-        return false;
-      }
-
-      if (min !== null && Number.isFinite(min) && finalPrice < min) {
-        return false;
-      }
-
-      if (max !== null && Number.isFinite(max) && finalPrice > max) {
-        return false;
-      }
-
-      return !inStockOnly || product.stockQuantity > 0;
-    });
-  }, [colorFilter, infinite.products, inStockOnly, maxPrice, minPrice, sizeFilter]);
+  const visibleProducts = infinite.products;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const min = minPrice ? Number(minPrice) : undefined,
+        max = maxPrice ? Number(maxPrice) : undefined;
+      if (
+        (min !== undefined && (!Number.isFinite(min) || min < 0)) ||
+        (max !== undefined && (!Number.isFinite(max) || max < 0)) ||
+        (min !== undefined && max !== undefined && min > max)
+      )
+        return;
+      setRemoteFilters((current) => ({
+        ...current,
+        color: colorFilter || undefined,
+        size: sizeFilter || undefined,
+        minPrice: minPrice || undefined,
+        maxPrice: maxPrice || undefined,
+        inStock: inStockOnly,
+      }));
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [colorFilter, sizeFilter, minPrice, maxPrice, inStockOnly]);
   const hasLocalFilters = Boolean(
-    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
+    colorFilter ||
+    sizeFilter ||
+    minPrice ||
+    maxPrice ||
+    inStockOnly ||
+    remoteFilters.discount ||
+    remoteFilters.vip ||
+    remoteFilters.commerceType,
   );
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
+  const priceError =
+    minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+      ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+      : initialFilterError;
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
     setActiveSort(sort);
+    const saved = readFilterQuery();
+    if (saved) {
+      setColorFilter(saved.color);
+      setSizeFilter(saved.size);
+      setMinPrice(saved.minPrice);
+      setMaxPrice(saved.maxPrice);
+      setInStockOnly(saved.inStockOnly);
+    }
   }, [selectedCategoryId, sort]);
 
   function selectCategory(category?: CategoryOption) {
@@ -1481,7 +1890,11 @@ export function ProductMarketplace({
       url.searchParams.delete("category");
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
@@ -1501,8 +1914,14 @@ export function ProductMarketplace({
       url.searchParams.set("sort", nextSort);
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+    window.requestAnimationFrame(() =>
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" }),
+    );
   }
 
   function resetFilters() {
@@ -1511,8 +1930,15 @@ export function ProductMarketplace({
     setMinPrice("");
     setMaxPrice("");
     setInStockOnly(false);
+    setRemoteFilters({});
+    ["discount", "vip", "commerceType"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
     selectCategory();
     selectSort("newest");
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
   }
 
   const filterBar = (
@@ -1526,32 +1952,61 @@ export function ProductMarketplace({
       minPrice={minPrice}
       maxPrice={maxPrice}
       inStockOnly={inStockOnly}
+      priceError={priceError}
       onCategory={selectCategory}
-      onColor={setColorFilter}
-      onSize={setSizeFilter}
-      onMinPrice={setMinPrice}
-      onMaxPrice={setMaxPrice}
-      onStockOnly={setInStockOnly}
+      onColor={(value) => {
+        setColorFilter(value);
+        updateFilterQuery("color", value);
+      }}
+      onSize={(value) => {
+        setSizeFilter(value);
+        updateFilterQuery("size", value);
+      }}
+      onMinPrice={(value) => {
+        setMinPrice(value);
+        updateFilterQuery("minPrice", value);
+      }}
+      onMaxPrice={(value) => {
+        setMaxPrice(value);
+        updateFilterQuery("maxPrice", value);
+      }}
+      onStockOnly={(value) => {
+        setInStockOnly(value);
+        updateFilterQuery("inStock", value);
+      }}
     />
   );
 
-  const productGrid = (
-    visibleProducts.length === 0 && !infinite.hasMore && !infinite.isLoadingNext ? (
-      <EmptyState
-        className="min-h-96"
-        title={labels.emptyTitle}
-        description={labels.emptyDescription}
-      />
-    ) : (
-      <ProductInfiniteGrid
-        products={visibleProducts}
-        hasMore={!hasLocalFilters && infinite.hasMore}
-        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
-        onLoadNext={infinite.loadNext}
-        productCardVariant={productCardVariant}
-        labels={{ stock: labels.stock }}
-      />
-    )
+  const productGrid = infinite.isError ? (
+    <EmptyState
+      className="min-h-80"
+      title="Məhsulları yükləmək mümkün olmadı"
+      description="Bağlantını yoxlayın və yenidən cəhd edin."
+      action={<Button onClick={infinite.retry}>Yenidən cəhd et</Button>}
+    />
+  ) : visibleProducts.length === 0 && !infinite.isLoadingNext ? (
+    <EmptyState
+      className="min-h-96"
+      title={
+        searchQuery || hasActiveProductFilters
+          ? "Axtarışınıza uyğun məhsul tapılmadı"
+          : labels.emptyTitle
+      }
+      description={
+        searchQuery || hasActiveProductFilters
+          ? "Filtrləri təmizləyin və ya başqa axtarış sözü yoxlayın."
+          : labels.emptyDescription
+      }
+    />
+  ) : (
+    <ProductInfiniteGrid
+      products={visibleProducts}
+      hasMore={infinite.hasMore}
+      isLoadingNext={infinite.isLoadingNext}
+      onLoadNext={infinite.loadNext}
+      productCardVariant={productCardVariant}
+      labels={{ stock: labels.stock }}
+    />
   );
 
   const sortControl = (
@@ -1593,7 +2048,13 @@ export function ProductMarketplace({
                 >
                   <SlidersHorizontal className="size-4" aria-hidden="true" />
                   {t("filters")}
-                  <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+                  <ChevronDown
+                    className={cn(
+                      "size-4 transition-transform",
+                      isFiltersOpen && "rotate-180",
+                    )}
+                    aria-hidden="true"
+                  />
                 </Button>
                 <Button
                   type="button"
@@ -1604,7 +2065,9 @@ export function ProductMarketplace({
                 >
                   {t("clearFilters")}
                 </Button>
-                <div className="min-w-[10rem] flex-1 sm:flex-none">{sortControl}</div>
+                <div className="min-w-[10rem] flex-1 sm:flex-none">
+                  {sortControl}
+                </div>
               </div>
             </div>
             {isFiltersOpen ? (
@@ -1619,12 +2082,28 @@ export function ProductMarketplace({
                   minPrice={minPrice}
                   maxPrice={maxPrice}
                   inStockOnly={inStockOnly}
+                  priceError={priceError}
                   onCategory={selectCategory}
-                  onColor={setColorFilter}
-                  onSize={setSizeFilter}
-                  onMinPrice={setMinPrice}
-                  onMaxPrice={setMaxPrice}
-                  onStockOnly={setInStockOnly}
+                  onColor={(value) => {
+                    setColorFilter(value);
+                    updateFilterQuery("color", value);
+                  }}
+                  onSize={(value) => {
+                    setSizeFilter(value);
+                    updateFilterQuery("size", value);
+                  }}
+                  onMinPrice={(value) => {
+                    setMinPrice(value);
+                    updateFilterQuery("minPrice", value);
+                  }}
+                  onMaxPrice={(value) => {
+                    setMaxPrice(value);
+                    updateFilterQuery("maxPrice", value);
+                  }}
+                  onStockOnly={(value) => {
+                    setInStockOnly(value);
+                    updateFilterQuery("inStock", value);
+                  }}
                   layout="wide"
                 />
               </div>
@@ -1652,33 +2131,52 @@ export function Storefront({
   isStoreOwner = false,
   legacyLayout = false,
   storeSubdomainSlug,
+  productsOnly = false,
+  contactOnly = false,
 }: StorefrontProps) {
   const t = useTranslations("marketplace");
   const home = useTranslations("home");
   const storefront = useTranslations("storefront");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
-  const [activeSort, setActiveSort] = useState<MarketplaceProductSort>("newest");
+  const [activeSort, setActiveSort] =
+    useState<MarketplaceProductSort>("newest");
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [colorFilter, setColorFilter] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [showAllMobileCategories, setShowAllMobileCategories] = useState(false);
+  const [remoteFilters, setRemoteFilters] = useState<CatalogFilters>({});
+  const categoryQueryIds = useMemo(
+    () => getDescendantCategoryIds(categories, activeCategoryId),
+    [categories, activeCategoryId],
+  );
+  const [homeProductLimit, setHomeProductLimit] = useState(4);
+  const [isOwnerEditing, setIsOwnerEditing] = useState(false);
   const infinite = useInfiniteProducts({
     initialProducts: store.sampleProducts,
     initialCursor: store.productNextCursor,
     initialHasMore: store.productHasMore,
     locale,
     categoryId: activeCategoryId,
+    categoryIds: categoryQueryIds,
+    filters: remoteFilters,
     storeId: store.id,
     searchQuery,
     sort: activeSort,
+    pageSize: productsOnly ? 20 : 4,
   });
   // The data query is already scoped by store ID. Keep a client-side guard too so
   // stale cached state can never render another store's product in "Mağazam".
   const visibleProducts = useMemo(
-    () => infinite.products.filter((product) => product.storeId === store.id),
+    () =>
+      infinite.products
+        .filter((product) => product.storeId === store.id)
+        .sort(
+          (left, right) =>
+            Number(Boolean(right.isPromoted)) -
+            Number(Boolean(left.isPromoted)),
+        ),
     [infinite.products, store.id],
   );
   const storeHomeHref = storeBaseHref ?? getStorePath(store.slug);
@@ -1706,48 +2204,53 @@ export function Storefront({
 
     return {
       colors: [...values.color].sort((a, b) => a.localeCompare(b, "az")),
-      sizes: [...values.size].sort((a, b) => a.localeCompare(b, "az", { numeric: true })),
+      sizes: [...values.size].sort((a, b) =>
+        a.localeCompare(b, "az", { numeric: true }),
+      ),
     };
   }, [infinite.products]);
-  const filteredVisibleProducts = useMemo(() => {
-    const min = minPrice.trim() ? Number(minPrice) : null;
-    const max = maxPrice.trim() ? Number(maxPrice) : null;
-
-    return visibleProducts.filter((product) => {
-      const finalPrice = Math.max(product.priceAmount - product.discountAmount, 0);
-      const values = product.options?.flatMap((option) => option.values.map((value) => ({
-        type: option.type,
-        value: value.value,
-      }))) ?? [];
-
-      if (colorFilter && !values.some((value) => value.type === "color" && value.value === colorFilter)) {
-        return false;
-      }
-
-      if (sizeFilter && !values.some((value) => value.type === "size" && value.value === sizeFilter)) {
-        return false;
-      }
-
-      if (min !== null && Number.isFinite(min) && finalPrice < min) {
-        return false;
-      }
-
-      if (max !== null && Number.isFinite(max) && finalPrice > max) {
-        return false;
-      }
-
-      return !inStockOnly || product.stockQuantity > 0;
-    });
-  }, [colorFilter, inStockOnly, maxPrice, minPrice, sizeFilter, visibleProducts]);
+  const filteredVisibleProducts = visibleProducts;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const min = minPrice ? Number(minPrice) : undefined,
+        max = maxPrice ? Number(maxPrice) : undefined;
+      if (
+        (min !== undefined && (!Number.isFinite(min) || min < 0)) ||
+        (max !== undefined && (!Number.isFinite(max) || max < 0)) ||
+        (min !== undefined && max !== undefined && min > max)
+      )
+        return;
+      setRemoteFilters({
+        color: colorFilter || undefined,
+        size: sizeFilter || undefined,
+        minPrice: minPrice || undefined,
+        maxPrice: maxPrice || undefined,
+        inStock: inStockOnly,
+      });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [colorFilter, sizeFilter, minPrice, maxPrice, inStockOnly]);
   const hasLocalFilters = Boolean(
     colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
   );
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
   );
+  const storefrontPriceError =
+    minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
+      ? "Minimum qiymət maksimum qiymətdən böyük ola bilməz."
+      : "";
 
   useEffect(() => {
     setActiveCategoryId(selectedCategoryId);
+    const saved = readFilterQuery();
+    if (saved) {
+      setColorFilter(saved.color);
+      setSizeFilter(saved.size);
+      setMinPrice(saved.minPrice);
+      setMaxPrice(saved.maxPrice);
+      setInStockOnly(saved.inStockOnly);
+    }
   }, [selectedCategoryId]);
   const isMarketplaceStoreHref = storeHomeHref.startsWith("/store/");
   const storeProductCategoryIds = useMemo(
@@ -1756,35 +2259,46 @@ export function Storefront({
   );
   const isCustomStorefront = !legacyLayout && !isMarketplaceStoreHref;
   const legacyCategories = useMemo(
-    () => categories.filter((category) => storeProductCategoryIds.has(category.id)),
-    [categories, storeProductCategoryIds],
-  );
-  const sortedStoreCategories = useMemo(
     () =>
-      [...categories].sort((a, b) => {
-        const aHasProducts = storeProductCategoryIds.has(a.id);
-        const bHasProducts = storeProductCategoryIds.has(b.id);
-
-        if (aHasProducts !== bHasProducts) {
-          return aHasProducts ? -1 : 1;
-        }
-
-        return a.name.localeCompare(b.name, "az");
-      }),
+      categories.filter((category) => storeProductCategoryIds.has(category.id)),
     [categories, storeProductCategoryIds],
   );
+  const sortedStoreCategories = useMemo(() => {
+    const available = categories.filter((category) =>
+      storeProductCategoryIds.has(category.id),
+    );
+    const featuredOrder = new Map(
+      (store.featuredCategoryIds ?? []).map((id, index) => [id, index]),
+    );
+    return available.sort((a, b) => {
+      const aOrder = featuredOrder.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = featuredOrder.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder || a.name.localeCompare(b.name, "az");
+    });
+  }, [categories, store.featuredCategoryIds, storeProductCategoryIds]);
   const primaryStoreCategory = sortedStoreCategories.find((category) =>
     storeProductCategoryIds.has(category.id),
   );
   const heroCategories = sortedStoreCategories.slice(0, 5);
   const heroSubtitle = getStoreHeroSubtitle(store, primaryStoreCategory?.name);
-  const storeContactPhone = store.whatsappPhone || store.phone ||
+  const storeContactPhone =
+    store.whatsappPhone ||
+    store.phone ||
     locations.find((location) => location.isActive && location.phone)?.phone;
-  const customHeroCategories = heroCategories.slice(0, 4);
+  const selectedFeaturedCategories =
+    (store.featuredCategoryIds?.length ?? 0) > 0
+      ? sortedStoreCategories.filter((category) =>
+          store.featuredCategoryIds?.includes(category.id),
+        )
+      : sortedStoreCategories;
+  const customHeroCategories = selectedFeaturedCategories.slice(0, 4);
   const customHeroDescription = getDisplayStoreDescription(store);
   const aboutContent = getStoreAboutContent(store);
 
-  function selectCategory(category?: CategoryOption, options?: { scrollToProducts?: boolean }) {
+  function selectCategory(
+    category?: CategoryOption,
+    options?: { scrollToProducts?: boolean },
+  ) {
     setActiveCategoryId(category?.id);
 
     if (typeof window === "undefined") {
@@ -1799,7 +2313,11 @@ export function Storefront({
       url.searchParams.delete("category");
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
     if (options?.scrollToProducts ?? true) {
       scheduleScrollToPageSection("products");
     }
@@ -1820,7 +2338,11 @@ export function Storefront({
       url.searchParams.set("sort", nextSort);
     }
 
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
   }
 
   function resetFilters() {
@@ -1831,6 +2353,9 @@ export function Storefront({
     setInStockOnly(false);
     selectCategory();
     selectSort("newest");
+    ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
+      updateFilterQuery(key, ""),
+    );
   }
 
   function scrollToSection(sectionId: string) {
@@ -1848,12 +2373,28 @@ export function Storefront({
       minPrice={minPrice}
       maxPrice={maxPrice}
       inStockOnly={inStockOnly}
+      priceError={storefrontPriceError}
       onCategory={selectCategory}
-      onColor={setColorFilter}
-      onSize={setSizeFilter}
-      onMinPrice={setMinPrice}
-      onMaxPrice={setMaxPrice}
-      onStockOnly={setInStockOnly}
+      onColor={(value) => {
+        setColorFilter(value);
+        updateFilterQuery("color", value);
+      }}
+      onSize={(value) => {
+        setSizeFilter(value);
+        updateFilterQuery("size", value);
+      }}
+      onMinPrice={(value) => {
+        setMinPrice(value);
+        updateFilterQuery("minPrice", value);
+      }}
+      onMaxPrice={(value) => {
+        setMaxPrice(value);
+        updateFilterQuery("maxPrice", value);
+      }}
+      onStockOnly={(value) => {
+        setInStockOnly(value);
+        updateFilterQuery("inStock", value);
+      }}
       layout="wide"
     />
   );
@@ -1869,11 +2410,15 @@ export function Storefront({
         { value: "price_desc", label: t("sortPriceDesc") },
       ]}
       onChange={(value) => selectSort(value as MarketplaceProductSort)}
+      compact
     />
   );
 
   const productsSection = (
-    <section id="products" className="mt-4 min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8">
+    <section
+      id="products"
+      className="mt-4 min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card md:mt-6 md:p-8"
+    >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="break-words text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
           {t("storeProducts")}
@@ -1882,19 +2427,25 @@ export function Storefront({
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
-            className="h-10 gap-2 rounded-[10px] px-3 text-sm"
+            className="h-9 gap-1.5 rounded-[9px] px-2.5 text-xs sm:h-10 sm:gap-2 sm:rounded-[10px] sm:px-3 sm:text-sm"
             aria-expanded={isFiltersOpen}
             aria-controls="storefront-filters"
             onClick={() => setIsFiltersOpen((current) => !current)}
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             {t("filters")}
-            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+            <ChevronDown
+              className={cn(
+                "size-4 transition-transform",
+                isFiltersOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
           </Button>
           <Button
             type="button"
             variant="ghost"
-            className="h-10 rounded-[10px] px-3 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+            className="h-9 rounded-[9px] px-2.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-950 sm:h-10 sm:rounded-[10px] sm:px-3 sm:text-sm"
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
@@ -1921,15 +2472,16 @@ export function Storefront({
         <div className="min-w-0">
           <ProductInfiniteGrid
             products={filteredVisibleProducts}
-            hasMore={!hasLocalFilters && infinite.hasMore}
-            isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
+            hasMore={infinite.hasMore}
+            isLoadingNext={infinite.isLoadingNext}
             onLoadNext={infinite.loadNext}
             storeSlug={store.slug}
             storeName={store.name}
             storeBaseHref={storeBaseHref}
             productCardVariant={productCardVariant}
             labels={{ stock: labels.stock }}
-            isStoreOwner={isStoreOwner}
+            isStoreOwner={isStoreOwner && isOwnerEditing}
+            sellerOwnsStore={isStoreOwner}
             forceMobileTwoColumns
           />
         </div>
@@ -1947,35 +2499,22 @@ export function Storefront({
           "p-3 sm:p-4",
         )}
       >
-        <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+        <div className="mb-3 flex min-w-0 items-center gap-3">
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-xl">
-              {legacyLayout ? home("categories") : storefront("featuredCategories")}
+              {legacyLayout
+                ? home("categories")
+                : storefront("featuredCategories")}
             </h2>
           </div>
-          <button
-            type="button"
-            className="inline-flex shrink-0 items-center gap-1 text-[13px] font-semibold text-blue-600 transition md:hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:text-blue-300 dark:md:hover:text-blue-200 sm:text-sm"
-            onClick={() => {
-              if (isCustomStorefront) {
-                setShowAllMobileCategories((current) => !current);
-                scheduleScrollToPageSection("store-categories");
-                return;
-              }
-
-              selectCategory();
-            }}
-          >
-            {showAllMobileCategories ? storefront("showLess") : storefront("viewAll")}
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </button>
         </div>
-        <div className="-mx-3 grid min-w-0 grid-flow-col grid-rows-2 auto-cols-[164px] snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:grid-rows-none sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="-mx-3 grid min-w-0 grid-flow-col auto-cols-[164px] snap-x gap-2 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:auto-cols-auto sm:grid-flow-row sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5 xl:grid-cols-6">
           {sortedStoreCategories.map((category, index) => {
             const isSelected = activeCategoryId === category.id;
             const hasProducts = storeProductCategoryIds.has(category.id);
             const Icon = getCategoryIcon(category);
-            const iconStyle = CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
+            const iconStyle =
+              CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length];
 
             return (
               <button
@@ -1983,15 +2522,22 @@ export function Storefront({
                 type="button"
                 className={cn(
                   "group flex min-h-[52px] w-[164px] min-w-0 shrink-0 snap-start items-center gap-2 rounded-lg border border-slate-200 bg-white p-2 text-left shadow-none transition duration-200 md:hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 dark:border-slate-800 dark:bg-background dark:text-slate-100 sm:w-auto",
-                  isCustomStorefront && !showAllMobileCategories && index >= 12 && "hidden sm:flex",
                   !hasProducts && "text-muted-foreground opacity-70",
-                  isSelected && "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
+                  isSelected &&
+                    "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-200",
                 )}
                 onClick={() =>
-                  selectCategory(category, { scrollToProducts: !isCustomStorefront })
+                  selectCategory(category, {
+                    scrollToProducts: !isCustomStorefront,
+                  })
                 }
               >
-                <span className={cn("grid size-8 shrink-0 place-items-center rounded-lg ring-1", iconStyle)}>
+                <span
+                  className={cn(
+                    "grid size-8 shrink-0 place-items-center rounded-lg ring-1",
+                    iconStyle,
+                  )}
+                >
                   <Icon className="size-4 stroke-[2.1]" aria-hidden="true" />
                 </span>
                 <span className="flex min-w-0 flex-1 items-center justify-between gap-1.5">
@@ -2008,24 +2554,45 @@ export function Storefront({
     ) : null;
 
   const modernProductsSection = (
-      <section
-        id="products"
+    <section
+      id="products"
+      className={cn(
+        "min-w-0 scroll-mt-28",
+        productsOnly
+          ? "rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.07)] dark:border-slate-800 dark:bg-slate-900 sm:rounded-[24px] sm:p-6 lg:p-8"
+          : isCustomStorefront
+            ? "border-0 bg-transparent px-0 py-2 shadow-none"
+            : "rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-5 lg:p-6",
+      )}
+    >
+      <div
         className={cn(
-          "min-w-0 scroll-mt-28 rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card",
-          isCustomStorefront ? "p-3.5 sm:p-5 lg:p-6" : "p-4 sm:p-5 lg:p-6",
+          "grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between",
+          isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5",
         )}
       >
-      <div className={cn("grid min-w-0 gap-3 lg:flex lg:items-end lg:justify-between", isCustomStorefront ? "mb-4 sm:mb-5" : "mb-5")}>
         <div className="min-w-0">
-          <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">{home("recentlyListed")}</h2>
+          {productsOnly ? (
+            <h1 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+              Bütün məhsullar
+            </h1>
+          ) : (
+            <h2 className="truncate text-[22px] font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
+              {home("recentlyListed")}
+            </h2>
+          )}
+          {productsOnly ? (
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Məhsulları filtr və sıralama ilə rahat tapın
+            </p>
+          ) : null}
         </div>
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center sm:justify-end">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-1.5 sm:flex sm:items-center sm:justify-end sm:gap-2">
           <Button
             type="button"
             variant={isFiltersOpen ? "default" : "outline"}
             className={cn(
-              "gap-2 rounded-[10px] px-3 text-sm shadow-none",
-              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
+              "h-9 gap-1.5 rounded-[9px] px-2.5 text-xs shadow-none sm:h-11 sm:gap-2 sm:rounded-[10px] sm:px-3 sm:text-sm",
               isFiltersOpen
                 ? "bg-blue-600 text-white md:hover:bg-blue-700"
                 : "border-slate-200 bg-white text-slate-700 md:hover:bg-slate-50 md:hover:text-slate-950",
@@ -2036,42 +2603,80 @@ export function Storefront({
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             {t("filters")}
-            <ChevronDown className={cn("size-4 transition-transform", isFiltersOpen && "rotate-180")} aria-hidden="true" />
+            <ChevronDown
+              className={cn(
+                "size-4 transition-transform",
+                isFiltersOpen && "rotate-180",
+              )}
+              aria-hidden="true"
+            />
           </Button>
           <Button
             type="button"
             variant="ghost"
             className={cn(
-              "rounded-[10px] px-3 text-sm text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100",
-              isCustomStorefront ? "h-10 sm:h-11" : "h-11",
+              "h-9 rounded-[9px] px-2.5 text-xs text-slate-500 md:hover:bg-slate-100 md:hover:text-slate-950 disabled:opacity-45 dark:md:hover:bg-slate-900 dark:md:hover:text-slate-100 sm:h-11 sm:rounded-[10px] sm:px-3 sm:text-sm",
             )}
             disabled={!hasActiveProductFilters}
             onClick={resetFilters}
           >
             {t("clearFilters")}
           </Button>
-          <div className="col-span-2 min-w-0 sm:col-auto sm:min-w-[10rem]">{sortControl}</div>
+          <div className="col-span-2 min-w-0 sm:col-auto sm:min-w-[10rem]">
+            {sortControl}
+          </div>
         </div>
       </div>
       {isFiltersOpen ? (
-        <div id="storefront-modern-filters" className="relative z-20 mb-5 w-full">
+        <div
+          id="storefront-modern-filters"
+          className="relative z-20 mb-5 w-full"
+        >
           {filterBar}
         </div>
       ) : null}
-      <ProductInfiniteGrid
-        products={filteredVisibleProducts}
-        hasMore={!hasLocalFilters && infinite.hasMore}
-        isLoadingNext={!hasLocalFilters && infinite.isLoadingNext}
-        onLoadNext={infinite.loadNext}
-        storeSlug={store.slug}
-        storeName={store.name}
-        storeBaseHref={storeBaseHref}
-        productCardVariant={productCardVariant}
-        labels={{ stock: labels.stock }}
-        isStoreOwner={isStoreOwner}
-        forceMobileTwoColumns
-        compactMobileCards={isCustomStorefront}
-      />
+      {infinite.isRefreshing ? (
+        <div
+          className="flex min-h-64 items-center justify-center"
+          aria-live="polite"
+        >
+          <GlobalLoader />
+        </div>
+      ) : (
+        <ProductInfiniteGrid
+          products={
+            productsOnly
+              ? filteredVisibleProducts
+              : filteredVisibleProducts.slice(0, homeProductLimit)
+          }
+          hasMore={
+            productsOnly
+              ? infinite.hasMore
+              : homeProductLimit < filteredVisibleProducts.length ||
+                infinite.hasMore
+          }
+          isLoadingNext={infinite.isLoadingNext}
+          onLoadNext={() => {
+            if (productsOnly) {
+              infinite.loadNext();
+              return;
+            }
+            setHomeProductLimit((current) => current + 4);
+            if (homeProductLimit >= filteredVisibleProducts.length)
+              infinite.loadNext();
+          }}
+          storeSlug={store.slug}
+          storeName={store.name}
+          storeBaseHref={storeBaseHref}
+          productCardVariant={productCardVariant}
+          labels={{ stock: labels.stock }}
+          isStoreOwner={isStoreOwner && isOwnerEditing}
+          sellerOwnsStore={isStoreOwner}
+          forceMobileTwoColumns
+          compactMobileCards={isCustomStorefront}
+          isolatedStoreSlug={isCustomStorefront ? store.slug : undefined}
+        />
+      )}
     </section>
   );
 
@@ -2097,36 +2702,119 @@ export function Storefront({
     </section>
   ) : null;
 
+  const ownerEditControl = isStoreOwner ? (
+    <div className="mb-4 flex justify-end">
+      <Button
+        type="button"
+        variant={isOwnerEditing ? "outline" : "default"}
+        className="h-10 gap-2 rounded-xl px-4 font-semibold shadow-sm"
+        onClick={() => setIsOwnerEditing((current) => !current)}
+      >
+        <Pencil className="size-4" aria-hidden="true" />
+        {isOwnerEditing ? "Redaktəni bağla" : "Redaktə et"}
+      </Button>
+    </div>
+  ) : null;
+
+  const customCategorySection =
+    sortedStoreCategories.length > 0 ? (
+      <section
+        id="store-categories"
+        className="min-w-0 scroll-mt-28 py-2 sm:py-4"
+      >
+        <div className="mb-4 flex items-end justify-between gap-4 sm:mb-6">
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-300">
+              {storefront("store")}
+            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+              {storefront("featuredCategories")}
+            </h2>
+          </div>
+        </div>
+        <div className="-mx-4 flex min-w-0 snap-x gap-3 overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4 xl:grid-cols-6">
+          {sortedStoreCategories.map((category, index) => {
+            const Icon = getCategoryIcon(category);
+            const hasProducts = storeProductCategoryIds.has(category.id);
+
+            return (
+              <button
+                key={category.id}
+                type="button"
+                className={cn(
+                  "group relative min-h-[116px] w-[148px] shrink-0 snap-start overflow-hidden rounded-[18px] border border-slate-200 bg-white p-3.5 text-left shadow-[0_8px_26px_rgba(15,23,42,0.05)] transition duration-300 md:hover:-translate-y-1 md:hover:border-blue-200 md:hover:shadow-[0_16px_38px_rgba(37,99,235,0.10)] dark:border-slate-800 dark:bg-slate-900 sm:min-h-[132px] sm:w-auto sm:p-4",
+                  !hasProducts && "opacity-65",
+                  activeCategoryId === category.id &&
+                    "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30",
+                )}
+                onClick={() =>
+                  selectCategory(category, { scrollToProducts: true })
+                }
+              >
+                <span
+                  className={cn(
+                    "grid size-10 place-items-center rounded-xl ring-1 sm:size-11 sm:rounded-2xl",
+                    CATEGORY_ICON_STYLES[index % CATEGORY_ICON_STYLES.length],
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+                <span className="mt-4 flex items-end justify-between gap-2 sm:mt-5">
+                  <span className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 dark:text-white">
+                    {category.name}
+                  </span>
+                  <ArrowRight
+                    className="size-4 shrink-0 text-slate-400 transition-transform md:group-hover:translate-x-1 md:group-hover:text-blue-600"
+                    aria-hidden="true"
+                  />
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    ) : null;
+
   if (!isCustomStorefront) {
     return (
       <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 px-4 py-4 pb-[calc(88px+env(safe-area-inset-bottom))] dark:bg-slate-950 sm:px-6 sm:py-8 md:pb-10 lg:px-8 lg:py-10">
         <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-8 md:gap-10">
-          {isStoreOwner ? (
+          {ownerEditControl}
+          {isStoreOwner && isOwnerEditing ? (
             <div className="relative min-w-0">
               <StoreBrandingQuickEdit store={store} />
               <StoreWhatsAppButton phone={storeContactPhone} />
             </div>
           ) : (
-            <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
-              <div className="relative overflow-hidden rounded-2xl bg-slate-950">
-                <div className="relative h-[380px] sm:h-[280px] lg:h-[340px]">
+            <section className="min-w-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white p-0 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card sm:p-4">
+              <div className="relative overflow-hidden rounded-[19px] bg-slate-950 sm:rounded-2xl">
+                <div className="relative h-[190px] sm:h-[280px] lg:h-[340px]">
                   <StoreHeroCover store={store} />
                   <StoreWhatsAppButton phone={storeContactPhone} />
-                  <div className="absolute inset-0 bg-slate-950/55" aria-hidden="true" />
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]" aria-hidden="true" />
+                  <div
+                    className="absolute inset-0 bg-slate-950/55"
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,6,23,0.78),rgba(15,23,42,0.42),rgba(2,6,23,0.64))]"
+                    aria-hidden="true"
+                  />
                 </div>
-                <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6 lg:p-8">
-                  <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
+                <div className="absolute inset-x-0 bottom-0 z-10 p-2.5 sm:p-6 lg:p-8">
+                  <div className="grid min-w-0 gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-end">
                     <div className="flex min-w-0 items-end gap-3 sm:gap-5">
-                      <StoreLogo store={store} className="size-20 shrink-0 rounded-2xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 lg:size-28" />
+                      <StoreLogo
+                        store={store}
+                        className="size-16 shrink-0 rounded-xl border-2 border-white bg-white shadow-[0_14px_32px_rgba(2,6,23,0.22)] sm:size-24 sm:rounded-2xl lg:size-28"
+                      />
                       <div className="min-w-0 pb-1 text-white">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                        <p className="mb-2 hidden text-xs font-semibold uppercase tracking-[0.18em] text-white/70 sm:block">
                           {storefront("marketplaceStore")}
                         </p>
-                        <h1 className="line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal sm:text-4xl lg:text-[44px]">
+                        <h1 className="line-clamp-2 break-words pb-1 text-2xl font-semibold leading-[1.16] tracking-normal sm:text-4xl lg:text-[44px]">
                           {store.name}
                         </h1>
-                        <p className="mt-2 break-words text-sm font-medium text-white/80 sm:text-base">
+                        <p className="mt-2 hidden break-words text-sm font-medium text-white/80 sm:block sm:text-base">
                           {heroSubtitle}
                         </p>
                       </div>
@@ -2137,15 +2825,15 @@ export function Storefront({
                         defaultValue={searchQuery}
                         storeSlug={store.slug}
                         searchBaseHref={storeHomeHref}
-                        className="rounded-[14px] bg-white p-1.5 shadow-[0_12px_35px_rgba(2,6,23,0.22)]"
-                        inputClassName="h-12 rounded-[12px] border-transparent bg-transparent pl-11 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0"
-                        buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
+                        className="rounded-[12px] bg-white p-1 shadow-[0_12px_35px_rgba(2,6,23,0.18)] sm:rounded-[14px] sm:p-1.5"
+                        inputClassName="h-10 rounded-[10px] border-transparent bg-transparent pl-10 text-[15px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 sm:h-12 sm:rounded-[12px] sm:pl-11 sm:text-[16px]"
+                        buttonClassName="!size-10 !min-w-10 rounded-[9px] bg-blue-600 p-0 text-white md:hover:bg-blue-700 sm:!size-11 sm:!min-w-11 sm:rounded-[10px]"
                         buttonSize="lg"
                         stackOnMobile
                         compactActions
                       />
                       {aboutContent ? (
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 hidden justify-end sm:flex">
                           <Button
                             type="button"
                             variant="outline"
@@ -2153,14 +2841,17 @@ export function Storefront({
                             onClick={() => scrollToSection("about")}
                           >
                             {storefront("learnAboutStore")}
-                            <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                            <ArrowRight
+                              className="ml-2 size-4"
+                              aria-hidden="true"
+                            />
                           </Button>
                         </div>
                       ) : null}
                     </div>
                   </div>
                   {heroCategories.length > 0 ? (
-                    <div className="mt-5 flex max-w-full flex-wrap gap-2">
+                    <div className="mt-5 hidden max-w-full flex-wrap gap-2 sm:flex">
                       {heroCategories.map((category) => (
                         <button
                           key={category.id}
@@ -2185,162 +2876,7 @@ export function Storefront({
           {modernCategoriesSection}
           {aboutSection}
           {modernProductsSection}
-          {!isStoreOwner ? (
-            <div id="store-info">
-              <PublicStoreLocationSection
-                locations={locations}
-                logoUrl={store.logoUrl}
-                storeName={store.name}
-                socialLinks={{
-                  instagram: store.socialInstagram ?? undefined,
-                  tiktok: store.socialTiktok ?? undefined,
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
-        <SiteFooter {...footer} />
-      </main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(88px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
-      <CustomStorefrontHeader
-        store={store}
-        storeHomeHref={storeHomeHref}
-        searchQuery={searchQuery}
-        onNavigateSection={(sectionId) => {
-          if (sectionId === "store-categories") {
-            setShowAllMobileCategories(true);
-          }
-        }}
-      />
-      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-6 px-4 py-4 sm:px-6 sm:py-8 md:gap-10 lg:px-8 lg:py-10">
-        {isStoreOwner ? (
-          <div className="relative min-w-0">
-            <StoreBrandingQuickEdit store={store} />
-            <StoreWhatsAppButton phone={storeContactPhone} />
-          </div>
-        ) : (
-          <section className="grid min-w-0 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900/70 sm:gap-6 sm:rounded-[20px] sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.8fr)] lg:items-center lg:p-8">
-            <div className="relative -mx-1 -mt-1 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:hidden">
-              <div className="aspect-[16/9] w-full">
-                <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={storeContactPhone} />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 via-slate-950/8 to-transparent" aria-hidden="true" />
-              <StoreLogo store={store} className="absolute bottom-3 left-3 size-16 rounded-2xl border-2 border-white bg-white shadow-[0_12px_28px_rgba(2,6,23,0.24)]" />
-            </div>
-            <div className="min-w-0">
-              <div className="mb-4 flex min-w-0 items-center gap-3 sm:mb-5">
-                <StoreLogo store={store} className="hidden size-16 shrink-0 rounded-2xl border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-950 sm:grid sm:size-20" />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-600 dark:text-blue-300 sm:text-xs sm:tracking-[0.18em]">
-                    {storefront("onlineStore")}
-                  </p>
-                  <h1 className="mt-1 line-clamp-2 break-words pb-1 text-[30px] font-semibold leading-[1.16] tracking-normal text-slate-950 dark:text-white sm:text-[38px] lg:text-[44px]">
-                    {store.name}
-                  </h1>
-                </div>
-              </div>
-              {customHeroDescription ? (
-                <p className="max-w-2xl break-words text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base sm:leading-7">
-                  {customHeroDescription}
-                </p>
-              ) : null}
-              <div className="mt-4 flex min-w-0 flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
-                <Button
-                  type="button"
-                  className="h-11 rounded-[10px] bg-blue-600 px-5 text-sm font-semibold text-white shadow-none md:hover:bg-blue-700"
-                  onClick={() => scrollToSection("products")}
-                >
-                  {storefront("browseProducts")}
-                </Button>
-                {locations.length > 0 ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    onClick={() => scrollToSection("contact")}
-                  >
-                    {storefront("contact")}
-                  </Button>
-                ) : null}
-                {aboutContent ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 rounded-[10px] border-slate-300 bg-white px-5 text-sm font-semibold text-slate-900 shadow-none md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    onClick={() => scrollToSection("about")}
-                  >
-                    {storefront("learnAboutStore")}
-                  </Button>
-                ) : null}
-              </div>
-              <MarketplaceSearch
-                stores={[store]}
-                defaultValue={searchQuery}
-                storeSlug={store.slug}
-                searchBaseHref={storeHomeHref}
-                resultsAnchorId="products"
-                className="mt-4 max-w-xl rounded-[14px] border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.06)] dark:border-slate-800 dark:bg-slate-950 sm:mt-6 sm:p-1.5"
-                inputClassName="h-11 rounded-[12px] border-transparent bg-transparent pl-10 text-[16px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11"
-                buttonClassName="!size-11 !min-w-11 rounded-[10px] bg-blue-600 p-0 text-white md:hover:bg-blue-700"
-                buttonSize="lg"
-                stackOnMobile
-                compactActions
-              />
-              {customHeroCategories.length > 0 ? (
-                <div className="mt-3 flex max-w-full gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-4 sm:flex-wrap sm:overflow-visible">
-                  {customHeroCategories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      className="flex h-8 shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 transition md:hover:border-blue-200 md:hover:bg-blue-50 md:hover:text-blue-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 sm:h-auto sm:px-3.5 sm:py-2 sm:text-xs"
-                      onClick={() =>
-                        selectCategory(category, { scrollToProducts: !isCustomStorefront })
-                      }
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            <div className="relative hidden min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950 sm:block">
-              <div className="aspect-[4/3] w-full">
-                <StoreHeroCover store={store} />
-                <StoreWhatsAppButton phone={storeContactPhone} />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/5 to-transparent" aria-hidden="true" />
-              <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-[0_18px_40px_rgba(2,6,23,0.28)] backdrop-blur-md">
-                <p className="text-xs font-semibold text-slate-200">{storefront("store")}</p>
-                <div className="mt-1 flex min-w-0 items-end justify-between gap-3">
-                  <p className="line-clamp-2 min-w-0 break-words text-lg font-bold text-white drop-shadow-sm">
-                    {heroSubtitle}
-                  </p>
-                  {aboutContent ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 shrink-0 rounded-full border-white/25 bg-white/95 px-3 text-xs font-semibold text-slate-950 shadow-none md:hover:bg-white md:hover:text-blue-700"
-                      onClick={() => scrollToSection("about")}
-                    >
-                      {storefront("learnAboutStore")}
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {modernCategoriesSection}
-        {aboutSection}
-        {modernProductsSection}
-        {!isStoreOwner ? (
-          <div id="contact" className="scroll-mt-28">
+          <div id="store-info">
             <PublicStoreLocationSection
               locations={locations}
               logoUrl={store.logoUrl}
@@ -2351,10 +2887,174 @@ export function Storefront({
               }}
             />
           </div>
-        ) : null}
+        </div>
+        <SiteFooter {...footer} />
+      </main>
+    );
+  }
+
+  if (productsOnly || contactOnly) {
+    return (
+      <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+        <div
+          className={cn(
+            "mx-auto w-full max-w-[1440px] pb-5 md:pb-8 lg:px-8",
+            productsOnly
+              ? "px-2 pt-2 sm:px-6 sm:pt-4 md:pt-6"
+              : "px-4 pt-20 sm:px-6 sm:pt-14 md:pt-12",
+          )}
+        >
+          {productsOnly ? ownerEditControl : null}
+          {productsOnly && isStoreOwner && isOwnerEditing ? (
+            <div className="mb-5">
+              <StoreBrandingQuickEdit store={store} />
+            </div>
+          ) : null}
+          {productsOnly ? (
+            modernProductsSection
+          ) : (
+            <PublicStoreLocationSection
+              locations={locations}
+              logoUrl={store.logoUrl}
+              storeName={store.name}
+              isolated
+              socialLinks={{
+                instagram: store.socialInstagram ?? undefined,
+                tiktok: store.socialTiktok ?? undefined,
+              }}
+            />
+          )}
+        </div>
+        <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
+        <MobileBottomNav
+          storeHomeHref={storeHomeHref}
+          storeSubdomainSlug={storeSubdomainSlug}
+          storeId={store.id}
+          isolatedStorefront
+          sellerOwnsStore={isStoreOwner}
+        />
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-white pb-[calc(76px+env(safe-area-inset-bottom))] text-slate-950 dark:bg-slate-950 dark:text-slate-50 md:pb-0">
+      <div className="mx-auto flex w-full max-w-[1280px] min-w-0 flex-col gap-7 px-4 py-4 sm:px-6 sm:py-7 md:gap-8 lg:px-7 lg:py-7">
+        {ownerEditControl}
+        {isStoreOwner && isOwnerEditing ? (
+          <div className="relative min-w-0">
+            <StoreBrandingQuickEdit store={store} />
+            <StoreWhatsAppButton phone={storeContactPhone} />
+          </div>
+        ) : (
+          <section
+            data-store-search-sentinel
+            className="-mx-4 flex min-w-0 flex-col sm:mx-0"
+          >
+            <div className="order-2 grid overflow-hidden bg-[#edf4ff] dark:bg-slate-900 lg:order-1 lg:min-h-[430px] lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="relative z-10 order-2 flex min-w-0 flex-col justify-center px-5 py-4 sm:px-10 sm:py-10 lg:order-1 lg:px-12 lg:py-10 xl:px-14">
+                <StoreLogo
+                  store={store}
+                  className="mb-4 hidden size-20 rounded-none border-0 bg-white text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.10)] sm:grid sm:mb-5 sm:size-20 lg:mb-6 lg:size-20"
+                />
+                <h1 className="max-w-xl text-pretty text-2xl font-black leading-[1.18] tracking-[-0.025em] text-slate-950 dark:text-white sm:text-4xl sm:leading-[1.16] lg:text-[42px] lg:leading-[1.16]">
+                  {store.heroTitle?.trim() || storefront("heroTitle")}
+                </h1>
+                {store.heroSubtitle?.trim() || customHeroDescription ? (
+                  <p className="mt-3 hidden line-clamp-3 max-w-lg text-sm leading-6 text-slate-600 dark:text-slate-300 sm:block sm:mt-5 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
+                    {store.heroSubtitle?.trim() || customHeroDescription}
+                  </p>
+                ) : null}
+                <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-7 sm:gap-3">
+                  <Button
+                    type="button"
+                    className="h-11 rounded-none bg-slate-950 px-5 text-sm font-bold text-white shadow-none md:hover:bg-blue-700 dark:bg-white dark:text-slate-950 dark:md:hover:bg-blue-100 sm:h-12 sm:px-7"
+                    onClick={() => scrollToSection("products")}
+                  >
+                    {storefront("browseProducts")}
+                    <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                  </Button>
+                  {locations.length > 0 ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="hidden h-11 rounded-none border-slate-400 bg-transparent px-5 text-sm font-bold text-slate-900 shadow-none md:hover:border-slate-950 md:hover:bg-white dark:border-slate-600 dark:text-white dark:md:hover:bg-slate-800 sm:inline-flex sm:h-12 sm:px-7"
+                      onClick={() => scrollToSection("contact")}
+                    >
+                      {storefront("contact")}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="relative order-1 min-h-[180px] overflow-hidden sm:min-h-[320px] lg:order-2 lg:min-h-[430px]">
+                <StoreHeroCover store={store} isolated />
+                <div
+                  className="absolute inset-0 bg-gradient-to-t from-slate-950/25 via-transparent to-transparent"
+                  aria-hidden="true"
+                />
+                <StoreWhatsAppButton phone={storeContactPhone} />
+                {customHeroCategories.length > 0 ? (
+                  <div className="absolute inset-x-4 bottom-4 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:inset-x-7 sm:bottom-7">
+                    {customHeroCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        className="h-9 shrink-0 bg-white px-3.5 text-[11px] font-bold text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.16)] transition md:hover:bg-blue-600 md:hover:text-white sm:h-10 sm:px-4 sm:text-xs"
+                        onClick={() =>
+                          selectCategory(category, { scrollToProducts: true })
+                        }
+                      >
+                        {category.name}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="order-1 border-y border-slate-200 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950 sm:p-5 lg:hidden lg:order-2 lg:border-x lg:border-t-0">
+              <MarketplaceSearch
+                stores={[store]}
+                defaultValue={searchQuery}
+                storeSlug={store.slug}
+                searchBaseHref={storeHomeHref}
+                resultsAnchorId="products"
+                className="mx-auto max-w-4xl rounded-none border-0 bg-slate-100 p-1 shadow-none dark:bg-slate-900 sm:p-1.5"
+                inputClassName="h-10 rounded-none border-transparent bg-transparent pl-10 text-[15px] text-slate-900 placeholder:text-slate-500 focus-visible:ring-0 dark:text-slate-100 sm:h-12 sm:pl-11 sm:text-[16px]"
+                buttonClassName="!h-10 !min-w-10 rounded-none bg-slate-950 px-3 text-white md:hover:bg-blue-700 dark:bg-blue-600 sm:!h-12 sm:!min-w-12 sm:px-5"
+                buttonSize="lg"
+                stackOnMobile
+                compactActions
+              />
+            </div>
+          </section>
+        )}
+
+        {modernProductsSection}
+        {customCategorySection}
+        {aboutSection}
+        <div id="contact" className="scroll-mt-28">
+          <PublicStoreLocationSection
+            locations={locations}
+            logoUrl={store.logoUrl}
+            storeName={store.name}
+            isolated
+            socialLinks={{
+              instagram: store.socialInstagram ?? undefined,
+              tiktok: store.socialTiktok ?? undefined,
+            }}
+          />
+        </div>
       </div>
       <CustomStoreFooter store={store} storeHomeHref={storeHomeHref} />
-      <MobileBottomNav storeHomeHref={storeHomeHref} storeSubdomainSlug={storeSubdomainSlug} />
+      <MobileBottomNav
+        storeHomeHref={storeHomeHref}
+        storeSubdomainSlug={storeSubdomainSlug}
+        storeId={store.id}
+        isolatedStorefront={isCustomStorefront}
+        sellerOwnsStore={isStoreOwner}
+      />
     </main>
   );
 }

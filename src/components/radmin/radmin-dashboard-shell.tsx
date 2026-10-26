@@ -211,7 +211,7 @@ export function RadminDashboardShell({
     <div className="radmin-shell min-h-screen max-w-full overflow-x-hidden text-foreground">
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 hidden border-r border-[#1a4a62]/80 bg-[linear-gradient(180deg,#061323_0%,#0b3048_48%,#072033_100%)] text-white shadow-2xl shadow-cyan-950/20 transition-all duration-200 lg:flex",
+          "fixed inset-y-0 left-0 z-40 hidden border-r border-[#1a4a62]/80 bg-[linear-gradient(180deg,#061323_0%,#0b3048_48%,#072033_100%)] text-white shadow-2xl shadow-orange-950/20 transition-all duration-200 lg:flex",
           isCollapsed ? "w-24" : "w-80",
         )}
       >
@@ -228,7 +228,7 @@ export function RadminDashboardShell({
             >
               <span className="grid size-12 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-base font-black text-[#061323] shadow-lg shadow-amber-500/20">
                 {sidebarLogoUrl ? (
-                  <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                  <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-0.5" />
                 ) : (
                   "a"
                 )}
@@ -236,7 +236,7 @@ export function RadminDashboardShell({
               {!isCollapsed ? (
                 <div>
                   <p className="text-base font-black leading-none">{siteName}</p>
-                  <p className="text-sm font-medium text-cyan-100/70">RAdmin</p>
+                  <p className="text-sm font-medium text-orange-100/70">RAdmin</p>
                 </div>
               ) : null}
             </Link>
@@ -245,10 +245,10 @@ export function RadminDashboardShell({
               variant="ghost"
               size={isCollapsed ? "icon" : "sm"}
               className={cn(
-                "border border-white/10 bg-white/5 text-cyan-50 hover:bg-cyan-300/10 hover:text-white",
+                "border border-white/10 bg-white/5 text-orange-50 hover:bg-orange-300/10 hover:text-white",
                 !isCollapsed && "gap-2 px-2",
                 isCollapsed &&
-                  "size-12 rounded-xl shadow-sm shadow-cyan-950/20",
+                  "size-12 rounded-xl shadow-sm shadow-orange-950/20",
               )}
               onClick={() => setIsCollapsed((current) => !current)}
               aria-label={isCollapsed ? "Sidebari aç" : "Sidebari daralt"}
@@ -267,10 +267,10 @@ export function RadminDashboardShell({
           <div className="border-b border-white/10 px-5 py-4">
             {!isCollapsed ? (
               <>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/70">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-100/70">
                   Naviqasiya
                 </p>
-                <p className="mt-2 text-sm text-cyan-50/90">{userLabel}</p>
+                <p className="mt-2 text-sm text-orange-50/90">{userLabel}</p>
               </>
             ) : null}
           </div>
@@ -281,7 +281,7 @@ export function RadminDashboardShell({
               const Icon = (
                 <DashboardIconView
                   name={item.icon}
-                  className={cn("size-5 shrink-0", isActive ? "text-[#061323]" : "text-cyan-100/70")}
+                  className={cn("size-5 shrink-0", isActive ? "text-[#061323]" : "text-orange-100/70")}
                 />
               );
 
@@ -293,8 +293,8 @@ export function RadminDashboardShell({
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-3 text-base font-semibold transition",
                     isActive
-                      ? "bg-[#5eead4] text-[#061323] shadow-lg shadow-cyan-300/20"
-                      : "text-cyan-50/80 hover:bg-white/10 hover:text-white",
+                      ? "bg-[#5eead4] text-[#061323] shadow-lg shadow-orange-300/20"
+                      : "text-orange-50/80 hover:bg-white/10 hover:text-white",
                     isCollapsed && "justify-center px-2",
                   )}
                 >
@@ -315,8 +315,8 @@ export function RadminDashboardShell({
           </nav>
           <div className="border-t border-white/10 p-4">
             {!isCollapsed ? (
-              <div className="rounded-xl border border-white/10 bg-white/[0.06] p-3.5 shadow-inner shadow-cyan-950/20">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100/70">
+              <div className="rounded-xl border border-white/10 bg-white/[0.06] p-3.5 shadow-inner shadow-orange-950/20">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-100/70">
                   Sessiya
                 </p>
                 <p className="mt-2 truncate text-base font-semibold text-white">{userLabel}</p>
@@ -348,7 +348,7 @@ export function RadminDashboardShell({
               <Link href="/radmin" className="flex items-center gap-3">
                 <span className="grid size-11 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-sm font-black text-[#061323]">
                   {sidebarLogoUrl ? (
-                    <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-1.5" />
+                    <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-0.5" />
                   ) : (
                     "a"
                   )}
@@ -359,7 +359,7 @@ export function RadminDashboardShell({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-12 rounded-xl text-cyan-50 hover:bg-white/10 hover:text-white"
+                className="size-12 rounded-xl text-orange-50 hover:bg-white/10 hover:text-white"
                 onClick={() => setIsDrawerOpen(false)}
                 aria-label="Sidebari bağla"
               >
@@ -379,7 +379,7 @@ export function RadminDashboardShell({
                       "flex items-center gap-3 rounded-xl px-3 py-3 text-base font-medium",
                       isActive
                         ? "bg-[#5eead4] text-[#061323]"
-                        : "text-cyan-50/80 hover:bg-white/10 hover:text-white",
+                        : "text-orange-50/80 hover:bg-white/10 hover:text-white",
                     )}
                     onClick={() => {
                       setIsDrawerOpen(false);
@@ -396,13 +396,13 @@ export function RadminDashboardShell({
       ) : null}
 
       <div className={cn("min-h-screen min-w-0 max-w-full overflow-x-hidden", sidebarWidth)}>
-        <header className="sticky top-0 z-30 border-b border-cyan-900/10 bg-white/90 shadow-sm shadow-cyan-950/5 backdrop-blur-xl dark:border-cyan-200/10 dark:bg-slate-950/90">
+        <header className="fixed inset-x-0 top-0 z-30 border-b border-orange-900/10 bg-white/95 shadow-sm shadow-orange-950/5 backdrop-blur-xl dark:border-orange-200/10 dark:bg-slate-950/95 lg:sticky lg:inset-x-auto">
           <div className="flex h-16 min-w-0 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="grid size-11 shrink-0 place-items-center rounded-xl border-cyan-900/10 bg-white text-[#0b3048] shadow-sm lg:hidden"
+              className="grid size-11 shrink-0 place-items-center rounded-xl border-orange-900/10 bg-white text-[#0b3048] shadow-sm lg:hidden"
               onClick={() => setIsDrawerOpen(true)}
               aria-label="Sidebari aç"
             >
@@ -422,7 +422,7 @@ export function RadminDashboardShell({
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="İstifadəçi, məhsul, mağaza..."
-                className="h-11 w-full rounded-xl border border-cyan-900/10 bg-white/90 pl-10 pr-4 text-sm outline-none shadow-sm shadow-cyan-950/5 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-slate-900/90"
+                className="h-11 w-full rounded-xl border border-orange-900/10 bg-white/90 pl-10 pr-4 text-sm outline-none shadow-sm shadow-orange-950/5 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 dark:bg-slate-900/90"
               />
               {filteredItems.length > 0 ? (
                 <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-full rounded-xl border bg-popover p-2 shadow-xl">
@@ -443,14 +443,14 @@ export function RadminDashboardShell({
             <ThemeToggle />
             <AdminProfileMenu userLabel={userLabel} />
           </div>
-          <div className="border-t border-cyan-900/10 bg-cyan-50/50 px-4 py-3 text-sm text-muted-foreground dark:border-cyan-200/10 dark:bg-cyan-950/10 sm:px-6 lg:px-8">
+          <div className="border-t border-orange-900/10 bg-orange-50/50 px-4 py-3 text-sm text-muted-foreground dark:border-orange-200/10 dark:bg-orange-950/10 sm:px-6 lg:px-8">
             <span className="font-medium text-foreground">Hazır bölmə:</span>{" "}
             {activeItem ? getItemLabel(activeItem) : "Dashboard"}
           </div>
         </header>
 
-        <main className="min-w-0 max-w-full overflow-x-hidden px-3 py-5 sm:px-6 lg:px-8">
-          <div className="min-w-0 max-w-full overflow-x-hidden rounded-2xl border border-white/80 bg-white/75 p-3 shadow-xl shadow-cyan-950/10 ring-1 ring-cyan-900/5 backdrop-blur sm:p-6 dark:border-cyan-200/10 dark:bg-slate-950/50 dark:shadow-black/20">
+        <main className="min-w-0 max-w-full overflow-x-hidden px-3 pb-5 pt-[7.75rem] sm:px-6 lg:px-8 lg:py-5">
+          <div className="min-w-0 max-w-full overflow-x-hidden rounded-2xl border border-white/80 bg-white/75 p-3 shadow-xl shadow-orange-950/10 ring-1 ring-orange-900/5 backdrop-blur sm:p-6 dark:border-orange-200/10 dark:bg-slate-950/50 dark:shadow-black/20">
             {children}
           </div>
         </main>

@@ -18,7 +18,11 @@ it("starts late-hydrating consumers with the server snapshot even after auth cac
     return createElement("span", null, `${profile.status}:${isResolved}`);
   }
   const initial = renderToString(createElement(Consumer));
-  vi.stubGlobal("window", { localStorage: { getItem: () => null, setItem: vi.fn() } });
+  vi.stubGlobal("window", { addEventListener: vi.fn(), localStorage: { getItem: () => null, setItem: vi.fn() } });
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+    authenticated: true,
+    profile: { status: "authenticated", userId: "seller-1", role: "seller", email: null, fullName: "QA Seller", avatarUrl: null },
+  })));
   expect((await getClientAuthProfileOnce()).status).toBe("authenticated");
   expect(renderToString(createElement(Consumer))).toBe(initial);
 });

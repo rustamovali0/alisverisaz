@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import {
   invalidateHomepagePublicData,
@@ -470,6 +471,77 @@ export async function cancelPromotionRequestAction(
   return {
     ok: true,
     message: "Önə çıxarma ləğv edildi.",
+  };
+}
+
+export async function deletePromotionRequestAction(
+  formData: FormData,
+): Promise<PromotionActionResult> {
+  const current = await requireRole(["admin"], "/radmin/promotions");
+  const requestId = readString(formData, "requestId");
+
+  if (!UUID_PATTERN.test(requestId)) {
+    return {
+      ok: false,
+      message: "Önə çıxarma qeydi tapılmadı.",
+    };
+  }
+
+  const request = await getPromotionRequestById(requestId);
+  if (!request) {
+    return {
+      ok: false,
+      message: "Önə çıxarma qeydi artıq silinib və ya mövcud deyil.",
+    };
+  }
+
+  const supabase = createSupabaseAdminClient();
+  const { error } = await (supabase as any)
+    .from("promotion_requests")
+    .delete()
+    .eq("id", requestId);
+
+  if (error) {
+    await recordAdminAudit({
+      action: "delete_promotion_request",
+      adminId: current.user.id,
+      entityType: "promotion_request",
+      entityId: requestId,
+      success: false,
+      metadata: { error: error.message },
+    });
+    return {
+      ok: false,
+      message: error.message,
+    };
+  }
+
+  await recordAdminAudit({
+    action: "delete_promotion_request",
+    adminId: current.user.id,
+    entityType: "promotion_request",
+    entityId: requestId,
+    metadata: {
+      targetType: request.targetType,
+      storeId: request.storeId,
+      storeName: request.storeName,
+      productId: request.productId,
+      productName: request.productName,
+      previousStatus: request.status,
+    },
+  });
+
+  revalidatePromotionPaths({
+    productId: request.productId,
+    storeId: request.storeId,
+    storeSlug: request.storeSlug,
+  });
+
+  return {
+    ok: true,
+    message: request.status === "approved"
+      ? "Önə çıxarma dayandırıldı və qeyd siyahıdan silindi."
+      : "Önə çıxarma qeydi siyahıdan silindi.",
   };
 }
 

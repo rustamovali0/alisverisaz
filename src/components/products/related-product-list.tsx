@@ -13,6 +13,8 @@ type RelatedProductListProps = {
   productId: string;
   categoryId: string;
   locale: string;
+  storeId?: string;
+  isolatedStoreSlug?: string;
 };
 
 function mergeProducts(current: CartProduct[], nextProducts: CartProduct[]) {
@@ -27,10 +29,12 @@ export function RelatedProductList({
   productId,
   categoryId,
   locale,
+  storeId,
+  isolatedStoreSlug,
 }: RelatedProductListProps) {
   const t = useTranslations("marketplace");
   const query = useInfiniteQuery({
-    queryKey: ["related-products", locale, productId, categoryId],
+    queryKey: ["related-products", locale, productId, categoryId, storeId],
     initialPageParam: null as string | null,
     initialData: {
       pages: [{ products: initialProducts, nextCursor: initialCursor, hasMore: initialHasMore }],
@@ -38,6 +42,7 @@ export function RelatedProductList({
     },
     queryFn: async ({ pageParam, signal }): Promise<MarketplaceProductPage> => {
       const params = new URLSearchParams({ productId, categoryId, locale, limit: "20" });
+      if (storeId) params.set("storeId", storeId);
       if (pageParam) params.set("cursor", pageParam);
       const response = await fetch(`/api/marketplace/related-products?${params}`, { signal });
       if (!response.ok) throw new Error("RELATED_PRODUCTS_FAILED");
@@ -65,7 +70,7 @@ export function RelatedProductList({
         </div>
       </div>
       {products.length ? (
-        <ProductGrid products={products} labels={{ stock: t("stock") }} layout="related" />
+        <ProductGrid products={products} labels={{ stock: t("stock") }} layout="related" isolatedStoreSlug={isolatedStoreSlug} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }, (_, index) => (

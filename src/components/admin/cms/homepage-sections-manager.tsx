@@ -296,7 +296,7 @@ export function HomepageSectionsManager({
                   />
                 </label>
                 {section.key === "hero" ? (
-                  <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-cyan-500/5 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
+                  <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-orange-500/5 px-4 py-3 text-center text-sm transition hover:border-primary/40 hover:bg-primary/5">
                     <Smartphone className="size-6 text-primary" aria-hidden="true" />
                     <span className="font-semibold">Mobil hero şəklini seç</span>
                     <span className="text-xs text-muted-foreground">
