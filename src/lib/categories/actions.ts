@@ -161,19 +161,24 @@ export async function createCategoryAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
+      message:
+        error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
     };
   }
 
-  const { data: category, error } = await (supabase as any).from("categories").insert({
-    parent_id: parentId,
-    name,
-    slug,
-    image_url: imageUrl,
-    description: readString(formData, "description") || null,
-    sort_order: readNumber(formData, "sortOrder"),
-    is_active: readBoolean(formData, "isActive"),
-  }).select("id").single();
+  const { data: category, error } = await (supabase as any)
+    .from("categories")
+    .insert({
+      parent_id: parentId,
+      name,
+      slug,
+      image_url: imageUrl,
+      description: readString(formData, "description") || null,
+      sort_order: readNumber(formData, "sortOrder"),
+      is_active: readBoolean(formData, "isActive"),
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return {
@@ -223,7 +228,9 @@ export async function updateCategoryAction(
     .select("image_url")
     .eq("id", id)
     .maybeSingle();
-  let imageUrl = existing?.image_url ?? null;
+  let imageUrl = readBoolean(formData, "removeImage")
+    ? null
+    : (existing?.image_url ?? null);
 
   try {
     const imageFile = readFile(formData, "imageFile");
@@ -238,7 +245,8 @@ export async function updateCategoryAction(
   } catch (error) {
     return {
       ok: false,
-      message: error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
+      message:
+        error instanceof Error ? error.message : "Kateqoriya şəkli yüklənmədi.",
     };
   }
 
@@ -263,7 +271,9 @@ export async function updateCategoryAction(
     };
   }
 
-  await deleteR2MediaAssetsByUrls([existing?.image_url !== imageUrl ? existing?.image_url : ""]);
+  await deleteR2MediaAssetsByUrls([
+    existing?.image_url !== imageUrl ? existing?.image_url : "",
+  ]);
   revalidateCategorySurfaces(id);
   await recordAdminAudit({
     adminId: current.user.id,
@@ -298,7 +308,10 @@ export async function deleteCategoryAction(
     .select("image_url")
     .eq("id", id)
     .maybeSingle();
-  const { error } = await (supabase as any).from("categories").delete().eq("id", id);
+  const { error } = await (supabase as any)
+    .from("categories")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     return {

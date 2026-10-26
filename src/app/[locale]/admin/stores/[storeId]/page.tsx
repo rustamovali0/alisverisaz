@@ -61,6 +61,7 @@ export default async function AdminStoreDetailPage({
           panelSettings={detail.settings}
         />
       </DashboardPanel>
+      <div id="store-products" className="scroll-mt-40" />
       <DashboardPanel
         title="Mağaza məhsulları"
         description="Admin bu mağazanın məhsullarını görə, redaktə edə və silə bilər."
@@ -82,6 +83,7 @@ export default async function AdminStoreDetailPage({
         </div>
         <ProductList
           products={products}
+          editHrefBase="/radmin/products"
           categories={categories}
           deleteAction={deleteProductAction}
           emptyTitle="Məhsul yoxdur"

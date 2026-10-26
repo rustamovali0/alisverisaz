@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ArrowRight, Tags } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { getCategoryImage } from "@/lib/categories/images";
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { ScrollToTopOnMount } from "@/components/common/scroll-to-top-on-mount";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -71,8 +72,17 @@ export default async function CategoriesPage({ params }: CategoriesPageProps) {
                   scroll
                   className="group flex min-h-[50px] min-w-0 items-center gap-2 rounded-lg px-1 transition hover:text-primary"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
-                    <CategoryIcon className="size-4.5 stroke-[2.1]" aria-hidden="true" />
+                  <span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20">
+                    {getCategoryImage(category) ? (
+                      <img
+                        src={getCategoryImage(category)!}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <CategoryIcon className="size-6" aria-hidden="true" />
+                    )}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-base font-black">
                     {category.name}

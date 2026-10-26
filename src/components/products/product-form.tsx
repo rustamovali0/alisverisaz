@@ -1,8 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Heading2, List, ListOrdered, Pilcrow, Sparkles } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Heading2,
+  List,
+  ListOrdered,
+  Pilcrow,
+  Sparkles,
+} from "lucide-react";
 
 import { ImageDropzone } from "@/components/products/image-dropzone";
 import { Button } from "@/components/ui/button";
@@ -14,6 +29,7 @@ import {
   deleteProductImageAction,
   setPrimaryProductImageAction,
   updateProductAction,
+  updateProductByAdminAction,
 } from "@/lib/products/actions";
 import type {
   ProductLocationAvailability,
@@ -33,6 +49,7 @@ import {
 type ProductFormMode = "store-create" | "personal-create" | "edit";
 
 type ProductFormProps = {
+  adminMode?: boolean;
   mode: ProductFormMode;
   categories: CategoryOption[];
   stores?: Array<{
@@ -50,20 +67,173 @@ type ProductFormProps = {
 };
 
 const CATEGORY_KEYWORD_GROUPS = [
-  { category: ["moda"], words: ["geyim", "paltar", "köynək", "koynek", "şalvar", "salvar", "jeans", "ayaqqabı", "ayaqqabi", "çanta", "canta", "kostyum"] },
-  { category: ["elektronika"], words: ["telefon", "iphone", "samsung", "noutbuk", "laptop", "kompüter", "komputer", "qulaqcıq", "qulaqciq", "televizor", "kamera"] },
-  { category: ["gözəllik", "baxım"], words: ["ətir", "etir", "parfum", "krem", "şampun", "sampun", "makiyaj", "kosmetika", "saç", "sac"] },
-  { category: ["ana", "uşaq"], words: ["uşaq", "usaq", "körpə", "korpe", "oyuncaq", "beşik", "besik"] },
-  { category: ["avto"], words: ["avtomobil", "maşın", "masin", "mühərrik", "muherrik", "təkər", "teker", "yağ", "yag"] },
-  { category: ["ev", "bağ"], words: ["mebel", "divan", "masa", "stul", "yataq", "mətbəx", "metbex", "bağ", "bag"] },
-  { category: ["idman", "outdoor"], words: ["idman", "fitness", "trenajor", "velosiped", "top", "çadır", "cadir"] },
-  { category: ["kitab"], words: ["kitab", "roman", "dərslik", "derslik", "jurnal"] },
-  { category: ["qida", "içki"], words: ["qida", "yemək", "yemek", "içki", "icki", "qəhvə", "qehve", "çay", "cay"] },
-  { category: ["tikinti", "alət"], words: ["alət", "alet", "drel", "mişar", "misar", "tikinti", "vintaçan", "vintacan"] },
-  { category: ["heyvan"], words: ["it", "pişik", "pisik", "heyvan", "yem", "akvarium"] },
-  { category: ["səyahət", "baqaj", "çanta"], words: ["çamadan", "camadan", "baqaj", "səyahət", "seyahat", "yol çantası", "noutbuk çantası"] },
-  { category: ["hobbi", "yaradıcılıq"], words: ["musiqi", "gitara", "piano", "rəsm", "resm", "pazl", "model", "əl işi", "el isi"] },
-  { category: ["hədiyyə", "bayram"], words: ["hədiyyə", "hediyye", "gül", "gul", "buket", "şar", "sar", "suvenir", "bayram"] },
+  {
+    category: ["moda"],
+    words: [
+      "geyim",
+      "paltar",
+      "köynək",
+      "koynek",
+      "şalvar",
+      "salvar",
+      "jeans",
+      "ayaqqabı",
+      "ayaqqabi",
+      "çanta",
+      "canta",
+      "kostyum",
+    ],
+  },
+  {
+    category: ["elektronika"],
+    words: [
+      "telefon",
+      "iphone",
+      "samsung",
+      "noutbuk",
+      "laptop",
+      "kompüter",
+      "komputer",
+      "qulaqcıq",
+      "qulaqciq",
+      "televizor",
+      "kamera",
+    ],
+  },
+  {
+    category: ["gözəllik", "baxım"],
+    words: [
+      "ətir",
+      "etir",
+      "parfum",
+      "krem",
+      "şampun",
+      "sampun",
+      "makiyaj",
+      "kosmetika",
+      "saç",
+      "sac",
+    ],
+  },
+  {
+    category: ["ana", "uşaq"],
+    words: ["uşaq", "usaq", "körpə", "korpe", "oyuncaq", "beşik", "besik"],
+  },
+  {
+    category: ["avto"],
+    words: [
+      "avtomobil",
+      "maşın",
+      "masin",
+      "mühərrik",
+      "muherrik",
+      "təkər",
+      "teker",
+      "yağ",
+      "yag",
+    ],
+  },
+  {
+    category: ["ev", "bağ"],
+    words: [
+      "mebel",
+      "divan",
+      "masa",
+      "stul",
+      "yataq",
+      "mətbəx",
+      "metbex",
+      "bağ",
+      "bag",
+    ],
+  },
+  {
+    category: ["idman", "outdoor"],
+    words: [
+      "idman",
+      "fitness",
+      "trenajor",
+      "velosiped",
+      "top",
+      "çadır",
+      "cadir",
+    ],
+  },
+  {
+    category: ["kitab"],
+    words: ["kitab", "roman", "dərslik", "derslik", "jurnal"],
+  },
+  {
+    category: ["qida", "içki"],
+    words: [
+      "qida",
+      "yemək",
+      "yemek",
+      "içki",
+      "icki",
+      "qəhvə",
+      "qehve",
+      "çay",
+      "cay",
+    ],
+  },
+  {
+    category: ["tikinti", "alət"],
+    words: [
+      "alət",
+      "alet",
+      "drel",
+      "mişar",
+      "misar",
+      "tikinti",
+      "vintaçan",
+      "vintacan",
+    ],
+  },
+  {
+    category: ["heyvan"],
+    words: ["it", "pişik", "pisik", "heyvan", "yem", "akvarium"],
+  },
+  {
+    category: ["səyahət", "baqaj", "çanta"],
+    words: [
+      "çamadan",
+      "camadan",
+      "baqaj",
+      "səyahət",
+      "seyahat",
+      "yol çantası",
+      "noutbuk çantası",
+    ],
+  },
+  {
+    category: ["hobbi", "yaradıcılıq"],
+    words: [
+      "musiqi",
+      "gitara",
+      "piano",
+      "rəsm",
+      "resm",
+      "pazl",
+      "model",
+      "əl işi",
+      "el isi",
+    ],
+  },
+  {
+    category: ["hədiyyə", "bayram"],
+    words: [
+      "hədiyyə",
+      "hediyye",
+      "gül",
+      "gul",
+      "buket",
+      "şar",
+      "sar",
+      "suvenir",
+      "bayram",
+    ],
+  },
 ];
 
 const PRODUCT_FIELD_LABELS: Record<string, string> = {
@@ -78,14 +248,20 @@ function normalizeCategoryText(value: string) {
   return value.trim().toLocaleLowerCase("az-AZ");
 }
 
-function suggestedCategories(productName: string, categories: CategoryOption[]) {
+function suggestedCategories(
+  productName: string,
+  categories: CategoryOption[],
+) {
   const name = normalizeCategoryText(productName);
   if (name.length < 2) return [];
 
   return categories
     .map((category) => {
       const categoryName = normalizeCategoryText(category.name);
-      let score = categoryName.split(/\s+/).filter((word) => word.length > 2 && name.includes(word)).length * 4;
+      let score =
+        categoryName
+          .split(/\s+/)
+          .filter((word) => word.length > 2 && name.includes(word)).length * 4;
 
       CATEGORY_KEYWORD_GROUPS.forEach((group) => {
         if (
@@ -99,7 +275,11 @@ function suggestedCategories(productName: string, categories: CategoryOption[]) 
       return { category, score };
     })
     .filter((item) => item.score > 0)
-    .sort((left, right) => right.score - left.score || left.category.name.localeCompare(right.category.name, "az"))
+    .sort(
+      (left, right) =>
+        right.score - left.score ||
+        left.category.name.localeCompare(right.category.name, "az"),
+    )
     .slice(0, 3)
     .map((item) => item.category);
 }
@@ -130,10 +310,18 @@ function ProductDescriptionEditor({
   }
 
   const tools = [
-    { label: "Başlıq", icon: Heading2, text: `${value.trim() ? "\n\n" : ""}## Başlıq\n` },
+    {
+      label: "Başlıq",
+      icon: Heading2,
+      text: `${value.trim() ? "\n\n" : ""}## Başlıq\n`,
+    },
     { label: "Abzas", icon: Pilcrow, text: "\n\n" },
     { label: "Maddə", icon: List, text: `${value.trim() ? "\n" : ""}• ` },
-    { label: "Nömrə", icon: ListOrdered, text: `${value.trim() ? "\n" : ""}1. ` },
+    {
+      label: "Nömrə",
+      icon: ListOrdered,
+      text: `${value.trim() ? "\n" : ""}1. `,
+    },
   ];
 
   return (
@@ -272,7 +460,10 @@ function ProductVariantEditor({
     [options, product?.variantCombinations],
   );
 
-  function updateOption(type: ProductOptionType, next: Partial<ProductOptionInput>) {
+  function updateOption(
+    type: ProductOptionType,
+    next: Partial<ProductOptionInput>,
+  ) {
     setOptions((current) =>
       current.map((option) =>
         option.type === type
@@ -331,7 +522,9 @@ function ProductVariantEditor({
         option.type === type
           ? {
               ...option,
-              values: option.values.filter((_, itemIndex) => itemIndex !== index),
+              values: option.values.filter(
+                (_, itemIndex) => itemIndex !== index,
+              ),
             }
           : option,
       ),
@@ -341,7 +534,12 @@ function ProductVariantEditor({
   return (
     <div className="grid gap-4 rounded-md border bg-background p-4">
       <input type="hidden" name="variantConfig" value={variantConfig} />
-      <textarea name="variants" value={variantsToText(product)} readOnly hidden />
+      <textarea
+        name="variants"
+        value={variantsToText(product)}
+        readOnly
+        hidden
+      />
       <div>
         <p className="text-sm font-semibold">Məhsul variantları</p>
         <p className="mt-1 text-xs text-muted-foreground">
@@ -376,7 +574,11 @@ function ProductVariantEditor({
                     onChange={(event) =>
                       updateOption(option.type, { name: event.target.value })
                     }
-                    disabled={disabled || option.type === "color" || option.type === "size"}
+                    disabled={
+                      disabled ||
+                      option.type === "color" ||
+                      option.type === "size"
+                    }
                     placeholder={optionFallbackLabel(option.type)}
                     className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
                   />
@@ -409,7 +611,12 @@ function ProductVariantEditor({
                       <input
                         value={value.value}
                         onChange={(event) =>
-                          updateOptionValue(option.type, index, "value", event.target.value)
+                          updateOptionValue(
+                            option.type,
+                            index,
+                            "value",
+                            event.target.value,
+                          )
                         }
                         disabled={disabled}
                         placeholder={
@@ -548,7 +755,10 @@ function ExistingProductImages({
               disabled={disabled || isPending}
               aria-label="Şəkli sil"
             >
-              <span aria-hidden="true" className="text-base font-black leading-none">
+              <span
+                aria-hidden="true"
+                className="text-base font-black leading-none"
+              >
                 ×
               </span>
             </Button>
@@ -560,6 +770,7 @@ function ExistingProductImages({
 }
 
 export function ProductForm({
+  adminMode = false,
   mode,
   categories,
   stores = [],
@@ -574,13 +785,19 @@ export function ProductForm({
 }: ProductFormProps) {
   const [isPending, startTransition] = useTransition();
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [trackStock, setTrackStock] = useState(product?.stockTrackingEnabled ?? false);
+  const [trackStock, setTrackStock] = useState(
+    product?.stockTrackingEnabled ?? false,
+  );
   const [productName, setProductName] = useState(product?.name ?? "");
   const [commerceType, setCommerceType] = useState<"sale" | "rental">(
     product?.commerceType ?? "sale",
   );
-  const [selectedCategoryId, setSelectedCategoryId] = useState(product?.categoryId ?? "");
-  const initialCategory = categories.find((category) => category.id === product?.categoryId);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    product?.categoryId ?? "",
+  );
+  const initialCategory = categories.find(
+    (category) => category.id === product?.categoryId,
+  );
   const [selectedRootCategoryId, setSelectedRootCategoryId] = useState(
     initialCategory?.parentId ?? initialCategory?.id ?? "",
   );
@@ -592,8 +809,10 @@ export function ProductForm({
   const selectedLocationMap = new Map(
     productLocations.map((item) => [item.locationId, item]),
   );
-  const showLocationSection = mode !== "personal-create" && locations.length > 0;
-  const existingImageCount = mode === "edit" ? product?.images.length ?? 0 : 0;
+  const showLocationSection =
+    mode !== "personal-create" && locations.length > 0;
+  const existingImageCount =
+    mode === "edit" ? (product?.images.length ?? 0) : 0;
   const newImageLimit =
     imageLimit === null ? null : Math.max(imageLimit - existingImageCount, 0);
   const categorySuggestions = useMemo(
@@ -605,13 +824,18 @@ export function ProductForm({
     [categories],
   );
   const subcategories = useMemo(
-    () => categories.filter((category) => category.parentId === selectedRootCategoryId),
+    () =>
+      categories.filter(
+        (category) => category.parentId === selectedRootCategoryId,
+      ),
     [categories, selectedRootCategoryId],
   );
   const selectedRootCategory = rootCategories.find(
     (category) => category.id === selectedRootCategoryId,
   );
-  const selectedCategory = categories.find((category) => category.id === selectedCategoryId);
+  const selectedCategory = categories.find(
+    (category) => category.id === selectedCategoryId,
+  );
 
   useEffect(() => {
     if (!isRootCategoryOpen && !isSubcategoryOpen) return;
@@ -646,9 +870,9 @@ export function ProductForm({
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const invalidField = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
-      ":invalid",
-    );
+    const invalidField = form.querySelector<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >(":invalid");
 
     if (invalidField) {
       const fieldLabel = PRODUCT_FIELD_LABELS[invalidField.name] ?? "Bu sahə";
@@ -678,7 +902,9 @@ export function ProductForm({
           ? await createStoreProductAction(formData)
           : mode === "personal-create"
             ? await createPersonalListingAction(formData)
-            : await updateProductAction(formData);
+            : adminMode
+              ? await updateProductByAdminAction(formData)
+              : await updateProductAction(formData);
 
       if (!result.ok) {
         void appAlert.error(result.message, "Əməliyyat alınmadı");
@@ -686,7 +912,9 @@ export function ProductForm({
       }
 
       void appAlert.success("Uğurludur", result.message);
-      void queryClient.invalidateQueries({ queryKey: ["marketplace-products"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["marketplace-products"],
+      });
       void queryClient.invalidateQueries({ queryKey: ["marketplace-search"] });
       void queryClient.invalidateQueries({ queryKey: ["related-products"] });
       setImageFiles([]);
@@ -711,7 +939,9 @@ export function ProductForm({
       noValidate
       className="grid min-w-0 gap-5 overflow-hidden rounded-xl border bg-card p-4 text-card-foreground shadow-sm sm:p-5 [&_input]:min-w-0 [&_select]:min-w-0 [&_select]:w-full [&_textarea]:min-w-0 [&_textarea]:w-full"
     >
-      {product ? <input type="hidden" name="productId" value={product.id} /> : null}
+      {product ? (
+        <input type="hidden" name="productId" value={product.id} />
+      ) : null}
       {mode === "store-create" ? (
         <input type="hidden" name="storeId" value={stores[0]?.id ?? ""} />
       ) : null}
@@ -728,7 +958,10 @@ export function ProductForm({
             disabled={disabled}
           />
         </label>
-        <div ref={categoryPickerRef} className="grid min-w-0 gap-3 text-sm font-medium">
+        <div
+          ref={categoryPickerRef}
+          className="grid min-w-0 gap-3 text-sm font-medium"
+        >
           <span>Kateqoriya</span>
           <input type="hidden" name="categoryId" value={selectedCategoryId} />
           {categorySuggestions.length > 0 ? (
@@ -747,7 +980,9 @@ export function ProductForm({
             </div>
           ) : null}
           <div className="relative grid gap-1.5">
-            <span className="text-xs font-semibold text-muted-foreground">Əsas kateqoriya</span>
+            <span className="text-xs font-semibold text-muted-foreground">
+              Əsas kateqoriya
+            </span>
             <button
               type="button"
               className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
@@ -758,10 +993,19 @@ export function ProductForm({
                 setIsSubcategoryOpen(false);
               }}
             >
-              <span className={selectedRootCategory ? "text-foreground" : "text-muted-foreground"}>
+              <span
+                className={
+                  selectedRootCategory
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                }
+              >
                 {selectedRootCategory?.name ?? "Əsas kateqoriya seçin"}
               </span>
-              <ChevronDown className={`size-4 transition-transform ${isRootCategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              <ChevronDown
+                className={`size-4 transition-transform ${isRootCategoryOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
             </button>
             {isRootCategoryOpen ? (
               <div className="absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
@@ -775,7 +1019,9 @@ export function ProductForm({
                   }}
                 >
                   Kateqoriyasız
-                  {!selectedRootCategoryId ? <Check className="size-4 text-primary" /> : null}
+                  {!selectedRootCategoryId ? (
+                    <Check className="size-4 text-primary" />
+                  ) : null}
                 </button>
                 {rootCategories.map((category) => (
                   <button
@@ -789,7 +1035,9 @@ export function ProductForm({
                     }}
                   >
                     <span>{category.name}</span>
-                    {selectedRootCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                    {selectedRootCategoryId === category.id ? (
+                      <Check className="size-4 text-primary" />
+                    ) : null}
                   </button>
                 ))}
               </div>
@@ -797,7 +1045,9 @@ export function ProductForm({
           </div>
           {selectedRootCategoryId && subcategories.length > 0 ? (
             <div className="relative grid gap-1.5">
-              <span className="text-xs font-semibold text-muted-foreground">Alt kateqoriya</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                Alt kateqoriya
+              </span>
               <button
                 type="button"
                 className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 text-left text-sm outline-none transition hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950"
@@ -805,10 +1055,21 @@ export function ProductForm({
                 aria-expanded={isSubcategoryOpen}
                 onClick={() => setIsSubcategoryOpen((current) => !current)}
               >
-                <span className={selectedCategory?.parentId ? "text-foreground" : "text-muted-foreground"}>
-                  {selectedCategory?.parentId ? selectedCategory.name : "Alt kateqoriya seçin"}
+                <span
+                  className={
+                    selectedCategory?.parentId
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  {selectedCategory?.parentId
+                    ? selectedCategory.name
+                    : "Alt kateqoriya seçin"}
                 </span>
-                <ChevronDown className={`size-4 transition-transform ${isSubcategoryOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                <ChevronDown
+                  className={`size-4 transition-transform ${isSubcategoryOpen ? "rotate-180" : ""}`}
+                  aria-hidden="true"
+                />
               </button>
               {isSubcategoryOpen ? (
                 <div className="absolute inset-x-0 top-full z-40 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
@@ -820,7 +1081,9 @@ export function ProductForm({
                       onClick={() => selectCategory(category)}
                     >
                       <span>{category.name}</span>
-                      {selectedCategoryId === category.id ? <Check className="size-4 text-primary" /> : null}
+                      {selectedCategoryId === category.id ? (
+                        <Check className="size-4 text-primary" />
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -904,20 +1167,22 @@ export function ProductForm({
           profitTrackingEnabled ? "lg:grid-cols-4" : "lg:grid-cols-3"
         }`}
       >
-        {profitTrackingEnabled ? <label className="grid min-w-0 gap-2 text-sm font-medium">
-          Maya dəyəri
-          <input
-            name="costAmount"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={product?.costAmount ?? undefined}
-            placeholder="Maya dəyəri"
-            required
-            className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
-            disabled={disabled}
-          />
-        </label> : null}
+        {profitTrackingEnabled ? (
+          <label className="grid min-w-0 gap-2 text-sm font-medium">
+            Maya dəyəri
+            <input
+              name="costAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              defaultValue={product?.costAmount ?? undefined}
+              placeholder="Maya dəyəri"
+              required
+              className="h-11 rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 hover:border-slate-300 focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+              disabled={disabled}
+            />
+          </label>
+        ) : null}
         <label className="grid min-w-0 gap-2 text-sm font-medium">
           {commerceType === "rental" ? "İcarə qiyməti" : "Satış qiyməti"}
           <input
@@ -941,7 +1206,8 @@ export function ProductForm({
             step="0.01"
             defaultValue={
               product
-                ? Math.max(product.priceAmount - product.discountAmount, 0) || ""
+                ? Math.max(product.priceAmount - product.discountAmount, 0) ||
+                  ""
                 : ""
             }
             placeholder="Endirim yoxdursa boş saxlayın"
@@ -964,7 +1230,10 @@ export function ProductForm({
         </label>
       </div>
 
-      <ProductDescriptionEditor initialValue={product?.description ?? ""} disabled={disabled} />
+      <ProductDescriptionEditor
+        initialValue={product?.description ?? ""}
+        disabled={disabled}
+      />
 
       <input type="hidden" name="depositEnabled" value="off" />
       <input type="hidden" name="depositType" value="fixed" />
@@ -994,7 +1263,9 @@ export function ProductForm({
                       name="productLocationIds"
                       type="checkbox"
                       value={location.id}
-                      defaultChecked={locations.length === 1 || Boolean(selected)}
+                      defaultChecked={
+                        locations.length === 1 || Boolean(selected)
+                      }
                       disabled={disabled}
                       className="mt-1 size-4 rounded border-input"
                     />
@@ -1017,7 +1288,10 @@ export function ProductForm({
       <label className="grid gap-2 text-sm font-medium">
         Şəkillər
         {mode === "edit" && product ? (
-          <ExistingProductImages product={product} disabled={disabled || isPending} />
+          <ExistingProductImages
+            product={product}
+            disabled={disabled || isPending}
+          />
         ) : null}
         <ImageDropzone
           files={imageFiles}
@@ -1037,8 +1311,8 @@ export function ProductForm({
 
       {mode === "personal-create" ? (
         <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
-          Fərdi elan yaradıldıqdan sonra 1 AZN ödəniş tələb olunur.
-          Real ödəniş təsdiqlənəndən sonra elan aktivləşir.
+          Fərdi elan yaradıldıqdan sonra 1 AZN ödəniş tələb olunur. Real ödəniş
+          təsdiqlənəndən sonra elan aktivləşir.
         </p>
       ) : null}
 

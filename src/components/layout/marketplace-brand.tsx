@@ -11,7 +11,8 @@ export function MarketplaceBrand({
   siteName?: string;
   showDomain?: boolean;
 }) {
-  const name = /al[ıi]ş?ver[iı]ş?/i.test(siteName) ? "alışveriş" : siteName;
+  const isMarketplace = /al[ıi]ş?ver[iı]ş?/i.test(siteName);
+  const name = isMarketplace ? "ALİSVERİS" : siteName;
   return (
     <Link
       href={href}
@@ -23,7 +24,11 @@ export function MarketplaceBrand({
       </span>
       <span>
         {name.replace(/\.az$/i, "")}
-        {showDomain && <span className="live-brand-domain">.az</span>}
+        {showDomain && (
+          <span className="live-brand-domain">
+            {isMarketplace ? ".AZ" : ".az"}
+          </span>
+        )}
       </span>
     </Link>
   );
