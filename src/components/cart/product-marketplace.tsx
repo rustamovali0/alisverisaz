@@ -1122,7 +1122,7 @@ export function ProductGrid({
             "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
             compactMobileCards && "max-sm:rounded-xl",
             isLiquidGlass &&
-              "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-cyan-200/80",
+              "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-orange-200/80",
           )}
         >
           <Link
@@ -1222,7 +1222,7 @@ export function ProductGrid({
             <h2
               className={cn(
                 "line-clamp-2 min-h-9 break-words text-[12px] font-bold leading-[18px] tracking-[-0.01em] text-slate-950 dark:text-slate-100 sm:min-h-11 sm:text-[15px] sm:leading-[22px] md:group-hover:text-orange-700 md:dark:group-hover:text-orange-300",
-                isLiquidGlass && "font-black md:group-hover:text-cyan-700 md:dark:group-hover:text-cyan-200",
+                isLiquidGlass && "font-black md:group-hover:text-orange-700 md:dark:group-hover:text-orange-200",
               )}
             >
               {product.name}
@@ -1275,7 +1275,7 @@ export function ProductGrid({
                       "!h-11 min-h-11 w-full justify-center gap-2 rounded-xl border-0 bg-primary px-2 text-[12px] font-bold leading-none text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25",
+                        "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25",
                     )}
                   >
                     <Link href={detailHref} prefetch={false} scroll className="inline-flex items-center justify-center">
@@ -1292,7 +1292,7 @@ export function ProductGrid({
                       "!h-11 min-h-11 w-full rounded-xl border-0 bg-primary px-2 text-[12px] font-bold text-white shadow-sm shadow-primary/20 transition duration-200 md:hover:-translate-y-0.5 md:hover:bg-orange-600 md:hover:text-white disabled:bg-slate-100 disabled:text-slate-400 min-[360px]:text-[13px] sm:!h-12 sm:px-4 sm:text-sm",
                       compactMobileCards && "max-sm:!h-10 max-sm:min-h-10 max-sm:rounded-[10px] max-sm:text-xs",
                       isLiquidGlass &&
-                        "bg-gradient-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-500/20 md:hover:shadow-lg md:hover:shadow-cyan-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
+                        "bg-gradient-to-r from-orange-500 to-sky-500 text-white shadow-md shadow-orange-500/20 md:hover:shadow-lg md:hover:shadow-orange-500/25 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 sm:border-0 sm:text-white",
                     )}
                   />
                 )}

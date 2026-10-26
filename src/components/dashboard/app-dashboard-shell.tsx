@@ -47,20 +47,20 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
     })}
   </nav>;
 
-  const sidebar = (mobile = false) => <aside className={cn("flex h-full flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950", mobile ? "w-[min(19rem,calc(100vw-2rem))] shadow-2xl" : collapsed ? "w-20" : "w-72")}>
+  const sidebar = (mobile = false) => <aside className={cn("flex h-full flex-col border-r border-slate-200/80 bg-white/95 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/95", mobile ? "w-[min(19rem,calc(100vw-2rem))] shadow-2xl" : collapsed ? "w-20" : "w-72")}>
     <div className={cn("flex h-20 items-center border-b border-slate-200 px-4 dark:border-slate-800", collapsed ? "justify-center" : "gap-3")}>
-      <Link href="/" className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary text-lg font-black text-white shadow-sm">A</Link>
+      <Link href="/" className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border border-orange-100 bg-white p-1 shadow-sm dark:border-orange-500/20 dark:bg-slate-900"><img src="/brand/alisveris-logo.svg" alt="Alışveriş" className="size-full object-contain" /></Link>
       {!collapsed || mobile ? <div className="min-w-0"><p className="font-black tracking-tight text-slate-950 dark:text-white">Alışveriş</p><p className="truncate text-xs text-slate-500">{userLabel}</p></div> : null}
     </div>
     {navigation(!mobile && collapsed)}
     <div className="border-t border-slate-200 p-3 dark:border-slate-800"><LogoutButton compact={!mobile && collapsed} /></div>
   </aside>;
 
-  return <div className="min-h-screen overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+  return <div className="app-dashboard-shell min-h-screen overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
     <div className={cn("fixed inset-y-0 left-0 z-40 hidden transition-[width] duration-200 lg:block", collapsed ? "w-20" : "w-72")}>{sidebar()}</div>
     {drawerOpen ? <div className="fixed inset-0 z-[80] lg:hidden"><button className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" aria-label="Menyunu bağla" onClick={() => setDrawerOpen(false)} /><div className="relative h-full animate-in slide-in-from-left duration-200">{sidebar(true)}<Button variant="secondary" size="icon" className="absolute right-3 top-3 size-10" onClick={() => setDrawerOpen(false)} aria-label="Menyunu bağla"><X className="size-5" /></Button></div></div> : null}
     <div className={cn("min-w-0 transition-[padding] duration-200", collapsed ? "lg:pl-20" : "lg:pl-72")}>
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90"><div className="flex min-h-16 items-center gap-2 px-3 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/88 shadow-[0_8px_28px_rgba(15,23,42,0.04)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88"><div className="flex min-h-16 items-center gap-2 px-3 sm:px-6 lg:px-8">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setDrawerOpen(true)} aria-label="Panel menyusunu aç"><Menu className="size-5" /></Button>
         <Button variant="ghost" size="icon" className="hidden lg:inline-flex" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? "Menyunu böyüt" : "Menyunu yığ"}>{collapsed ? <ChevronRight className="size-5" /> : <ChevronLeft className="size-5" />}</Button>
         {!isRoot ? <Button variant="ghost" size="icon" onClick={() => router.back()} aria-label="Geri qayıt"><ArrowLeft className="size-5" /></Button> : null}

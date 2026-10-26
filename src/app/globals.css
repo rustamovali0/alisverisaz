@@ -23,7 +23,10 @@
     --border: 214 20% 88%;
     --input: 214 20% 88%;
     --ring: 24 95% 53%;
-    --radius: 0.75rem;
+    --radius: 0.875rem;
+    --surface-raised: 0 18px 48px rgb(15 23 42 / 0.08);
+    --surface-hover: 0 24px 64px rgb(15 23 42 / 0.12);
+    --content-max: 90rem;
     --marketplace-primary: 24 95% 53%;
     --marketplace-primary-hover: 17 88% 48%;
     --marketplace-primary-hover-foreground: 0 0% 100%;
@@ -131,6 +134,22 @@
     background:
       linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted) / 0.72) 42%, hsl(var(--background)) 100%),
       hsl(var(--background));
+    min-height: 100dvh;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   input,
@@ -271,16 +290,88 @@
 }
 
 @layer components {
+  .page-shell {
+    @apply min-h-[70dvh] bg-background text-foreground;
+  }
+
+  .page-container {
+    width: min(100% - 2rem, var(--content-max));
+    margin-inline: auto;
+  }
+
+  .page-header {
+    @apply flex flex-col gap-3 border-b border-border/80 pb-5 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  .page-title {
+    @apply text-2xl font-black tracking-[-0.035em] text-foreground sm:text-3xl;
+  }
+
+  .page-description {
+    @apply max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base;
+  }
+
+  .ui-surface {
+    @apply border border-border/80 bg-card text-card-foreground;
+    border-radius: var(--design-card-radius, 1rem);
+    box-shadow: var(--surface-raised);
+  }
+
+  .ui-surface-interactive {
+    @apply ui-surface transition-[transform,border-color,box-shadow] duration-200 motion-reduce:transition-none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ui-surface-interactive:hover {
+      transform: translateY(-3px);
+      border-color: hsl(var(--primary) / 0.34);
+      box-shadow: var(--surface-hover);
+    }
+  }
+
+  .ui-field {
+    @apply min-h-11 rounded-xl border border-input bg-background px-3.5 text-sm shadow-sm outline-none transition-[border-color,box-shadow,background-color] placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .ui-label {
+    @apply mb-1.5 block text-sm font-semibold text-foreground;
+  }
+
+  .ui-table-wrap {
+    @apply overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm;
+  }
+
+  .ui-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .ui-table thead {
+    @apply bg-muted/70 text-xs font-bold uppercase tracking-[0.06em] text-muted-foreground;
+  }
+
+  .ui-table th,
+  .ui-table td {
+    @apply border-b border-border/70 px-4 py-3.5 align-middle;
+  }
+
+  .ui-table tbody tr {
+    @apply transition-colors hover:bg-primary/[0.035];
+  }
+
+  .ui-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
   .glass-panel {
     @apply border border-white/70 bg-white/95 shadow-sm dark:border-white/10 dark:bg-card;
     border-radius: var(--design-card-radius, 1rem);
-    box-shadow: 0 12px 34px rgb(15 23 42 / 0.07);
+    box-shadow: var(--surface-raised);
   }
 
   .premium-card {
     @apply border bg-card text-card-foreground shadow-sm shadow-slate-900/5 transition-[border-color,box-shadow,transform] duration-200 hover:border-primary/35 dark:shadow-black/20;
     border-radius: var(--design-card-radius, 1rem);
-    box-shadow: var(--design-card-shadow, 0 10px 28px rgb(15 23 42 / 0.07));
+    box-shadow: var(--design-card-shadow, var(--surface-raised));
   }
 
   .radmin-shell {
@@ -452,6 +543,52 @@
   .product-card {
     border-radius: var(--design-card-radius, 0.75rem);
     box-shadow: var(--design-card-shadow, 0 1px 2px rgb(15 23 42 / 0.05));
+  }
+
+  .product-card:focus-within {
+    border-color: hsl(var(--primary) / 0.52);
+    box-shadow: 0 0 0 4px hsl(var(--primary) / 0.12), var(--surface-raised);
+  }
+
+  .app-dashboard-shell main form,
+  .radmin-shell main form {
+    accent-color: hsl(var(--primary));
+  }
+
+  .app-dashboard-shell main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .app-dashboard-shell main textarea,
+  .app-dashboard-shell main select,
+  .radmin-shell main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .radmin-shell main textarea,
+  .radmin-shell main select {
+    @apply min-h-11 rounded-xl border border-input bg-background px-3.5 shadow-sm outline-none transition-[border-color,box-shadow,background-color] focus:border-primary focus:ring-4 focus:ring-primary/10;
+  }
+
+  .app-dashboard-shell main table,
+  .radmin-shell main table {
+    @apply w-full border-collapse text-left;
+  }
+
+  .app-dashboard-shell main table tbody tr,
+  .radmin-shell main table tbody tr {
+    @apply transition-colors hover:bg-primary/[0.035];
+  }
+
+  @media (max-width: 639px) {
+    .page-container {
+      width: min(100% - 1rem, var(--content-max));
+    }
+
+    .ui-surface,
+    .premium-card,
+    .glass-panel {
+      border-radius: min(var(--design-card-radius, 1rem), 0.875rem);
+      box-shadow: 0 6px 20px rgb(15 23 42 / 0.06);
+    }
+
+    .page-title {
+      @apply text-xl;
+    }
   }
 
   [data-product-card-preset="minimal"] .product-card,

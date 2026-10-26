@@ -367,7 +367,7 @@ export function MarketplaceHeader({
           </Button>
           <Link href={brandHomeHref} prefetch className="group flex min-w-0 flex-1 items-center gap-2 sm:gap-3 md:flex-none">
             {logoUrl ? (
-              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-cyan-100 bg-white shadow-sm dark:border-cyan-200/20 md:size-9 md:rounded-md">
+              <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-lg border border-orange-100 bg-white shadow-sm dark:border-orange-200/20 md:size-9 md:rounded-md">
                 <img
                   src={logoUrl}
                   alt=""
