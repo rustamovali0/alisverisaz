@@ -630,7 +630,8 @@ export function RegisterForm({
               type="checkbox"
               checked={termsAccepted}
               readOnly
-              className="mt-0.5 size-7 shrink-0 cursor-pointer rounded border-input accent-[hsl(var(--primary))]"
+              className="registration-consent-check mt-0.5 size-7 shrink-0 cursor-pointer rounded border-input accent-[hsl(var(--primary))]"
+              style={{ width: 28, height: 28, minWidth: 28 }}
               aria-label="Razılaşma mətnini aç"
               aria-describedby="registration-legal-help"
             />

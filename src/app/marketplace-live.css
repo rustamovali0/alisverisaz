@@ -2679,3 +2679,8 @@
     height: 32px;
   }
 }
+.registration-consent-check[type="checkbox"]::before {
+  width: 8px;
+  height: 14px;
+  border-width: 0 3px 3px 0;
+}
