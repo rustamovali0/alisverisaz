@@ -21,3 +21,7 @@ tsconfig.tsbuildinfo
 outputs
 work
 .vercel
+
+# Runtime-only deployment credentials
+app.env
+rollback.config.cjs
