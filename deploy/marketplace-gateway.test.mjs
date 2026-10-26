@@ -129,3 +129,69 @@ test("Next RSC requests stay with backend", async () => {
   const r = await fetch(base + "/?_rsc=example", { headers: { RSC: "1" } });
   assert.equal((await r.json()).url, "/?_rsc=example");
 });
+
+test("PM2-style module loading starts the gateway and supervised backend", async () => {
+  const { spawn } = await import("node:child_process");
+  const { once } = await import("node:events");
+  const { fileURLToPath } = await import("node:url");
+  const launchDirectory = join(directory, "pm2-fixture");
+  await mkdir(join(launchDirectory, "backend"), { recursive: true });
+  await mkdir(join(launchDirectory, "frontend"), { recursive: true });
+  await writeFile(
+    join(launchDirectory, "frontend", "index.html"),
+    "<h1>PM2 storefront</h1>",
+  );
+  await writeFile(
+    join(launchDirectory, "backend", "server.js"),
+    "require('node:http').createServer((req,res)=>res.end('existing-backend')).listen(Number(process.env.PORT),process.env.HOSTNAME);",
+  );
+  const gatewayURL = new URL("./marketplace-gateway.mjs", import.meta.url);
+  const loader = join(launchDirectory, "pm2-loader.mjs");
+  await writeFile(loader, `import ${JSON.stringify(gatewayURL.href)};`);
+  const temporaryPort = async () => {
+    const socket = http.createServer();
+    await listen(socket);
+    const port = socket.address().port;
+    await close(socket);
+    return port;
+  };
+  const port = await temporaryPort(),
+    backendPort = await temporaryPort();
+  const launcher = spawn(process.execPath, [loader], {
+    cwd: launchDirectory,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      MARKETPLACE_BACKEND_PORT: String(backendPort),
+      pm_exec_path: fileURLToPath(gatewayURL),
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let output = "";
+  launcher.stdout.on("data", (x) => (output += x));
+  launcher.stderr.on("data", (x) => (output += x));
+  try {
+    let html = "";
+    for (let i = 0; i < 60; i++) {
+      if (launcher.exitCode !== null)
+        throw Error("PM2-loaded module exited before listening: " + output);
+      try {
+        const r = await fetch(`http://127.0.0.1:${port}/`);
+        html = await r.text();
+        break;
+      } catch {
+        await new Promise((r) => setTimeout(r, 100));
+      }
+    }
+    assert.match(html, /PM2 storefront/, output);
+    assert.equal(
+      await (await fetch(`http://127.0.0.1:${port}/api/test`)).text(),
+      "existing-backend",
+    );
+  } finally {
+    if (launcher.exitCode === null) {
+      launcher.kill("SIGTERM");
+      await once(launcher, "exit");
+    }
+  }
+});
