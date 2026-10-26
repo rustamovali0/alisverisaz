@@ -36,7 +36,7 @@ The gateway has integration coverage for static paths, traversal protection, cac
 
 The currently deployed standalone backend is copied because it is newer than the backend on the repository's main branch. Rebuilding that older backend source would discard production fixes. The new release preserves the deployed runtime and all its public assets. Subsequent backend work should first reconcile that source history.
 
-PM2 keeps the name `alisveris-vds`; the gateway listens on `127.0.0.1:3004`, and its supervised Next.js child on `127.0.0.1:3405`. Nginx and HTTPS stay on their existing configuration. Port 3005 was already occupied and is not used by this release. Startup waits for the backend to listen; backend failure terminates the gateway so PM2 can restart the complete app.
+PM2 keeps the name `alisveris-vds`; the gateway listens on `127.0.0.1:3004`, and its supervised Next.js child on loopback `[::ffff:127.0.0.1]:3405` (also reachable over `127.0.0.1`). Nginx and HTTPS stay on their existing configuration. Port 3005 was already occupied and is not used by this release. The mapped loopback address avoids NextURL canonicalizing a plain `127.0.0.1` origin to `localhost`, which otherwise turns locale rewrites into external rewrites and causes redirect loops in the deployed standalone build. Both listeners remain restricted to loopback. Startup waits for the backend to listen; backend failure terminates the gateway so PM2 can restart the complete app.
 
 ## Staging and switching
 

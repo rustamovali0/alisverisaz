@@ -221,9 +221,11 @@ async function start() {
   const backendPort = Number(process.env.MARKETPLACE_BACKEND_PORT || 3405);
   if (port === backendPort)
     throw new Error("Frontend and backend ports must differ");
+  // Keep the backend on loopback without NextURL canonicalizing its origin to
+  // localhost and treating locale rewrites as external requests.
   const child = spawn(process.execPath, ["server.js"], {
     cwd: resolve(cwd, "backend"),
-    env: { ...process.env, HOSTNAME: "127.0.0.1", PORT: String(backendPort) },
+    env: { ...process.env, HOSTNAME: "::ffff:127.0.0.1", PORT: String(backendPort) },
     stdio: "inherit",
   });
   const server = createMarketplaceGateway({
