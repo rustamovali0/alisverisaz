@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -34,6 +34,80 @@ type FieldErrors = {
 };
 
 const MAX_SELLER_IMAGE_SIZE = 5 * 1024 * 1024;
+
+type LegalDocument = "terms" | "privacy";
+
+function LegalReadDialog({
+  document,
+  onClose,
+  onRead,
+}: {
+  document: LegalDocument;
+  onClose: () => void;
+  onRead: () => void;
+}) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const [hasReachedEnd, setHasReachedEnd] = useState(false);
+  const title = document === "terms" ? "İstifadəçi razılaşması" : "Məxfilik siyasəti";
+
+  useEffect(() => () => cleanupRef.current?.(), []);
+
+  function attachScrollTracking() {
+    cleanupRef.current?.();
+    const frameWindow = iframeRef.current?.contentWindow;
+    const frameDocument = frameWindow?.document;
+
+    if (!frameWindow || !frameDocument) return;
+
+    const checkPosition = () => {
+      const root = frameDocument.documentElement;
+      const body = frameDocument.body;
+      const scrollTop = frameWindow.scrollY || root.scrollTop || body.scrollTop;
+      const viewportHeight = frameWindow.innerHeight || root.clientHeight;
+      const scrollHeight = Math.max(root.scrollHeight, body.scrollHeight);
+
+      if (scrollTop + viewportHeight >= scrollHeight - 24) {
+        setHasReachedEnd(true);
+        onRead();
+      }
+    };
+
+    frameWindow.addEventListener("scroll", checkPosition, { passive: true });
+    cleanupRef.current = () => frameWindow.removeEventListener("scroll", checkPosition);
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/60 p-3 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="flex h-[min(760px,88dvh)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-4 border-b px-4 py-3 sm:px-5">
+          <div>
+            <h2 className="font-bold text-slate-950">{title}</h2>
+            <p className="text-xs text-slate-500">Razılıq üçün sənədi sona qədər oxuyun.</p>
+          </div>
+          <Button type="button" size="icon" variant="ghost" onClick={onClose} aria-label="Pəncərəni bağla">
+            <X className="size-5" aria-hidden="true" />
+          </Button>
+        </div>
+        <iframe
+          ref={iframeRef}
+          src={`/${document}?embedded=1`}
+          title={title}
+          className="min-h-0 flex-1 bg-white"
+          onLoad={attachScrollTracking}
+        />
+        <div className="flex items-center justify-between gap-3 border-t bg-slate-50 px-4 py-3 sm:px-5">
+          <span className={hasReachedEnd ? "text-sm font-semibold text-emerald-700" : "text-sm text-slate-500"}>
+            {hasReachedEnd ? "Oxundu" : "Sonadək aşağı sürüşdürün"}
+          </span>
+          <Button type="button" onClick={onClose} disabled={!hasReachedEnd} className="bg-primary text-white hover:bg-orange-600">
+            Tamam
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function SellerImageDropzone({
   name,
@@ -193,6 +267,9 @@ export function RegisterForm({
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsRead, setTermsRead] = useState(false);
+  const [privacyRead, setPrivacyRead] = useState(false);
+  const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const canRegister = customerOnly
@@ -203,6 +280,13 @@ export function RegisterForm({
   const loginHref = next
     ? `/login?${new URLSearchParams({ next }).toString()}`
     : "/login";
+
+  useEffect(() => {
+    if (termsRead && privacyRead) {
+      setTermsAccepted(true);
+      setFieldErrors((current) => ({ ...current, terms: undefined }));
+    }
+  }, [privacyRead, termsRead]);
 
   function validate() {
     const nextErrors: FieldErrors = {};
@@ -326,7 +410,7 @@ export function RegisterForm({
 
   return (
     <AuthCard
-      className="mx-auto max-w-[560px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="mx-auto max-w-[680px] rounded-2xl border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] [&>div.mb-7]:mb-5"
       topStart={
         <Button asChild variant="ghost" size="sm" className="h-10 px-2 text-sm">
           <Link href="/">
@@ -359,10 +443,10 @@ export function RegisterForm({
         </div>
       ) : null}
       {canRegister ? (
-        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3">
-          <AuthErrorAlert message={serverError} />
+        <form action={handleSubmit} encType="multipart/form-data" className="grid gap-3 lg:grid-cols-2">
+          <div className="lg:col-span-2"><AuthErrorAlert message={serverError} /></div>
           {!customerOnly ? (
-            <fieldset className="grid gap-2">
+            <fieldset className="grid gap-2 lg:col-span-2">
               <legend className="text-sm font-medium">Hesab tipi</legend>
               <div className="grid gap-2 sm:grid-cols-2">
                 {userRegistrationEnabled ? (
@@ -421,10 +505,11 @@ export function RegisterForm({
                 setFieldErrors((current) => ({ ...current, storeName: undefined }));
               }}
               error={fieldErrors.storeName}
+              className="lg:col-span-2"
               required
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 lg:col-span-2">
               <AuthField
                 id="firstName"
                 name="firstName"
@@ -489,12 +574,26 @@ export function RegisterForm({
             minLength={8}
             required
           />
-          <div className="space-y-2">
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Şifrənin təkrarı"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onValueChange={(value) => {
+              setConfirmPassword(value);
+              setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
+            }}
+            error={fieldErrors.confirmPassword}
+            minLength={8}
+            required
+          />
+          <div className="space-y-2 lg:col-span-2">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
               <span>Şifrə gücü</span>
               <span>{passwordStrength.label || "Seçilməyib"}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
               <div
                 className={`h-full rounded-full transition-all duration-200 ${passwordStrength.className}`}
                 style={{
@@ -510,22 +609,8 @@ export function RegisterForm({
               />
             </div>
           </div>
-          <PasswordInput
-            id="confirmPassword"
-            name="confirmPassword"
-            label="Şifrənin təkrarı"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onValueChange={(value) => {
-              setConfirmPassword(value);
-              setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
-            }}
-            error={fieldErrors.confirmPassword}
-            minLength={8}
-            required
-          />
           {!customerOnly && role === "seller" ? (
-            <div className="grid gap-3 rounded-xl border bg-muted/20 p-3">
+            <div className="grid gap-3 rounded-xl border bg-muted/20 p-3 lg:col-span-2">
               <div>
                 <h3 className="text-sm font-semibold">Mağaza şəkilləri</h3>
               </div>
@@ -543,31 +628,31 @@ export function RegisterForm({
               </div>
             </div>
           ) : null}
-          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm">
+          <label className="flex items-start gap-3 rounded-xl border border-border/80 bg-muted/30 p-3 text-sm lg:col-span-2">
             <input
               type="checkbox"
               checked={termsAccepted}
-              onChange={(event) => {
-                setTermsAccepted(event.target.checked);
-                setFieldErrors((current) => ({ ...current, terms: undefined }));
-              }}
+              disabled={!termsRead || !privacyRead}
+              onChange={(event) => setTermsAccepted(event.target.checked)}
               className="mt-1 size-4 rounded border-input"
             />
             <span className="leading-6">
-              <Link href="/terms" className="font-medium text-foreground underline-offset-4 hover:underline">
+              <button type="button" onClick={() => setLegalDocument("terms")} className="font-medium text-foreground underline underline-offset-4">
                 İstifadəçi razılaşması
-              </Link>{" "}
+                {termsRead ? " ✓" : ""}
+              </button>{" "}
               və{" "}
-              <Link href="/privacy" className="font-medium text-foreground underline-offset-4 hover:underline">
+              <button type="button" onClick={() => setLegalDocument("privacy")} className="font-medium text-foreground underline underline-offset-4">
                 məxfilik siyasəti
-              </Link>{" "}
-              ilə tanış oldum və qəbul edirəm.
+                {privacyRead ? " ✓" : ""}
+              </button>{" "}
+              sona qədər oxunduqdan sonra avtomatik qəbul edilir.
             </span>
           </label>
           {fieldErrors.terms ? (
-            <p className="text-xs font-medium text-destructive">{fieldErrors.terms}</p>
+            <p className="text-xs font-medium text-destructive lg:col-span-2">{fieldErrors.terms}</p>
           ) : null}
-          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700">
+          <Button type="submit" disabled={isPending} className="h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600 lg:col-span-2">
             {isPending ? "Yaradılır" : "Hesab yarat"}
           </Button>
         </form>
@@ -591,6 +676,16 @@ export function RegisterForm({
           </form>
         ) : null}
       </div>
+      {legalDocument ? (
+        <LegalReadDialog
+          document={legalDocument}
+          onClose={() => setLegalDocument(null)}
+          onRead={() => {
+            if (legalDocument === "terms") setTermsRead(true);
+            if (legalDocument === "privacy") setPrivacyRead(true);
+          }}
+        />
+      ) : null}
     </AuthCard>
   );
 }

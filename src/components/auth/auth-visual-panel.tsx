@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { ArrowRight, ShieldCheck, ShoppingBag, Store } from "lucide-react";
 
+import { Link } from "@/i18n/navigation";
+
 type AuthVisualPanelProps = {
   variant?: "login" | "register" | "admin";
 };
@@ -52,23 +54,23 @@ export function AuthVisualPanel({ variant = "login" }: AuthVisualPanelProps) {
           {copy.description}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium">
+          <Link href="/help" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium transition hover:border-orange-300 hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400">
             <Store className="size-4" aria-hidden="true" />
             Satıcı paneli
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium">
+          </Link>
+          <Link href="/help" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium transition hover:border-orange-300 hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400">
             <ShoppingBag className="size-4" aria-hidden="true" />
             Məhsul idarəetməsi
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium">
+          </Link>
+          <Link href="/help" className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-medium transition hover:border-orange-300 hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400">
             <ShieldCheck className="size-4" aria-hidden="true" />
             Təhlükəsiz giriş
-          </div>
+          </Link>
         </div>
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-950/20">
+        <Link href="/help" className="mt-6 inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-950/20 transition hover:bg-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300">
           Təhlükəsiz davam et
           <ArrowRight className="size-4" aria-hidden="true" />
-        </div>
+        </Link>
       </div>
     </aside>
   );

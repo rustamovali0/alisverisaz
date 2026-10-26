@@ -375,7 +375,7 @@ export function HomeExperience({
   const themeAccent =
     typeof themeConfig?.accent === "string" ? themeConfig.accent : undefined;
   const showSellerQuickActions = initialRole === null || initialRole === "seller";
-  const promotedProducts = products.filter((product) => product.isPromoted).slice(0, 8);
+  const discoveryProducts = products.slice(0, 10);
   const regularProducts = products.filter((product) => !product.isPromoted);
   const discountedProducts = products.filter((product) => product.discountAmount > 0).slice(0, 8);
 
@@ -428,18 +428,18 @@ export function HomeExperience({
           </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-            <Link href="/products" className="group relative min-h-[210px] overflow-hidden rounded-[28px] bg-orange-500 p-7 text-white shadow-lg shadow-orange-950/10">
-              <div className="absolute -right-12 -top-12 size-40 rounded-full border-[28px] border-white/10 transition group-hover:scale-110" />
+            <Link href="/products" className="group relative z-0 min-h-[210px] overflow-hidden rounded-[28px] bg-orange-500 p-7 text-white shadow-lg shadow-orange-950/10 transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none md:hover:z-10 md:hover:scale-[1.035] md:hover:shadow-[0_26px_60px_rgba(234,88,12,0.28)]">
+              <div className="absolute -right-12 -top-12 size-40 rounded-full border-[28px] border-white/10 transition-transform duration-500 ease-out motion-reduce:transform-none motion-reduce:transition-none group-hover:scale-125 group-hover:-rotate-12" />
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-100">Yeni kolleksiya</p>
               <h2 className="mt-4 max-w-[10ch] text-3xl font-black leading-tight">Yeni məhsulları kəşf et</h2>
-              <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">Məhsullara bax <ArrowRight className="size-4" /></span>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold">Məhsullara bax <ArrowRight className="size-4 transition-transform duration-300 motion-reduce:transform-none group-hover:translate-x-1.5" /></span>
             </Link>
-            <Link href="/stores" className="group relative min-h-[210px] overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 p-7 text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+            <Link href="/stores" className="group relative z-0 min-h-[210px] overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 p-7 text-slate-950 shadow-sm transition-[transform,box-shadow,border-color] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none dark:border-slate-800 dark:bg-slate-900 dark:text-white md:hover:z-10 md:hover:scale-[1.035] md:hover:border-orange-200 md:hover:shadow-[0_26px_60px_rgba(15,23,42,0.16)]">
               {mobileHeroImageUrl ? <OptimizedImage src={mobileHeroImageUrl} alt="" fill sizes="360px" className="object-cover opacity-15" loading="lazy" /> : null}
               <div className="relative z-10">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-600">Etibarlı mağazalar</p>
                 <h2 className="mt-4 max-w-[12ch] text-3xl font-black leading-tight">Satıcıları bir yerdə tap</h2>
-                <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-orange-600">Mağazaları aç <ArrowRight className="size-4" /></span>
+                <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-orange-600">Mağazaları aç <ArrowRight className="size-4 transition-transform duration-300 motion-reduce:transform-none group-hover:translate-x-1.5" /></span>
               </div>
             </Link>
           </div>
@@ -453,7 +453,7 @@ export function HomeExperience({
               href="/categories"
               action={home("viewAll")}
             />
-            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            <div className="-mx-3 flex snap-x gap-3 overflow-x-auto px-3 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
               {activeCategories.map((category) => (
                 <div key={category.id} className="w-[46vw] max-w-[170px] shrink-0 snap-start sm:w-auto sm:max-w-none"><CategoryCard category={category} /></div>
               ))}
@@ -461,11 +461,11 @@ export function HomeExperience({
           </section>
         ) : null}
 
-        {promotedProducts.length > 0 ? (
+        {discoveryProducts.length > 0 ? (
           <section>
             <SectionHeader title="Sənin üçün seçilənlər" href="/products" action={productsLabel} />
             <InfiniteProductGrid
-              initialProducts={promotedProducts}
+              initialProducts={discoveryProducts}
               initialCursor={null}
               initialHasMore={false}
               locale={locale}
