@@ -456,7 +456,7 @@ export function RegisterForm({
           {!customerOnly ? (
             <fieldset className="grid gap-2 lg:col-span-2">
               <legend className="text-sm font-medium">Hesab tipi</legend>
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="registration-role-options grid gap-2 sm:grid-cols-2">
                 {userRegistrationEnabled ? (
                   <button
                     type="button"
@@ -519,7 +519,7 @@ export function RegisterForm({
               required
             />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:col-span-2">
+            <div className="registration-name-fields grid gap-3 sm:grid-cols-2 lg:col-span-2">
               <AuthField
                 id="firstName"
                 name="firstName"

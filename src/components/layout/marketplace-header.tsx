@@ -174,7 +174,7 @@ export function MarketplaceHeader({
         </div>
       </div>
       }
-      <header className="marketplace-header live-header" data-live-header>
+      <header className="marketplace-header live-header" data-live-header data-auth-header={compactAuthHeader || undefined}>
         <div className="live-wrap live-header-main">
           <button
             className="live-mobile-menu"

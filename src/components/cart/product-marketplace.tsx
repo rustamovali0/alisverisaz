@@ -2028,7 +2028,7 @@ export function ProductMarketplace({
       <div className="container mx-auto max-w-[1280px] py-5 md:py-10">
         <div className="min-w-0">
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
+            <div className="marketplace-catalog-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
               <h1 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
                 {labels.title}
               </h1>
