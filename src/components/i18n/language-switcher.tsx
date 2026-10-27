@@ -64,6 +64,7 @@ function RoundFlag({
     <span
       className={cn("inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-slate-200", className)}
       aria-hidden="true"
+      data-language-flag
     >
       {locale === "az" ? (
         <svg viewBox="0 0 36 36" className="h-full w-full" role="img">
@@ -337,6 +338,7 @@ export function LanguageSwitcher({
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
+        data-language-trigger
         className="glass-panel inline-flex size-11 items-center justify-center rounded-full border border-transparent bg-transparent p-0 text-foreground shadow-none transition hover:border-transparent hover:bg-transparent hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-slate-100 md:size-10"
         aria-haspopup="menu"
         aria-expanded={isOpen}
