@@ -1281,6 +1281,7 @@
   box-shadow: none;
 }
 .live-marketplace .app-dashboard-shell > div > header {
+  top: var(--marketplace-header-height, 0px);
   box-shadow: none;
   background: #fffffff3;
 }

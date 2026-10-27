@@ -113,8 +113,25 @@ export function MarketplaceHeader({
     `${scopedProducts}?category=${encodeURIComponent(slug)}`;
   const [count, setCount] = useState(0);
   const [menu, setMenu] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const root = header.closest<HTMLElement>(".live-marketplace") ?? document.documentElement;
+    const syncHeight = () => root.style.setProperty(
+      "--marketplace-header-height", `${header.getBoundingClientRect().height}px`,
+    );
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--marketplace-header-height");
+    };
+  }, []);
+
   useEffect(() => {
     const sync = () =>
       setCount(cartCount(isolatedStorefront ? storeId : undefined));
@@ -182,6 +199,7 @@ export function MarketplaceHeader({
         </div>
       )}
       <header
+        ref={headerRef}
         className="marketplace-header live-header"
         data-live-header
         data-auth-header={compactAuthHeader || undefined}
