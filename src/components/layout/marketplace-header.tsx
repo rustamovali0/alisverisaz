@@ -231,7 +231,7 @@ export function MarketplaceHeader({
               >
                 <span>
                   <ShoppingBag size={24} />
-                  <b>{count}</b>
+                  <b aria-hidden="true">{count > 99 ? "99+" : count}</b>
                 </span>
                 <span>
                   Səbətim<small>{count} məhsul</small>

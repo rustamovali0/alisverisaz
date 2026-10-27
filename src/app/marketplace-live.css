@@ -2828,3 +2828,40 @@
   .marketplace-catalog-toolbar > div > button:not(:first-child):not(:disabled) { grid-row: 2; grid-column: 1/-1; justify-self: start; }
   .marketplace-catalog-toolbar > div > div:last-child { min-width: 0; }
 }
+
+/* Badge text must fit inside its border on every viewport. */
+.live-cart-link b {
+  top: -5px;
+  right: -6px;
+  width: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .live-mobile-menu, .live-cart-link { min-width: 44px; min-height: 44px; }
+  .live-header .live-search-submit { min-width: 44px !important; width: 44px !important; }
+  .live-marketplace .product-card > a ~ button { width: 44px; height: 44px; }
+  .live-marketplace .product-card [data-product-card-body] > div:last-child :is(button,a) { height: 44px !important; min-height: 44px !important; }
+  .live-section-heading > .live-text-link, .live-section-tabs > a { min-height: 44px; }
+  .live-marketplace [data-auth-shell] button { min-height: 44px; }
+  .live-marketplace [data-auth-shell] button:has(> svg:only-child) { min-width: 44px; }
+}
+@media (max-width: 767px) {
+  .live-header-main { height: 108px; }
+  .live-header .live-search-form { height: 48px; }
+  .live-header .live-search-submit { height: 44px !important; min-height: 44px !important; }
+  .live-hero .live-btn, .live-footer-links > a { min-height: 44px; }
+  .live-hero-dots { display: none; }
+  .marketplace-catalog-toolbar button { min-height: 44px; }
+}
+.dark .live-notifications > div > button { color: #c9d8c2; }
+.dark .live-cart-link b { border-color: #17221b; }
