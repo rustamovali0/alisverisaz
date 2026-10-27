@@ -133,10 +133,9 @@ function useLocaleSelection({
       }
 
       startTransition(() => {
-        router.refresh();
-
         void setUserLocale(nextLocale)
           .then((persistedLocale) => {
+            router.refresh();
             setSelectedLocale(persistedLocale);
             onLocaleChange?.(persistedLocale);
           })

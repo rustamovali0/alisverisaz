@@ -1,4 +1,5 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 
 import {
   Heart,
@@ -167,6 +168,7 @@ export function MobileBottomNav({
   sellerOwnsStore = false,
 }: MobileBottomNavProps) {
   const common = useTranslations("common");
+  const text = useMarketplaceText();
   const nav = useTranslations("nav");
   const auth = useTranslations("auth");
   const { profile, isResolved } = useClientAuthProfileState();
@@ -514,7 +516,7 @@ export function MobileBottomNav({
                 item.href === "#storefront-loading" && "cursor-wait opacity-60",
               )}
               aria-current={isActive ? "page" : undefined}
-              aria-label={item.label}
+              aria-label={text(item.label)}
             >
               <span
                 className={cn(
@@ -533,7 +535,7 @@ export function MobileBottomNav({
                   </span>
                 ) : null}
               </span>
-              <span className="max-w-full whitespace-normal leading-[1.05]">{item.label}</span>
+              <span className="max-w-full whitespace-normal leading-[1.05]">{text(item.label)}</span>
             </button>
           );
         })}

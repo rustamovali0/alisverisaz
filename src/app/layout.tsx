@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { getLocale } from "next-intl/server";
 
 import { AppProviders } from "@/components/providers/app-providers";
 import { siteConfig } from "@/lib/config/site";
@@ -70,9 +71,10 @@ type RootLayoutProps = {
   children: ReactNode;
 };
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default async function RootLayout({ children }: RootLayoutProps) {
+  const locale = await getLocale();
   return (
-    <html lang="az" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <link rel="stylesheet" href="/marketplace/fonts/manrope.css" />
         <script

@@ -1,4 +1,5 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -55,26 +56,28 @@ function SectionHeading({
   href?: string;
   action?: string;
 }) {
+  const text = useMarketplaceText();
   return (
     <div className="live-section-heading">
       <div>
-        <span className="live-eyebrow">{eyebrow}</span>
-        <h2>{title}</h2>
+        <span className="live-eyebrow">{text(eyebrow)}</span>
+        <h2>{text(title)}</h2>
       </div>
       <Link href={href} className="live-text-link">
-        {action}
+        {text(action)}
         <ArrowRight size={16} />
       </Link>
     </div>
   );
 }
 function LiveStoreCard({ store }: { store: MarketplaceStore }) {
+  const text = useMarketplaceText();
   return (
     <article className="live-store-card">
       <Link
         href={getStorePath(store.slug)}
         className="live-store-cover"
-        aria-label={`${store.name} mağazasına bax`}
+        aria-label={text("{name} mağazasına bax", { name: store.name })}
       >
         {store.coverUrl && (
           <OptimizedImage
@@ -106,15 +109,15 @@ function LiveStoreCard({ store }: { store: MarketplaceStore }) {
             <ShieldCheck size={15} />
           </h3>
         </Link>
-        <p>{store.description || "Seçilmiş məhsulların ünvanı"}</p>
+        <p>{store.description || text("Seçilmiş məhsulların ünvanı")}</p>
         <div>
           <span>
             <Package size={13} />
-            {store.productCount} məhsul
+            {text("{count} məhsul", { count: store.productCount })}
           </span>
           <Link
             href={getStorePath(store.slug)}
-            aria-label={`${store.name} vitrininə keç`}
+            aria-label={text("{name} vitrininə keç", { name: store.name })}
           >
             <ArrowUpRight size={19} />
           </Link>
@@ -134,6 +137,7 @@ export function HomeExperience({
   categories,
   initialRole,
 }: HomeExperienceProps) {
+  const text = useMarketplaceText();
   const [slide, setSlide] = useState(0);
   const hero = sections.find((s) => s.key === "hero");
   const categorySection = sections.find((s) => s.key === "categories");
@@ -193,47 +197,47 @@ export function HomeExperience({
           <section className="live-hero">
             <img
               src={heroImage}
-              alt="ALISVERIS.AZ yeni məhsul və mağaza kəşfləri"
+              alt={text("ALISVERIS.AZ yeni məhsul və mağaza kəşfləri")}
               fetchPriority="high"
             />
             <div className="live-hero-copy">
               <span className="live-hero-label">
                 <i />
-                YENİ KƏŞFLƏR. SİZƏ ÖZƏL SEÇİMLƏR.
+                {text("YENİ KƏŞFLƏR. SİZƏ ÖZƏL SEÇİMLƏR.")}
               </span>
               <h1>
                 {slide === 0 ? (
                   isDefaultTitle ? (
                     <>
-                      Hər ehtiyacına
+                      {text("Hər ehtiyacına")}
                       <br />
-                      bir <em>tapıntı.</em>
+                      {text("bir")} <em>{text("tapıntı.")}</em>
                     </>
                   ) : (
-                    hero.title
+                    text(hero.title)
                   )
                 ) : slide === 1 ? (
                   <>
-                    Sevdiyin stil.
+                    {text("Sevdiyin stil.")}
                     <br />
-                    Sənin <em>seçimin.</em>
+                    {text("Sənin")} <em>{text("seçimin.")}</em>
                   </>
                 ) : (
                   <>
-                    Evinə yeni
+                    {text("Evinə yeni")}
                     <br />
-                    bir <em>nəfəs.</em>
+                    {text("bir")} <em>{text("nəfəs.")}</em>
                   </>
                 )}
               </h1>
               <p>
                 {slide === 0 && hero?.description && !isDefaultTitle ? (
-                  hero.description
+                  text(hero.description)
                 ) : (
                   <>
-                    Sevdiyin məhsullar, etibarlı mağazalar.
+                    {text("Sevdiyin məhsullar, etibarlı mağazalar.")}
                     <br />
-                    Hamısı bir ünvanda — alışveriş.az-da.
+                    {text("Hamısı bir ünvanda — alışveriş.az-da.")}
                   </>
                 )}
               </p>
@@ -250,17 +254,20 @@ export function HomeExperience({
                 }
               >
                 {hero?.buttonLabel && slide === 0
-                  ? hero.buttonLabel
-                  : "İndi kəşf et"}
+                  ? text(hero.buttonLabel)
+                  : text("İndi kəşf et")}
                 <ArrowRight size={17} />
               </Link>
-              <div className="live-hero-dots" aria-label="Kampaniya slaydları">
+              <div
+                className="live-hero-dots"
+                aria-label={text("Kampaniya slaydları")}
+              >
                 {[0, 1, 2].map((n) => (
                   <button
                     key={n}
                     onClick={() => setSlide(n)}
                     className={slide === n ? "active" : ""}
-                    aria-label={`${n + 1}-ci slayd`}
+                    aria-label={text("{number}-ci slayd", { number: n + 1 })}
                     aria-pressed={slide === n}
                   />
                 ))}
@@ -269,26 +276,29 @@ export function HomeExperience({
             <span className="live-hero-sticker">
               <ShieldCheck size={22} />
               <span>
-                Əminliklə seç.<strong>Sevərək istifadə et.</strong>
+                {text("Əminliklə seç.")}
+                <strong>{text("Sevərək istifadə et.")}</strong>
               </span>
             </span>
           </section>
           <section className="live-side-offer">
             <span className="live-eyebrow">
-              {offer?.discountAmount ? "SƏRFƏLİ TAPINTI" : "YENİ MƏHSULLAR"}
+              {offer?.discountAmount
+                ? text("SƏRFƏLİ TAPINTI")
+                : text("YENİ MƏHSULLAR")}
             </span>
             <h2>
               {offer?.discountAmount ? (
                 <>
-                  Yaxşı seçim.
+                  {text("Yaxşı seçim.")}
                   <br />
-                  Daha yaxşı qiymət.
+                  {text("Daha yaxşı qiymət.")}
                 </>
               ) : (
                 <>
-                  Axtardığınız
+                  {text("Axtardığınız")}
                   <br />
-                  burada ola bilər.
+                  {text("burada ola bilər.")}
                 </>
               )}
             </h2>
@@ -315,12 +325,12 @@ export function HomeExperience({
                 )}
               </>
             ) : (
-              <p>Mağazaların yeni məhsulları ilə tanış olun.</p>
+              <p>{text("Mağazaların yeni məhsulları ilə tanış olun.")}</p>
             )}
             <Link
               className="live-circle-arrow"
               href={offerHref}
-              aria-label="Məhsula bax"
+              aria-label={text("Məhsula bax")}
             >
               <ArrowUpRight size={22} />
             </Link>
@@ -330,34 +340,34 @@ export function HomeExperience({
           {[
             {
               Icon: Truck,
-              title: "Mağazadan çatdırılma",
-              text: "Şərtlər məhsul səhifəsində",
+              title: text("Mağazadan çatdırılma"),
+              text: text("Şərtlər məhsul səhifəsində"),
               href: "/help",
             },
             {
               Icon: ShieldCheck,
-              title: "Etibarlı alış-veriş",
-              text: "Mağazalarla birbaşa əlaqə",
+              title: text("Etibarlı alış-veriş"),
+              text: text("Mağazalarla birbaşa əlaqə"),
               href: "/stores",
             },
             {
               Icon: MessageCircle,
-              title: "Satıcıya sual verin",
-              text: "Məhsul üzrə mesajlaşma",
+              title: text("Satıcıya sual verin"),
+              text: text("Məhsul üzrə mesajlaşma"),
               href: "/products",
             },
             {
               Icon: Headphones,
-              title: "Hər zaman yanınızda",
-              text: "Yardım və dəstək mərkəzi",
+              title: text("Hər zaman yanınızda"),
+              text: text("Yardım və dəstək mərkəzi"),
               href: "/help",
             },
-          ].map(({ Icon, title, text, href }) => (
-            <Link key={title} href={href}>
+          ].map(({ Icon, title, text: detail, href }) => (
+            <Link key={text(title)} href={href}>
               <Icon size={25} />
               <span>
-                <strong>{title}</strong>
-                <small>{text}</small>
+                <strong>{text(title)}</strong>
+                <small>{detail}</small>
               </span>
             </Link>
           ))}
@@ -365,10 +375,10 @@ export function HomeExperience({
         {activeCategories.length > 0 && (
           <section className="live-section live-category-section">
             <SectionHeading
-              eyebrow="SƏNİN DÜNYAN, SƏNİN SEÇİMİN"
-              title={categorySection?.title || "Nə axtarırsınız?"}
+              eyebrow={text("SƏNİN DÜNYAN, SƏNİN SEÇİMİN")}
+              title={categorySection?.title || text("Nə axtarırsınız?")}
               href="/categories"
-              action="Bütün kateqoriyalar"
+              action={text("Bütün kateqoriyalar")}
             />
             <div className="live-categories">
               {activeCategories.map((c, i) => {
@@ -392,7 +402,7 @@ export function HomeExperience({
                         <Icon strokeWidth={1.2} size={45} />
                       )}
                     </span>
-                    <strong>{c.name}</strong>
+                    <strong>{text(c.name)}</strong>
                   </Link>
                 );
               })}
@@ -401,30 +411,30 @@ export function HomeExperience({
         )}
         <section className="live-section">
           <SectionHeading
-            eyebrow="SEÇİLMİŞ MƏHSULLAR"
-            title="Bəyənəcəyinizi düşündük"
+            eyebrow={text("SEÇİLMİŞ MƏHSULLAR")}
+            title={text("Bəyənəcəyinizi düşündük")}
           />
           <div className="live-section-tabs">
             <Link href="/products" className="active">
-              Sizin üçün
+              {text("Sizin üçün")}
             </Link>
             {activeCategories.slice(0, 4).map((c) => (
               <Link
                 key={c.id}
                 href={`/products?category=${encodeURIComponent(c.slug)}`}
               >
-                {c.name}
+                {text(c.name)}
               </Link>
             ))}
             <span>
               <Crown size={14} />
-              Mağazalardan yeni tapıntılar
+              {text("Mağazalardan yeni tapıntılar")}
             </span>
           </div>
           <div className="live-home-products">
             <ProductGrid
               products={featuredProducts}
-              labels={{ stock: "Stok" }}
+              labels={{ stock: text("Stok") }}
               compactMobileCards
             />
           </div>
@@ -433,32 +443,34 @@ export function HomeExperience({
           <Link href="/products?q=ev" className="live-interior-promo">
             <img
               src="/marketplace/images/interior.jpg"
-              alt="Müasir və rahat ev interyeri"
+              alt={text("Müasir və rahat ev interyeri")}
               loading="lazy"
             />
             <div>
-              <span className="live-eyebrow">EVİNİZƏ YARAŞAN SEÇİMLƏR</span>
+              <span className="live-eyebrow">
+                {text("EVİNİZƏ YARAŞAN SEÇİMLƏR")}
+              </span>
               <h2>
-                Rahatlıq kiçik
+                {text("Rahatlıq kiçik")}
                 <br />
-                detallardan başlayır.
+                {text("detallardan başlayır.")}
               </h2>
               <span className="live-btn live-btn-white">
-                Evin üçün kəşf et
+                {text("Evin üçün kəşf et")}
                 <ArrowRight size={16} />
               </span>
             </div>
           </Link>
           <Link href="/products?q=geyim" className="live-style-promo">
-            <span className="live-eyebrow">ÖZ STİLİNİ TAP</span>
+            <span className="live-eyebrow">{text("ÖZ STİLİNİ TAP")}</span>
             <h2>
-              Hər addımda
+              {text("Hər addımda")}
               <br />
-              sənə özəl.
+              {text("sənə özəl.")}
             </h2>
-            <p>Sevdiyiniz seçimləri bir arada tapın.</p>
+            <p>{text("Sevdiyiniz seçimləri bir arada tapın.")}</p>
             <span className="live-text-link">
-              Kolleksiyaya bax
+              {text("Kolleksiyaya bax")}
               <ArrowRight size={16} />
             </span>
             <Leaf size={145} strokeWidth={0.55} />
@@ -467,10 +479,10 @@ export function HomeExperience({
         {featuredStores.length > 0 && (
           <section className="live-section">
             <SectionHeading
-              eyebrow="YAXŞI SEÇİMLƏRİN ÜNVANI"
-              title={featuredSection?.title || "Seçilmiş mağazalar"}
+              eyebrow={text("YAXŞI SEÇİMLƏRİN ÜNVANI")}
+              title={featuredSection?.title || text("Seçilmiş mağazalar")}
               href="/stores"
-              action="Bütün mağazalar"
+              action={text("Bütün mağazalar")}
             />
             <div className="live-store-grid">
               {featuredStores.map((s) => (
@@ -481,8 +493,8 @@ export function HomeExperience({
         )}
         <section className="live-section">
           <SectionHeading
-            eyebrow="YENİ GƏLƏNLƏR"
-            title="Kəşf etməyə davam edin"
+            eyebrow={text("YENİ GƏLƏNLƏR")}
+            title={text("Kəşf etməyə davam edin")}
           />
           <InfiniteProductGrid
             initialProducts={products}
@@ -490,7 +502,7 @@ export function HomeExperience({
             initialHasMore={productHasMore}
             locale={locale}
             sort="newest"
-            labels={{ stock: "Stok" }}
+            labels={{ stock: text("Stok") }}
             compactMobileCards
           />
         </section>
@@ -498,9 +510,9 @@ export function HomeExperience({
           <section className="live-seller-banner">
             <Store size={54} strokeWidth={1.2} />
             <div>
-              <span className="live-eyebrow">BİRLİKDƏ BÖYÜYƏK</span>
-              <h2>Mağazanızın növbəti ünvanı buradır.</h2>
-              <p>Məhsullarınızı yeni alıcılarla tanış edin.</p>
+              <span className="live-eyebrow">{text("BİRLİKDƏ BÖYÜYƏK")}</span>
+              <h2>{text("Mağazanızın növbəti ünvanı buradır.")}</h2>
+              <p>{text("Məhsullarınızı yeni alıcılarla tanış edin.")}</p>
             </div>
             <Link
               href={
@@ -511,8 +523,8 @@ export function HomeExperience({
               className="live-btn"
             >
               {initialRole === "seller"
-                ? "Mağazanı idarə et"
-                : "Satışa başlayın"}
+                ? text("Mağazanı idarə et")
+                : text("Satışa başlayın")}
               <ArrowUpRight size={17} />
             </Link>
           </section>

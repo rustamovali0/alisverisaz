@@ -422,9 +422,9 @@
   font-weight: 750;
   margin: 0;
 }
-.live-category-menu > div button {
-  height: 30px;
-  width: 30px;
+.live-category-menu > div:first-child > button {
+  height: 44px;
+  width: 44px;
   display: grid;
   place-items: center;
 }
@@ -2869,3 +2869,11 @@
 .dark .live-hero p { color: #526747; }
 .dark .live-hero .live-btn { background: #17634e; color: #fff; }
 .dark .live-hero-sticker, .dark .live-hero-sticker strong { color: #344b2d; }
+/* Keep the category/language drawer above the fixed mobile navigation. */
+@media (max-width: 767px) {
+  .live-menu-overlay { z-index: 240; }
+}
+
+.live-mobile-language > button { min-height: 44px; }
+.live-mobile-language > div { left: 0; right: auto; }
+.live-mobile-language [role="menuitemradio"] { min-height: 44px; }
