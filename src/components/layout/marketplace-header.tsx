@@ -230,7 +230,7 @@ export function MarketplaceHeader({
               <HeaderAccountActions showSellerCta={false} />
             </div>
             <div className="live-notifications">
-              <NotificationCenter requireAuth={!isResolved || profile.status !== "authenticated"} />
+              <NotificationCenter requireAuth={isResolved && profile.status !== "authenticated"} authLoading={!isResolved} />
             </div>
             {!hideCart && (
               <Link

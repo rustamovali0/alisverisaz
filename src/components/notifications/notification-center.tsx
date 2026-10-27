@@ -20,6 +20,7 @@ type NotificationCenterProps = {
   buttonClassName?: string;
   iconClassName?: string;
   requireAuth?: boolean;
+  authLoading?: boolean;
 };
 
 const SHOWN_STORAGE_KEY = "alisveris-shown-notifications";
@@ -64,6 +65,7 @@ export function NotificationCenter({
   buttonClassName,
   iconClassName,
   requireAuth = false,
+  authLoading = false,
 }: NotificationCenterProps) {
   const text = useMarketplaceText();
   const [open, setOpen] = useState(false);
@@ -72,7 +74,7 @@ export function NotificationCenter({
   const shownRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (requireAuth) {
+    if (requireAuth || authLoading) {
       setItems([]);
       return;
     }
@@ -103,7 +105,7 @@ export function NotificationCenter({
       // A background notification failure must not block the current page.
     });
     return () => controller.abort();
-  }, [requireAuth]);
+  }, [requireAuth, authLoading]);
 
   useEffect(() => {
     if (!open) {
@@ -301,6 +303,8 @@ export function NotificationCenter({
         variant="ghost"
         size="icon"
         onClick={openModal}
+        disabled={authLoading}
+        aria-busy={authLoading}
         className={cn(
           "relative size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
           buttonClassName,
