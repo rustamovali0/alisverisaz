@@ -86,6 +86,7 @@ export function MarketplaceHeader({
   isolatedStorefront = false,
 }: MarketplaceHeaderProps) {
   const pathname = usePathname();
+  const compactAuthHeader = /^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname);
   const { profile, isResolved } = useClientAuthProfileState();
   const role = isResolved
     ? profile.status === "authenticated"
@@ -155,7 +156,7 @@ export function MarketplaceHeader({
   const sellerHref = isSeller ? "/store/dashboard" : "/register?role=seller";
   return (
     <>
-      <div className="live-utility">
+      {!compactAuthHeader && <div className="live-utility">
         <div className="live-wrap">
           <span>
             <Truck size={14} />
@@ -172,6 +173,7 @@ export function MarketplaceHeader({
           </div>
         </div>
       </div>
+      }
       <header className="marketplace-header live-header" data-live-header>
         <div className="live-wrap live-header-main">
           <button
@@ -238,7 +240,7 @@ export function MarketplaceHeader({
             )}
           </div>
         </div>
-        <nav className="live-navigation" aria-label="Əsas menyu">
+        {!compactAuthHeader && <nav className="live-navigation" aria-label="Əsas menyu">
           <div className="live-wrap">
             <button
               className="live-all-categories"
@@ -299,7 +301,7 @@ export function MarketplaceHeader({
               <ArrowUpRight size={14} />
             </Link>
           </div>
-        </nav>
+        </nav>}
       </header>
       {menu && (
         <div
