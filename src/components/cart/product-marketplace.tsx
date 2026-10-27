@@ -1323,6 +1323,9 @@ export function ProductGrid({
           <article
             key={product.id}
             onClick={openDetail}
+            onPointerEnter={() => router.prefetch(detailHref)}
+            onFocusCapture={() => router.prefetch(detailHref)}
+            onTouchStart={() => router.prefetch(detailHref)}
             className={cn(
               "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
               compactMobileCards && "max-sm:rounded-xl",

@@ -17,9 +17,13 @@
 - Məhsul formasında ikiqat göndərmə kilidi, bağlantı xətası üçün istifadəçiyə bildiriş və ayrıca loading vəziyyəti var.
 - Satıcının telefon/WhatsApp məlumatı dəyişməyibsə hər girişdə eyni mağaza yenidən yazılmır.
 
+- Bildirişlərin ilkin oxunması ayrıca private/no-store GET endpoint-inə keçirildi və guest sessiyada sorğu buraxılmır. Baxış statistikası `after` ilə cavabdan sonra yazılır; bunlar login və məhsul saxlama Server Action növbəsini gözlətmir.
+- Məhsul kartlarında pointer/focus/touch niyyəti üzrə öncədən yükləmə, satıcıda yeni məhsul formasının öncədən yüklənməsi əlavə edildi.
+
 ## Yoxlama nəticələri
 
-- 40 test faylı, **257 test keçdi**. Yeddi yeni test: ilkin sessiya sorğusunun paylaşılması, focus/visibility deduplikasiyası, gecikmiş guest cavabının giriş profilini əvəz etməməsi, məhsul təsdiq bildirişinin cavabı bloklamaması, məhsul/şəkil limiti və mağaza mülkiyyətinin qorunması.
+- 41 test faylı, **264 test keçdi**. İlk yeddi regression testi: ilkin sessiya sorğusunun paylaşılması, focus/visibility deduplikasiyası, gecikmiş guest cavabının giriş profilini əvəz etməməsi, məhsul təsdiq bildirişinin cavabı bloklamaması, məhsul/şəkil limiti və mağaza mülkiyyətinin qorunması.
+- Daha yeddi regression testi bildirişlərin yalnız verified user_id ilə oxunmasını, private cache başlığını, guest/DB-error sərhədlərini, statistikanın cavabı bloklamamasını və satıcının öz baxışının sayılmamasını yoxlayır.
 - TypeScript və production build keçdi.
 - Beş səhifə × doqquz en = **45 adaptiv yoxlama**: ana səhifə, məhsullar, ngallery mağazası, login, register; 320, 375, 390, 430, 768, 1024, 1280, 1440, 1920px. Üfüqi daşma və kəsilən qiymət tapılmadı.
 - Mobil login boş email/şifrəni qəbul etmir; auth səhifələrində utility/category menyusu gizlidir.
@@ -34,3 +38,9 @@ Bu dəyişiklikdə real satıcının şifrəsi ilə giriş, real məhsul yaratma
 `design-after.json`, `design-dark-after.json`, `navigation-before.json`, `latency-server-comparison.json` və canlı deployment yoxlamaları hesabatın yanındadır. Əvvəlki geniş təhlükəsizlik/checkout hesabatı ayrıca saxlanılıb; bu hesabat həmin yoxlamaları yenidən icra edilmiş kimi təqdim etmir.
 
 Texniki istinad: [Next.js after](https://nextjs.org/docs/app/api-reference/functions/after), [streaming metadata](https://nextjs.org/docs/app/api-reference/functions/generate-metadata#streaming-metadata).
+
+## Canlı nəticələr
+
+İlk deploy `14f1b55` mənbəsindən 27 oktyabr 13:26 UTC-də aktivləşdi. 25 native runtime, 57 route/auth redirect, 6 locale və 9 təhlükəsizlik HTTP yoxlaması keçdi. Sessiya mövcud QA alıcısı ilə qorundu. Eyni brauzer vasitəsi ilə ilkin keçidlər 721–1689ms idi; ilk deploy-dan sonra öncədən yüklənmiş əsas bölmə keçidləri 129–156ms ölçüldü (dörd nümunə, alət overhead-i daxil, mobil/soyuq yükləmə zəmanəti deyil).
+
+Xarici HTTP təkrarında `/products` median 1333ms ilə 1000ms büdcəsini keçmədi; bir `/stores` nümunəsi 10489ms oldu. Digər səhifələrin medianları 337–534ms idi. Bu qalan cold-request/şəbəkə dəyişkənliyi açıq nəticədir; bütün gecikmələrin sıfırlandığı iddia edilmir. Brauzerin öncədən yüklənmiş keçidi ilə bütöv soyuq HTTP cavabı fərqli ölçülərdir. Nəticələr `latency-http-after.txt` və `navigation-after.json` fayllarındadır.

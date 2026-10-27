@@ -8,7 +8,6 @@ import { Bell, CheckCircle2, Info, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   deleteAllNotificationsAction,
-  loadMyNotificationsAction,
   markAllNotificationsReadAction,
   type UserNotification,
 } from "@/lib/notifications/actions";
@@ -79,8 +78,15 @@ export function NotificationCenter({
     }
 
     shownRef.current = getShownIds();
-    startTransition(async () => {
-      const result = await loadMyNotificationsAction();
+    const controller = new AbortController();
+    // Reads must not occupy the Server Action queue used by login and saves.
+    void (async () => {
+      const response = await fetch("/api/notifications", {
+        credentials: "same-origin", cache: "no-store", signal: controller.signal,
+      });
+      if (!response.ok) return;
+      const result = await response.json() as { notifications: UserNotification[] };
+      if (controller.signal.aborted) return;
       setItems(result.notifications);
 
       const newestUnread = result.notifications.find((item) => !item.readAt && !shownRef.current.has(item.id));
@@ -93,7 +99,10 @@ export function NotificationCenter({
         shownRef.current.add(newestUnread.id);
         saveShownIds(shownRef.current);
       }
+    })().catch(() => {
+      // A background notification failure must not block the current page.
     });
+    return () => controller.abort();
   }, [requireAuth]);
 
   useEffect(() => {
