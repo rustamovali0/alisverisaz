@@ -389,7 +389,6 @@ export function RegisterForm({
         await refreshCachedClientAuthProfile();
       }
       router.replace(result.redirectTo);
-      router.refresh();
     });
   }
 

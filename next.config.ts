@@ -1,9 +1,17 @@
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
+// Self-hosted Supabase uses api.alisveris.az rather than *.supabase.co.
+// Only the configured API origin (and its realtime websocket) is permitted.
+const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+  : "";
+const supabaseConnectSources = supabaseOrigin
+  ? `${supabaseOrigin} ${supabaseOrigin.replace(/^http/, "ws")}`
+  : "";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  htmlLimitedBots: /.*/,
   poweredByHeader: false,
   output: "standalone",
   ...(process.env.REDIS_URL ? {
@@ -24,7 +32,7 @@ const nextConfig: NextConfig = {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data:",
-            "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://cloudflareinsights.com",
+            `connect-src 'self' https://*.supabase.co wss://*.supabase.co ${supabaseConnectSources} https://challenges.cloudflare.com https://cloudflareinsights.com`,
             "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
             "frame-ancestors 'self'",
             "object-src 'none'",

@@ -3,6 +3,7 @@
 import { allowsPersonalListings } from "@/lib/products/marketplace-policy";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
@@ -495,23 +496,17 @@ async function insertProductImageRows(input: {
   existingImageCount: number;
   images: Awaited<ReturnType<typeof uploadProductImageFiles>>;
 }) {
-  await Promise.all(
-    input.images.map((image, index) =>
-      (input.supabaseAdmin as any).from("product_images").insert({
-        product_id: input.productId,
-        url: image.url,
-        alt_text: input.productName,
-        sort_order: input.existingImageCount + index,
-        is_primary: input.existingImageCount === 0 && index === 0,
-      }),
-    ),
-  ).then((results) => {
-    const failed = results.find((result) => result.error);
-
-    if (failed?.error) {
-      throw new Error(failed.error.message);
-    }
-  });
+  if (input.images.length === 0) return;
+  const { error } = await (input.supabaseAdmin as any).from("product_images").insert(
+    input.images.map((image, index) => ({
+      product_id: input.productId,
+      url: image.url,
+      alt_text: input.productName,
+      sort_order: input.existingImageCount + index,
+      is_primary: input.existingImageCount === 0 && index === 0,
+    })),
+  );
+  if (error) throw new Error(error.message);
 }
 
 async function uploadProductImages(input: {
@@ -990,8 +985,9 @@ export async function createStoreProductAction(
   const imageFiles = getImageFiles(formData);
 
   try {
-    await assertStoreImageLimit({
-      storeId,
+    // canCreateListing has already read the same effective entitlements.
+    assertImageLimit({
+      imagesPerProductLimit: limit.subscription.imagesPerProductLimit,
       nextImageCount: imageFiles.length,
     });
   } catch (error) {
@@ -1127,12 +1123,20 @@ export async function createStoreProductAction(
   });
 
   if (requiresApproval) {
-    await notifyProductSubmitted({
-      sellerId: current.user.id,
-      sellerName,
-      sellerEmail: current.user.email ?? null,
-      productId: product.id,
-      productName: payload.name,
+    // The product and media are persisted. SMTP delivery must not hold the
+    // editor response open; Next keeps this task alive after sending it.
+    after(async () => {
+      try {
+        await notifyProductSubmitted({
+          sellerId: current.user.id,
+          sellerName,
+          sellerEmail: current.user.email ?? null,
+          productId: product.id,
+          productName: payload.name,
+        });
+      } catch (error) {
+        console.error("Product submission notification failed", { productId: product.id, error });
+      }
     });
   }
 

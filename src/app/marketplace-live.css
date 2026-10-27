@@ -2877,3 +2877,39 @@
 .live-mobile-language > button { min-height: 44px; }
 .live-mobile-language > div { left: 0; right: auto; }
 .live-mobile-language [role="menuitemradio"] { min-height: 44px; }
+
+/* Design audit: keep merchant artwork clear and essential text readable. */
+.live-store-cover > img { opacity: 1; filter: none; }
+.live-footer-links > a,
+.live-footer-contact > p,
+.live-footer-contact > span,
+.live-footer-bottom,
+.live-cart-link small { color: #526747; }
+.dark .live-footer-links > a,
+.dark .live-footer-contact > p,
+.dark .live-footer-contact > span,
+.dark .live-footer-bottom,
+.dark .live-cart-link small { color: #bdd0b4; }
+@media (max-width: 1024px) {
+  .live-socials > a,
+  .live-store-body > div > a { width: 44px; height: 44px; flex-shrink: 0; }
+  .live-store-body h3 { min-height: 44px; }
+  .live-section-tabs > a { min-width: 44px; }
+  .live-footer-bottom a { display: inline-flex; min-height: 44px; align-items: center; }
+}
+@media (max-width: 767px) {
+  .live-header-main > .live-brand, .live-footer-brand > .live-brand { min-height: 44px; }
+  .live-benefits > a { min-height: 44px; }
+  .live-benefits strong, .live-categories strong { font-size: 12px; }
+  .live-categories strong { overflow-wrap: anywhere; }
+  .live-marketplace .product-card [data-product-card-body] { grid-template-columns: minmax(0, 1fr); }
+  .live-marketplace .product-card [data-product-card-body] > div.border-t { grid-column: 1; grid-row: 3; min-width: 0; }
+  .live-marketplace .product-card [data-product-card-body] > div.border-t > p:first-child {
+    width: 100%; max-width: none; overflow: visible; text-overflow: clip;
+    white-space: normal; overflow-wrap: anywhere;
+  }
+  .live-marketplace .product-card [data-product-card-body] > p:first-of-type {
+    grid-column: 1; grid-row: 4; justify-self: start;
+  }
+  .live-marketplace .product-card [data-product-card-body] > div:last-child { grid-column: 1; grid-row: 5; }
+}

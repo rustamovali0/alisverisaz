@@ -15,5 +15,5 @@ export function isOptimizableImage(src: ImageProps["src"]) {
 }
 
 export function OptimizedImage(props: ImageProps) {
-  return <Image {...props} unoptimized={!isOptimizableImage(props.src)} placeholder="blur" blurDataURL={props.blurDataURL || PLACEHOLDER} />;
+  return <Image {...props} unoptimized={!isOptimizableImage(props.src)} placeholder={props.placeholder ?? "blur"} blurDataURL={props.blurDataURL || PLACEHOLDER} />;
 }

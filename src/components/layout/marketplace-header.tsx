@@ -276,6 +276,7 @@ export function MarketplaceHeader({
               </Link>
               <Link
                 href={scopedProducts}
+                prefetch={true}
                 aria-current={pathname === "/products" ? "page" : undefined}
               >
                 {text("Məhsullar")}
@@ -300,6 +301,7 @@ export function MarketplaceHeader({
                   </Link>
                   <Link
                     href="/stores"
+                    prefetch={true}
                     aria-current={pathname === "/stores" ? "page" : undefined}
                   >
                     {text("Mağazalar")}

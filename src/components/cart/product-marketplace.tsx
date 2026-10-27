@@ -213,6 +213,7 @@ function StoreHeroCover({
   return (
     <OptimizedImage
       src={coverUrl}
+      placeholder="empty"
       alt={store.name}
       fill
       sizes="(max-width: 1024px) 100vw, 60vw"

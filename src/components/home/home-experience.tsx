@@ -84,8 +84,9 @@ function LiveStoreCard({ store }: { store: MarketplaceStore }) {
             src={store.coverUrl}
             alt=""
             fill
-            sizes="320px"
-            className="object-cover opacity-35"
+            sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, 320px"
+            placeholder="empty"
+            className="object-cover"
           />
         )}
         <span className="live-store-logo">
