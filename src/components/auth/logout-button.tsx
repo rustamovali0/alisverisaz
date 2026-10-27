@@ -31,7 +31,6 @@ export function LogoutButton({ compact = false, className }: LogoutButtonProps) 
       void appAlert.success("Çıxış edildi", result.message);
       clearHeaderAccountCache();
       router.replace(result.redirectTo);
-      router.refresh();
     });
   }
 
@@ -42,7 +41,7 @@ export function LogoutButton({ compact = false, className }: LogoutButtonProps) 
       onClick={handleLogout}
       disabled={isPending}
       size={compact ? "icon" : "default"}
-      className={cn(compact ? "size-10 rounded-xl" : undefined, className)}
+      className={cn(compact ? "size-11 rounded-xl" : "min-h-11", className)}
       aria-label={compact ? "Çıxış" : undefined}
     >
       <LogOut className={compact ? "size-6 stroke-[2.5]" : "mr-2 size-4"} aria-hidden="true" />

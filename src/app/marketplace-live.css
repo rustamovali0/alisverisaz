@@ -2913,3 +2913,11 @@
   }
   .live-marketplace .product-card [data-product-card-body] > div:last-child { grid-column: 1; grid-row: 5; }
 }
+
+/* A modal owns the mobile screen; navigation must not cover its controls. */
+@media (max-width: 767px) {
+  body:has([role="dialog"][aria-modal="true"]) .mobile-bottom-nav-stable {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}

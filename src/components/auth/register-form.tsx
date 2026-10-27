@@ -619,31 +619,29 @@ export function RegisterForm({
             </div>
           </div>
           <div
-            className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-primary/25 bg-primary/5 p-4 text-base transition-colors hover:border-primary/60 hover:bg-primary/10 focus-within:ring-2 focus-within:ring-primary/40 lg:col-span-2"
+            className="flex min-h-11 cursor-pointer items-start gap-2.5 rounded-md px-1 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-within:ring-2 focus-within:ring-primary/40 lg:col-span-2"
             role="group"
             aria-label="İstifadəçi razılaşması"
             onClick={(event) => { event.preventDefault(); setLegalDialogOpen(true); }}
           >
-            <ArrowRight className="mt-1 size-6 shrink-0 text-primary" aria-hidden="true" />
             <input
               type="checkbox"
               checked={termsAccepted}
               readOnly
-              className="registration-consent-check mt-0.5 size-7 shrink-0 cursor-pointer rounded border-input accent-[hsl(var(--primary))]"
-              style={{ width: 28, height: 28, minWidth: 28 }}
+              className="registration-consent-check mt-0.5 size-5 shrink-0 cursor-pointer rounded border-input accent-[hsl(var(--primary))]"
+              style={{ width: 20, height: 20, minWidth: 20 }}
               aria-label="Razılaşma mətnini aç"
               aria-describedby="registration-legal-help"
             />
-            <span className="leading-6" id="registration-legal-help">
-              <strong className="mb-1 block font-bold text-primary">Razılaşmanı oxumaq üçün bura klikləyin</strong>
+            <span className="min-w-0 leading-5" id="registration-legal-help">
               <Link href="/terms" className="font-medium text-foreground underline underline-offset-4">
-                İstifadəçi razılaşması
+                İstifadəçi razılaşmasını
               </Link>{" "}
               və{" "}
               <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4">
-                məxfilik siyasəti
+                məxfilik siyasətini
               </Link>{" "}
-              sona qədər oxunduqdan sonra avtomatik qəbul edilir.
+              qəbul edirəm.
             </span>
           </div>
           {fieldErrors.terms ? (
