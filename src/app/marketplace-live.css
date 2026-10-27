@@ -2865,3 +2865,7 @@
 }
 .dark .live-notifications > div > button { color: #c9d8c2; }
 .dark .live-cart-link b { border-color: #17221b; }
+/* Hero artwork remains light in both themes; keep text contrast on that surface. */
+.dark .live-hero p { color: #526747; }
+.dark .live-hero .live-btn { background: #17634e; color: #fff; }
+.dark .live-hero-sticker, .dark .live-hero-sticker strong { color: #344b2d; }

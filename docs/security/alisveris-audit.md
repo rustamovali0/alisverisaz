@@ -202,3 +202,5 @@ Badge və mobil CSS nümunəsi (işləyən komponentdə tətbiq edilib):
   .live-cart-link { min-width: 44px; min-height: 44px; }
 }
 ```
+
+Responsive son yoxlama: 320/375/430/768/1024/1440 px enlərdə daşma yoxdur. Mobil menyu/səbət/axtarış/favorit düymələri 44×44 px ölçüldü; nişan 22×22 px. Dark rejimdə açıq hero şəkli üzərində mətn/CTA kontrastı düzəldildi.
