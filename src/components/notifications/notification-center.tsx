@@ -1,4 +1,5 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -7,7 +8,6 @@ import { Bell, CheckCircle2, Info, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   deleteAllNotificationsAction,
-  loadMyNotificationsAction,
   markAllNotificationsReadAction,
   type UserNotification,
 } from "@/lib/notifications/actions";
@@ -20,6 +20,7 @@ type NotificationCenterProps = {
   buttonClassName?: string;
   iconClassName?: string;
   requireAuth?: boolean;
+  authLoading?: boolean;
 };
 
 const SHOWN_STORAGE_KEY = "alisveris-shown-notifications";
@@ -64,21 +65,30 @@ export function NotificationCenter({
   buttonClassName,
   iconClassName,
   requireAuth = false,
+  authLoading = false,
 }: NotificationCenterProps) {
+  const text = useMarketplaceText();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<UserNotification[]>([]);
   const [isPending, startTransition] = useTransition();
   const shownRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (requireAuth) {
+    if (requireAuth || authLoading) {
       setItems([]);
       return;
     }
 
     shownRef.current = getShownIds();
-    startTransition(async () => {
-      const result = await loadMyNotificationsAction();
+    const controller = new AbortController();
+    // Reads must not occupy the Server Action queue used by login and saves.
+    void (async () => {
+      const response = await fetch("/api/notifications", {
+        credentials: "same-origin", cache: "no-store", signal: controller.signal,
+      });
+      if (!response.ok) return;
+      const result = await response.json() as { notifications: UserNotification[] };
+      if (controller.signal.aborted) return;
       setItems(result.notifications);
 
       const newestUnread = result.notifications.find((item) => !item.readAt && !shownRef.current.has(item.id));
@@ -91,8 +101,11 @@ export function NotificationCenter({
         shownRef.current.add(newestUnread.id);
         saveShownIds(shownRef.current);
       }
+    })().catch(() => {
+      // A background notification failure must not block the current page.
     });
-  }, [requireAuth]);
+    return () => controller.abort();
+  }, [requireAuth, authLoading]);
 
   useEffect(() => {
     if (!open) {
@@ -208,7 +221,7 @@ export function NotificationCenter({
           className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/45 p-3 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
-          aria-label="Bildirişlər"
+          aria-label={text("Bildirişlər")}
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
               setOpen(false);
@@ -221,7 +234,7 @@ export function NotificationCenter({
           >
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-5">
               <div>
-                <h2 className="text-lg font-black tracking-normal">Bildirişlər</h2>
+                <h2 className="text-lg font-black tracking-normal">{text("Bildirişlər")}</h2>
                 <p className="text-sm text-muted-foreground">
                   {items.length > 0 ? `${items.length} bildiriş` : "Yeni bildiriş yoxdur"}
                 </p>
@@ -290,11 +303,13 @@ export function NotificationCenter({
         variant="ghost"
         size="icon"
         onClick={openModal}
+        disabled={authLoading}
+        aria-busy={authLoading}
         className={cn(
           "relative size-12 rounded-xl border bg-background text-foreground transition duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary hover:shadow-md",
           buttonClassName,
         )}
-        aria-label="Bildirişlər"
+        aria-label={text("Bildirişlər")}
       >
         <Bell className={cn("size-7 stroke-[2.3]", iconClassName)} aria-hidden="true" />
         {unreadCount > 0 ? (

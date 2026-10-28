@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -97,7 +98,7 @@ async function getRows<T>(
   return (data ?? []) as T[];
 }
 
-export async function getOwnedStores(userId: string) {
+export const getOwnedStores = cache(async function getOwnedStores(userId: string) {
   const stores = await getRows<StoreSummary>(
     "stores",
     "id,name,slug,status,created_at,settings",
@@ -110,7 +111,7 @@ export async function getOwnedStores(userId: string) {
     20,
   );
   return stores.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
-}
+});
 
 async function getCustomerIds(userId: string) {
   const customers = await getRows<{ id: string }>(

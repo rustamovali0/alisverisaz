@@ -1,11 +1,15 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 
 import { ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 export function ScrollToTopButton() {
+  const text = useMarketplaceText();
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -21,6 +25,8 @@ export function ScrollToTopButton() {
     };
   }, []);
 
+  if (/^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname)) return null;
+
   return (
     <button
       type="button"
@@ -30,8 +36,8 @@ export function ScrollToTopButton() {
         isVisible ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
       )}
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      aria-label="Yuxarı qayıt"
-      title="Yuxarı qayıt"
+      aria-label={text("Yuxarı qayıt")}
+      title={text("Yuxarı qayıt")}
     >
       <ChevronUp className="size-8 stroke-[2.4]" aria-hidden="true" />
     </button>

@@ -422,9 +422,9 @@
   font-weight: 750;
   margin: 0;
 }
-.live-category-menu > div button {
-  height: 30px;
-  width: 30px;
+.live-category-menu > div:first-child > button {
+  height: 44px;
+  width: 44px;
   display: grid;
   place-items: center;
 }
@@ -1281,6 +1281,7 @@
   box-shadow: none;
 }
 .live-marketplace .app-dashboard-shell > div > header {
+  top: var(--marketplace-header-height, 0px);
   box-shadow: none;
   background: #fffffff3;
 }
@@ -2683,4 +2684,241 @@
   width: 8px;
   height: 14px;
   border-width: 0 3px 3px 0;
+}
+
+/* Keep flag artwork independent of utility-bar icon and text rules. */
+.live-utility button[data-language-trigger] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.live-utility [data-language-flag] {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.live-utility [data-language-flag] > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  flex-shrink: 0;
+}
+.live-utility button:not([data-language-trigger]) > svg {
+  width: 18px;
+  height: 18px;
+}
+.live-header-actions .lucide {
+  flex-shrink: 0;
+  stroke-width: 1.8;
+}
+.live-favorites-link > svg,
+.live-cart-link > span:first-child > svg,
+.live-notifications > div > button > svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.live-notifications > div > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  color: #344b2d;
+  border-radius: 50%;
+}
+.live-cart-link > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+/* Mobile shopping: compact content, clear controls, no repeated navigation. */
+@media (max-width: 767px) {
+  .live-marketplace .live-wrap { width: calc(100% - 24px); }
+  .live-utility, .live-navigation { display: none; }
+  .live-header-main { height: 104px; padding-top: 6px; align-items: flex-start; gap: 8px; }
+  .live-mobile-menu { width: 40px; height: 40px; }
+  .live-header-main > .live-brand { height: 40px; max-width: calc(100% - 96px); }
+  .live-header .live-brand { font-size: 20px; letter-spacing: -.6px; gap: 5px; }
+  .live-header .live-brand-domain { font-size: 17px; }
+  .live-header .live-brand-symbol { width: 26px; height: 29px; }
+  .live-header-actions { padding-top: 0; }
+  .live-cart-link { min-width: 40px; min-height: 40px; justify-content: center; }
+  .live-header-search { top: 52px; }
+  .live-header .live-search-form { height: 44px; border-radius: 10px; }
+  .live-header .live-search-input { height: 36px !important; min-height: 36px !important; font-size: 16px; }
+  .live-header .live-search-submit { height: 36px !important; min-height: 36px !important; width: 40px !important; min-width: 40px !important; border-radius: 7px !important; }
+  .live-header[data-auth-header] .live-header-search { display: none; }
+  .live-header[data-auth-header] .live-header-main { height: 54px; }
+  .live-hero-grid { margin-top: 12px; }
+  .live-hero { min-height: 216px; border-radius: 12px; }
+  .live-hero-copy { width: 82%; padding: 21px 18px 18px; }
+  .live-hero-label { display: none; }
+  .live-hero h1 { font-size: clamp(27px, 7.5vw, 33px); line-height: 1.12; letter-spacing: -1px; margin-bottom: 10px; }
+  .live-hero p { font-size: 13px; line-height: 1.5; max-width: 210px; margin-bottom: 12px; }
+  .live-hero p > br { display: none; }
+  .live-hero .live-btn { min-height: 40px; padding: 9px 14px; font-size: 13px; }
+  .live-hero-dots { margin-top: 10px; }
+  .live-hero-dots > button { position: relative; }
+  .live-hero-dots > button::after { content: ''; position: absolute; inset: -10px -5px; }
+  .live-hero-sticker { display: none; }
+  .live-benefits { gap: 10px; padding: 14px 0; }
+  .live-benefits > a { padding-left: 0 !important; gap: 8px; border: 0; }
+  .live-benefits > a:nth-child(n+3), .live-benefits small { display: none; }
+  .live-benefits strong { font-size: 11px; line-height: 1.4; }
+  .live-benefits > a > svg { width: 20px; height: 20px; flex-shrink: 0; }
+  .live-section { margin-top: 22px; }
+  .live-section-heading { margin-bottom: 12px; align-items: center; gap: 8px; }
+  .live-section-heading .live-eyebrow { display: none; }
+  .live-section-heading h2 { font-size: 20px; line-height: 1.25; letter-spacing: -.5px; }
+  .live-section-heading > .live-text-link { font-size: 12px; min-height: 40px; white-space: nowrap; }
+  .live-categories { gap: 14px 10px; }
+  .live-category-art { height: auto; aspect-ratio: 1; border-radius: 12px; }
+  .live-categories strong { font-size: 11px; line-height: 1.35; margin-top: 6px; }
+  .live-section-tabs { margin-bottom: 12px; gap: 18px; }
+  .live-section-tabs > a { padding-block: 10px; min-height: 40px; font-size: 13px; }
+  .live-home-products > .grid { gap: 18px 10px; }
+  .live-marketplace .product-card [data-product-card-image] { aspect-ratio: 4 / 3; border-radius: 10px; }
+  .live-marketplace .product-card [data-product-card-body] { padding-top: 8px !important; }
+  .live-marketplace .product-card [data-product-card-body] > div:first-child { font-size: 10px; margin-bottom: 4px; }
+  .live-marketplace .product-card h2 { font-size: 13px; line-height: 1.4; min-height: 36px; }
+  .live-marketplace .product-card [data-product-card-body] > div:last-child :is(button,a) { height: 40px !important; min-height: 40px !important; font-size: 13px; }
+  .live-marketplace .product-card > a ~ button { width: 40px; height: 40px; top: 2px; right: 2px; }
+  .live-marketplace .product-card > a ~ button > svg { width: 18px; height: 18px; }
+  .live-promo-banners, .live-seller-banner, .live-discovery-band { display: none; }
+  .live-footer { margin-top: 28px; padding-top: 22px; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .live-footer-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 14px; }
+  .live-footer-brand p { margin-block: 8px; }
+  .live-footer-links > a { min-height: 36px; display: flex; align-items: center; margin-bottom: 0; }
+  .live-marketplace [data-auth-shell] { padding: 0; background: none; }
+  .live-marketplace [data-auth-shell] > div { border-radius: 14px; box-shadow: none; }
+  .live-marketplace [data-auth-artwork] { display: none; }
+  .live-marketplace [data-auth-shell] > div > div:first-child { padding: 20px 16px; }
+  .live-marketplace [data-auth-shell] :is(input:not([type=checkbox]),select) { font-size: 16px; min-height: 44px; }
+  .live-marketplace [data-auth-shell] h1 { font-size: 25px; line-height: 1.2; }
+}
+@media (max-width: 359px) {
+  .live-header .live-brand { font-size: 18px; }
+  .live-header .live-brand-domain { font-size: 15px; }
+  .live-header .live-brand-symbol { width: 23px; }
+  .live-section-heading h2 { font-size: 18px; }
+}
+
+@media (max-width: 767px) {
+  .registration-role-options, .registration-name-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .registration-role-options > button { font-size: 12px; padding-inline: 6px; gap: 5px; line-height: 1.3; }
+  .registration-role-options > button > svg { flex-shrink: 0; }
+  .marketplace-catalog-toolbar { padding: 12px; gap: 8px; }
+  .marketplace-catalog-toolbar > h1 { font-size: 20px; }
+  .marketplace-catalog-toolbar > div { width: 100%; display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px; }
+  .marketplace-catalog-toolbar > div > button:disabled { display: none; }
+  .marketplace-catalog-toolbar > div > button:not(:first-child):not(:disabled) { grid-row: 2; grid-column: 1/-1; justify-self: start; }
+  .marketplace-catalog-toolbar > div > div:last-child { min-width: 0; }
+}
+
+/* Badge text must fit inside its border on every viewport. */
+.live-cart-link b {
+  top: -5px;
+  right: -6px;
+  width: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .live-mobile-menu, .live-cart-link { min-width: 44px; min-height: 44px; }
+  .live-header .live-search-submit { min-width: 44px !important; width: 44px !important; }
+  .live-marketplace .product-card > a ~ button { width: 44px; height: 44px; }
+  .live-marketplace .product-card [data-product-card-body] > div:last-child :is(button,a) { height: 44px !important; min-height: 44px !important; }
+  .live-section-heading > .live-text-link, .live-section-tabs > a { min-height: 44px; }
+  .live-marketplace [data-auth-shell] button { min-height: 44px; }
+  .live-marketplace [data-auth-shell] button:has(> svg:only-child) { min-width: 44px; }
+}
+@media (max-width: 767px) {
+  .live-header-main { height: 108px; }
+  .live-header .live-search-form { height: 48px; }
+  .live-header .live-search-submit { height: 44px !important; min-height: 44px !important; }
+  .live-hero .live-btn, .live-footer-links > a { min-height: 44px; }
+  .live-hero-dots { display: none; }
+  .marketplace-catalog-toolbar button { min-height: 44px; }
+}
+.dark .live-notifications > div > button { color: #c9d8c2; }
+.dark .live-cart-link b { border-color: #17221b; }
+/* Hero artwork remains light in both themes; keep text contrast on that surface. */
+.dark .live-hero p { color: #526747; }
+.dark .live-hero .live-btn { background: #17634e; color: #fff; }
+.dark .live-hero-sticker, .dark .live-hero-sticker strong { color: #344b2d; }
+/* Keep the category/language drawer above the fixed mobile navigation. */
+@media (max-width: 767px) {
+  .live-menu-overlay { z-index: 240; }
+}
+
+.live-mobile-language > button { min-height: 44px; }
+.live-mobile-language > div { left: 0; right: auto; }
+.live-mobile-language [role="menuitemradio"] { min-height: 44px; }
+
+/* Design audit: keep merchant artwork clear and essential text readable. */
+.live-store-cover > img { opacity: 1; filter: none; }
+.live-footer-links > a,
+.live-footer-contact > p,
+.live-footer-contact > span,
+.live-footer-bottom,
+.live-cart-link small { color: #526747; }
+.dark .live-footer-links > a,
+.dark .live-footer-contact > p,
+.dark .live-footer-contact > span,
+.dark .live-footer-bottom,
+.dark .live-cart-link small { color: #bdd0b4; }
+@media (max-width: 1024px) {
+  .live-socials > a,
+  .live-store-body > div > a { width: 44px; height: 44px; flex-shrink: 0; }
+  .live-store-body h3 { min-height: 44px; }
+  .live-section-tabs > a { min-width: 44px; }
+  .live-footer-bottom a { display: inline-flex; min-height: 44px; align-items: center; }
+}
+@media (max-width: 767px) {
+  .live-header-main > .live-brand, .live-footer-brand > .live-brand { min-height: 44px; }
+  .live-benefits > a { min-height: 44px; }
+  .live-benefits strong, .live-categories strong { font-size: 12px; }
+  .live-categories strong { overflow-wrap: anywhere; }
+  .live-marketplace .product-card [data-product-card-body] { grid-template-columns: minmax(0, 1fr); }
+  .live-marketplace .product-card [data-product-card-body] > div.border-t { grid-column: 1; grid-row: 3; min-width: 0; }
+  .live-marketplace .product-card [data-product-card-body] > div.border-t > p:first-child {
+    width: 100%; max-width: none; overflow: visible; text-overflow: clip;
+    white-space: normal; overflow-wrap: anywhere;
+  }
+  .live-marketplace .product-card [data-product-card-body] > p:first-of-type {
+    grid-column: 1; grid-row: 4; justify-self: start;
+  }
+  .live-marketplace .product-card [data-product-card-body] > div:last-child { grid-column: 1; grid-row: 5; }
+}
+
+/* A modal owns the mobile screen; navigation must not cover its controls. */
+@media (max-width: 767px) {
+  body:has([role="dialog"][aria-modal="true"]) .mobile-bottom-nav-stable {
+    visibility: hidden;
+    pointer-events: none;
+  }
 }

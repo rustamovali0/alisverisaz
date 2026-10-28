@@ -1,4 +1,5 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -21,7 +22,10 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { NotificationCenter } from "@/components/notifications/notification-center";
 import { MarketplaceSearch } from "@/components/search/marketplace-search";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import {
+  LanguageCompactDropdown,
+  LanguageSwitcher,
+} from "@/components/i18n/language-switcher";
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { Link, usePathname } from "@/i18n/navigation";
 import { useClientAuthProfileState } from "@/lib/auth/use-client-auth-profile";
@@ -85,7 +89,10 @@ export function MarketplaceHeader({
   storeId,
   isolatedStorefront = false,
 }: MarketplaceHeaderProps) {
+  const text = useMarketplaceText();
   const pathname = usePathname();
+  const compactAuthHeader =
+    /^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname);
   const { profile, isResolved } = useClientAuthProfileState();
   const role = isResolved
     ? profile.status === "authenticated"
@@ -106,8 +113,25 @@ export function MarketplaceHeader({
     `${scopedProducts}?category=${encodeURIComponent(slug)}`;
   const [count, setCount] = useState(0);
   const [menu, setMenu] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const root = header.closest<HTMLElement>(".live-marketplace") ?? document.documentElement;
+    const syncHeight = () => root.style.setProperty(
+      "--marketplace-header-height", `${header.getBoundingClientRect().height}px`,
+    );
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--marketplace-header-height");
+    };
+  }, []);
+
   useEffect(() => {
     const sync = () =>
       setCount(cartCount(isolatedStorefront ? storeId : undefined));
@@ -155,29 +179,36 @@ export function MarketplaceHeader({
   const sellerHref = isSeller ? "/store/dashboard" : "/register?role=seller";
   return (
     <>
-      <div className="live-utility">
-        <div className="live-wrap">
-          <span>
-            <Truck size={14} />
-            Azərbaycanın mağazaları — bir ünvanda
-          </span>
-          <div>
-            <Link href={sellerHref}>
-              Satıcı ol
-              <ArrowUpRight size={12} />
-            </Link>
-            <Link href="/help">Yardım mərkəzi</Link>
-            <LanguageSwitcher />
-            <ThemeToggle />
+      {!compactAuthHeader && (
+        <div className="live-utility">
+          <div className="live-wrap">
+            <span>
+              <Truck size={14} />
+              {text("Azərbaycanın mağazaları — bir ünvanda")}
+            </span>
+            <div>
+              <Link href={sellerHref}>
+                {text("Satıcı ol")}
+                <ArrowUpRight size={12} />
+              </Link>
+              <Link href="/help">{text("Yardım mərkəzi")}</Link>
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
-      </div>
-      <header className="marketplace-header live-header" data-live-header>
+      )}
+      <header
+        ref={headerRef}
+        className="marketplace-header live-header"
+        data-live-header
+        data-auth-header={compactAuthHeader || undefined}
+      >
         <div className="live-wrap live-header-main">
           <button
             className="live-mobile-menu"
             onClick={() => setMenu(true)}
-            aria-label="Kateqoriyaları aç"
+            aria-label={text("Kateqoriyaları aç")}
           >
             <Menu size={23} />
           </button>
@@ -191,7 +222,9 @@ export function MarketplaceHeader({
             <MarketplaceSearch
               stores={stores}
               defaultValue={searchDefaultValue}
-              placeholder="Nə axtarırsınız? Məhsul, mağaza və daha çox..."
+              placeholder={text(
+                "Nə axtarırsınız? Məhsul, mağaza və daha çox...",
+              )}
               storeSlug={searchStoreSlug ?? undefined}
               searchBaseHref={productsHref.split("#")[0]}
               resultsAnchorId={searchStoreSlug ? "products" : undefined}
@@ -208,14 +241,14 @@ export function MarketplaceHeader({
                 className="live-utility-action live-favorites-link"
               >
                 <Heart size={22} />
-                <span>Sevimlilər</span>
+                <span>{text("Sevimlilər")}</span>
               </Link>
             )}
             <div className="live-header-account">
               <HeaderAccountActions showSellerCta={false} />
             </div>
             <div className="live-notifications">
-              <NotificationCenter />
+              <NotificationCenter requireAuth={isResolved && profile.status !== "authenticated"} authLoading={!isResolved} />
             </div>
             {!hideCart && (
               <Link
@@ -225,81 +258,92 @@ export function MarketplaceHeader({
                     : "/cart"
                 }
                 className="live-cart-link"
-                aria-label={`Səbətim, ${count} məhsul`}
+                aria-label={text("Səbətim, {count} məhsul", { count })}
               >
                 <span>
                   <ShoppingBag size={24} />
-                  <b>{count}</b>
+                  <b aria-hidden="true">{count > 99 ? "99+" : count}</b>
                 </span>
                 <span>
-                  Səbətim<small>{count} məhsul</small>
+                  {text("Səbətim")}
+                  <small>{text("{count} məhsul", { count })}</small>
                 </span>
               </Link>
             )}
           </div>
         </div>
-        <nav className="live-navigation" aria-label="Əsas menyu">
-          <div className="live-wrap">
-            <button
-              className="live-all-categories"
-              ref={triggerRef}
-              onClick={() => setMenu(true)}
-              aria-expanded={menu}
-              aria-controls="live-category-menu"
-            >
-              <Grid2X2 size={18} />
-              Bütün kateqoriyalar
-              <ChevronDown size={14} />
-            </button>
-            <Link
-              href={storeHomeHref}
-              aria-current={pathname === storeHomeHref ? "page" : undefined}
-            >
-              Ana səhifə
-            </Link>
-            <Link
-              href={scopedProducts}
-              aria-current={pathname === "/products" ? "page" : undefined}
-            >
-              Məhsullar
-            </Link>
-            {isolatedStorefront ? (
-              <>
-                <Link href={`${storeHomeHref}#about`}>Mağaza haqqında</Link>
-                <Link href={`${storeHomeHref}#contact`}>Əlaqə</Link>
-                {ownsStore && (
-                  <Link href="/store/dashboard">Mağazanı idarə et</Link>
-                )}
-              </>
-            ) : (
-              <>
-                <Link href="/products?discount=true">
-                  Endirimlər
-                  <span className="live-hot-dot" />
-                </Link>
-                <Link
-                  href="/stores"
-                  aria-current={pathname === "/stores" ? "page" : undefined}
-                >
-                  Mağazalar
-                </Link>
-                <Link href="/products?commerceType=rental">İcarə</Link>
-                <Link href="/products?vip=true">
-                  <Crown size={15} className="live-gold" />
-                  VIP məhsullar
-                </Link>
-              </>
-            )}
-            <Link
-              href={`${scopedProducts}?sort=newest`}
-              className="live-new-collection"
-            >
-              <i />
-              Yeni kəşflər
-              <ArrowUpRight size={14} />
-            </Link>
-          </div>
-        </nav>
+        {!compactAuthHeader && (
+          <nav className="live-navigation" aria-label={text("Əsas menyu")}>
+            <div className="live-wrap">
+              <button
+                className="live-all-categories"
+                ref={triggerRef}
+                onClick={() => setMenu(true)}
+                aria-expanded={menu}
+                aria-controls="live-category-menu"
+              >
+                <Grid2X2 size={18} />
+                {text("Bütün kateqoriyalar")}
+                <ChevronDown size={14} />
+              </button>
+              <Link
+                href={storeHomeHref}
+                aria-current={pathname === storeHomeHref ? "page" : undefined}
+              >
+                {text("Ana səhifə")}
+              </Link>
+              <Link
+                href={scopedProducts}
+                prefetch={true}
+                aria-current={pathname === "/products" ? "page" : undefined}
+              >
+                {text("Məhsullar")}
+              </Link>
+              {isolatedStorefront ? (
+                <>
+                  <Link href={`${storeHomeHref}#about`}>
+                    {text("Mağaza haqqında")}
+                  </Link>
+                  <Link href={`${storeHomeHref}#contact`}>{text("Əlaqə")}</Link>
+                  {ownsStore && (
+                    <Link href="/store/dashboard">
+                      {text("Mağazanı idarə et")}
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Link href="/products?discount=true">
+                    {text("Endirimlər")}
+                    <span className="live-hot-dot" />
+                  </Link>
+                  <Link
+                    href="/stores"
+                    prefetch={true}
+                    aria-current={pathname === "/stores" ? "page" : undefined}
+                  >
+                    {text("Mağazalar")}
+                  </Link>
+                  <Link href="/products?commerceType=rental">
+                    {text("İcarə")}
+                  </Link>
+                  <Link href="/products?vip=true">
+                    <Crown size={15} className="live-gold" />
+                    {text("VIP məhsullar")}
+                  </Link>
+                </>
+              )}
+              <Link
+                href={`${scopedProducts}?sort=newest`}
+                className="live-new-collection"
+              >
+                <i />
+                {text("Yeni kəşflər")}
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
+          </nav>
+        )}
       </header>
       {menu && (
         <div
@@ -314,16 +358,20 @@ export function MarketplaceHeader({
             ref={menuRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Bütün kateqoriyalar"
+            aria-label={text("Bütün kateqoriyalar")}
           >
             <div>
-              <h2>Alış-verişə başla</h2>
+              <h2>{text("Alış-verişə başla")}</h2>
               <button
-                aria-label="Kateqoriyaları bağla"
+                aria-label={text("Kateqoriyaları bağla")}
                 onClick={() => setMenu(false)}
               >
                 <X size={20} />
               </button>
+            </div>
+            <div className="mb-4 flex items-center justify-between border-b pb-3 md:hidden">
+              <LanguageCompactDropdown className="live-mobile-language" menuPlacement="bottom" />
+              <ThemeToggle />
             </div>
             <nav>
               {categories.map((category) => {
@@ -335,7 +383,7 @@ export function MarketplaceHeader({
                     onClick={() => setMenu(false)}
                   >
                     <Icon size={19} />
-                    {category.name}
+                    {text(category.name)}
                     <ChevronRight size={15} />
                   </Link>
                 );
@@ -345,26 +393,26 @@ export function MarketplaceHeader({
                 onClick={() => setMenu(false)}
               >
                 <Grid2X2 size={19} />
-                Bütün kateqoriyalara bax
+                {text("Bütün kateqoriyalara bax")}
                 <ArrowRight size={15} />
               </Link>
               {!isolatedStorefront && (
                 <Link href="/stores" onClick={() => setMenu(false)}>
                   <Store size={19} />
-                  Bütün mağazalar
+                  {text("Bütün mağazalar")}
                   <ArrowRight size={15} />
                 </Link>
               )}
               <Link href="/help" onClick={() => setMenu(false)}>
                 <HelpCircle size={19} />
-                Yardım mərkəzi
+                {text("Yardım mərkəzi")}
                 <ArrowRight size={15} />
               </Link>
             </nav>
           </div>
         </div>
       )}
-      {showBottomNav && (
+      {showBottomNav && !compactAuthHeader && (
         <MobileBottomNav
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}

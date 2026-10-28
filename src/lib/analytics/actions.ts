@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { requireRole } from "@/lib/auth/session";
 import { getAnalyticsRangeDates, type AnalyticsRange } from "@/lib/analytics/ranges";
@@ -24,7 +25,7 @@ function normalizeSource(value?: string | null): ViewSource {
   return value === "share" || value === "direct" ? value : "normal";
 }
 
-export async function trackProductViewAction(input: {
+async function recordProductView(input: {
   productId: string;
   visitorId: string;
   source?: string | null;
@@ -85,7 +86,7 @@ export async function trackProductViewAction(input: {
   await query.eq("visitor_id", visitorId).is("user_id", null);
 }
 
-export async function trackStoreViewAction(input: {
+async function recordStoreView(input: {
   storeId: string;
   visitorId: string;
   source?: string | null;
@@ -144,6 +145,28 @@ export async function trackStoreViewAction(input: {
   }
 
   await query.eq("visitor_id", visitorId).is("user_id", null);
+}
+
+// View statistics are best-effort background writes. Sending the response first
+// releases the browser's Server Action queue for login, checkout and editing.
+export async function trackProductViewAction(input: {
+  productId: string; visitorId: string; source?: string | null;
+}) {
+  if (typeof input?.productId !== "string" || typeof input.visitorId !== "string") return;
+  after(async () => {
+    try { await recordProductView(input); }
+    catch (error) { console.error("Product view tracking failed", error); }
+  });
+}
+
+export async function trackStoreViewAction(input: {
+  storeId: string; visitorId: string; source?: string | null;
+}) {
+  if (typeof input?.storeId !== "string" || typeof input.visitorId !== "string") return;
+  after(async () => {
+    try { await recordStoreView(input); }
+    catch (error) { console.error("Store view tracking failed", error); }
+  });
 }
 
 function applyDeleteRange(query: any, range: AnalyticsRange) {

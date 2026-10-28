@@ -1,4 +1,5 @@
 "use client";
+import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -38,6 +39,7 @@ export function SiteFooter({
   logoUrl,
   socialLinks,
 }: SiteFooterProps) {
+  const text = useMarketplaceText();
   const { profile } = useClientAuthProfileState();
   const role = profile.status === "authenticated" ? profile.role : null;
   const accountHref =
@@ -65,30 +67,30 @@ export function SiteFooter({
   ].filter((s) => s.href);
   const groups = [
     {
-      title: "Kəşf edin",
+      title: text("Kəşf edin"),
       links: [
-        ["Bütün məhsullar", "/products"],
-        ["Mağazalar", "/stores"],
-        ["Endirimlər", "/products?discount=true"],
-        ["İcarə məhsulları", "/products?commerceType=rental"],
+        [text("Bütün məhsullar"), "/products"],
+        [text("Mağazalar"), "/stores"],
+        [text("Endirimlər"), "/products?discount=true"],
+        [text("İcarə məhsulları"), "/products?commerceType=rental"],
       ],
     },
     {
-      title: "Alıcılar üçün",
+      title: text("Alıcılar üçün"),
       links: [
-        ["Sifarişlərim", "/dashboard/orders"],
-        ["Şəxsi kabinet", accountHref],
-        ["Sevimlilər", "/favorites"],
-        ["Yardım mərkəzi", "/help"],
+        [text("Sifarişlərim"), "/dashboard/orders"],
+        [text("Şəxsi kabinet"), accountHref],
+        [text("Sevimlilər"), "/favorites"],
+        [text("Yardım mərkəzi"), "/help"],
       ],
     },
     {
-      title: "Satıcılar üçün",
+      title: text("Satıcılar üçün"),
       links: [
-        ["Satıcı olun", "/register?role=seller"],
-        ["Satıcı paneli", "/store/dashboard"],
-        ["VIP xidmətləri", "/store/dashboard/promotions"],
-        ["Əməkdaşlıq", "/contact"],
+        [text("Satıcı olun"), "/register?role=seller"],
+        [text("Satıcı paneli"), "/store/dashboard"],
+        [text("VIP xidmətləri"), "/store/dashboard/promotions"],
+        [text("Əməkdaşlıq"), "/contact"],
       ],
     },
   ];
@@ -100,11 +102,13 @@ export function SiteFooter({
             <Leaf size={29} />
           </span>
           <div>
-            <h2>Yeni tapıntınız bir klik uzaqda.</h2>
-            <p>Mağazaların məhsullarını və yeni təkliflərini kəşf edin.</p>
+            <h2>{text("Yeni tapıntınız bir klik uzaqda.")}</h2>
+            <p>
+              {text("Mağazaların məhsullarını və yeni təkliflərini kəşf edin.")}
+            </p>
           </div>
           <Link href="/products" className="live-btn">
-            Kəşf etməyə davam et
+            {text("Kəşf etməyə davam et")}
             <ArrowRight size={16} />
           </Link>
         </div>
@@ -115,9 +119,9 @@ export function SiteFooter({
             <div className="live-footer-brand">
               <MarketplaceBrand siteName={siteName} logoUrl={logoUrl} />
               <p>
-                Sevdiyiniz məhsullar, etibarlı mağazalar.
+                {text("Sevdiyiniz məhsullar, etibarlı mağazalar.")}
                 <br />
-                Azərbaycanın alış-veriş məkanı.
+                {text("Azərbaycanın alış-veriş məkanı.")}
               </p>
               <div className="live-socials">
                 {socials.map(({ label, href, Icon }) => (
@@ -144,26 +148,27 @@ export function SiteFooter({
               </div>
             ))}
             <div className="live-footer-contact">
-              <h2>Bizimlə əlaqə</h2>
+              <h2>{text("Bizimlə əlaqə")}</h2>
               <Link href="/contact">
                 <Headphones size={18} />
-                Dəstək mərkəzi
+                {text("Dəstək mərkəzi")}
                 <ArrowUpRight size={14} />
               </Link>
               <p>
                 <ShieldCheck size={15} />
-                Hər alış-verişdə yanınızdayıq
+                {text("Hər alış-verişdə yanınızdayıq")}
               </p>
-              <span>🇦🇿 Azərbaycanda, sizin üçün.</span>
+              <span>{text("🇦🇿 Azərbaycanda, sizin üçün.")}</span>
             </div>
           </div>
           <div className="live-footer-bottom">
             <span>
-              © {new Date().getFullYear()} ALISVERIS.AZ. Bütün hüquqlar qorunur.
+              © {new Date().getFullYear()}{" "}
+              {text("ALISVERIS.AZ. Bütün hüquqlar qorunur.")}
             </span>
             <div>
-              <Link href="/terms">İstifadəçi razılaşması</Link>
-              <Link href="/privacy">Məxfilik siyasəti</Link>
+              <Link href="/terms">{text("İstifadəçi razılaşması")}</Link>
+              <Link href="/privacy">{text("Məxfilik siyasəti")}</Link>
               <span>AZN ₼</span>
             </div>
           </div>

@@ -841,16 +841,11 @@ export async function getAdminStorefrontAccessRows() {
 export async function getSellerFeatureAccess(userId: string, featureKey: string) {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: stores, error: storesError } = await (supabase as any)
-      .from("stores")
-      .select("id")
-      .eq("owner_id", userId);
-    const { data: globalSettings, error: globalSettingsError } = await (supabase as any)
-      .from("store_panel_settings")
-      .select("features")
-      .is("store_id", null)
-      .limit(1)
-      .maybeSingle();
+    const [{ data: stores, error: storesError }, { data: globalSettings, error: globalSettingsError }] = await Promise.all([
+      (supabase as any).from("stores").select("id").eq("owner_id", userId),
+      (supabase as any).from("store_panel_settings").select("features")
+        .is("store_id", null).limit(1).maybeSingle(),
+    ]);
 
     if (storesError || globalSettingsError) {
       return false;

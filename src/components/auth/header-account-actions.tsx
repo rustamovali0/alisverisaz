@@ -132,7 +132,6 @@ export function HeaderAccountActions({
       setIsOpen(false);
       void appAlert.success(auth("loggedOut"), result.message);
       router.replace("/");
-      router.refresh();
     });
   }
 

@@ -30,6 +30,8 @@ export type ClientAuthProfileState = {
   isResolved: boolean;
 };
 
+export const VERIFIED_CLIENT_LOGOUT_EVENT = "alisveris-verified-session-ended";
+
 const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v3";
 let inMemoryProfile: ClientAuthProfile | null = null;
 let didReadInitialCache = false;
@@ -38,6 +40,7 @@ let currentIsResolved = false;
 let authProfilePromise: Promise<ClientAuthProfile> | null = null;
 let authProfileVersion = 0;
 let authWatcherStarted = false;
+let lastProfileCheckAt = 0;
 let hasHydratedClientAuthProfile = false;
 const profileListeners = new Set<(state: ClientAuthProfileState) => void>();
 
@@ -170,7 +173,13 @@ export function refreshClientAuthProfile() {
   const nextPromise = loadClientAuthProfile()
     .then((nextProfile) => {
       if (requestVersion === authProfileVersion) {
+        lastProfileCheckAt = Date.now();
         cacheAndPublishAuthProfile(nextProfile, true);
+        if (nextProfile.status === "guest" && typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+          // Only a successful server-cookie verification may end a private UI.
+          // Cached guest values and network failures must not cause redirect loops.
+          window.dispatchEvent(new Event(VERIFIED_CLIENT_LOGOUT_EVENT));
+        }
         return nextProfile;
       }
 
@@ -236,6 +245,16 @@ export async function getClientAuthProfileOnce() {
   return refreshClientAuthProfile();
 }
 
+/** Only use a profile returned by this site's cookie-verification endpoint. */
+export function acceptVerifiedClientAuthProfile(value: unknown) {
+  if (!isCachedProfile(value) || value.status !== "authenticated") return false;
+  authProfileVersion += 1;
+  authProfilePromise = null;
+  lastProfileCheckAt = Date.now();
+  cacheAndPublishAuthProfile(value, true);
+  return true;
+}
+
 export function clearClientAuthProfileCache() {
   clearPersistedAuthProfile();
   currentProfile = emptyProfile;
@@ -252,8 +271,11 @@ function ensureAuthProfileWatcher() {
   authWatcherStarted = true;
   const supabase = createSupabaseBrowserClient();
 
-  supabase.auth.onAuthStateChange(() => {
-    // Browser auth events are hints; server cookies determine the actual session.
+  supabase.auth.onAuthStateChange((event) => {
+    // Hydration already verifies server cookies. INITIAL_SESSION must not cancel
+    // that request and start a second identical verification.
+    if (event === "INITIAL_SESSION") return;
+    // Browser events are hints; authorization still comes from the server.
     setTimeout(refreshProfileAfterSessionChange, 0);
   });
   const syncAcrossTabs = (event: StorageEvent) => {
@@ -263,14 +285,21 @@ function ensureAuthProfileWatcher() {
       void reloadClientAuthProfile();
     }
   };
+  const refreshWhenActive = () => {
+    // focus and visibilitychange normally arrive together. Share in-flight work
+    // and avoid another request immediately after a successful cookie check.
+    if (!authProfilePromise && Date.now() - lastProfileCheckAt > 5_000) {
+      void refreshClientAuthProfile();
+    }
+  };
   const syncWhenVisible = () => {
-    if (document.visibilityState === "visible") void reloadClientAuthProfile();
+    if (document.visibilityState === "visible") refreshWhenActive();
   };
   window.addEventListener("storage", syncAcrossTabs);
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", syncWhenVisible);
   }
-  window.addEventListener("focus", refreshProfileAfterSessionChange);
+  window.addEventListener("focus", refreshWhenActive);
 }
 
 function ensureAuthProfileLoaded() {

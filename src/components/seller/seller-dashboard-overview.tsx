@@ -196,7 +196,7 @@ export function SellerDashboardOverview({ overview }: SellerDashboardOverviewPro
       </section>
 
       <section className="grid gap-3 sm:grid-cols-3">
-        <Link href="/sell/product/new" className="rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
+        <Link href="/sell/product/new" prefetch={true} className="rounded-lg border bg-card p-4 shadow-sm transition hover:-translate-y-0.5">
           <Box className="size-5 text-primary" aria-hidden="true" />
           <p className="mt-2 font-black">Yeni məhsul əlavə et</p>
         </Link>

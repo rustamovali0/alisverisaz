@@ -9,6 +9,7 @@ import {
   getPopularMarketplaceSearches,
   normalizeMarketplaceSearchTerm,
 } from "@/lib/search/data";
+import { readBoundedJson } from "@/lib/http/read-json";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
@@ -29,12 +30,23 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
 
-  if (origin && origin !== request.nextUrl.origin) {
+  if ((origin && origin !== request.nextUrl.origin) || request.headers.get("sec-fetch-site") === "cross-site") {
     return new NextResponse(null, { status: 403 });
   }
 
-  const body = await request.json().catch(() => null);
-  const term = normalizeMarketplaceSearchTerm(body?.term);
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json") {
+    return new NextResponse(null, { status: 415 });
+  }
+  let body: unknown;
+  try {
+    body = await readBoundedJson(request);
+  } catch (error) {
+    return new NextResponse(null, { status: error instanceof RangeError ? 413 : 400 });
+  }
+  if (!body || typeof body !== "object" || Array.isArray(body) || typeof (body as { term?: unknown }).term !== "string") {
+    return new NextResponse(null, { status: 400 });
+  }
+  const term = normalizeMarketplaceSearchTerm((body as { term: string }).term);
 
   if (term.length < 2) {
     return new NextResponse(null, { status: 204 });

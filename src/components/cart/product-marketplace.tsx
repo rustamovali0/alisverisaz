@@ -213,6 +213,7 @@ function StoreHeroCover({
   return (
     <OptimizedImage
       src={coverUrl}
+      placeholder="empty"
       alt={store.name}
       fill
       sizes="(max-width: 1024px) 100vw, 60vw"
@@ -1322,6 +1323,9 @@ export function ProductGrid({
           <article
             key={product.id}
             onClick={openDetail}
+            onPointerEnter={() => router.prefetch(detailHref)}
+            onFocusCapture={() => router.prefetch(detailHref)}
+            onTouchStart={() => router.prefetch(detailHref)}
             className={cn(
               "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
               compactMobileCards && "max-sm:rounded-xl",
@@ -2028,7 +2032,7 @@ export function ProductMarketplace({
       <div className="container mx-auto max-w-[1280px] py-5 md:py-10">
         <div className="min-w-0">
           <section className="mx-auto min-w-0 w-full max-w-[1180px] space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
+            <div className="marketplace-catalog-toolbar flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-card">
               <h1 className="text-xl font-semibold tracking-normal text-slate-950 dark:text-slate-100 sm:text-2xl">
                 {labels.title}
               </h1>

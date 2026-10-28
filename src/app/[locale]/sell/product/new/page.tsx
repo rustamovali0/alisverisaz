@@ -35,18 +35,18 @@ export default async function NewStoreProductPage() {
     }),
   ]);
   const storeIds = stores.slice(0, 1).map((store) => store.id);
-  const locations = await getLocationsForStores(storeIds).catch((error) => {
-    console.error("Store locations could not be loaded for new product page", error);
-    return [];
-  });
   const firstStore = stores[0];
-  const limit = firstStore
-    ? await canCreateListing(firstStore.id).catch((error) => {
-        console.error("Product limit could not be loaded for new product page", error);
-        setupError = true;
-        return null;
-      })
-    : null;
+  const [locations, limit] = await Promise.all([
+    getLocationsForStores(storeIds).catch((error) => {
+      console.error("Store locations could not be loaded for new product page", error);
+      return [];
+    }),
+    firstStore ? canCreateListing(firstStore.id).catch((error) => {
+      console.error("Product limit could not be loaded for new product page", error);
+      setupError = true;
+      return null;
+    }) : Promise.resolve(null),
+  ]);
   const productLimit = limit?.subscription?.productLimit ?? null;
   const remainingListings = limit?.subscription?.remainingListings ?? 0;
   const imageLimit = limit?.subscription?.imagesPerProductLimit ?? 5;

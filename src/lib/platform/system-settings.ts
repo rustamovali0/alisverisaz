@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   systemFlagDefaults,
@@ -24,7 +25,7 @@ function readBooleanFlag(value: unknown, fallback: boolean) {
   return fallback;
 }
 
-export async function getSystemFlags(): Promise<SystemFlags> {
+export const getSystemFlags = cache(async function getSystemFlags(): Promise<SystemFlags> {
   try {
     const supabase = createSupabaseAdminClient();
     const keys = Object.keys(systemFlagDefaults) as SystemFlagKey[];
@@ -47,7 +48,7 @@ export async function getSystemFlags(): Promise<SystemFlags> {
   } catch {
     return { ...systemFlagDefaults };
   }
-}
+});
 
 export async function getSystemFlag(key: SystemFlagKey) {
   try {

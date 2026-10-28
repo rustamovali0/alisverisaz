@@ -1098,7 +1098,7 @@ export async function createWhatsAppOrderIntentAction(
   const note = readString(formData, "note");
   const cart = parseCartItems(readString(formData, "items"));
 
-  if (cart.invalidItems || (checkoutRequestId && !UUID_PATTERN.test(checkoutRequestId))) {
+  if (note.length > 1000 || cart.invalidItems || (checkoutRequestId && !UUID_PATTERN.test(checkoutRequestId))) {
     return {
       ok: false,
       message: "WhatsApp sifariş məlumatları yanlışdır.",
@@ -1147,6 +1147,22 @@ export async function createWhatsAppOrderIntentAction(
       ok: false,
       message: "Öz mağazanızdan məhsul almaq mümkün deyil.",
     };
+  }
+
+  if (!current) {
+    const ip = await getClientIp();
+    const rule = {
+      endpoint: "guest_checkout" as const,
+      identifier: `whatsapp:${ip}`,
+      ip,
+      maxAttempts: 5,
+      windowSeconds: 15 * 60,
+      blockSeconds: 15 * 60,
+    };
+    const limit = await assertAuthRateLimit(rule);
+    if (!limit.ok) return { ok: false, message: limit.message };
+    const attempt = await recordAuthRateLimitAttempt(rule);
+    if (attempt.isBlocked) return { ok: false, message: attempt.message };
   }
 
   const groupedByStore = groupValidatedItemsByStore(validatedVariants.items);
@@ -1460,7 +1476,7 @@ export async function createCheckoutOrdersAction(
       };
     }
 
-    await recordAuthRateLimitAttempt({
+    const attempt = await recordAuthRateLimitAttempt({
       endpoint: "guest_checkout",
       identifier: phone,
       ip,
@@ -1468,6 +1484,7 @@ export async function createCheckoutOrdersAction(
       windowSeconds: 15 * 60,
       blockSeconds: 15 * 60,
     });
+    if (attempt.isBlocked) return { ok: false, message: attempt.message };
   }
 
   const groupedByStore = groupValidatedItemsByStore(validatedVariants.items);

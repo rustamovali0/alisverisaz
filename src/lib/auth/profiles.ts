@@ -99,7 +99,8 @@ export async function ensureSellerStore(input: {
       existingStore.settings && typeof existingStore.settings === "object" && !Array.isArray(existingStore.settings)
         ? { ...(existingStore.settings as Record<string, unknown>) }
         : {};
-    if (input.phone) {
+    if (input.phone &&
+        (currentSettings.phone !== input.phone || currentSettings.whatsappPhone !== input.phone)) {
       payload.settings = {
         ...currentSettings,
         phone: input.phone,

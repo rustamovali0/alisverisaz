@@ -2,7 +2,9 @@
 
 import { ArrowLeft, Bell, ChevronLeft, ChevronRight, ExternalLink, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { VERIFIED_CLIENT_LOGOUT_EVENT } from "@/lib/auth/use-client-auth-profile";
+import { getLoginPath } from "@/lib/auth/redirects";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { DashboardIconView } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
@@ -22,7 +24,23 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
   const router = useRouter();
   const t = useTranslations("nav");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    // A public logout must not affect the isolated RAdmin session.
+    if (pathname === "/radmin" || pathname.startsWith("/radmin/")) return;
+    // Another tab cannot invalidate this tab's authenticated Router Cache.
+    // Start a fresh document at the session boundary so the login form renders.
+    let leaving = false;
+    const onSessionEnded = () => {
+      if (leaving) return;
+      leaving = true;
+      window.location.replace(getLoginPath(pathname));
+    };
+    window.addEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
+    return () => window.removeEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
+  }, [pathname]);
+
   const selectedHref = useMemo(() => findActive(navItems, pathname), [navItems, pathname]);
   const selected = navItems.find((item) => item.href === selectedHref);
   const selectedTitle = selected ? (selected.titleKey ? t(selected.titleKey as never) : selected.title) : title;
@@ -31,8 +49,35 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
   const notifications = navItems.find((item) => item.href.includes("notifications") || item.href.includes("messages"));
 
   useEffect(() => {
-    document.body.style.overflow = drawerOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!drawerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.body.style.overflow = "hidden";
+    const focusable = () => Array.from(drawerRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex="0"]',
+    ) ?? []).filter((element) => element.getClientRects().length > 0);
+    focusable()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setDrawerOpen(false);
+      }
+      if (event.key !== "Tab") return;
+      const elements = focusable();
+      const first = elements[0], last = elements[elements.length - 1];
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && (document.activeElement === first || !drawerRef.current?.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !drawerRef.current?.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [drawerOpen]);
 
   const label = (item: DashboardNavItem) => item.titleKey ? t(item.titleKey as never) : item.title;
@@ -53,12 +98,20 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
       {!collapsed || mobile ? <div className="min-w-0"><p className="font-black tracking-tight text-slate-950 dark:text-white">Alışveriş</p><p className="truncate text-xs text-slate-500">{userLabel}</p></div> : null}
     </div>
     {navigation(!mobile && collapsed)}
-    <div className="border-t border-slate-200 p-3 dark:border-slate-800"><LogoutButton compact={!mobile && collapsed} /></div>
+    <div className="border-t border-slate-200 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:border-slate-800"><LogoutButton compact={!mobile && collapsed} /></div>
   </aside>;
 
   return <div className="app-dashboard-shell min-h-screen overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
     <div className={cn("fixed inset-y-0 left-0 z-40 hidden transition-[width] duration-200 lg:block", collapsed ? "w-20" : "w-72")}>{sidebar()}</div>
-    {drawerOpen ? <div className="fixed inset-0 z-[80] lg:hidden"><button className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" aria-label="Menyunu bağla" onClick={() => setDrawerOpen(false)} /><div className="relative h-full animate-in slide-in-from-left duration-200">{sidebar(true)}<Button variant="secondary" size="icon" className="absolute right-3 top-3 size-10" onClick={() => setDrawerOpen(false)} aria-label="Menyunu bağla"><X className="size-5" /></Button></div></div> : null}
+    {drawerOpen ? (
+      <div ref={drawerRef} role="dialog" aria-modal="true" aria-label="Panel menyusu" className="fixed inset-0 z-[300] lg:hidden">
+        <button className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" aria-label="Menyunu bağla" onClick={() => setDrawerOpen(false)} />
+        <div className="relative h-full animate-in slide-in-from-left duration-200">
+          {sidebar(true)}
+          <Button variant="secondary" size="icon" className="absolute right-3 top-3 size-11" onClick={() => setDrawerOpen(false)} aria-label="Menyunu bağla"><X className="size-5" /></Button>
+        </div>
+      </div>
+    ) : null}
     <div className={cn("min-w-0 transition-[padding] duration-200", collapsed ? "lg:pl-20" : "lg:pl-72")}>
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/88 shadow-[0_8px_28px_rgba(15,23,42,0.04)] backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/88"><div className="flex min-h-16 items-center gap-2 px-3 sm:px-6 lg:px-8">
         <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setDrawerOpen(true)} aria-label="Panel menyusunu aç"><Menu className="size-5" /></Button>

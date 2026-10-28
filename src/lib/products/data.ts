@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+import { marketplaceTranslationKeys } from "@/i18n/marketplace-keys";
 import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 import { createSupabasePublicClient } from "@/lib/supabase/public";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -288,8 +290,13 @@ const getRootCategoryOptionsCached = publicCache(
 );
 
 export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
+  const t = await getTranslations("marketplaceLive");
+  const localize = (category: CategoryOption) => {
+    const key = marketplaceTranslationKeys[category.name];
+    return key ? { ...category, name: t(key) } : category;
+  };
   if (options?.rootOnly) {
-    return getRootCategoryOptionsCached();
+    return (await getRootCategoryOptionsCached()).map(localize);
   }
 
   const supabase = await createSupabaseServerClient();
@@ -301,7 +308,7 @@ export async function getCategoryOptions(options?: { rootOnly?: boolean }) {
       ascending: true,
     });
 
-  return ((data ?? []) as CategoryOptionRow[]).map(toCategoryOption);
+  return ((data ?? []) as CategoryOptionRow[]).map(toCategoryOption).map(localize);
 }
 
 export async function getManagedProducts(filters: {

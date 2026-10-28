@@ -806,6 +806,7 @@ export function ProductForm({
   const categoryPickerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
+  const submitInFlight = useRef(false);
   const selectedLocationMap = new Map(
     productLocations.map((item) => [item.locationId, item]),
   );
@@ -869,6 +870,7 @@ export function ProductForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitInFlight.current || disabled) return;
     const form = event.currentTarget;
     const invalidField = form.querySelector<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -896,39 +898,44 @@ export function ProductForm({
       formData.append("images", file);
     });
 
+    submitInFlight.current = true;
     startTransition(async () => {
-      const result =
-        mode === "store-create"
-          ? await createStoreProductAction(formData)
-          : mode === "personal-create"
-            ? await createPersonalListingAction(formData)
-            : adminMode
-              ? await updateProductByAdminAction(formData)
-              : await updateProductAction(formData);
+      try {
+        const result =
+          mode === "store-create"
+            ? await createStoreProductAction(formData)
+            : mode === "personal-create"
+              ? await createPersonalListingAction(formData)
+              : adminMode
+                ? await updateProductByAdminAction(formData)
+                : await updateProductAction(formData);
 
-      if (!result.ok) {
-        void appAlert.error(result.message, "Əməliyyat alınmadı");
-        return;
-      }
-
-      void appAlert.success("Uğurludur", result.message);
-      void queryClient.invalidateQueries({
-        queryKey: ["marketplace-products"],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["marketplace-search"] });
-      void queryClient.invalidateQueries({ queryKey: ["related-products"] });
-      setImageFiles([]);
-
-      if (standalone) {
-        if (mode === "store-create") {
-          router.replace("/store/dashboard/products");
-          router.refresh();
+        if (!result.ok) {
+          void appAlert.error(result.message, "Əməliyyat alınmadı");
           return;
         }
-        router.refresh();
-      } else if (successRedirect) {
-        router.replace(successRedirect);
-        router.refresh();
+
+        void appAlert.success("Uğurludur", result.message);
+        void queryClient.invalidateQueries({
+          queryKey: ["marketplace-products"],
+        });
+        void queryClient.invalidateQueries({ queryKey: ["marketplace-search"] });
+        void queryClient.invalidateQueries({ queryKey: ["related-products"] });
+        setImageFiles([]);
+
+        if (standalone) {
+          if (mode === "store-create") {
+            router.replace("/store/dashboard/products");
+            return;
+          }
+          router.refresh();
+        } else if (successRedirect) {
+          router.replace(successRedirect);
+        }
+      } catch {
+        void appAlert.error("Bağlantı xətası baş verdi. Məlumatlarınızı yoxlayıb yenidən cəhd edin.", "Məhsul saxlanmadı");
+      } finally {
+        submitInFlight.current = false;
       }
     });
   }

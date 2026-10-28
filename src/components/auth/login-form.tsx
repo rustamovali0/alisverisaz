@@ -12,9 +12,9 @@ import { TurnstileField } from "@/components/auth/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { googleOAuthAction, loginAction } from "@/lib/auth/actions";
 import { appAlert } from "@/lib/alerts/app-alert";
-import { clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
+import { acceptVerifiedClientAuthProfile, clearClientAuthProfileCache } from "@/lib/auth/use-client-auth-profile";
 import { showToast } from "@/lib/toast";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
@@ -33,6 +33,7 @@ function getInitialIdentifier(params: URLSearchParams) {
 
 export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isGooglePending, startGoogleTransition] = useTransition();
   const [identifier, setIdentifier] = useState(() => getInitialIdentifier(searchParams));
@@ -102,9 +103,10 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       }
 
       try {
-        const response = await fetch(`/api/auth/session?scope=${mode === "admin" ? "admin" : "public"}`, {
+        const response = await fetch(`/api/auth/session?scope=${mode === "admin" ? "admin" : "public"}&profile=1`, {
           credentials: "same-origin",
           cache: "no-store",
+          signal: AbortSignal.timeout(15_000),
         });
         const session = await response.json();
         if (!response.ok || session.authenticated !== true) {
@@ -112,6 +114,9 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
           clearClientAuthProfileCache();
           showToast({ title: "Giriş alınmadı", description: "Sessiya təsdiqlənmədi. Sayt cookie-ləri və hesabın profil icazələri yoxlanmalıdır.", variant: "error" });
           return;
+        }
+        if (mode === "public" && !acceptVerifiedClientAuthProfile(session.profile)) {
+          throw new Error("Invalid verified profile");
         }
       } catch {
         setCaptchaToken("");
@@ -122,8 +127,12 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
       void appAlert.success("Xoş gəldiniz", "Giriş uğurla tamamlandı.", {
         dedupeKey: "login-success",
       });
-      clearClientAuthProfileCache();
-      window.location.assign(result.redirectTo);
+      if (mode === "admin") {
+        // Keep the isolated administrator session separate from the public shell.
+        window.location.assign(result.redirectTo);
+      } else {
+        router.replace(result.redirectTo);
+      }
     });
   }
 

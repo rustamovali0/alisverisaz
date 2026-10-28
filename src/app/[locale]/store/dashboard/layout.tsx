@@ -19,18 +19,15 @@ export default async function StoreDashboardLayout({
 }: StoreDashboardLayoutProps) {
   const current = await requireSeller();
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Mağaza sahibi";
-  const navItems = await getDashboardNavigationForRole("seller");
-  const [ownedStores, alertConfig] = await Promise.all([
+  const admin = createSupabaseAdminClient();
+  const [navItems, ownedStores, alertConfig, { data: brandingStores }] = await Promise.all([
+    getDashboardNavigationForRole("seller"),
     getOwnedStores(current.user.id),
     getSellerDailyAlertConfig(),
+    (admin as any).from("stores").select("name,logo_url,cover_url").eq("owner_id", current.user.id),
   ]);
   const profitEnabled = ownedStores
     .some((store) => isProfitTrackingEnabled(store.settings));
-  const admin = createSupabaseAdminClient();
-  const { data: brandingStores } = await (admin as any)
-    .from("stores")
-    .select("name,logo_url,cover_url")
-    .eq("owner_id", current.user.id);
   const missingAssets = ((brandingStores ?? []) as Array<{
     name: string;
     logo_url: string | null;
