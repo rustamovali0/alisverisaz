@@ -29,10 +29,17 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
   useEffect(() => {
     // A public logout must not affect the isolated RAdmin session.
     if (pathname === "/radmin" || pathname.startsWith("/radmin/")) return;
-    const onSessionEnded = () => router.replace(getLoginPath(pathname));
+    // Another tab cannot invalidate this tab's authenticated Router Cache.
+    // Start a fresh document at the session boundary so the login form renders.
+    let leaving = false;
+    const onSessionEnded = () => {
+      if (leaving) return;
+      leaving = true;
+      window.location.replace(getLoginPath(pathname));
+    };
     window.addEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
     return () => window.removeEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
-  }, [pathname, router]);
+  }, [pathname]);
 
   const selectedHref = useMemo(() => findActive(navItems, pathname), [navItems, pathname]);
   const selected = navItems.find((item) => item.href === selectedHref);
