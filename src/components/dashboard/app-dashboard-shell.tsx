@@ -3,6 +3,8 @@
 import { ArrowLeft, Bell, ChevronLeft, ChevronRight, ExternalLink, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { VERIFIED_CLIENT_LOGOUT_EVENT } from "@/lib/auth/use-client-auth-profile";
+import { getLoginPath } from "@/lib/auth/redirects";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { DashboardIconView } from "@/components/dashboard/dashboard-icons";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,14 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    // A public logout must not affect the isolated RAdmin session.
+    if (pathname === "/radmin" || pathname.startsWith("/radmin/")) return;
+    const onSessionEnded = () => router.replace(getLoginPath(pathname));
+    window.addEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
+    return () => window.removeEventListener(VERIFIED_CLIENT_LOGOUT_EVENT, onSessionEnded);
+  }, [pathname, router]);
+
   const selectedHref = useMemo(() => findActive(navItems, pathname), [navItems, pathname]);
   const selected = navItems.find((item) => item.href === selectedHref);
   const selectedTitle = selected ? (selected.titleKey ? t(selected.titleKey as never) : selected.title) : title;

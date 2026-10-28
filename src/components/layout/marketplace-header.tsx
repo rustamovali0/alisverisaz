@@ -412,7 +412,7 @@ export function MarketplaceHeader({
           </div>
         </div>
       )}
-      {showBottomNav && (
+      {showBottomNav && !compactAuthHeader && (
         <MobileBottomNav
           variant={mobileNavbarVariant}
           storeSubdomainSlug={storeSubdomainSlug}

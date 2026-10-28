@@ -4,10 +4,12 @@ import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import { ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
 export function ScrollToTopButton() {
   const text = useMarketplaceText();
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -22,6 +24,8 @@ export function ScrollToTopButton() {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+
+  if (/^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname)) return null;
 
   return (
     <button

@@ -30,6 +30,8 @@ export type ClientAuthProfileState = {
   isResolved: boolean;
 };
 
+export const VERIFIED_CLIENT_LOGOUT_EVENT = "alisveris-verified-session-ended";
+
 const AUTH_PROFILE_CACHE_KEY = "alisveris-auth-profile-cache-v3";
 let inMemoryProfile: ClientAuthProfile | null = null;
 let didReadInitialCache = false;
@@ -173,6 +175,11 @@ export function refreshClientAuthProfile() {
       if (requestVersion === authProfileVersion) {
         lastProfileCheckAt = Date.now();
         cacheAndPublishAuthProfile(nextProfile, true);
+        if (nextProfile.status === "guest" && typeof window !== "undefined" && typeof window.dispatchEvent === "function") {
+          // Only a successful server-cookie verification may end a private UI.
+          // Cached guest values and network failures must not cause redirect loops.
+          window.dispatchEvent(new Event(VERIFIED_CLIENT_LOGOUT_EVENT));
+        }
         return nextProfile;
       }
 

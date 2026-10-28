@@ -91,3 +91,30 @@ it("uses the verified login profile immediately and ignores a stale guest respon
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect(auth.acceptVerifiedClientAuthProfile({ status: "authenticated", role: "root" })).toBe(false);
 });
+
+it("signals a private UI logout only after the server confirms the cookies are unauthenticated", async () => {
+  vi.resetModules();
+  const dispatch = vi.fn();
+  vi.stubGlobal("window", {
+    addEventListener: vi.fn(), dispatchEvent: dispatch,
+    localStorage: { getItem: () => null, setItem: vi.fn(), removeItem: vi.fn() },
+  });
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ authenticated: false })));
+  const auth = await import("@/lib/auth/use-client-auth-profile");
+  await auth.getClientAuthProfileOnce();
+  expect(dispatch).toHaveBeenCalledTimes(1);
+  expect(dispatch.mock.calls[0][0].type).toBe(auth.VERIFIED_CLIENT_LOGOUT_EVENT);
+});
+
+it("does not signal logout for a cached guest when server verification fails", async () => {
+  vi.resetModules();
+  const dispatch = vi.fn();
+  vi.stubGlobal("window", {
+    addEventListener: vi.fn(), dispatchEvent: dispatch,
+    localStorage: { getItem: () => JSON.stringify({ status: "guest", userId: null, role: null }), setItem: vi.fn(), removeItem: vi.fn() },
+  });
+  vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("Temporary network failure"); }));
+  const auth = await import("@/lib/auth/use-client-auth-profile");
+  expect((await auth.getClientAuthProfileOnce()).status).toBe("guest");
+  expect(dispatch).not.toHaveBeenCalled();
+});
