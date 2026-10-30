@@ -1,3 +1,4 @@
+import {fillEmailTemplate,systemTemplateKey,SYSTEM_EMAIL_TEMPLATES,type SystemEmailTemplate} from "./template-catalog.ts";
 export type EmailJob = {
   id: string;
   kind: string;
@@ -51,6 +52,7 @@ export function renderEmail(
   job: EmailJob,
   origin: string,
   order?: Record<string, any>,
+  template?: SystemEmailTemplate,
 ): EmailMessage {
   const base = new URL(origin);
   if (base.protocol !== "https:" || base.username || base.password) {
@@ -65,7 +67,7 @@ export function renderEmail(
     job.payload.body ||
       "Hesabınıza daxil olaraq məlumatları yoxlaya bilərsiniz.",
   );
-  let path = dashboard + "/notifications";
+  let path = job.recipient_role==="administrator"?"/radmin/email":dashboard + "/notifications";
   let details = "";
   const lines: string[] = [];
   if (job.kind === "registration_admin") {
@@ -123,6 +125,10 @@ export function renderEmail(
       body += " Bu, WhatsApp sifariş müraciətidir; ödəniş təsdiqi deyil.";
     }
     path = job.recipient_id ? dashboard + "/orders" : "/help";
+  } else if(job.kind==='seller_campaign') {
+    if(typeof job.payload.store_slug!=='string'||!job.payload.store_slug)throw Error('seller_store_unavailable');
+    path='/store/'+encodeURIComponent(job.payload.store_slug);
+    body='Mağaza: '+String(job.payload.store_name||'Mağaza')+'\n\n'+body;
   } else if (job.kind === "welcome") {
     title = "ALİSVERİS.AZ-a xoş gəldiniz";
     body = `${job.payload.name || "Salam"}, hesabınız yaradıldı.`;
@@ -143,8 +149,17 @@ export function renderEmail(
     body = "Mağaza panelindən məhsullarınızı idarə edə bilərsiniz.";
     path = "/store/dashboard";
   }
+  const originalTitle=title,originalBody=body;
+  const selectedTemplate=template || SYSTEM_EMAIL_TEMPLATES.find(t=>t.key===systemTemplateKey(job));
+  let buttonLabel='Hesabda bax';
+  if(selectedTemplate) {
+    const state=String(job.kind==='order_payment'?job.payload.payment_status:job.payload.status||'');
+    const variables:Record<string,unknown>={ad:job.payload.name||'İstifadəçi',email:job.payload.email||job.to_address,telefon:job.payload.phone||'',magaza:job.payload.store||job.payload.store_name||order?.stores?.name||job.payload.body||'',sifaris:order?.order_number||order?.id||'',status:statusLabels[state]||state,yekun:order?money(order.total_amount,order.currency||'AZN'):'',mehsul:job.payload.body||'',stok:job.payload.stock||'0',basliq:originalTitle,mesaj:originalBody};
+    title=fillEmailTemplate(selectedTemplate.title,variables);body=fillEmailTemplate(selectedTemplate.body,variables);buttonLabel=fillEmailTemplate(selectedTemplate.button_label,variables);
+    if(order?.metadata?.source==='whatsapp')body+=' Bu, WhatsApp sifariş müraciətidir; ödəniş təsdiqi deyil.';
+  }
   const link = new URL(path, base).toString();
-  const settings = new URL(dashboard + "/settings", base).toString();
+  const settings = new URL(job.recipient_role==="administrator"?"/radmin/email":dashboard + "/settings", base).toString();
   return {
     subject: clean(title) +
       (order ? ` — ${clean(order.order_number || order.id)}` : ""),
@@ -156,13 +171,13 @@ export function renderEmail(
       "E-poçt ayarları: " + settings,
     ].join("\n\n"),
     html:
-      `<!doctype html><html lang="az"><body style="margin:0;background:#f5f7f5;font-family:Arial,sans-serif;color:#18382c"><div style="max-width:600px;margin:24px auto;background:white;padding:28px;border-radius:16px"><p style="font-weight:bold">ALİSVERİS.AZ</p><h1 style="font-size:24px">${
+      `<!doctype html><html lang="az"><body style="margin:0;background:#f5f7f5;font-family:Arial,sans-serif;color:#18382c"><div style="max-width:600px;margin:24px auto;background:white;padding:28px;border-radius:16px;overflow-wrap:anywhere"><p style="font-weight:bold">ALİSVERİS.AZ</p><h1 style="font-size:24px">${
         escape(title)
-      }</h1><p style="line-height:1.7">${
+      }</h1><p style="line-height:1.7;white-space:pre-line">${
         escape(body)
       }</p>${details}<p><a href="${
         escape(link)
-      }" style="display:inline-block;padding:14px 22px;background:#17634b;color:white;text-decoration:none;border-radius:8px">Hesabda bax</a></p><p style="font-size:13px;color:#52645c">Şifrənizi və təsdiq kodlarınızı heç kimlə paylaşmayın.</p><a href="${
+      }" style="display:inline-block;padding:14px 22px;background:#17634b;color:white;text-decoration:none;border-radius:8px">${escape(buttonLabel)}</a></p><p style="font-size:13px;color:#52645c">Şifrənizi və təsdiq kodlarınızı heç kimlə paylaşmayın.</p><a href="${
         escape(settings)
       }" style="font-size:13px;color:#17634b">E-poçt bildirişlərini idarə et</a></div></body></html>`,
   };
@@ -177,6 +192,7 @@ export type EmailWorkerDependencies = {
   prepare(
     job: EmailJob,
   ): Promise<{ allowed: boolean; order?: Record<string, any> }>;
+  template?(job: EmailJob): Promise<SystemEmailTemplate | undefined>;
   send(job: EmailJob, message: EmailMessage): Promise<string>;
   finish(
     job: EmailJob,
@@ -229,7 +245,8 @@ export async function handleEmailDispatch(
         await d.finish(job, "skipped", "preferences_or_disabled");
         return "skipped";
       }
-      const message = renderEmail(job, d.origin, context.order);
+      const template=d.template?await d.template(job):undefined;
+      const message = renderEmail(job, d.origin, context.order,template);
       const messageId = await d.send(job, message);
       sent = true;
       await d.finish(job, "sent", undefined, messageId);

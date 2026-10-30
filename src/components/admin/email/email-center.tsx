@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, FileText, History, Mail, RefreshCw, Send, X } from "lucide-react";
+import { Eye, FileText, History, Mail, RefreshCw, Send, Settings2, X } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -12,6 +12,9 @@ import {
   saveEmailTemplate,
   searchEmailRecipients,
 } from "@/lib/email/admin";
+
+import { SystemTemplateEditor } from "@/components/admin/email/system-template-editor";
+import type { SystemEmailTemplate } from "../../../../supabase/functions/_shared/template-catalog";
 
 type Template = {
   id: string;
@@ -43,6 +46,8 @@ type Center = {
   enabled: boolean;
   adminAddress: string;
   templates: Template[];
+  systemAvailable:boolean;
+  systemTemplates:SystemEmailTemplate[];
   history: Campaign[];
 };
 const audienceLabels: Record<string, string> = {
@@ -228,7 +233,7 @@ export function AdminEmailCenter({ initial }: { initial: Center }) {
           "templates",
           "Hazır şablonlar",
           FileText,
-        ], ["history", "Göndəriş tarixçəsi", History]].map((
+        ], ["system", "Avtomatik məktublar", Settings2], ["history", "Göndəriş tarixçəsi", History]].map((
           [id, label, Icon]: any,
         ) => (
           <button
@@ -251,7 +256,7 @@ export function AdminEmailCenter({ initial }: { initial: Center }) {
       <p role="status" aria-live="polite" className="text-sm font-medium">
         {feedback}
       </p>
-      {tab !== "history"
+      {tab === "system" ? <SystemTemplateEditor initialTemplates={data.systemTemplates||[]} available={data.systemAvailable}/> : tab !== "history"
         ? (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
             <fieldset

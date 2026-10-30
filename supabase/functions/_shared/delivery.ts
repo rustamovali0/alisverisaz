@@ -1,3 +1,4 @@
+import {systemTemplateKey,validateSystemTemplate,type SystemEmailTemplate} from "./template-catalog.ts";
 import { type EmailWorkerDependencies, handleEmailDispatch } from "./email.ts";
 
 export function createEmailDispatcher(
@@ -65,10 +66,16 @@ export function createEmailDispatcher(
           profile.email?.toLowerCase() !== job.to_address.toLowerCase()
         ) return { allowed: false };
         if (
-          (job.kind === "promo" || job.kind === "campaign_marketing")
+          (job.kind === "promo" || job.kind === "campaign_marketing" || job.kind === "seller_campaign")
             ? !preference?.marketing
             : preference?.transactional === false
         ) return { allowed: false };
+      }
+      if(job.kind==='seller_campaign') {
+        const {data:stores,error}=await db().rpc('email_seller_eligible_stores',{p_actor:job.payload.sender_id});
+        if(error)throw Error('seller_permission_lookup_failed');
+        const store=stores?.find((s:any)=>s.id===job.payload.sender_store_id);if(!store)return {allowed:false};
+        job.payload.store_slug=store.slug;job.payload.store_name=store.name;job.payload.title=store.name+' — '+String(job.payload.campaign_subject||'');
       }
       if (!job.kind.startsWith("order_")) return { allowed: true };
       const [{ data: site, error: siteError }, { data: order, error }] =
@@ -92,6 +99,14 @@ export function createEmailDispatcher(
         ? order.user_id === job.recipient_id
         : customer?.email?.toLowerCase() === job.to_address.toLowerCase();
       return { allowed: Boolean(owns), order: { ...order, stores: store } };
+    },
+    async template(job) {
+      const key=systemTemplateKey(job);if(!key)return undefined;
+      const {data,error}=await db().from('email_system_templates').select('key,name,title,body,button_label').eq('key',key).maybeSingle();
+      if(error)throw Error('system_template_unavailable');
+      if(!data)return undefined;
+      if(!validateSystemTemplate(data as SystemEmailTemplate))throw Error('invalid_system_template');
+      return data as SystemEmailTemplate;
     },
     async send(job, message) {
       const transport = makeTransport({

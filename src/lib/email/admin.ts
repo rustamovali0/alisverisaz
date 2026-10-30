@@ -1,9 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireRadmin } from "@/lib/auth/radmin-auth";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+import { SYSTEM_EMAIL_TEMPLATES,validateSystemTemplate,type SystemEmailTemplate } from "../../../supabase/functions/_shared/template-catalog";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -27,7 +29,7 @@ function draft(f: FormData) {
 export async function loadEmailCenter() {
   await requireRadmin();
   const db = createSupabaseAdminClient() as any;
-  const [settings, templates, history] = await Promise.all([
+  const [settings, templates, history, system] = await Promise.all([
     db.from("email_delivery_settings").select("enabled,admin_address").eq(
       "id",
       true,
@@ -37,6 +39,7 @@ export async function loadEmailCenter() {
       { ascending: false },
     ).limit(50),
     db.rpc("email_campaign_history", { p_limit: 20 }),
+    db.from("email_system_templates").select("key,name,title,body,button_label").order("name").limit(30),
   ]);
   return {
     available: !settings.error && !templates.error && !history.error,
@@ -44,6 +47,8 @@ export async function loadEmailCenter() {
     adminAddress: settings.data?.admin_address || "admin@alisveris.az",
     templates: templates.data || [],
     history: history.data || [],
+    systemAvailable: !system.error,
+    systemTemplates: system.data || SYSTEM_EMAIL_TEMPLATES,
   };
 }
 export async function searchEmailRecipients(term: string) {
@@ -171,4 +176,17 @@ export async function loadEmailCampaignRecipients(id: string, page = 0) {
   )
     .eq("campaign_id", id).order("id").range(page * 50, page * 50 + 49);
   return data || [];
+}
+
+export async function saveSystemEmailTemplate(f:FormData) {
+ const current=await requireRadmin();
+ const key=read(f,'key'),defaults=SYSTEM_EMAIL_TEMPLATES.find(t=>t.key===key);
+ const value:SystemEmailTemplate={key,name:defaults?.name||'',title:read(f,'title'),body:read(f,'body'),button_label:read(f,'button_label')};
+ if(!validateSystemTemplate(value))return {ok:false,message:'Başlığı, mətni və icazəli dəyişənləri yoxlayın.'};
+ const db=createSupabaseAdminClient() as any;
+ const {error}=await db.from('email_system_templates').update({title:value.title,body:value.body,button_label:value.button_label,updated_at:new Date().toISOString()}).eq('key',key).select('key').single();
+ if(error)return {ok:false,message:'Sistem şablonu saxlanılmadı.'};
+ await recordAdminAudit({adminId:current.user.id,action:'system_email_template_saved',entityType:'email_system_templates',entityId:null,metadata:{key}});
+ revalidateTag('system-email-templates',{expire:0});revalidatePath('/radmin/email');
+ return {ok:true,message:key==='password_recovery'?'Şablon saxlanıldı. Şifrə bərpası məktublarında yenilənməsi 10 dəqiqəyədək çəkə bilər.':'Şablon saxlanıldı. Növbəti məktublarda istifadə ediləcək.'};
 }
