@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
 import { createEmailDispatcher } from "../supabase/functions/_shared/delivery.ts";
 
-const file=process.env.EMAIL_WORKER_CONFIG || "/srv/alisveris/email-service/config.json";
+const file=process.env.EMAIL_WORKER_CONFIG || "/home/deploy/alisveris-email-service/config.json";
 const config=JSON.parse(fs.readFileSync(file,"utf8"));
 const handler=createEmailDispatcher(key=>String(config[key] || ""),createClient,nodemailer.createTransport);
 const response=await handler(new Request("http://127.0.0.1/email-dispatch",{

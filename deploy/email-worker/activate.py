@@ -2,7 +2,7 @@
 Uses existing server credentials, never prints credentials, and restores Auth if startup fails.
 """
 import http.client,json,os,pathlib,pwd,secrets,smtplib,socket,ssl,subprocess,time,urllib.request
-BASE=pathlib.Path('/srv/alisveris/email-service')
+BASE=pathlib.Path('/home/deploy/alisveris-email-service')
 SETUP=pathlib.Path('/home/deploy/alisveris-email-setup')
 DATABASE='alisveris_candidate_20261010'
 OWNER=pwd.getpwnam('deploy')
@@ -109,7 +109,7 @@ def main():
     worker={**backend,**smtp,'APP_ORIGIN':'https://alisveris.az','EMAIL_DELIVERY_ENABLED':'true','EMAIL_DISPATCH_SECRET':dispatch}
     save(config_file,json.dumps(worker)+'\n',deploy=True)
     if not (BASE/'worker.mjs').is_file() or not (BASE/'node_modules/nodemailer').is_dir(): raise RuntimeError('Worker runtime missing.')
-    save(pathlib.Path('/etc/cron.d/alisveris-email'), 'SHELL=/bin/sh\nPATH=/usr/local/bin:/usr/bin:/bin\n* * * * * deploy /usr/bin/flock -n /srv/alisveris/email-service/dispatch.lock /usr/bin/node /srv/alisveris/email-service/worker.mjs >>/home/deploy/alisveris-email-worker.log 2>&1\n',0o644)
+    save(pathlib.Path('/etc/cron.d/alisveris-email'), 'SHELL=/bin/sh\nPATH=/usr/local/bin:/usr/bin:/bin\n* * * * * deploy /usr/bin/flock -n /home/deploy/alisveris-email-service/dispatch.lock /usr/bin/node /home/deploy/alisveris-email-service/worker.mjs >>/home/deploy/alisveris-email-worker.log 2>&1\n',0o644)
     save(pathlib.Path('/etc/logrotate.d/alisveris-email'),'/home/deploy/alisveris-email-worker.log {\n daily\n rotate 7\n size 1M\n compress\n missingok\n notifempty\n copytruncate\n su deploy deploy\n}\n',0o644)
     sql("update public.email_delivery_settings set enabled=true,admin_address='admin@alisveris.az' where id; insert into public.email_outbox(event_key,kind,recipient_role,to_address,payload) values('installation-delivery-test:20261029','delivery_test','administrator','admin@alisveris.az','{\"title\":\"ALİSVERİS.AZ — e-poçt sistemi testi\",\"body\":\"Supabase növbəsi və Hostinger göndərişi aktivləşdirildi. Bu, quraşdırmanın bir dəfəlik test məktubudur.\"}') on conflict(event_key) do nothing;")
     run(['sudo','-u','deploy','-H','node',str(BASE/'worker.mjs')],timeout=90)
