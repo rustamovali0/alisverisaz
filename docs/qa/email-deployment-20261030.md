@@ -24,3 +24,11 @@
 Həqiqi müştərilərə kütləvi test kampaniyası və real sifariş yaradılmayıb. Tam recovery → yeni şifrə → köhnə sessiyanın bağlanması real inbox ilə bu yerləşdirmədə tamamlanmayıb; bunun üçün sahibin bərpa məktubunu açıb yeni şifrəni özü daxil etməsi lazımdır. Auth, password validation və sessiya revoke davranışı avtomatlaşdırılmış testlərlə yoxlanılıb. SMTP sent inbox-a çatma və oxunma zəmanəti vermir.
 
 Şifrələr, service key-lər və tam server environment-ləri bu hesabata və Git-ə yazılmayıb. PR #9, açıq PR #8 üzərində ayrıca dəyişiklik kimi hazırlanıb; merge edilməyib.
+
+## Gün ərzində əlavə edilən dizayner və kampaniyalar
+
+19 avtomatik şablon, başlıq/mətn/düymə redaktəsi, təhlükəsiz canlı önizləmə və altı HEX rəng ayarı əlavə edilib. RAdmin-in Önə çıxarma bölməsində mağaza üzrə ayrıca kampaniya icazəsi var; standart olaraq heç bir real mağazaya icazə açılmayıb. Sahiblik, aktiv önə çıxarma, revocation, marketing opt-in, idempotency və 24 saatlıq limit test olunub.
+
+341 test / 51 fayl, TypeScript, production build və Deno yoxlaması keçib. Yeni release-lər staging və canlı aktivləşdirmədə 25 yoxlamadan keçib. Admin-in əvvəlki quraşdırma və cron test məktubları readonly IMAP ilə Inbox-da tapılıb; DKIM pass təsdiqlənib. Cron məktubu manual worker çağırılmadan 35 saniyəyə göndərib.
+
+Canlı RAdmin-də alıcı/satıcı/birgə auditoriyalar 6/4/10 olaraq yoxlanılıb, bütün təsdiqlər ləğv edilib. Marketing opt-in olmayan auditoriya üçün göndəriş bloklanıb. Nümunə “Yeni tapıntılar — alış-veriş kampaniyası” şablonu UI-dən saxlanılıb, real istifadəçilərə göndərilməyib. Newsletter-də banner, məzmun bölmələri, kateqoriya keçidləri, mağaza/məhsul CTA-sı, yardım və məxfilik/razılaşma/footer keçidləri var. Önizləmə real renderer ilə eynidir. 390px yoxlamasında üfüqi daşma yoxdur. Cloudflare HTML transformasiyası no-transform ilə dayandırıldıqdan sonra yeni RAdmin yüklənməsində hydration xətası görünməyib.
