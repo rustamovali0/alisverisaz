@@ -741,7 +741,7 @@ export function CartCheckout({
           checkoutOnly
             ? "container flex justify-center py-8"
             : isEmptyCart
-              ? "container py-6 md:py-8"
+              ? "container py-2 md:py-8"
             : "container mx-auto grid max-w-[1280px] gap-3 py-3 sm:gap-5 sm:py-5 md:gap-6 md:py-8 lg:grid-cols-[minmax(0,1fr)_400px]"
         }
       >
@@ -753,7 +753,7 @@ export function CartCheckout({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="inline-flex size-9 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-none hover:bg-slate-50 md:h-9 md:w-auto md:rounded-[10px] md:px-3"
+                className="hidden size-9 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-none hover:bg-slate-50 md:inline-flex md:h-9 md:w-auto md:rounded-[10px] md:px-3"
                 onClick={goBackFromCart}
                 aria-label={common("back")}
               >
