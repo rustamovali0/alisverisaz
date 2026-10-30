@@ -1,3 +1,4 @@
+import {renderCampaignLayout} from "./campaign-layout.ts";
 import {resolveEmailTheme,fillEmailTemplate,systemTemplateKey,SYSTEM_EMAIL_TEMPLATES,type SystemEmailTemplate} from "./template-catalog.ts";
 export type EmailJob = {
   id: string;
@@ -125,6 +126,8 @@ export function renderEmail(
       body += " Bu, WhatsApp sifariş müraciətidir; ödəniş təsdiqi deyil.";
     }
     path = job.recipient_id ? dashboard + "/orders" : "/help";
+  } else if(job.kind==='campaign_marketing') {
+    path='/products';
   } else if(job.kind==='seller_campaign') {
     if(typeof job.payload.store_slug!=='string'||!job.payload.store_slug)throw Error('seller_store_unavailable');
     path='/store/'+encodeURIComponent(job.payload.store_slug);
@@ -159,6 +162,7 @@ export function renderEmail(
     title=fillEmailTemplate(selectedTemplate.title,variables);body=fillEmailTemplate(selectedTemplate.body,variables);buttonLabel=fillEmailTemplate(selectedTemplate.button_label,variables);
     if(order?.metadata?.source==='whatsapp')body+=' Bu, WhatsApp sifariş müraciətidir; ödəniş təsdiqi deyil.';
   }
+  if(job.kind==='campaign_marketing'&&buttonLabel==='Hesabda bax')buttonLabel='Təkliflərə bax';
   const link = new URL(path, base).toString();
   const settings = new URL(job.recipient_role==="administrator"?"/radmin/email":dashboard + "/settings", base).toString();
   return {
@@ -171,7 +175,7 @@ export function renderEmail(
       "Hesabda bax: " + link,
       "E-poçt ayarları: " + settings,
     ].join("\n\n"),
-    html:
+    html: (job.kind==='campaign_marketing'||job.kind==='seller_campaign') ? renderCampaignLayout({title,body,link,settings,origin,button:buttonLabel,colors}) :
       `<!doctype html><html lang="az"><body style="margin:0;background:${colors.background};font-family:Arial,sans-serif;color:${colors.text}"><div style="max-width:600px;margin:24px auto;background:${colors.card};padding:28px;border-radius:16px;overflow-wrap:anywhere"><p style="font-weight:bold;color:${colors.heading}">ALİSVERİS.AZ</p><h1 style="font-size:24px;color:${colors.heading}">${
         escape(title)
       }</h1><p style="line-height:1.7;white-space:pre-line">${

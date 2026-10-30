@@ -27,6 +27,8 @@ export const SYSTEM_TEMPLATE_VARIABLES:Record<string,string[]>={
  ...Object.fromEntries(SYSTEM_EMAIL_TEMPLATES.filter(t=>t.key.startsWith('order_')).map(t=>[t.key,['sifaris','status','magaza','yekun']]))
 };
 export function systemTemplateKey(job:{kind:string;recipient_role:string;payload:Record<string,unknown>}) {
+ if(job.kind==='campaign_marketing')return 'promo';
+ if(job.kind==='admin_campaign')return 'notification';
  if(job.kind==='registration_admin')return job.payload.requested_role==='seller'?'registration_seller_admin':'registration_customer_admin';
  if(job.kind.startsWith('order_'))return `${job.kind}_${job.payload.audience==='seller'?'seller':'customer'}`;
  return SYSTEM_EMAIL_TEMPLATES.some(t=>t.key===job.kind)?job.kind:null;

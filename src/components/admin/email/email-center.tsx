@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, FileText, History, Mail, RefreshCw, Send, Settings2, X } from "lucide-react";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
 import {
@@ -15,6 +15,8 @@ import {
 
 import { SystemTemplateEditor } from "@/components/admin/email/system-template-editor";
 import type { SystemEmailTemplate } from "../../../../supabase/functions/_shared/template-catalog";
+
+import { renderEmail } from "../../../../supabase/functions/_shared/email";
 
 type Template = {
   id: string;
@@ -85,6 +87,8 @@ export function AdminEmailCenter({ initial }: { initial: Center }) {
     { id: string; page: number; rows: any[] } | null
   >(null);
   const requestId = useRef<string | null>(null);
+  const campaignPreview=useMemo(()=>renderEmail({id:'preview',kind:purpose==='marketing'?'campaign_marketing':'admin_campaign',recipient_id:'preview',recipient_role:'customer',to_address:'alici@example.com',lock_token:'',payload:{title:subject||'Məktubun mövzusu',body:(body||'Məktubun mətni burada görünəcək.').replaceAll('{ad}','Aysel').replaceAll('{magaza}','Nümunə mağaza').replaceAll('{sayt}','https://alisveris.az')}},'https://alisveris.az',undefined,data.systemTemplates?.find(t=>t.key===(purpose==='marketing'?'promo':'notification'))).html,[subject,body,purpose,data.systemTemplates]);
+
   useEffect(() => {
     let active = true;
     if (audience !== "selected" || search.length < 2) {
@@ -418,28 +422,8 @@ export function AdminEmailCenter({ initial }: { initial: Center }) {
                 preview ? "" : "hidden lg:block"
               }`}
             >
-              <p className="text-sm text-slate-500">
-                Önizləmə • no-reply@alisveris.az
-              </p>
-              <p className="mt-8 font-black text-emerald-800">ALİSVERİS.AZ</p>
-              <h2 className="mt-5 break-words text-xl font-bold">
-                {subject || "Məktubun mövzusu"}
-              </h2>
-              <p className="mt-5 whitespace-pre-wrap break-words leading-7">
-                {(body || "Məktubun mətni burada görünəcək.").replaceAll(
-                  "{ad}",
-                  "Aysel",
-                ).replaceAll("{magaza}", "Nümunə mağaza").replaceAll(
-                  "{sayt}",
-                  "https://alisveris.az",
-                )}
-              </p>
-              <p className="mt-8 rounded-lg bg-emerald-800 px-4 py-3 text-center text-white">
-                Hesabda bax
-              </p>
-              <p className="mt-6 text-xs leading-5 text-slate-500">
-                E-poçt seçimləri hesab ayarlarından idarə edilir.
-              </p>
+              <p className="mb-3 text-sm text-slate-500">Önizləmə • no-reply@alisveris.az</p>
+              <iframe title="Kampaniyanın canlı görünüşü" sandbox="" srcDoc={campaignPreview} className="h-[650px] w-full border-0"/>
             </section>
           </div>
         )
