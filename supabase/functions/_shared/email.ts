@@ -1,3 +1,4 @@
+import {renderEmailBrand} from "./email-brand.ts";
 import {renderCampaignLayout} from "./campaign-layout.ts";
 import {resolveEmailTheme,fillEmailTemplate,systemTemplateKey,SYSTEM_EMAIL_TEMPLATES,type SystemEmailTemplate} from "./template-catalog.ts";
 export type EmailJob = {
@@ -199,7 +200,7 @@ export function renderEmail(
       "E-poçt ayarları: " + settings,
     ].join("\n\n"),
     html: (job.kind==='campaign_marketing'||job.kind==='seller_campaign') ? renderCampaignLayout({title,body,link,settings,origin,button:buttonLabel,colors}) :
-      `<!doctype html><html lang="az"><body style="margin:0;background:${colors.background};font-family:Arial,sans-serif;color:${colors.text}"><div style="max-width:600px;margin:24px auto;background:${colors.card};padding:28px;border-radius:16px;overflow-wrap:anywhere"><p style="font-weight:bold;color:${colors.heading}">ALİSVERİS.AZ</p><h1 style="font-size:24px;color:${colors.heading}">${
+      `<!doctype html><html lang="az"><body style="margin:0;background:${colors.background};font-family:Arial,sans-serif;color:${colors.text}"><div style="max-width:600px;margin:24px auto;background:${colors.card};padding:28px;border-radius:16px;overflow-wrap:anywhere">${renderEmailBrand(base.origin,colors.heading)}<h1 style="font-size:24px;color:${colors.heading}">${
         escape(title)
       }</h1><p style="line-height:1.7;white-space:pre-line">${
         escape(body)
