@@ -13,6 +13,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
+import { getPublicAuthOrigin } from "@/lib/auth/public-origin";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { ensureAuthProfile, ensureSellerStore } from "@/lib/auth/profiles";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
@@ -118,16 +119,6 @@ function isMissingAuthUserError(error: { message?: string; code?: string; status
   );
 }
 
-function isLocalhostOrigin(value: string) {
-  try {
-    const hostname = new URL(value).hostname;
-
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-  } catch {
-    return false;
-  }
-}
-
 async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -149,11 +140,7 @@ async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promi
 }
 
 async function getPublicRequestOrigin() {
-  // Recovery tokens must never be sent to a host supplied by the request.
-  if (process.env.NODE_ENV !== "production" || !isLocalhostOrigin(clientEnv.appUrl)) {
-    return new URL(clientEnv.appUrl).origin;
-  }
-  return new URL(`https://${clientEnv.storeRootDomain}`).origin;
+  return getPublicAuthOrigin();
 }
 
 async function recordLoginFailure(

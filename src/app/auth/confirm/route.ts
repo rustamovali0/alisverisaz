@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
+import { getPublicAuthOrigin } from "@/lib/auth/public-origin";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -12,7 +13,7 @@ function privateRedirect(url: URL) {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const origin = requestUrl.origin;
+  const origin = getPublicAuthOrigin();
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const nextPath = normalizeNextPath(
