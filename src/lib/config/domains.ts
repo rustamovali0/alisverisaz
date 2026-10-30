@@ -33,6 +33,7 @@ export const RESERVED_STORE_SUBDOMAINS = [
   "logout",
   "forgot-password",
   "reset-password",
+  "email-preferences",
   "privacy",
   "terms",
   "about",

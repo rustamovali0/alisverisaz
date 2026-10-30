@@ -29,10 +29,6 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/telegram/notifications", () => ({
   notifyOrderCreated: vi.fn(),
 }));
-vi.mock("@/lib/email/order", () => ({
-  sendCustomerOrderCreatedEmail: vi.fn(),
-  sendSellerOrderCreatedEmail: vi.fn(),
-}));
 vi.mock("@/lib/activity/events", () => ({ trackActivityEvent: vi.fn() }));
 vi.mock("@/lib/whatsapp-orders/data", () => ({
   getGlobalWhatsAppOrderTemplate: async () => "{{products}} {{total}}",

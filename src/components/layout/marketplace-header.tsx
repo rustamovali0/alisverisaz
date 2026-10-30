@@ -93,6 +93,11 @@ export function MarketplaceHeader({
   const pathname = usePathname();
   const compactAuthHeader =
     /^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname);
+  const informationHeader =
+    /^\/(about|help|faq|guide|contact|terms|privacy|rules|email-preferences)(\/|$)/.test(
+      pathname,
+    );
+  const compactHeader = compactAuthHeader || informationHeader;
   const { profile, isResolved } = useClientAuthProfileState();
   const role = isResolved
     ? profile.status === "authenticated"
@@ -119,10 +124,14 @@ export function MarketplaceHeader({
   useEffect(() => {
     const header = headerRef.current;
     if (!header) return;
-    const root = header.closest<HTMLElement>(".live-marketplace") ?? document.documentElement;
-    const syncHeight = () => root.style.setProperty(
-      "--marketplace-header-height", `${header.getBoundingClientRect().height}px`,
-    );
+    const root =
+      header.closest<HTMLElement>(".live-marketplace") ??
+      document.documentElement;
+    const syncHeight = () =>
+      root.style.setProperty(
+        "--marketplace-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
     syncHeight();
     const observer = new ResizeObserver(syncHeight);
     observer.observe(header);
@@ -179,7 +188,7 @@ export function MarketplaceHeader({
   const sellerHref = isSeller ? "/store/dashboard" : "/register?role=seller";
   return (
     <>
-      {!compactAuthHeader && (
+      {!compactHeader && (
         <div className="live-utility">
           <div className="live-wrap">
             <span>
@@ -203,6 +212,7 @@ export function MarketplaceHeader({
         className="marketplace-header live-header"
         data-live-header
         data-auth-header={compactAuthHeader || undefined}
+        data-info-header={informationHeader || undefined}
       >
         <div className="live-wrap live-header-main">
           <button
@@ -218,22 +228,22 @@ export function MarketplaceHeader({
             siteName={siteName}
             showDomain={!isolatedStorefront}
           />
-          <div className="live-header-search">
-            <MarketplaceSearch
-              stores={stores}
-              defaultValue={searchDefaultValue}
-              placeholder={text(
-                "Nə axtarırsınız? Məhsul, mağaza və daha çox...",
-              )}
-              storeSlug={searchStoreSlug ?? undefined}
-              searchBaseHref={productsHref.split("#")[0]}
-              resultsAnchorId={searchStoreSlug ? "products" : undefined}
-              compactActions
-              className="live-search-form"
-              inputClassName="live-search-input"
-              buttonClassName="live-search-submit"
-            />
-          </div>
+          {!informationHeader && (
+            <div className="live-header-search">
+              <MarketplaceSearch
+                stores={stores}
+                defaultValue={searchDefaultValue}
+                placeholder={text("Nə axtarırsınız?")}
+                storeSlug={searchStoreSlug ?? undefined}
+                searchBaseHref={productsHref.split("#")[0]}
+                resultsAnchorId={searchStoreSlug ? "products" : undefined}
+                compactActions
+                className="live-search-form"
+                inputClassName="live-search-input"
+                buttonClassName="live-search-submit"
+              />
+            </div>
+          )}
           <div className="live-header-actions">
             {!isolatedStorefront && (
               <Link
@@ -248,7 +258,10 @@ export function MarketplaceHeader({
               <HeaderAccountActions showSellerCta={false} />
             </div>
             <div className="live-notifications">
-              <NotificationCenter requireAuth={isResolved && profile.status !== "authenticated"} authLoading={!isResolved} />
+              <NotificationCenter
+                requireAuth={isResolved && profile.status !== "authenticated"}
+                authLoading={!isResolved}
+              />
             </div>
             {!hideCart && (
               <Link
@@ -272,7 +285,7 @@ export function MarketplaceHeader({
             )}
           </div>
         </div>
-        {!compactAuthHeader && (
+        {!compactHeader && (
           <nav className="live-navigation" aria-label={text("Əsas menyu")}>
             <div className="live-wrap">
               <button
@@ -370,7 +383,10 @@ export function MarketplaceHeader({
               </button>
             </div>
             <div className="mb-4 flex items-center justify-between border-b pb-3 md:hidden">
-              <LanguageCompactDropdown className="live-mobile-language" menuPlacement="bottom" />
+              <LanguageCompactDropdown
+                className="live-mobile-language"
+                menuPlacement="bottom"
+              />
               <ThemeToggle />
             </div>
             <nav>

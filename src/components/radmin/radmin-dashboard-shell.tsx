@@ -164,7 +164,7 @@ export function RadminDashboardShell({
   logoUrl,
   darkLogoUrl,
 }: RadminDashboardShellProps) {
-  const pathname = usePathname();
+  const pathname = normalizePath(usePathname());
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = usePersistentBoolean("alisveris-radmin-collapsed", false);
   const [search, setSearch] = useState("");

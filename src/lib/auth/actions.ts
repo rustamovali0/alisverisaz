@@ -13,6 +13,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getDashboardPath } from "@/lib/auth/redirects";
+import { getPublicAuthOrigin } from "@/lib/auth/public-origin";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { ensureAuthProfile, ensureSellerStore } from "@/lib/auth/profiles";
 import { invalidateStorePublicData } from "@/lib/cache/public-cache";
@@ -24,8 +25,6 @@ import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
 import { deleteR2ImagesByUrls, uploadImageToR2 } from "@/lib/storage/r2";
-import { sendPasswordResetEmail } from "@/lib/email/password-reset";
-import { sendWelcomeRegistrationEmail } from "@/lib/email/welcome";
 import {
   notifyAdminLogin,
   notifyAdminLoginFailed,
@@ -50,11 +49,13 @@ import {
 const MAX_AUTH_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_AUTH_MEDIA_TYPES = ["image/*"];
 const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
-const GENERIC_RESET_RESPONSE =
-  "Əgər bu email ilə hesab varsa, bərpa linki göndəriləcək.";
+const ACCEPTED_RESET_RESPONSE =
+  "Bərpa keçidi e-poçtunuza göndərilir. Gələnlər və spam qovluğunu yoxlayın.";
+const RESET_ACCOUNT_NOT_FOUND =
+  "Bu e-poçt ünvanı ilə qeydiyyat tapılmadı. Əvvəlcə qeydiyyatdan keçin.";
 const ACCEPTED_PASSWORD_RESET: AuthResult = {
   ok: true,
-  message: GENERIC_RESET_RESPONSE,
+  message: ACCEPTED_RESET_RESPONSE,
   redirectTo: "/login",
 };
 const PASSWORD_RESET_SEND_ERROR =
@@ -120,16 +121,6 @@ function isMissingAuthUserError(error: { message?: string; code?: string; status
   );
 }
 
-function isLocalhostOrigin(value: string) {
-  try {
-    const hostname = new URL(value).hostname;
-
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-  } catch {
-    return false;
-  }
-}
-
 async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promise<T> {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -151,11 +142,7 @@ async function withAuthTimeout<T>(promise: PromiseLike<T>, label: string): Promi
 }
 
 async function getPublicRequestOrigin() {
-  // Recovery tokens must never be sent to a host supplied by the request.
-  if (process.env.NODE_ENV !== "production" || !isLocalhostOrigin(clientEnv.appUrl)) {
-    return new URL(clientEnv.appUrl).origin;
-  }
-  return new URL(`https://${clientEnv.storeRootDomain}`).origin;
+  return getPublicAuthOrigin();
 }
 
 async function recordLoginFailure(
@@ -446,24 +433,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       },
     });
 
-    if (serverEnv.hasSmtpConfig) {
-      try {
-        await sendWelcomeRegistrationEmail({
-          to: email,
-          fullName,
-          role,
-          loginUrl: new URL("/login", await getPublicRequestOrigin()).toString(),
-        });
-      } catch (error) {
-        console.error("Welcome registration email failed", {
-          message: error instanceof Error ? error.message : String(error),
-          email,
-          role,
-        });
-      }
-    } else {
-      console.warn("Welcome registration email skipped because SMTP is not configured");
-    }
+    // Welcome delivery is captured transactionally by the Supabase profile trigger.
+
   });
 
   if (role === "seller") {
@@ -1031,8 +1002,14 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
   const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
   if (attempt.isBlocked) return { ok: false, message: attempt.message };
 
-  // Respond before account lookup so neither response content nor mail latency
-  // reveals whether the supplied address has an active account.
+  // Check registration on the server after rate limiting, as requested by the
+  // account-recovery UI. SMTP delivery remains outside the response path.
+  try {
+    const account = await checkRecoveryAccount(email);
+    if (!account.ok) return account;
+  } catch {
+    return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
+  }
   after(async () => {
     try {
       await sendAccountRecoveryEmail(email);
@@ -1043,13 +1020,12 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
   return ACCEPTED_PASSWORD_RESET;
 }
 
-async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
-  const accepted = ACCEPTED_PASSWORD_RESET;
+async function checkRecoveryAccount(email: string): Promise<AuthResult> {
   const supabaseAdmin = createSupabaseAdminClient();
   const { data: resetProfile, error: resetProfileError } = await (supabaseAdmin as any)
     .from("profiles")
     .select("id,email")
-    .ilike("email", email)
+    .ilike("email", email.replace(/[\\%_]/g, "\\$&"))
     .limit(1)
     .maybeSingle();
 
@@ -1066,7 +1042,7 @@ async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
   }
 
   if (!resetProfile?.id) {
-    return accepted;
+    return { ok: false, message: RESET_ACCOUNT_NOT_FOUND };
   }
 
   let authUserResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.getUserById>>;
@@ -1088,137 +1064,40 @@ async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
   }
 
   const resetUser = authUserResult.data.user;
-  const bannedUntil =
-    typeof resetUser?.banned_until === "string" ? Date.parse(resetUser.banned_until) : null;
-  const isAccountActive =
-    !authUserResult.error &&
-    Boolean(resetUser?.id) &&
-    resetUser?.email?.toLowerCase() === email &&
-    !resetUser.deleted_at &&
-    !(bannedUntil && bannedUntil > Date.now());
+  if (authUserResult.error) {
+    return { ok: false, message: isMissingAuthUserError(authUserResult.error) ? RESET_ACCOUNT_NOT_FOUND : PASSWORD_RESET_SEND_ERROR };
+  }
+  if (!resetUser?.id || resetUser.email?.toLowerCase() !== email || resetUser.deleted_at) {
+    return { ok: false, message: RESET_ACCOUNT_NOT_FOUND };
+  }
+  const bannedUntil = typeof resetUser.banned_until === "string" ? Date.parse(resetUser.banned_until) : null;
+  if (bannedUntil && bannedUntil > Date.now()) {
+    return { ok: false, message: "Bu hesab hazırda aktiv deyil. Dəstək mərkəzinə müraciət edin." };
+  }
+  return ACCEPTED_PASSWORD_RESET;
+}
 
-  if (!isAccountActive) {
-    return accepted;
+async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
+  const supabaseAdmin = createSupabaseAdminClient();
+  // Supabase Auth owns recovery tokens and mail delivery. Its recovery template
+  // uses TokenHash -> /auth/confirm, so no response-time PKCE cookie write or
+  // cross-device code verifier is required. Never put recovery tokens in the outbox.
+  const redirectUrl = new URL("/reset-password?mode=recovery", await getPublicRequestOrigin());
+  try {
+    const { error } = await withAuthTimeout(
+      supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl.toString() }),
+      "Bərpa emailinin göndərilməsi",
+    );
+    if (error) {
+      console.error("Supabase recovery delivery failed", { status: error.status, code: error.code });
+      return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
+    }
+  } catch {
+    console.error("Supabase recovery delivery timed out");
+    return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
   }
 
-  const redirectUrl = new URL("/auth/callback", await getPublicRequestOrigin());
-
-  redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
-
-  if (serverEnv.hasSmtpConfig) {
-    console.info("Password reset email channel selected", { channel: "smtp" });
-    let generateResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.generateLink>>;
-
-    try {
-      generateResult = await withAuthTimeout(
-        supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email,
-          options: {
-            redirectTo: redirectUrl.toString(),
-          },
-        }),
-        "Bərpa linkinin yaradılması",
-      );
-    } catch (error) {
-      console.error("Password reset link generation timed out", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const { data, error } = generateResult;
-
-    if (error) {
-      if (isMissingAuthUserError(error)) {
-        return accepted;
-      }
-
-      console.error("Password reset link generation failed", {
-        message: error.message,
-        status: error.status,
-        code: error.code,
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const tokenHash = data.properties?.hashed_token;
-
-    if (!tokenHash) {
-      console.error("Password reset link generation returned no token hash");
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const resetUrl = new URL("/auth/confirm", await getPublicRequestOrigin());
-    resetUrl.searchParams.set("token_hash", tokenHash);
-    resetUrl.searchParams.set("type", "recovery");
-    resetUrl.searchParams.set("next", "/reset-password?mode=recovery");
-
-    try {
-      await sendPasswordResetEmail({ to: email, resetUrl: resetUrl.toString() });
-    } catch (error) {
-      console.error("Password reset SMTP email failed", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-  } else {
-    console.info("Password reset email channel selected", { channel: "supabase" });
-    const supabase = await createSupabaseServerClient();
-    let resetResult: Awaited<ReturnType<typeof supabase.auth.resetPasswordForEmail>>;
-
-    try {
-      resetResult = await withAuthTimeout(
-        supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectUrl.toString(),
-        }),
-        "Bərpa emailinin göndərilməsi",
-      );
-    } catch (error) {
-      console.error("Password reset email timed out", {
-        channel: "supabase",
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const { error } = resetResult;
-
-    if (error) {
-      console.error("Password reset email failed", {
-        message: error.message,
-        status: error.status,
-        code: error.code,
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-  }
-
-  return accepted;
+  return ACCEPTED_PASSWORD_RESET;
 }
 
 export async function updatePasswordAction(formData: FormData): Promise<AuthResult> {
@@ -1248,7 +1127,7 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
     };
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient({ authScope: "public", requireCookieWrite: true });
   const { data: userData } = await supabase.auth.getUser();
 
   if (!userData.user) {
@@ -1262,6 +1141,9 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
 
   if (error) {
     const message = error.message.toLowerCase();
+    if (error.code === "same_password" || message.includes("new password should be different from the old password")) {
+      return { ok: false, message: "Yeni şifrə əvvəlki şifrədən fərqli olmalıdır." };
+    }
     const isMissingSession =
       message.includes("session") ||
       message.includes("jwt") ||
@@ -1275,11 +1157,37 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
     };
   }
 
-  return {
+  const loginFallback: AuthResult = {
     ok: true,
-    message: "Şifrə uğurla yeniləndi.",
+    message: "Şifrə yeniləndi. Avtomatik giriş alınmadı; yeni şifrə ilə giriş səhifəsindən daxil olun.",
     redirectTo: "/login",
   };
+
+  try {
+    const { revokedAt, error: revokeError } = await revokeProfileSessions(userData.user.id);
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "global" });
+    if (revokeError || signOutError || !userData.user.email) return loginFallback;
+
+    // Existing access tokens are invalidated with millisecond precision, while
+    // JWT iat is in seconds. Issue the replacement session after that cutoff.
+    const nextIssueTime = Math.floor(Date.parse(revokedAt) / 1000) * 1000 + 1000;
+    const waitMs = Math.max(0, nextIssueTime - Date.now());
+    if (waitMs) await new Promise<void>((resolve) => setTimeout(resolve, waitMs));
+
+    const loginForm = new FormData();
+    loginForm.set("identifier", userData.user.email);
+    loginForm.set("password", password);
+    loginForm.set("mode", "public");
+    loginForm.set("next", normalizeNextPath(readString(formData, "next")));
+    // Reuse the normal role, approval, rate-limit and account-access checks.
+    const login = await loginAction(loginForm);
+    return login.ok
+      ? { ...login, message: "Şifrə uğurla yeniləndi. Hesabınıza daxil oldunuz." }
+      : loginFallback;
+  } catch {
+    // The password is already changed, even if the replacement login fails.
+    return loginFallback;
+  }
 }
 
 export async function updateCustomerProfileAction(formData: FormData): Promise<AuthResult> {
@@ -1889,10 +1797,12 @@ async function cleanupUserMarketplaceData(input: {
 
 async function revokeProfileSessions(userId: string) {
   const supabaseAdmin = createSupabaseAdminClient();
-  await (supabaseAdmin as any)
+  const revokedAt = new Date().toISOString();
+  const { error } = await (supabaseAdmin as any)
     .from("profiles")
-    .update({ session_revoked_at: new Date().toISOString() })
+    .update({ session_revoked_at: revokedAt })
     .eq("id", userId);
+  return { revokedAt, error };
 }
 
 export async function updateUserContactByAdminAction(

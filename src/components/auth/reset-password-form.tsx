@@ -7,22 +7,28 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { AuthErrorAlert } from "@/components/auth/auth-error-alert";
 import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
-import { Link, useRouter } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { updatePasswordAction } from "@/lib/auth/actions";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 
 export function ResetPasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
+    if (isPending) return;
     startTransition(async () => {
       formData.set("password", password);
       formData.set("confirmPassword", confirmPassword);
-      const result = await updatePasswordAction(formData);
+      setServerError(null);
+      let result;
+      try { result = await updatePasswordAction(formData); } catch {
+        setServerError("Şifrə yenilənmədi. Bağlantını yoxlayıb yenidən cəhd edin.");
+        return;
+      }
 
       if (!result.ok) {
         setServerError(result.message);
@@ -31,8 +37,8 @@ export function ResetPasswordForm() {
       }
 
       void appAlert.success("Şifrə yeniləndi", result.message);
-      router.replace("/login");
-      router.refresh();
+      // Credential boundary: discard any authenticated Router Cache.
+      window.location.replace(normalizeNextPath(result.redirectTo, "/"));
     });
   }
 

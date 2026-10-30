@@ -2922,3 +2922,17 @@
     pointer-events: none;
   }
 }
+
+/* Information pages use a compact masthead without the product search. */
+.live-header[data-info-header] .live-header-main {
+  height: 84px;
+}
+.live-header[data-info-header] .live-header-actions {
+  margin-left: auto;
+}
+@media (max-width: 767px) {
+  .live-header[data-info-header] .live-header-main {
+    height: 60px;
+    padding-top: 4px;
+  }
+}

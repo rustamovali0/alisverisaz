@@ -1,6 +1,5 @@
 import "server-only";
 
-import { sendProductSubmittedEmail } from "@/lib/email/product-approval";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 // Internal helpers: these must not become client-callable Server Actions.
@@ -38,18 +37,5 @@ export async function notifyProductSubmitted(input: {
     productId: input.productId,
   });
 
-  if (!input.sellerEmail) return;
-
-  try {
-    await sendProductSubmittedEmail({
-      to: input.sellerEmail,
-      sellerName: input.sellerName,
-      productName: input.productName,
-    });
-  } catch (error) {
-    console.error("Product submitted email failed", {
-      productId: input.productId,
-      error,
-    });
-  }
+  // The notification insert is captured by the Supabase email outbox trigger.
 }

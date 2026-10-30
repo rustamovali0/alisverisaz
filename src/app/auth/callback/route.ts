@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
+import { getPublicAuthOrigin } from "@/lib/auth/public-origin";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import type { AuthRole } from "@/lib/auth/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,7 +20,7 @@ function readMetadataString(metadata: Record<string, unknown>, keys: string[]) {
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
-  const origin = requestUrl.origin;
+  const origin = getPublicAuthOrigin();
   const code = requestUrl.searchParams.get("code");
   const nextPath = normalizeNextPath(requestUrl.searchParams.get("next"), "/");
 

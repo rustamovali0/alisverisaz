@@ -1,3 +1,5 @@
+import { EmailPreferences } from "@/components/notifications/email-preferences";
+import { getEmailPreferences } from "@/lib/email/preferences";
 import { FeatureBlocked } from "@/components/dashboard/feature-blocked";
 import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
 import { StoreSettingsForm } from "@/components/dashboard/store-settings-form";
@@ -14,7 +16,7 @@ export default async function StoreSettingsPage() {
   const enabled = await getSellerFeatureAccess(current.user.id, "settings");
 
   if (!enabled) {
-    return <FeatureBlocked title="Ayarlar" />;
+    return <div className="grid gap-5"><EmailPreferences initial={await getEmailPreferences()} /><FeatureBlocked title="Ayarlar" /></div>;
   }
 
   const supabase = await createSupabaseServerClient();
@@ -27,7 +29,7 @@ export default async function StoreSettingsPage() {
     .maybeSingle();
 
   if (!store) {
-    return <FeatureBlocked title="Mağaza tapılmadı" description="Mağaza yaradıldıqda ayarlar burada görünəcək." />;
+    return <div className="grid gap-5"><EmailPreferences initial={await getEmailPreferences()} /><FeatureBlocked title="Mağaza tapılmadı" description="Mağaza yaradıldıqda ayarlar burada görünəcək." /></div>;
   }
 
   const [{ data: productCategories }, categories] = await Promise.all([
@@ -51,6 +53,7 @@ export default async function StoreSettingsPage() {
   return (
     <div className="grid gap-5">
       <AccountLanguageSettings />
+      <EmailPreferences initial={await getEmailPreferences()} />
       <StoreSettingsForm store={store} availableCategories={availableCategories} />
       <PasswordChangeForm />
     </div>

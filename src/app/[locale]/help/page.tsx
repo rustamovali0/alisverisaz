@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
-import { HelpDocumentPage } from "@/components/help/help-content-pages";
-import { getHelpPage } from "@/lib/help-center/content";
+import { HelpCenter } from "@/components/help/help-center";
+import { helpQuickLinks, helpTopicLinks } from "@/lib/help-center/landing-data";
+import { getSiteSettings } from "@/lib/cms/data";
 
 type HelpPageProps = {
   params: Promise<{
@@ -23,12 +23,14 @@ export const metadata: Metadata = {
 export default async function HelpPage({ params }: HelpPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const page = getHelpPage("help");
-
-  if (!page) {
-    notFound();
-  }
-
-  return <HelpDocumentPage page={page} />;
+  const settings = await getSiteSettings();
+  return (
+    <HelpCenter
+      locale={locale}
+      topics={helpTopicLinks}
+      quickLinks={helpQuickLinks}
+      supportPhone={settings.phone || settings.whatsapp}
+      year={new Date().getFullYear()}
+    />
+  );
 }
-
