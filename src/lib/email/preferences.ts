@@ -6,7 +6,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function getEmailPreferences() {
   const current = await requireRole(
     ["customer", "seller"],
-    "/dashboard/settings",
+    "/email-preferences",
   );
   const db = await createSupabaseServerClient({ authScope: "public" });
   const { data, error } = await (db as any).from("email_preferences").select(
@@ -21,7 +21,7 @@ export async function getEmailPreferences() {
 export async function saveEmailPreferences(formData: FormData) {
   const current = await requireRole(
     ["customer", "seller"],
-    "/dashboard/settings",
+    "/email-preferences",
   );
   const db = await createSupabaseServerClient({ authScope: "public" });
   const { error } = await (db as any).from("email_preferences").upsert({

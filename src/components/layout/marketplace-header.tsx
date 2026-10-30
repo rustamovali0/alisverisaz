@@ -94,7 +94,7 @@ export function MarketplaceHeader({
   const compactAuthHeader =
     /^\/(login|register|forgot-password|reset-password)(\/|$)/.test(pathname);
   const informationHeader =
-    /^\/(about|help|faq|guide|contact|terms|privacy|rules)(\/|$)/.test(
+    /^\/(about|help|faq|guide|contact|terms|privacy|rules|email-preferences)(\/|$)/.test(
       pathname,
     );
   const compactHeader = compactAuthHeader || informationHeader;

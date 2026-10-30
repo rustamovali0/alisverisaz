@@ -104,8 +104,10 @@ export function renderEmail(
       ? order.order_items.slice(0, 100)
       : [];
     if (!items.length) throw new Error("order_items_not_ready");
-    details =
-      '<table role="presentation" width="100%" style="border-collapse:collapse">';
+    const createdAt = new Date(String(order.created_at || ""));
+    const dateLabel = Number.isFinite(createdAt.getTime()) ? new Intl.DateTimeFormat("az-AZ", {day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Baku"}).format(createdAt) : "";
+    if(dateLabel)lines.push(`Sifariş tarixi: ${dateLabel}`);
+    details = (dateLabel ? `<p style="font-size:13px;color:#66766d;margin:0 0 20px">${escape(dateLabel)} · Bakı vaxtı</p>` : "") + '<table role="presentation" width="100%" style="border-collapse:collapse">';
     for (const item of items) {
       const row = `${item.product_name} × ${item.quantity}: ${
         money(item.total_amount, order.currency || "AZN")
@@ -127,26 +129,20 @@ export function renderEmail(
       const sellerProfile = order.seller_profile || {};
       const addressValue = order.delivery_address || shipping.address;
       const address = typeof addressValue === "string" ? addressValue : addressValue && typeof addressValue === "object" ? [addressValue.city,addressValue.region,addressValue.address,addressValue.street,addressValue.building,addressValue.apartment,addressValue.postal_code].filter(Boolean).join(", ") : "";
-      const contactRows = [
-        ["Sifariş tarixi",order.created_at],
-        ["Müştəri",shipping.full_name || customer.full_name || customer.name],
-        ["Müştərinin telefonu",shipping.phone || customer.phone],
-        ["Müştərinin e-poçtu",shipping.email || customer.email],
-        ["Çatdırılma ünvanı",address],
-        ["Şəhər / region",order.delivery_region || shipping.city || shipping.region],
-        ["Çatdırılma üsulu",({pickup:"Mağazadan təhvil",delivery:"Çatdırılma",courier:"Kuryer",whatsapp:"WhatsApp"} as Record<string,string>)[order.delivery_method] || order.delivery_method],
-        ["Ödəniş üsulu",({cash:"Nağd",cash_on_delivery:"Çatdırılma zamanı nağd",bank_transfer:"Bank köçürməsi",card:"Kart",whatsapp:"WhatsApp"} as Record<string,string>)[order.payment_method || order.metadata?.payment_method] || order.payment_method || order.metadata?.payment_method],
-        ["Ödəniş statusu",order.payment_status === "pending" ? "Ödəniş gözlənilir" : statusLabels[order.payment_status] || order.payment_status],
-        ["Sifariş qeydi",order.notes],
-        ["Mağaza",order.stores?.name],
-        ["Satıcı",sellerProfile.full_name],
-        ["Satıcının telefonu",order.stores?.phone || sellerProfile.phone],
-        ["Satıcının e-poçtu",order.stores?.email || sellerProfile.email],
-        ["Mağazanın ünvanı",order.stores?.address],
-      ].filter(([,value])=>value!==null&&value!==undefined&&String(value).trim());
-      details += '<h2 style="font-size:18px;margin-top:26px">Sifariş və əlaqə məlumatları</h2><table role="presentation" width="100%" style="border-collapse:collapse">';
-      for(const [label,value] of contactRows){lines.push(`${label}: ${String(value)}`);details+=`<tr><td style="padding:9px 8px 9px 0;vertical-align:top;border-bottom:1px solid #e2e8f0;color:#52645c">${escape(label)}</td><td style="padding:9px 0;vertical-align:top;border-bottom:1px solid #e2e8f0;white-space:pre-line">${escape(value)}</td></tr>`;}
-      details += '</table>';
+      const section = (heading:string, values:unknown[]) => {
+        const rows=values.filter(value=>value!==null&&value!==undefined&&String(value).trim());
+        if(!rows.length)return;
+        lines.push(heading,...rows.map(String));
+        details+=`<div style="margin:12px 0;padding:16px 18px;border:1px solid #e1e8e2;border-radius:10px"><h2 style="margin:0 0 9px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:#66766d">${escape(heading)}</h2>${rows.map((value,index)=>`<p style="margin:${index?'6px':'0'} 0 0;font-size:14px;line-height:1.6;white-space:pre-line;overflow-wrap:anywhere;${index?'':'font-weight:600;'}">${escape(value)}</p>`).join('')}</div>`;
+      };
+      section("Müştəri",[shipping.full_name || customer.full_name || customer.name,shipping.phone || customer.phone,shipping.email || customer.email]);
+      const delivery=({pickup:"Mağazadan təhvil",delivery:"Çatdırılma",courier:"Kuryer",whatsapp:"WhatsApp"} as Record<string,string>)[order.delivery_method] || order.delivery_method;
+      section("Çatdırılma",[address,[order.delivery_region || shipping.city || shipping.region,delivery].filter(Boolean).join(" · ")]);
+      const payment=({cash:"Nağd",cash_on_delivery:"Çatdırılma zamanı nağd",bank_transfer:"Bank köçürməsi",card:"Kart",whatsapp:"WhatsApp"} as Record<string,string>)[order.payment_method || order.metadata?.payment_method] || order.payment_method || order.metadata?.payment_method;
+      const paymentStatus=order.payment_status === "pending" ? "Ödəniş gözlənilir" : statusLabels[order.payment_status] || order.payment_status;
+      section("Ödəniş",[[payment,paymentStatus].filter(Boolean).join(" · ")]);
+      if(job.recipient_role === "administrator")section("Mağaza / satıcı",[order.stores?.name,sellerProfile.full_name,order.stores?.phone || sellerProfile.phone,order.stores?.email || sellerProfile.email,order.stores?.address]);
+      section("Sifariş qeydi",[order.notes]);
     }
     // A WhatsApp intent is not a confirmed payment or completed WhatsApp message.
     if (order.metadata?.source === "whatsapp") {
@@ -191,7 +187,7 @@ export function renderEmail(
   }
   if(job.kind==='campaign_marketing'&&buttonLabel==='Hesabda bax')buttonLabel='Təkliflərə bax';
   const link = new URL(path, base).toString();
-  const settings = new URL(job.recipient_role==="administrator"?"/radmin/email":dashboard + "/settings", base).toString();
+  const settings = new URL(job.recipient_role==="administrator"?"/radmin/email":"/email-preferences", base).toString();
   return {
     subject: clean(title) +
       (order ? ` — ${clean(order.order_number || order.id)}` : ""),

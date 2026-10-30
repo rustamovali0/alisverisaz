@@ -76,6 +76,7 @@ function needsSessionCheck(pathname: string) {
     pathname === "/admin" ||
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/email-preferences" ||
     pathname.startsWith("/admin/") ||
     pathname.startsWith("/radmin") ||
     pathname.startsWith("/dashboard") ||
@@ -135,6 +136,7 @@ async function getAccessBlockResponse(pathname: string) {
     !flags.user_access_enabled &&
     (pathname === "/login" ||
       pathname === "/register" ||
+      pathname === "/email-preferences" ||
       pathname.startsWith("/dashboard"))
   ) {
     return createMaintenanceResponse(

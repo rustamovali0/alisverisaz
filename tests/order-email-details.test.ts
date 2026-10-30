@@ -5,6 +5,7 @@ import { renderRecoveryTemplate } from "@/lib/email/recovery-template";
 import { createEmailTestDatabase, buyer, store } from "./email-db";
 const order = {
   id: "qa",
+  created_at: "2026-10-30T15:40:46.905Z",
   order_number: "QA-1",
   total_amount: 25,
   shipping_amount: 0,
@@ -24,7 +25,7 @@ const order = {
   order_items: [{ product_name: "Test", quantity: 1, total_amount: 25 }],
 };
 it.each(["seller", "administrator"] as const)(
-  "includes fulfilment and seller details for %s",
+  "shows grouped fulfilment details with seller contacts restricted to administrator: %s",
   (recipient_role) => {
     const m = renderEmail(
       {
@@ -40,9 +41,11 @@ it.each(["seller", "administrator"] as const)(
       order,
     );
     expect(m.html).toContain("QA Buyer");
+    if(recipient_role === "seller")expect(m.html).toContain("https://alisveris.az/email-preferences");
     expect(m.html).toContain("buyer@example.test");
-    expect(m.html).toContain("Store address");
-    expect(m.html).toContain("seller@example.test");
+    expect(m.html.includes("Store address")).toBe(recipient_role === "administrator");
+    expect(m.html.includes("seller@example.test")).toBe(recipient_role === "administrator");
+    expect(m.html).toContain("30.10.2026");expect(m.html).toContain("19:40");expect(m.html).not.toContain("2026-10-30T15:40:46.905Z");
     expect(m.html).toContain("Zəng edin");
     expect(m.html).toContain("&lt;script&gt;");
     expect(m.html).not.toContain("<script>");

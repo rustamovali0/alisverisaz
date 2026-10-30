@@ -11,8 +11,10 @@ export function EmailPreferences(
 ) {
   const [pending, start] = useTransition();
   const [feedback, setFeedback] = useState("");
+  const [transactional,setTransactional]=useState(initial.transactional);
+  const [marketing,setMarketing]=useState(initial.marketing);
   return (
-    <section className="rounded-xl border bg-card p-4 sm:p-5">
+    <section id="email-preferences" className="scroll-mt-28 rounded-xl border bg-card p-4 sm:p-5">
       <h2 className="text-lg font-bold">E-poçt bildirişləri</h2>
       {!initial.available
         ? (
@@ -27,6 +29,8 @@ export function EmailPreferences(
             action={(data) =>
               start(async () => {
                 try {
+                  data.set("transactional",transactional?"on":"off");
+                  data.set("marketing",marketing?"on":"off");
                   setFeedback((await saveEmailPreferences(data)).message);
                 } catch {
                   setFeedback("Bağlantı xətası. Yenidən cəhd edin.");
@@ -38,7 +42,8 @@ export function EmailPreferences(
                 className="size-5 shrink-0 accent-emerald-700"
                 type="checkbox"
                 name="transactional"
-                defaultChecked={initial.transactional}
+                checked={transactional}
+                onChange={event=>setTransactional(event.target.checked)}
               />
               <span>Sifariş, mesaj və mağaza bildirişləri</span>
             </label>
@@ -47,7 +52,8 @@ export function EmailPreferences(
                 className="size-5 shrink-0 accent-emerald-700"
                 type="checkbox"
                 name="marketing"
-                defaultChecked={initial.marketing}
+                checked={marketing}
+                onChange={event=>setMarketing(event.target.checked)}
               />
               <span>Kampaniya və endirim e-poçtları</span>
             </label>
