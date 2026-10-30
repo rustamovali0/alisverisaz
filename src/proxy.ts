@@ -150,6 +150,14 @@ function localizedInternalPath(locale: string, pathname: string) {
   return pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
 }
 
+function protectAuthResponse(response: NextResponse, pathname: string) {
+  if (["/auth/confirm", "/auth/callback", "/reset-password"].includes(pathname)) {
+    response.headers.set("Cache-Control", "no-store, no-transform");
+    response.headers.set("Referrer-Policy", "no-referrer");
+  }
+  return response;
+}
+
 function createLocalizedRewrite(
   request: NextRequest,
   pathname: string,
@@ -202,7 +210,7 @@ function createLocalizedRewrite(
     setLocaleCookie(response, locale, request.headers.get("host"));
   }
 
-  return response;
+  return protectAuthResponse(response, pathname);
 }
 
 function createCleanLocaleRedirect(request: NextRequest, pathname: string, locale: string) {
@@ -211,7 +219,7 @@ function createCleanLocaleRedirect(request: NextRequest, pathname: string, local
   const response = NextResponse.redirect(url, 308);
   setLocaleCookie(response, locale, request.headers.get("host"));
 
-  return response;
+  return protectAuthResponse(response, pathname);
 }
 
 function resolveSubdomainPath(pathname: string, storeSlug: string) {

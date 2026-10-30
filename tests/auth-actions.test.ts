@@ -36,19 +36,37 @@ beforeEach(() => {
   mocks.recordAttempt.mockResolvedValue({ isBlocked: false });
   mocks.verifyCaptcha.mockResolvedValue({ ok: false, message: "CAPTCHA required" });
 });
-it("returns identical public responses for active, missing, and inactive accounts", async () => {
+it("reports unregistered and inactive accounts without queuing a recovery email", async () => {
   const data = form({ identifier: "user@example.test" });
-  const active = await requestPasswordResetAction(data);
+  expect((await requestPasswordResetAction(data)).ok).toBe(true);
   await mocks.afterTasks.pop()?.();
-  expect(active.ok).toBe(true);
   mocks.from.mockReturnValue(query());
-  expect(await requestPasswordResetAction(data)).toEqual(active);
-  await mocks.afterTasks.pop()?.();
+  expect(await requestPasswordResetAction(data)).toMatchObject({ok:false,message:"Bu e-poçt ünvanı ilə qeydiyyat tapılmadı. Əvvəlcə qeydiyyatdan keçin."});
+  expect(mocks.afterTasks).toHaveLength(0);
   mocks.from.mockReturnValue(query({ data: { id: "user-1" } }));
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1", email: "user@example.test", banned_until: "2099-01-01" } } });
-  expect(await requestPasswordResetAction(data)).toEqual(active);
-  await mocks.afterTasks.pop()?.();
+  expect(await requestPasswordResetAction(data)).toMatchObject({ok:false,message:"Bu hesab hazırda aktiv deyil. Dəstək mərkəzinə müraciət edin."});
+  expect(mocks.afterTasks).toHaveLength(0);
   expect(mocks.sendEmail).toHaveBeenCalledTimes(1);
+});
+it("treats a missing Auth user as unregistered rather than claiming delivery", async () => {
+  mocks.getUser.mockResolvedValue({data:{user:null},error:{status:404,code:"user_not_found"}});
+  expect((await requestPasswordResetAction(form({identifier:"user@example.test"}))).ok).toBe(false);
+  expect(mocks.afterTasks).toHaveLength(0);
+});
+it("does not misreport database failures as an unregistered address", async () => {
+  mocks.from.mockReturnValue(query({error:{message:"database unavailable"}}));
+  const result=await requestPasswordResetAction(form({identifier:"user@example.test"}));
+  expect(result.ok).toBe(false);
+  expect(result.message).not.toContain("qeydiyyat tapılmadı");
+  expect(mocks.afterTasks).toHaveLength(0);
+});
+it("matches email addresses literally instead of treating underscores and percent signs as lookup wildcards", async () => {
+  const email="person_one+%tag@example.test";
+  const profile=query({data:{id:"user-1",email}});mocks.from.mockReturnValue(profile);
+  mocks.getUser.mockResolvedValue({data:{user:{id:"user-1",email}}});
+  expect((await requestPasswordResetAction(form({identifier:email}))).ok).toBe(true);
+  expect(profile.ilike).toHaveBeenCalledWith("email","person\\_one+\\%tag@example.test");
 });
 it("never uses an attacker-controlled host for the emailed recovery token", async () => {
   await requestPasswordResetAction(form({ identifier: "user@example.test" }));
@@ -65,9 +83,10 @@ it("rejects a blocked password reset before account lookup or email delivery", a
   expect(mocks.admin).not.toHaveBeenCalled();
   expect(mocks.sendEmail).not.toHaveBeenCalled();
 });
-it("does not expose account lookup or email delivery time in the reset response", async () => {
+it("checks registration before responding without waiting for SMTP delivery", async () => {
   expect((await requestPasswordResetAction(form({ identifier: "user@example.test" }))).ok).toBe(true);
-  expect(mocks.admin).not.toHaveBeenCalled();
+  expect(mocks.admin).toHaveBeenCalled();
+  expect(mocks.getUser).toHaveBeenCalled();
   expect(mocks.sendEmail).not.toHaveBeenCalled();
   expect(mocks.afterTasks).toHaveLength(1);
 });
@@ -189,13 +208,53 @@ it("validates matching strong passwords before accessing a recovery session", as
   expect(result.ok).toBe(false);expect(mocks.server).not.toHaveBeenCalled();
   expect((await updatePasswordAction(form({password:"new-long-password",confirmPassword:"different-password"}))).ok).toBe(false);
 });
-it("sets the new password, revokes prior sessions and clears the recovery cookie session", async () => {
+it.each(["customer", "seller"])("replaces revoked sessions with an approved %s login after resetting a password", async (role) => {
   const updateUser=vi.fn(async()=>({error:null})),signOut=vi.fn(async()=>({error:null}));
+  const signInWithPassword=vi.fn(async()=>({data:{user:{id:"user-1",email:"user@example.test",user_metadata:{}}},error:null}));
   const profile=query();mocks.from.mockReturnValue(profile);
-  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1"}}}),updateUser,signOut}});
-  expect(await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}))).toMatchObject({ok:true,redirectTo:"/login"});
+  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser,signOut,signInWithPassword},from:()=>query({data:{role,full_name:"QA User",phone:null}})});
+  expect(await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}))).toMatchObject({ok:true,redirectTo:role==="seller"?"/store/dashboard":"/"});
   expect(updateUser).toHaveBeenCalledWith({password:"new-long-password"});
   expect(profile.update).toHaveBeenCalledWith({session_revoked_at:expect.any(String)});
   expect(signOut).toHaveBeenCalledWith({scope:"global"});
+  expect(signInWithPassword).toHaveBeenCalledWith({email:"user@example.test",password:"new-long-password"});
+  expect(signOut.mock.invocationCallOrder[0]).toBeLessThan(signInWithPassword.mock.invocationCallOrder[0]);
+  const revokedAt=Date.parse(profile.update.mock.calls[0][0].session_revoked_at);
+  expect(Math.floor(Date.now()/1000)*1000).toBeGreaterThanOrEqual(revokedAt);
   expect(mocks.server).toHaveBeenCalledWith({authScope:"public",requireCookieWrite:true});
+});
+
+it.each([
+  {code:"same_password",message:"same password"},
+  {message:"New password should be different from the old password."},
+])("explains a reused password without signing out the recovery session: %j", async (error) => {
+  const signOut=vi.fn();
+  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser:async()=>({error}),signOut}});
+  expect(await updatePasswordAction(form({password:"existing-password",confirmPassword:"existing-password"}))).toEqual({ok:false,message:"Yeni şifrə əvvəlki şifrədən fərqli olmalıdır."});
+  expect(signOut).not.toHaveBeenCalled();
+  expect(mocks.admin).not.toHaveBeenCalled();
+});
+
+it("reports a completed reset if automatic login fails, without pretending the new password failed", async () => {
+  const signInWithPassword=vi.fn(async()=>({data:{user:null},error:{message:"unavailable"}}));
+  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser:async()=>({error:null}),signOut:async()=>({error:null}),signInWithPassword}});
+  const result=await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}));
+  expect(result).toMatchObject({ok:true,redirectTo:"/login"});
+  expect(result.message).toContain("Şifrə yeniləndi");
+  expect(signInWithPassword).toHaveBeenCalled();
+});
+
+it("does not bypass pending seller approval during automatic login", async () => {
+  const signOut=vi.fn(async()=>({error:null}));
+  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser:async()=>({error:null}),signOut,signInWithPassword:async()=>({data:{user:{id:"user-1",email:"user@example.test",user_metadata:{requested_role:"seller",seller_application_status:"pending"}}},error:null})},from:()=>query({data:{role:"customer"}})});
+  expect(await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}))).toMatchObject({ok:true,redirectTo:"/login"});
+  expect(signOut).toHaveBeenCalledTimes(2);
+});
+
+it("keeps the old-session boundary if revoking sessions fails", async () => {
+  const signInWithPassword=vi.fn();
+  mocks.from.mockReturnValue(query({error:{message:"revocation failed"}}));
+  mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser:async()=>({error:null}),signOut:async()=>({error:null}),signInWithPassword}});
+  expect(await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}))).toMatchObject({ok:true,redirectTo:"/login"});
+  expect(signInWithPassword).not.toHaveBeenCalled();
 });
