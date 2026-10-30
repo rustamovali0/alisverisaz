@@ -5,7 +5,7 @@ import { requireRadmin } from "@/lib/auth/radmin-auth";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-import { SYSTEM_EMAIL_TEMPLATES,validateSystemTemplate,type SystemEmailTemplate } from "../../../supabase/functions/_shared/template-catalog";
+import { EMAIL_THEME_DEFAULTS,SYSTEM_EMAIL_TEMPLATES,validateSystemTemplate,type SystemEmailTemplate } from "../../../supabase/functions/_shared/template-catalog";
 
 const uuid =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -39,7 +39,7 @@ export async function loadEmailCenter() {
       { ascending: false },
     ).limit(50),
     db.rpc("email_campaign_history", { p_limit: 20 }),
-    db.from("email_system_templates").select("key,name,title,body,button_label").order("name").limit(30),
+    db.from("email_system_templates").select("key,name,title,body,button_label,theme").order("name").limit(30),
   ]);
   return {
     available: !settings.error && !templates.error && !history.error,
@@ -181,10 +181,10 @@ export async function loadEmailCampaignRecipients(id: string, page = 0) {
 export async function saveSystemEmailTemplate(f:FormData) {
  const current=await requireRadmin();
  const key=read(f,'key'),defaults=SYSTEM_EMAIL_TEMPLATES.find(t=>t.key===key);
- const value:SystemEmailTemplate={key,name:defaults?.name||'',title:read(f,'title'),body:read(f,'body'),button_label:read(f,'button_label')};
+ const value:SystemEmailTemplate={key,name:defaults?.name||'',title:read(f,'title'),body:read(f,'body'),button_label:read(f,'button_label'),theme:Object.fromEntries(Object.entries(EMAIL_THEME_DEFAULTS).map(([key,value])=>[key,read(f,'color_'+key)||value]))};
  if(!validateSystemTemplate(value))return {ok:false,message:'Başlığı, mətni və icazəli dəyişənləri yoxlayın.'};
  const db=createSupabaseAdminClient() as any;
- const {error}=await db.from('email_system_templates').update({title:value.title,body:value.body,button_label:value.button_label,updated_at:new Date().toISOString()}).eq('key',key).select('key').single();
+ const {error}=await db.from('email_system_templates').update({title:value.title,body:value.body,button_label:value.button_label,theme:value.theme,updated_at:new Date().toISOString()}).eq('key',key).select('key').single();
  if(error)return {ok:false,message:'Sistem şablonu saxlanılmadı.'};
  await recordAdminAudit({adminId:current.user.id,action:'system_email_template_saved',entityType:'email_system_templates',entityId:null,metadata:{key}});
  revalidateTag('system-email-templates',{expire:0});revalidatePath('/radmin/email');

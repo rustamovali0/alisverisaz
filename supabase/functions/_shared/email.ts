@@ -1,4 +1,4 @@
-import {fillEmailTemplate,systemTemplateKey,SYSTEM_EMAIL_TEMPLATES,type SystemEmailTemplate} from "./template-catalog.ts";
+import {resolveEmailTheme,fillEmailTemplate,systemTemplateKey,SYSTEM_EMAIL_TEMPLATES,type SystemEmailTemplate} from "./template-catalog.ts";
 export type EmailJob = {
   id: string;
   kind: string;
@@ -151,6 +151,7 @@ export function renderEmail(
   }
   const originalTitle=title,originalBody=body;
   const selectedTemplate=template || SYSTEM_EMAIL_TEMPLATES.find(t=>t.key===systemTemplateKey(job));
+  const colors=resolveEmailTheme(selectedTemplate?.theme);
   let buttonLabel='Hesabda bax';
   if(selectedTemplate) {
     const state=String(job.kind==='order_payment'?job.payload.payment_status:job.payload.status||'');
@@ -171,13 +172,13 @@ export function renderEmail(
       "E-poçt ayarları: " + settings,
     ].join("\n\n"),
     html:
-      `<!doctype html><html lang="az"><body style="margin:0;background:#f5f7f5;font-family:Arial,sans-serif;color:#18382c"><div style="max-width:600px;margin:24px auto;background:white;padding:28px;border-radius:16px;overflow-wrap:anywhere"><p style="font-weight:bold">ALİSVERİS.AZ</p><h1 style="font-size:24px">${
+      `<!doctype html><html lang="az"><body style="margin:0;background:${colors.background};font-family:Arial,sans-serif;color:${colors.text}"><div style="max-width:600px;margin:24px auto;background:${colors.card};padding:28px;border-radius:16px;overflow-wrap:anywhere"><p style="font-weight:bold;color:${colors.heading}">ALİSVERİS.AZ</p><h1 style="font-size:24px;color:${colors.heading}">${
         escape(title)
       }</h1><p style="line-height:1.7;white-space:pre-line">${
         escape(body)
       }</p>${details}<p><a href="${
         escape(link)
-      }" style="display:inline-block;padding:14px 22px;background:#17634b;color:white;text-decoration:none;border-radius:8px">${escape(buttonLabel)}</a></p><p style="font-size:13px;color:#52645c">Şifrənizi və təsdiq kodlarınızı heç kimlə paylaşmayın.</p><a href="${
+      }" style="display:inline-block;padding:14px 22px;background:${colors.button};color:${colors.button_text};text-decoration:none;border-radius:8px">${escape(buttonLabel)}</a></p><p style="font-size:13px;color:#52645c">Şifrənizi və təsdiq kodlarınızı heç kimlə paylaşmayın.</p><a href="${
         escape(settings)
       }" style="font-size:13px;color:#17634b">E-poçt bildirişlərini idarə et</a></div></body></html>`,
   };

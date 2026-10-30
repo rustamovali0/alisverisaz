@@ -1,4 +1,7 @@
-export type SystemEmailTemplate = {key:string;name:string;title:string;body:string;button_label:string};
+export const EMAIL_THEME_DEFAULTS={background:"#f4f7f4",card:"#ffffff",text:"#18382c",heading:"#18382c",button:"#17634b",button_text:"#ffffff"};
+export type EmailTheme=typeof EMAIL_THEME_DEFAULTS;
+export function resolveEmailTheme(theme?:Partial<EmailTheme>):EmailTheme{return Object.fromEntries(Object.entries(EMAIL_THEME_DEFAULTS).map(([key,value])=>[key,/^#[0-9a-f]{6}$/i.test(String(theme?.[key as keyof EmailTheme]||""))?theme![key as keyof EmailTheme]:value])) as EmailTheme;}
+export type SystemEmailTemplate = {key:string;name:string;title:string;body:string;button_label:string;theme?:Partial<EmailTheme>};
 const define=(key:string,name:string,title:string,body:string,button_label='Hesabda bax'):SystemEmailTemplate=>({key,name,title,body,button_label});
 export const SYSTEM_EMAIL_TEMPLATES:SystemEmailTemplate[]=[
  define('password_recovery','Şifrə bərpası','Şifrəni yenilə','Salam {email}, hesabınız üçün şifrə bərpası istənildi. Yeni şifrə təyin etmək üçün aşağıdakı düymədən istifadə edin.','Yeni şifrə təyin et'),
@@ -30,6 +33,7 @@ export function systemTemplateKey(job:{kind:string;recipient_role:string;payload
 }
 export function fillEmailTemplate(text:string,variables:Record<string,unknown>) {return text.replace(/\{([a-z_]+)\}/g,(_,key)=>String(variables[key]??''));}
 export function validateSystemTemplate(value:SystemEmailTemplate) {
+ if(value.theme&&(Object.keys(value.theme).some(k=>!Object.hasOwn(EMAIL_THEME_DEFAULTS,k))||Object.values(value.theme).some(v=>!/^#[0-9a-f]{6}$/i.test(String(v)))))return false;
  const defaults=SYSTEM_EMAIL_TEMPLATES.find(t=>t.key===value.key);if(!defaults)return false;
  if(!value.title.trim()||value.title.length>160||/[\r\n]/.test(value.title)||!value.body.trim()||value.body.length>20000||!value.button_label.trim()||value.button_label.length>80)return false;
  const all=[value.title,value.body,value.button_label].join('\n');

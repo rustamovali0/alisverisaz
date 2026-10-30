@@ -196,7 +196,7 @@ function createLocalizedRewrite(
     },
   });
   if (request.method === "GET" || request.method === "HEAD") {
-    response.headers.set("Cache-Control", "private, max-age=0, must-revalidate");
+    response.headers.set("Cache-Control", "private, max-age=0, must-revalidate, no-transform");
   }
   if (shouldSetLocaleCookie) {
     setLocaleCookie(response, locale, request.headers.get("host"));
@@ -273,7 +273,7 @@ async function storeSlugExists(slug: string) {
 function createNotFoundResponse() {
   return new NextResponse(
     '<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Səhifə tapılmadı | Alışveriş.az</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font-family:Inter,system-ui,sans-serif}.card{max-width:520px;margin:24px;padding:32px;text-align:center;border:1px solid #e2e8f0;border-radius:20px;background:#fff}h1{margin:0 0 10px;font-size:28px}p{margin:0 0 22px;color:#64748b;line-height:1.6}a{display:inline-flex;min-height:44px;align-items:center;padding:0 18px;border-radius:12px;background:#2563eb;color:#fff;text-decoration:none;font-weight:700}</style></head><body><main class="card"><h1>Səhifə tapılmadı</h1><p>Axtardığınız səhifə mövcud deyil və ya silinib.</p><a href="/">Ana səhifəyə qayıt</a></main></body></html>',
-    { status: 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "private, max-age=0, must-revalidate" } },
+    { status: 404, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "private, max-age=0, must-revalidate, no-transform" } },
   );
 }
 

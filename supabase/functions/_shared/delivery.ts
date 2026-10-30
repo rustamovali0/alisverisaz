@@ -102,7 +102,7 @@ export function createEmailDispatcher(
     },
     async template(job) {
       const key=systemTemplateKey(job);if(!key)return undefined;
-      const {data,error}=await db().from('email_system_templates').select('key,name,title,body,button_label').eq('key',key).maybeSingle();
+      const {data,error}=await db().from('email_system_templates').select('key,name,title,body,button_label,theme').eq('key',key).maybeSingle();
       if(error)throw Error('system_template_unavailable');
       if(!data)return undefined;
       if(!validateSystemTemplate(data as SystemEmailTemplate))throw Error('invalid_system_template');
