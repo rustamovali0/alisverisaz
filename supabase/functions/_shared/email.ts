@@ -84,7 +84,7 @@ export function renderEmail(
   } else if (job.kind.startsWith("order_")) {
     if (!order) throw new Error("order_unavailable");
     title = job.kind === "order_created"
-      ? seller ? "Yeni sifariş yaradıldı" : "Sifarişiniz qəbul edildi"
+      ? seller || job.recipient_role === "administrator" ? "Yeni sifariş yaradıldı" : "Sifarişiniz qəbul edildi"
       : job.kind === "order_payment"
       ? "Sifarişin ödəniş statusu yeniləndi"
       : "Sifariş statusu yeniləndi";
@@ -116,16 +116,43 @@ export function renderEmail(
           escape(row)
         }</td></tr>`;
     }
-    const shipping = money(order.shipping_amount || 0, order.currency || "AZN");
+    const shipping = money(order.delivery_amount ?? order.shipping_amount ?? 0, order.currency || "AZN");
     lines.push(`Çatdırılma: ${shipping}`, `Yekun: ${total}`);
     details += `</table><p>Çatdırılma: ${
       escape(shipping)
     }</p><p><strong>Yekun: ${escape(total)}</strong></p>`;
+    if (seller || job.recipient_role === "administrator") {
+      const shipping = order.shipping_address && typeof order.shipping_address === "object" ? order.shipping_address : {};
+      const customer = order.customers || {};
+      const sellerProfile = order.seller_profile || {};
+      const addressValue = order.delivery_address || shipping.address;
+      const address = typeof addressValue === "string" ? addressValue : addressValue && typeof addressValue === "object" ? [addressValue.city,addressValue.region,addressValue.address,addressValue.street,addressValue.building,addressValue.apartment,addressValue.postal_code].filter(Boolean).join(", ") : "";
+      const contactRows = [
+        ["Sifariş tarixi",order.created_at],
+        ["Müştəri",shipping.full_name || customer.full_name || customer.name],
+        ["Müştərinin telefonu",shipping.phone || customer.phone],
+        ["Müştərinin e-poçtu",shipping.email || customer.email],
+        ["Çatdırılma ünvanı",address],
+        ["Şəhər / region",order.delivery_region || shipping.city || shipping.region],
+        ["Çatdırılma üsulu",({pickup:"Mağazadan təhvil",delivery:"Çatdırılma",courier:"Kuryer",whatsapp:"WhatsApp"} as Record<string,string>)[order.delivery_method] || order.delivery_method],
+        ["Ödəniş üsulu",({cash:"Nağd",cash_on_delivery:"Çatdırılma zamanı nağd",bank_transfer:"Bank köçürməsi",card:"Kart",whatsapp:"WhatsApp"} as Record<string,string>)[order.payment_method || order.metadata?.payment_method] || order.payment_method || order.metadata?.payment_method],
+        ["Ödəniş statusu",order.payment_status === "pending" ? "Ödəniş gözlənilir" : statusLabels[order.payment_status] || order.payment_status],
+        ["Sifariş qeydi",order.notes],
+        ["Mağaza",order.stores?.name],
+        ["Satıcı",sellerProfile.full_name],
+        ["Satıcının telefonu",order.stores?.phone || sellerProfile.phone],
+        ["Satıcının e-poçtu",order.stores?.email || sellerProfile.email],
+        ["Mağazanın ünvanı",order.stores?.address],
+      ].filter(([,value])=>value!==null&&value!==undefined&&String(value).trim());
+      details += '<h2 style="font-size:18px;margin-top:26px">Sifariş və əlaqə məlumatları</h2><table role="presentation" width="100%" style="border-collapse:collapse">';
+      for(const [label,value] of contactRows){lines.push(`${label}: ${String(value)}`);details+=`<tr><td style="padding:9px 8px 9px 0;vertical-align:top;border-bottom:1px solid #e2e8f0;color:#52645c">${escape(label)}</td><td style="padding:9px 0;vertical-align:top;border-bottom:1px solid #e2e8f0;white-space:pre-line">${escape(value)}</td></tr>`;}
+      details += '</table>';
+    }
     // A WhatsApp intent is not a confirmed payment or completed WhatsApp message.
     if (order.metadata?.source === "whatsapp") {
       body += " Bu, WhatsApp sifariş müraciətidir; ödəniş təsdiqi deyil.";
     }
-    path = job.recipient_id ? dashboard + "/orders" : "/help";
+    path = job.recipient_role === "administrator" ? "/radmin/orders" : job.recipient_id ? dashboard + "/orders" : "/help";
   } else if(job.kind==='campaign_marketing') {
     path='/products';
   } else if(job.kind==='seller_campaign') {
@@ -182,7 +209,7 @@ export function renderEmail(
         escape(body)
       }</p>${details}<p><a href="${
         escape(link)
-      }" style="display:inline-block;padding:14px 22px;background:${colors.button};color:${colors.button_text};text-decoration:none;border-radius:8px">${escape(buttonLabel)}</a></p><p style="font-size:13px;color:#52645c">Şifrənizi və təsdiq kodlarınızı heç kimlə paylaşmayın.</p><a href="${
+      }" style="display:inline-block;padding:14px 22px;background:${colors.button};color:${colors.button_text};text-decoration:none;border-radius:8px">${escape(buttonLabel)}</a></p><a href="${
         escape(settings)
       }" style="font-size:13px;color:#17634b">E-poçt bildirişlərini idarə et</a></div></body></html>`,
   };

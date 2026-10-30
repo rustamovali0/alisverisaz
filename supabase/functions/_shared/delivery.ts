@@ -40,11 +40,8 @@ export function createEmailDispatcher(
       if (settingsError) throw Error("settings_unavailable");
       if (!settings?.enabled) return { allowed: false };
       if (job.recipient_role === "administrator") {
-        return {
-          allowed: ["registration_admin", "delivery_test"].includes(job.kind) &&
-            settings.admin_address?.toLowerCase() ===
-              job.to_address.toLowerCase(),
-        };
+        if (settings.admin_address?.toLowerCase() !== job.to_address.toLowerCase()) return {allowed:false};
+        if (job.kind !== "order_created") return {allowed:["registration_admin","delivery_test"].includes(job.kind)};
       }
       if (job.recipient_id) {
         const [
@@ -83,7 +80,7 @@ export function createEmailDispatcher(
           db().from("platform_settings").select("value").eq("key", "site")
             .maybeSingle(),
           db().from("orders").select(
-            "id,order_number,user_id,total_amount,shipping_amount,currency,metadata,customers(email),stores(owner_id,name),order_items(product_name,quantity,total_amount)",
+            "*,customers(*),stores(*),order_items(*)",
           ).eq("id", job.payload.order_id).maybeSingle(),
         ]);
       if (error || siteError) throw Error("order_lookup_failed");
@@ -93,12 +90,20 @@ export function createEmailDispatcher(
       const relation = (row: any) => Array.isArray(row) ? row[0] : row;
       const store = relation(order.stores);
       const customer = relation(order.customers);
-      const owns = job.payload.audience === "seller"
+      const owns = job.recipient_role === "administrator" ? true : job.payload.audience === "seller"
         ? store?.owner_id === job.recipient_id
         : job.recipient_id
         ? order.user_id === job.recipient_id
         : customer?.email?.toLowerCase() === job.to_address.toLowerCase();
-      return { allowed: Boolean(owns), order: { ...order, stores: store } };
+      if (!owns) return {allowed:false};
+      let sellerProfile, customerProfile;
+      if (job.recipient_role === "administrator" || job.payload.audience === "seller") {
+        const result = await db().from("profiles").select("full_name,email,phone").eq("id",store?.owner_id).maybeSingle();
+        if(result.error)throw Error("seller_details_unavailable");
+        sellerProfile=result.data;
+        if(order.user_id){const customerResult=await db().from("profiles").select("full_name,email,phone").eq("id",order.user_id).maybeSingle();if(customerResult.error)throw Error("customer_details_unavailable");customerProfile=customerResult.data;}
+      }
+      return { allowed: true, order: { ...order, customers:customer || customerProfile, stores: store, seller_profile:sellerProfile } };
     },
     async template(job) {
       const key=systemTemplateKey(job);if(!key)return undefined;

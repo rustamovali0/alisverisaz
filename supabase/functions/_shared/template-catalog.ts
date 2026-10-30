@@ -13,6 +13,7 @@ export const SYSTEM_EMAIL_TEMPLATES:SystemEmailTemplate[]=[
   `order_${event}_${audience}`,`${event==='created'?'Yeni sifariş':event==='status'?'Sifariş statusu':'Ödəniş statusu'} → ${audience==='seller'?'satıcı':'alıcı'}`,
   event==='created'?(audience==='seller'?'Yeni sifariş yaradıldı':'Sifarişiniz qəbul edildi'):event==='status'?'Sifariş statusu yeniləndi':'Sifarişin ödəniş statusu yeniləndi',
   'Sifariş: {sifaris}. Status: {status}.','Sifarişə bax'))),
+ define('order_created_admin','Yeni sifariş → administrator','Yeni sifariş yaradıldı','Sifariş: {sifaris}. Mağaza: {magaza}. Status: {status}.','Sifarişə bax'),
  define('store_status','Mağaza statusu','Mağaza statusu yeniləndi','{magaza} mağazasının statusu: {status}.','Mağaza panelinə keç'),
  define('message','Yeni müştəri mesajı','Yeni müştəri mesajı','Yeni mesajı mağaza panelindən oxuya bilərsiniz.','Mesajlara bax'),
  define('message_reply','Satıcı cavabı','Mesajınıza cavab gəldi','Cavabı hesabınızda oxuya bilərsiniz.','Mesajlara bax'),
@@ -30,6 +31,7 @@ export function systemTemplateKey(job:{kind:string;recipient_role:string;payload
  if(job.kind==='campaign_marketing')return 'promo';
  if(job.kind==='admin_campaign')return 'notification';
  if(job.kind==='registration_admin')return job.payload.requested_role==='seller'?'registration_seller_admin':'registration_customer_admin';
+ if(job.kind==='order_created'&&job.recipient_role==='administrator')return 'order_created_admin';
  if(job.kind.startsWith('order_'))return `${job.kind}_${job.payload.audience==='seller'?'seller':'customer'}`;
  return SYSTEM_EMAIL_TEMPLATES.some(t=>t.key===job.kind)?job.kind:null;
 }
