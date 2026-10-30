@@ -3,6 +3,13 @@ import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+function privateRedirect(url: URL) {
+  const response=NextResponse.redirect(url);
+  response.headers.set("Referrer-Policy", "no-referrer");
+  response.headers.set("Cache-Control", "no-store");
+  return response;
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const origin = requestUrl.origin;
@@ -17,18 +24,18 @@ export async function GET(request: Request) {
   expiredUrl.searchParams.set("reset", "expired");
 
   if (!tokenHash || type !== "recovery") {
-    return NextResponse.redirect(expiredUrl);
+    return privateRedirect(expiredUrl);
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient({ authScope: "public", requireCookieWrite: true });
   const { error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
     type: "recovery",
   });
 
   if (error) {
-    return NextResponse.redirect(expiredUrl);
+    return privateRedirect(expiredUrl);
   }
 
-  return NextResponse.redirect(new URL(nextPath, origin));
+  return privateRedirect(new URL(nextPath, origin));
 }

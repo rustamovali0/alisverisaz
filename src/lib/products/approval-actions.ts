@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import { invalidateProductPublicData } from "@/lib/cache/public-cache";
-import { sendProductRejectedEmail } from "@/lib/email/product-approval";
 import { notifySeller } from "@/lib/products/approval-notifications";
 import { deleteR2ImagesByUrls } from "@/lib/storage/r2";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -245,21 +244,6 @@ export async function rejectProductAction(
     body: note,
     productId: product.id,
   });
-  if (product.sellerEmail) {
-    try {
-      await sendProductRejectedEmail({
-        to: product.sellerEmail,
-        sellerName: product.sellerName,
-        productName: product.name,
-        message: note,
-      });
-    } catch (error) {
-      console.error("Product rejection email failed", {
-        productId: product.id,
-        error,
-      });
-    }
-  }
   await recordAdminAudit({
     adminId: current.user.id,
     action: "reject_product",

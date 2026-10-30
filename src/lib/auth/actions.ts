@@ -24,8 +24,6 @@ import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlags } from "@/lib/platform/system-settings";
 import { recordImageMediaAsset } from "@/lib/storage/media-assets";
 import { deleteR2ImagesByUrls, uploadImageToR2 } from "@/lib/storage/r2";
-import { sendPasswordResetEmail } from "@/lib/email/password-reset";
-import { sendWelcomeRegistrationEmail } from "@/lib/email/welcome";
 import {
   notifyAdminLogin,
   notifyAdminLoginFailed,
@@ -446,24 +444,8 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
       },
     });
 
-    if (serverEnv.hasSmtpConfig) {
-      try {
-        await sendWelcomeRegistrationEmail({
-          to: email,
-          fullName,
-          role,
-          loginUrl: new URL("/login", await getPublicRequestOrigin()).toString(),
-        });
-      } catch (error) {
-        console.error("Welcome registration email failed", {
-          message: error instanceof Error ? error.message : String(error),
-          email,
-          role,
-        });
-      }
-    } else {
-      console.warn("Welcome registration email skipped because SMTP is not configured");
-    }
+    // Welcome delivery is captured transactionally by the Supabase profile trigger.
+
   });
 
   if (role === "seller") {
@@ -1101,121 +1083,22 @@ async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
     return accepted;
   }
 
-  const redirectUrl = new URL("/auth/callback", await getPublicRequestOrigin());
-
-  redirectUrl.searchParams.set("next", "/reset-password?mode=recovery");
-
-  if (serverEnv.hasSmtpConfig) {
-    console.info("Password reset email channel selected", { channel: "smtp" });
-    let generateResult: Awaited<ReturnType<typeof supabaseAdmin.auth.admin.generateLink>>;
-
-    try {
-      generateResult = await withAuthTimeout(
-        supabaseAdmin.auth.admin.generateLink({
-          type: "recovery",
-          email,
-          options: {
-            redirectTo: redirectUrl.toString(),
-          },
-        }),
-        "Bərpa linkinin yaradılması",
-      );
-    } catch (error) {
-      console.error("Password reset link generation timed out", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const { data, error } = generateResult;
-
+  // Supabase Auth owns recovery tokens and mail delivery. Its recovery template
+  // uses TokenHash -> /auth/confirm, so no response-time PKCE cookie write or
+  // cross-device code verifier is required. Never put recovery tokens in the outbox.
+  const redirectUrl = new URL("/reset-password?mode=recovery", await getPublicRequestOrigin());
+  try {
+    const { error } = await withAuthTimeout(
+      supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl.toString() }),
+      "Bərpa emailinin göndərilməsi",
+    );
     if (error) {
-      if (isMissingAuthUserError(error)) {
-        return accepted;
-      }
-
-      console.error("Password reset link generation failed", {
-        message: error.message,
-        status: error.status,
-        code: error.code,
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
+      console.error("Supabase recovery delivery failed", { status: error.status, code: error.code });
+      return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
     }
-
-    const tokenHash = data.properties?.hashed_token;
-
-    if (!tokenHash) {
-      console.error("Password reset link generation returned no token hash");
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const resetUrl = new URL("/auth/confirm", await getPublicRequestOrigin());
-    resetUrl.searchParams.set("token_hash", tokenHash);
-    resetUrl.searchParams.set("type", "recovery");
-    resetUrl.searchParams.set("next", "/reset-password?mode=recovery");
-
-    try {
-      await sendPasswordResetEmail({ to: email, resetUrl: resetUrl.toString() });
-    } catch (error) {
-      console.error("Password reset SMTP email failed", {
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-  } else {
-    console.info("Password reset email channel selected", { channel: "supabase" });
-    const supabase = await createSupabaseServerClient();
-    let resetResult: Awaited<ReturnType<typeof supabase.auth.resetPasswordForEmail>>;
-
-    try {
-      resetResult = await withAuthTimeout(
-        supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: redirectUrl.toString(),
-        }),
-        "Bərpa emailinin göndərilməsi",
-      );
-    } catch (error) {
-      console.error("Password reset email timed out", {
-        channel: "supabase",
-        message: error instanceof Error ? error.message : String(error),
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
-
-    const { error } = resetResult;
-
-    if (error) {
-      console.error("Password reset email failed", {
-        message: error.message,
-        status: error.status,
-        code: error.code,
-      });
-
-      return {
-        ok: false,
-        message: PASSWORD_RESET_SEND_ERROR,
-      };
-    }
+  } catch {
+    console.error("Supabase recovery delivery timed out");
+    return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
   }
 
   return accepted;
@@ -1248,7 +1131,7 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
     };
   }
 
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient({ authScope: "public", requireCookieWrite: true });
   const { data: userData } = await supabase.auth.getUser();
 
   if (!userData.user) {
@@ -1275,9 +1158,12 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
     };
   }
 
+  await revokeProfileSessions(userData.user.id);
+  await supabase.auth.signOut({ scope: "global" });
+
   return {
     ok: true,
-    message: "Şifrə uğurla yeniləndi.",
+    message: "Şifrə uğurla yeniləndi. Yeni şifrə ilə daxil olun.",
     redirectTo: "/login",
   };
 }
