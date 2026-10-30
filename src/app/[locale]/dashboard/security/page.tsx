@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
 import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
 import { requireRole } from "@/lib/auth/session";
 
@@ -23,12 +24,12 @@ export default async function CustomerSecurityPage() {
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-black">Hesab qorunması</h2>
             <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Şifrə yeniləmə bölməsi Profil səhifəsinə köçürüldü. Giriş məlumatlarınızı
-              yeniləmək üçün Profil bölməsindən istifadə edin.
+              Hesabınızı qorumaq üçün başqa xidmətlərdə istifadə etmədiyiniz güclü şifrə seçin.
             </p>
           </div>
         </div>
       </div>
+      <PasswordChangeForm />
     </DashboardPanel>
   );
 }
