@@ -268,7 +268,8 @@
   font-weight: 650;
 }
 .live-header-account {
-  max-width: 230px;
+  /* Reserve the full width of the seller action and account menu. */
+  flex-shrink: 0;
   min-width: 0;
 }
 .live-header-account > div {

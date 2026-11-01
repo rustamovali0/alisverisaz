@@ -43,7 +43,7 @@ export default async function StoreAnalyticsPage({
               className={
                 option.value === range
                   ? "rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
-                  : "rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold hover:bg-accent"
+                  : "rounded-md border border-input bg-background px-3 py-2 text-sm font-semibold hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
               }
             >
               {option.label}

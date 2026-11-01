@@ -132,7 +132,7 @@ function AdminProfileMenu({ userLabel }: { userLabel: string }) {
           <div className="mt-2 grid gap-2">
             <Link
               href="/radmin"
-              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
               role="menuitem"
               onClick={() => setIsOpen(false)}
             >
@@ -140,7 +140,7 @@ function AdminProfileMenu({ userLabel }: { userLabel: string }) {
             </Link>
             <Link
               href="/radmin/settings"
-              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+              className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
               role="menuitem"
               onClick={() => setIsOpen(false)}
             >
@@ -430,7 +430,7 @@ export function RadminDashboardShell({
                     <Link
                       key={item.href}
                       href={normalizePath(item.href)}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-accent"
+                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                       onClick={() => setSearch("")}
                     >
                       <span>{getItemLabel(item)}</span>

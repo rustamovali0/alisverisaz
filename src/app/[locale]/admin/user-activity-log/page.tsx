@@ -270,7 +270,7 @@ export default async function AdminUserActivityLogPage({
                       to: activity.filters.to,
                       page: activity.pagination.page - 1,
                     })}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border bg-background px-3 text-sm font-bold hover:bg-accent"
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border bg-background px-3 text-sm font-bold hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                   >
                     <ChevronLeft className="size-4" aria-hidden="true" />
                     Əvvəlki
@@ -289,7 +289,7 @@ export default async function AdminUserActivityLogPage({
                       to: activity.filters.to,
                       page: activity.pagination.page + 1,
                     })}
-                    className="inline-flex h-10 items-center gap-2 rounded-lg border bg-background px-3 text-sm font-bold hover:bg-accent"
+                    className="inline-flex h-10 items-center gap-2 rounded-lg border bg-background px-3 text-sm font-bold hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                   >
                     Daha çox
                     <ChevronRight className="size-4" aria-hidden="true" />

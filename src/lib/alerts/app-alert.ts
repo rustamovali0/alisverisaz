@@ -142,7 +142,7 @@ function createAlert(input: {
       cancelButton.type = "button";
       cancelButton.dataset.alertCancel = "";
       cancelButton.className =
-        "inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+        "inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-background px-4 py-2 text-sm font-semibold transition-colors hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
       cancelButton.textContent = cancelText;
       actions.appendChild(cancelButton);
     }
