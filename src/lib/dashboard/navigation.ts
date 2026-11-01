@@ -9,6 +9,7 @@ export type DashboardIcon =
   | "home"
   | "image"
   | "layout"
+  | "mail"
   | "menu"
   | "package"
   | "palette"
@@ -298,6 +299,11 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       title: "Bildirişlər",
       href: "/radmin/announcements",
       icon: "sparkles",
+    },
+    {
+      title: "E-poçt mərkəzi",
+      href: "/radmin/email",
+      icon: "mail",
     },
     {
       title: "Media",

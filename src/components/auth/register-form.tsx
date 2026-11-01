@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Chrome, ImagePlus, Store, UserRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Chrome, Store, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition, type UIEvent } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -15,7 +15,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { googleOAuthAction, registerAction } from "@/lib/auth/actions";
 import { refreshCachedClientAuthProfile } from "@/lib/auth/use-client-auth-profile";
-import { isRealImageFile } from "@/lib/images/client-file-validation";
+import { SellerImageDropzone } from "@/components/auth/seller-image-dropzone";
 import { cn } from "@/lib/utils";
 
 type RegisterFormProps = {
@@ -33,8 +33,6 @@ type FieldErrors = {
   confirmPassword?: string;
   terms?: string;
 };
-
-const MAX_SELLER_IMAGE_SIZE = 5 * 1024 * 1024;
 
 function LegalReadDialog({
   onClose,
@@ -105,113 +103,6 @@ function LegalReadDialog({
   );
 }
 
-function SellerImageDropzone({
-  name,
-  label,
-  ratioClassName,
-}: {
-  name: string;
-  label: string;
-  ratioClassName: string;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState("");
-  const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    return () => {
-      if (preview.startsWith("blob:")) {
-        URL.revokeObjectURL(preview);
-      }
-    };
-  }, [preview]);
-
-  async function handleFiles(files: FileList | null) {
-    const file = files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    if (file.size > MAX_SELLER_IMAGE_SIZE) {
-      setError(`${label} maksimum 5MB ola bilər.`);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-      setPreview("");
-      return;
-    }
-
-    if (!(await isRealImageFile(file))) {
-      setError("Yalnız real şəkil faylları qəbul edilir.");
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-      setPreview("");
-      return;
-    }
-
-    setError("");
-    if (inputRef.current && typeof DataTransfer !== "undefined") {
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(file);
-      inputRef.current.files = dataTransfer.files;
-    }
-
-    const nextPreview = URL.createObjectURL(file);
-    setPreview((current) => {
-      if (current.startsWith("blob:")) {
-        URL.revokeObjectURL(current);
-      }
-
-      return nextPreview;
-    });
-  }
-
-  return (
-    <div className="grid min-w-0 gap-2">
-      <span className="text-sm font-medium">{label}</span>
-      <button
-        type="button"
-        className={`relative grid w-full min-w-0 place-items-center overflow-hidden rounded-xl border border-dashed bg-background p-3 text-center transition ${ratioClassName} ${
-          isDragging ? "border-primary bg-primary/5" : "border-input"
-        }`}
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-          void handleFiles(event.dataTransfer.files);
-        }}
-      >
-        {preview ? (
-          <img src={preview} alt={label} className="h-full w-full rounded-lg object-cover" />
-        ) : (
-          <span className="grid place-items-center gap-2 text-sm text-muted-foreground">
-            <ImagePlus className="size-7" aria-hidden="true" />
-            <span className="sm:hidden">Şəkil seç</span>
-            <span className="hidden sm:inline">Şəkli seç və ya buraya sürüklə</span>
-          </span>
-        )}
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        name={name}
-        accept="image/*,.heic,.heif,.avif,.tif,.tiff,.bmp"
-        className="hidden"
-        onChange={(event) => void handleFiles(event.target.files)}
-      />
-      {error ? <span className="text-xs font-medium text-destructive">{error}</span> : null}
-    </div>
-  );
-}
-
 function getPasswordStrength(value: string) {
   if (!value) {
     return { label: "", className: "bg-muted" };
@@ -266,6 +157,11 @@ export function RegisterForm({
   const [legalRead, setLegalRead] = useState(false);
   const [legalDialogOpen, setLegalDialogOpen] = useState(false);
   const [sellerStep, setSellerStep] = useState<1 | 2>(1);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [avatarValidating, setAvatarValidating] = useState(false);
+  const [bannerValidating, setBannerValidating] = useState(false);
+  const imagesValidating = avatarValidating || bannerValidating;
   const [serverError, setServerError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const canRegister = customerOnly
@@ -330,7 +226,7 @@ export function RegisterForm({
   }
 
   function handleSubmit(formData: FormData) {
-    if (isPending) {
+    if (isPending || imagesValidating) {
       return;
     }
 
@@ -340,14 +236,12 @@ export function RegisterForm({
       }
 
       const isSellerRegistration = !customerOnly && role === "seller";
-      if (isSellerRegistration) {
-        const avatarFile = formData.get("avatarFile");
-        const bannerFile = formData.get("bannerFile");
-        if (!(avatarFile instanceof File) || avatarFile.size === 0 || !(bannerFile instanceof File) || bannerFile.size === 0) {
-          void appAlert.error("Loqo və banner şəkillərinin hər ikisini seçin.", "Mağaza şəkilləri tələb olunur");
-          return;
-        }
-      }
+      // File inputs may be reset or unmounted between steps. Use the validated
+      // selection retained in state; both images are optional.
+      formData.delete("avatarFile");
+      formData.delete("bannerFile");
+      if (isSellerRegistration && avatarFile) formData.set("avatarFile", avatarFile);
+      if (isSellerRegistration && bannerFile) formData.set("bannerFile", bannerFile);
       const resolvedFullName = isSellerRegistration
         ? storeName.trim()
         : `${firstName.trim()} ${lastName.trim()}`.trim();
@@ -369,7 +263,7 @@ export function RegisterForm({
       try {
         result = await registerAction(formData);
       } catch {
-        const message = "Qeydiyyat tamamlanmadı. Şəkilləri yoxlayıb yenidən cəhd edin.";
+        const message = "Qeydiyyat tamamlanmadı. Yenidən cəhd edin.";
         setServerError(message);
         void appAlert.error(message, "Qeydiyyat alınmadı");
         return;
@@ -653,11 +547,11 @@ export function RegisterForm({
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">Addım 2 / 2</p>
                 <h3 className="mt-1 text-lg font-bold text-slate-950">Mağazanızın görünüşü</h3>
-                <p className="mt-1 text-sm text-slate-500">Loqo və banner şəkillərini əlavə edin.</p>
+                <p className="mt-1 text-sm text-slate-500">Loqo və banner istəyə bağlıdır. Şəkilsiz davam edə və sonra mağaza panelindən əlavə edə bilərsiniz.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-[160px_1fr]">
-                <SellerImageDropzone name="avatarFile" label="Profil şəkli / Loqo" ratioClassName="aspect-square" />
-                <SellerImageDropzone name="bannerFile" label="Banner şəkli" ratioClassName="aspect-[16/7]" />
+                <SellerImageDropzone name="avatarFile" label="Profil şəkli / Loqo" ratioClassName="aspect-square" file={avatarFile} onFileChange={setAvatarFile} onValidationChange={setAvatarValidating} />
+                <SellerImageDropzone name="bannerFile" label="Banner şəkli" ratioClassName="aspect-[16/7]" file={bannerFile} onFileChange={setBannerFile} onValidationChange={setBannerValidating} />
               </div>
             </div>
           ) : null}
@@ -674,10 +568,10 @@ export function RegisterForm({
           ) : (
             <div className="grid gap-2 sm:grid-cols-2 lg:col-span-2">
               {role === "seller" ? (
-                <Button type="button" variant="outline" onClick={() => setSellerStep(1)} className="h-11 rounded-[10px]">Geri</Button>
+                <Button type="button" variant="outline" disabled={isPending || imagesValidating} onClick={() => setSellerStep(1)} className="h-11 rounded-[10px]">Geri</Button>
               ) : null}
-              <Button type="submit" disabled={isPending} className={cn("h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600", role !== "seller" && "sm:col-span-2")}>
-                {isPending ? "Yaradılır" : "Hesab yarat"}
+              <Button type="submit" disabled={isPending || imagesValidating} className={cn("h-11 w-full rounded-[10px] bg-primary font-semibold text-white shadow-none hover:bg-orange-600", role !== "seller" && "sm:col-span-2")}>
+                {isPending ? "Yaradılır" : imagesValidating ? "Şəkil yoxlanılır…" : "Hesab yarat"}
               </Button>
             </div>
           )}

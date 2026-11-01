@@ -6,7 +6,6 @@ import { after } from "next/server";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { requireRole } from "@/lib/auth/session";
 import { siteConfig } from "@/lib/config/site";
-import { sendPromoCreatedEmail } from "@/lib/email/promo";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -146,20 +145,7 @@ function schedulePromoAudienceNotification(input: {
         })),
       );
 
-      await Promise.allSettled(
-        recipients
-          .filter((profile) => Boolean(profile.email))
-          .map((profile) =>
-            sendPromoCreatedEmail({
-              to: profile.email!,
-              storeName: input.storeName,
-              code: input.code,
-              discountPercent: input.discountPercent,
-              endsAt: input.endsAt,
-              storeUrl,
-            }),
-          ),
-      );
+      // The Supabase notification trigger queues promo email only for opted-in users.
 
       if (recipients.length < PROMO_NOTIFICATION_BATCH_SIZE) {
         break;

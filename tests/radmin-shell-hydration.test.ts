@@ -1,0 +1,11 @@
+import { expect,it,vi } from 'vitest';
+import { createElement as h } from 'react';
+import { renderToString } from 'react-dom/server';
+import { RadminDashboardShell } from '@/components/radmin/radmin-dashboard-shell';
+const m=vi.hoisted(()=>({path:vi.fn()}));
+vi.mock('@/i18n/navigation',()=>({usePathname:m.path,Link:({href,children,prefetch,...props}:any)=>h('a',{href,...props},children)}));
+vi.mock('@/components/auth/logout-button',()=>({LogoutButton:()=>h('button',null,'Logout')}));
+vi.mock('@/components/theme/theme-toggle',()=>({ThemeToggle:()=>h('button',null,'Theme')}));
+const nav:any[]=[{title:'Dashboard',href:'/radmin',icon:'dashboard'},{title:'E-poçt mərkəzi',href:'/radmin/email',icon:'mail'}];
+const render=(path:string)=>{m.path.mockReturnValue(path);return renderToString(h(RadminDashboardShell,{userLabel:'QA Admin',navItems:nav,children:h('h1',null,'QA email')}))};
+it('renders the same active title and navigation for the internal rewrite and visible URL',()=>{const server=render('/admin/email'),client=render('/radmin/email');expect(server).toBe(client);expect(server).toContain('Hazır bölmə:');expect(server).toContain('E-poçt mərkəzi')});

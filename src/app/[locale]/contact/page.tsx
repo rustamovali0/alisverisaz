@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 
-import { HelpDocumentPage } from "@/components/help/help-content-pages";
-import { getHelpPage } from "@/lib/help-center/content";
+import { ContactSupportPage } from "@/components/help/contact-page";
+import { getSiteSettings } from "@/lib/cms/data";
+import { getCurrentUserProfile } from "@/lib/auth/session";
 
 type ContactPageProps = {
   params: Promise<{
@@ -23,12 +23,19 @@ export const metadata: Metadata = {
 export default async function ContactPage({ params }: ContactPageProps) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const page = getHelpPage("contact");
-
-  if (!page) {
-    notFound();
-  }
-
-  return <HelpDocumentPage page={page} />;
+  const [settings, current] = await Promise.all([
+    getSiteSettings(),
+    getCurrentUserProfile(),
+  ]);
+  return (
+    <ContactSupportPage
+      locale={locale}
+      phone={settings.phone || settings.whatsapp}
+      email={settings.contactEmail}
+      isAuthenticated={Boolean(current)}
+      name={current?.profile?.full_name ?? current?.user.email ?? ""}
+      userEmail={current?.user.email ?? ""}
+      userPhone={current?.profile?.phone ?? ""}
+    />
+  );
 }
-

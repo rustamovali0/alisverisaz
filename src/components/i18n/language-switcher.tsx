@@ -184,7 +184,7 @@ export function LanguageOptionList({
             role="menuitemradio"
             aria-checked={isActive}
             className={cn(
-              "flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-popover-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold text-popover-foreground transition hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isActive && "bg-primary/10 text-primary",
             )}
           >

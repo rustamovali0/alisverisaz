@@ -1018,7 +1018,7 @@ export function ProductForm({
               <div className="absolute inset-x-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border bg-popover p-1.5 text-popover-foreground shadow-xl">
                 <button
                   type="button"
-                  className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                  className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                   onClick={() => {
                     setSelectedRootCategoryId("");
                     setSelectedCategoryId("");
@@ -1034,7 +1034,7 @@ export function ProductForm({
                   <button
                     key={category.id}
                     type="button"
-                    className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                    className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                     onClick={() => {
                       setSelectedRootCategoryId(category.id);
                       setSelectedCategoryId(category.id);
@@ -1084,7 +1084,7 @@ export function ProductForm({
                     <button
                       key={category.id}
                       type="button"
-                      className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-accent"
+                      className="flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-left text-sm hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                       onClick={() => selectCategory(category)}
                     >
                       <span>{category.name}</span>

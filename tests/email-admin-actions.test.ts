@@ -1,0 +1,17 @@
+import { beforeEach,expect,it,vi } from "vitest";
+import { loadEmailCenter,queueAdminEmail,previewAdminEmail,saveEmailTemplate,loadEmailCampaignRecipients,searchEmailRecipients } from "@/lib/email/admin";
+import { query } from "./query";
+const m=vi.hoisted(()=>({guard:vi.fn(),admin:vi.fn(),rpc:vi.fn(),from:vi.fn(),audit:vi.fn()}));
+vi.mock("@/lib/auth/radmin-auth",()=>({requireRadmin:m.guard}));
+vi.mock("@/lib/supabase/admin",()=>({createSupabaseAdminClient:m.admin}));
+vi.mock("@/lib/admin/audit",()=>({recordAdminAudit:m.audit}));
+vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));
+const actor="00000000-0000-4000-8000-000000000009",request="00000000-0000-4000-8000-000000000010";
+const form=(extra:Record<string,string>={})=>{const f=new FormData();Object.entries({subject:"Hello",body:"Message",audience:"all",purpose:"service",requestId:request,...extra}).forEach(([k,v])=>f.set(k,v));return f;};
+beforeEach(()=>{m.guard.mockResolvedValue({user:{id:actor}});m.admin.mockReturnValue({rpc:m.rpc,from:m.from});m.rpc.mockResolvedValue({data:{id:request,count:2},error:null});m.from.mockReturnValue(query({data:[]}));m.audit.mockResolvedValue(undefined)});
+it("requires isolated RAdmin authorization for every read and mutation",async()=>{m.guard.mockRejectedValue(Error("forbidden"));for(const call of [()=>loadEmailCenter(),()=>queueAdminEmail(form()),()=>previewAdminEmail(form()),()=>saveEmailTemplate(form()),()=>loadEmailCampaignRecipients(request),()=>searchEmailRecipients("qa")])await expect(call()).rejects.toThrow("forbidden");expect(m.admin).not.toHaveBeenCalled()});
+it("never trusts a submitted actor and preserves request idempotency",async()=>{const f=form({actor:"attacker"});expect((await queueAdminEmail(f)).ok).toBe(true);expect(m.rpc).toHaveBeenCalledWith("email_queue_campaign",expect.objectContaining({p_actor:actor,p_request:request}));expect(m.audit).toHaveBeenCalledWith(expect.objectContaining({adminId:actor,metadata:{audience:"all",purpose:"service",recipient_count:2}}))});
+it("rejects header injection, invalid recipients, oversized content and invalid request IDs before RPC",async()=>{for(const f of [form({subject:"x\r\nBcc:evil@test.com"}),form({body:"x".repeat(20001)}),form({requestId:"invalid"}),form({audience:"selected"})])expect((await queueAdminEmail(f)).ok).toBe(false);expect(m.rpc).not.toHaveBeenCalled()});
+it("reports disabled delivery without leaking server errors or secrets",async()=>{m.rpc.mockResolvedValue({error:{message:"EMAIL_DELIVERY_DISABLED private-token"}});const r=await queueAdminEmail(form());expect(r.ok).toBe(false);expect(r.message).not.toContain("private-token");expect(m.audit).not.toHaveBeenCalled()});
+it("bounds recipient history and rejects malformed IDs and pages",async()=>{expect(await loadEmailCampaignRecipients("bad")).toEqual([]);expect(await loadEmailCampaignRecipients(request,-1)).toEqual([]);expect(await loadEmailCampaignRecipients(request,1.2)).toEqual([]);expect(m.from).not.toHaveBeenCalled()});
+it("requires enough search text and validates templates before accessing the database",async()=>{expect(await searchEmailRecipients("a")).toEqual([]);expect((await saveEmailTemplate(form({name:"Demo",subject:"x\nBcc:bad@test.com"}))).ok).toBe(false);expect(m.from).not.toHaveBeenCalled()});

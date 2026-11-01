@@ -25,3 +25,7 @@ work
 # Runtime-only deployment credentials
 app.env
 rollback.config.cjs
+
+# Python installer bytecode
+__pycache__/
+*.pyc

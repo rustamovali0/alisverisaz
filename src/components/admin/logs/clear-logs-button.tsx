@@ -79,7 +79,7 @@ export function ClearLogsButton({ scope }: ClearLogsButtonProps) {
               </div>
               <button
                 type="button"
-                className="grid size-10 shrink-0 place-items-center rounded-lg border bg-background text-muted-foreground hover:bg-accent"
+                className="grid size-10 shrink-0 place-items-center rounded-lg border bg-background text-muted-foreground hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
                 onClick={closeModal}
                 aria-label="Bağla"
               >

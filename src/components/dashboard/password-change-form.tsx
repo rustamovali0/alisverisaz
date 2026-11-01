@@ -7,6 +7,7 @@ import { PasswordInput } from "@/components/auth/password-input";
 import { Button } from "@/components/ui/button";
 import { appAlert } from "@/lib/alerts/app-alert";
 import { updatePasswordAction } from "@/lib/auth/actions";
+import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 
 export function PasswordChangeForm() {
   const [password, setPassword] = useState("");
@@ -14,7 +15,9 @@ export function PasswordChangeForm() {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
+    if (isPending) return;
     startTransition(async () => {
+      formData.set("next", window.location.pathname);
       const result = await updatePasswordAction(formData);
 
       if (!result.ok) {
@@ -25,6 +28,7 @@ export function PasswordChangeForm() {
       setPassword("");
       setConfirmPassword("");
       void appAlert.success("Şifrə yeniləndi", result.message);
+      window.location.replace(normalizeNextPath(result.redirectTo, "/"));
     });
   }
 

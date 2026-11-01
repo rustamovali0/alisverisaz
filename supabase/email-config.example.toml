@@ -1,0 +1,22 @@
+# Reference only. Do not push SMTP/Auth configuration until sender details arrive.
+[auth]
+site_url = "https://alisveris.az"
+additional_redirect_urls = ["https://alisveris.az/reset-password?mode=recovery"]
+
+[auth.email.template.recovery]
+subject = "ALİSVERİS.AZ — şifrə bərpası"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "ALİSVERİS.AZ — yeni e-poçtu təsdiqləyin"
+content_path = "./supabase/templates/email-change.html"
+
+[auth.email.notification.password_changed]
+enabled = false
+subject = "ALİSVERİS.AZ — şifrəniz dəyişdirildi"
+content_path = "./supabase/templates/password-changed.html"
+
+[auth.email.notification.email_changed]
+enabled = false
+subject = "ALİSVERİS.AZ — e-poçt ünvanınız dəyişdirildi"
+content_path = "./supabase/templates/email-changed.html"

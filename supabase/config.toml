@@ -1,0 +1,5 @@
+project_id = "alisverisaz"
+
+# The gateway validates the JWT; the function also requires its own dispatch secret.
+[functions.email-dispatch]
+verify_jwt = true

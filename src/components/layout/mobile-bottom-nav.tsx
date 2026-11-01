@@ -42,25 +42,25 @@ const CART_KEY = "alisveris_cart";
 
 const navVariantClass: Record<MobileNavbarVariant, string> = {
   classic:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   floating:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   pill:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   compact:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   outlined:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   soft:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   solid:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none dark:border-slate-800 dark:bg-slate-950",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none dark:border-slate-800 dark:bg-slate-950",
   glass:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   minimal:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
   rail:
-    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.6rem)] pt-1.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
+    "inset-x-0 bottom-0 border-t border-slate-200 bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),0.2rem)] pt-0.5 shadow-none backdrop-blur-[14px] dark:border-slate-800 dark:bg-slate-950/90",
 };
 
 const itemVariantClass: Record<MobileNavbarVariant, string> = {
@@ -513,7 +513,7 @@ export function MobileBottomNav({
               onClick={() => handleItemNavigation(item.href)}
               disabled={item.href === "#storefront-loading"}
               className={cn(
-                "relative grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
+                "relative grid min-h-[48px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
                 itemVariantClass[variant],
                 isActive && "text-blue-600 dark:text-blue-300",
                 item.href === "#storefront-loading" && "cursor-wait opacity-60",
@@ -551,7 +551,7 @@ export function MobileBottomNav({
           }}
           disabled={isAuthLoading}
           className={cn(
-            "grid min-h-[58px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
+            "grid min-h-[48px] min-w-0 touch-manipulation select-none place-items-center gap-0.5 px-1 text-[11px] font-semibold text-slate-500 transition-[transform,color] duration-150 active:scale-95 min-[390px]:text-xs [-webkit-tap-highlight-color:transparent] dark:text-slate-400",
             itemVariantClass[variant],
             isAuthLoading && "cursor-wait opacity-70",
             activeHref === accountHref && "text-blue-600 dark:text-blue-300",

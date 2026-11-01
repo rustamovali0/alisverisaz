@@ -16,3 +16,12 @@ it("overwrites forged route headers during localization", async () => {
   const response = await proxy(new NextRequest("https://www.alisveris.az/store/dashboard/products", { headers: { "x-current-path": "/radmin/orders" } }));
   expect(response.headers.get("x-middleware-request-x-current-path")).toBe("/store/dashboard/products");
 });
+it.each(["/auth/confirm", "/auth/callback", "/reset-password?mode=recovery", "/az/auth/confirm", "/ru/auth/callback", "/en/reset-password?mode=recovery"])("keeps auth responses private across localization: %s", async (path) => {
+  const response = await proxy(new NextRequest(`https://alisveris.az${path}`));
+  expect(response.headers.get("cache-control")).toBe("no-store, no-transform");
+  expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+});
+it("retains no-transform on ordinary marketplace pages", async () => {
+  const response = await proxy(new NextRequest("https://alisveris.az/products"));
+  expect(response.headers.get("cache-control")).toBe("private, max-age=0, must-revalidate, no-transform");
+});

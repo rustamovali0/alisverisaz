@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { SellerDashboardShell } from "@/components/seller/seller-dashboard-shell";
+import { getSellerEmailStores } from "@/lib/email/seller-access";
 import { requireSeller } from "@/lib/auth/seller-auth";
 import { getDashboardNavigationForRole } from "@/lib/cms/data";
 import { getOwnedStores } from "@/lib/dashboard/data";
@@ -20,11 +21,11 @@ export default async function StoreDashboardLayout({
   const current = await requireSeller();
   const userLabel = current.profile?.full_name ?? current.user.email ?? "Mağaza sahibi";
   const admin = createSupabaseAdminClient();
-  const [navItems, ownedStores, alertConfig, { data: brandingStores }] = await Promise.all([
+  const [navItems, ownedStores, alertConfig, { data: brandingStores },emailStores] = await Promise.all([
     getDashboardNavigationForRole("seller"),
     getOwnedStores(current.user.id),
     getSellerDailyAlertConfig(),
-    (admin as any).from("stores").select("name,logo_url,cover_url").eq("owner_id", current.user.id),
+    (admin as any).from("stores").select("name,logo_url,cover_url").eq("owner_id", current.user.id),getSellerEmailStores(current.user.id),
   ]);
   const profitEnabled = ownedStores
     .some((store) => isProfitTrackingEnabled(store.settings));
@@ -44,8 +45,9 @@ export default async function StoreDashboardLayout({
       userId={current.user.id}
       alertConfig={alertConfig}
       missingAssets={missingAssets}
-      navItems={navItems.filter((item) =>
-        profitEnabled || item.href !== "/store/dashboard/earnings")}
+      navItems={[...navItems.filter((item) =>
+        (profitEnabled || item.href !== "/store/dashboard/earnings") && item.href!=="/store/dashboard/email-campaigns"),
+        ...(emailStores.length?[{title:"E-poçt kampaniyaları",href:"/store/dashboard/email-campaigns",icon:"mail" as const}]:[])]}
     >
       {children}
     </SellerDashboardShell>

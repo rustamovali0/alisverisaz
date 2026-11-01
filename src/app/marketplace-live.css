@@ -268,7 +268,8 @@
   font-weight: 650;
 }
 .live-header-account {
-  max-width: 230px;
+  /* Reserve the full width of the seller action and account menu. */
+  flex-shrink: 0;
   min-width: 0;
 }
 .live-header-account > div {
@@ -2920,5 +2921,19 @@
   body:has([role="dialog"][aria-modal="true"]) .mobile-bottom-nav-stable {
     visibility: hidden;
     pointer-events: none;
+  }
+}
+
+/* Information pages use a compact masthead without the product search. */
+.live-header[data-info-header] .live-header-main {
+  height: 84px;
+}
+.live-header[data-info-header] .live-header-actions {
+  margin-left: auto;
+}
+@media (max-width: 767px) {
+  .live-header[data-info-header] .live-header-main {
+    height: 60px;
+    padding-top: 4px;
   }
 }

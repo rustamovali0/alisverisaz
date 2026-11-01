@@ -56,7 +56,7 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
 
       setSuccessMessage(result.message);
       setIsSubmitting(false);
-      void appAlert.success("Bərpa linki göndərildi", result.message, {
+      void appAlert.success("Sorğu qəbul edildi", result.message, {
         dedupeKey: "password-reset-sent",
       });
 
