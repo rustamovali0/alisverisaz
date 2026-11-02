@@ -30,3 +30,5 @@ Tests: `python3 -m unittest discover -s deploy/security -p test_release_cleanup.
 Repository-dəki `install_cleanup.py` serverdəki **`install-cleanup.py`** adı ilə yayımlanmalıdır. Adları əl ilə qarışdırmamaq üçün lokal checkout-da `python3 deploy/security/publish_cleanup.py` işlədin. Bu alət əvvəl lokal installer/source checksum cütünü, sonra yüklənmiş hər iki faylın hash-ini yoxlayır və yalnız canonical adları yeniləyir. Root əməliyyatı icra etmir.
 
 2 noyabr quraşdırma cəhdində köhnə tireli installer ilə yeni underscore adlı nüsxə qarışmışdı; checksum guard silinmədən əvvəl dayandı. Yayımlama aləti və regression testi bu ad/hash uyğunsuzluğunu yoxlayır. Guard saxlanılıb.
+
+Quraşdırılma yoxlaması: 2 noyabr 2026, 19:07 Asia/Baku — nəticə `complete`, 12 release + 7 build surəti silinib, 2 361 569 280 bayt boşalıb. Cron active, əsas tətbiq/RTest/staging restart olmayıb; sayt/Auth/database oxu yoxlamaları 200 keçib. Təhlükəsizlik application rollout-u ayrıca pending qalır.

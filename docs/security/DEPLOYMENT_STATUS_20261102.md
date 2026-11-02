@@ -14,3 +14,14 @@ Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələ
 `Preparing database backup` mərhələsində hazırda işləyən/ilişən job sübutu yoxdur; yeni backup başladıldığını təsdiqləyən fayl və ya uğur marker-i tapılmayıb. Production keçidi hələ prerequisite/backup mərhələsini gözləyir. Növbəti təhlükəsizlik deployment addımı cari bazadan yeni backup, yoxlama və Nginx/Auth/limiter uyğunluğunun tamamlanmasıdır; bu status yoxlaması onları təkrarlamayıb.
 
 İstifadəçinin sonrakı disk təmizləmə tapşırığı ayrıca [release retention siyasəti](RELEASE_RETENTION.md) ilə icra olunur. Database backup-ları bu təmizləmədə silinmir.
+
+## Disk təmizləməsi tamamlandı — 19:07 Asia/Baku
+
+- Canonical installer/source checksum fərqi düzəldildi və qoruma saxlanıldı. İlk uyğunsuz cəhd silinmə və cron dəyişikliyindən əvvəl dayanmışdı.
+- Quraşdırıcı statusu `complete`: 12 köhnə release və 7 istifadə olunmayan legacy build/dependency surəti silindi.
+- Faktiki boşalan yer **2 361 569 280 bayt** (təxminən 2,20 GiB); ölçülmüş boş yer **16 253 464 576 bayt**. `df -h /`: 47% istifadə, təxminən 16G boş.
+- Root-owned `0750` cleanup script və root-owned cron yoxlanılıb. `cron` active; gündəlik `23:17 UTC` = **03:17 Asia/Baku**. Logrotate konfiqurasiyası quraşdırılıb.
+- `branded-email-20261030`, `header-hover-20261101`, `enterprise-security-20261102`, `rtest-premium-20261014` və saved PM2 `vps-test` qorunub. Pending deployment pin-i saxlanır.
+- Cleanup sonrası sayt, Auth health və limit=0 database REST SELECT yoxlamaları 200 qaytarıb. Əsas tətbiq PID 2607893, RTest PID 211116 və staging PID 2699199 dəyişməyib; hərəsində 0 restart.
+- Database backup-ları, database və Auth ayarları dəyişdirilməyib. Təmizləmə təkrarlanmayıb; nəticə faylı və canlı servislər yalnız oxunub.
+- **Təhlükəsizlik tətbiq release-i hələ production-a keçirilməyib.** Bu mərhələdə yalnız maintenance retention aktivləşdirilib; yeni backup və üç təhlükəsizlik migration-ı bu əməliyyatda başladılmayıb.
