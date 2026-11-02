@@ -1,5 +1,11 @@
 # Deployment vəziyyəti — 2 noyabr 2026
 
+**Yekun: təhlükəsizlik release-i 18:13:52 UTC / 22:13:52 Asia/Baku-da canlıya
+keçirildi.** 25 canlı smoke və müstəqil post-deploy yoxlamalar keçdi. Cari nəticə,
+qalan manual sazlamalar və rollback: [production hesabatı](PRODUCTION_DEPLOYMENT_20261102.md).
+Aşağıdakı qeydlər əvvəlki mərhələlərin xronologiyasıdır; staging/pending cümlələri
+həmin əvvəlki anlara aiddir.
+
 Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələdə yeni backup, restore, migration və ya production switch başladılmadı.
 
 - Production `header-hover-20261101/app` release-ində, `alisveris-vds`, port 3004, PID 2607893, 0 restart ilə işləyir.

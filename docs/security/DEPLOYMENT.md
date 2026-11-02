@@ -1,6 +1,11 @@
 # Təhlükəsizlik rollout və rollback
 
-Bu branch production-a avtomatik deploy edilmir. Mövcud sayt native release-də işləyir. Yeni rate limiter production-da yalnız Redis və ya atomik PostgreSQL RPC istifadə edir; memory fallback yoxdur. Redis outage zamanı PostgreSQL-ə keçmir: təzə counter ilə limit bypass etməmək üçün 503 verir.
+2 noyabr 2026-da root operator ilə guarded production rollout tamamlandı;
+[cari deployment hesabatı](PRODUCTION_DEPLOYMENT_20261102.md) əsas mənbədir. Bu
+branch avtomatik CI deployment etmir. Aşağıdakı checklist gələcək kontrollu
+rollout/rollback üçün saxlanılır. Yeni rate limiter production-da yalnız Redis
+və ya atomik PostgreSQL RPC istifadə edir; memory fallback yoxdur. Redis outage
+zamanı PostgreSQL-ə keçmir: təzə counter ilə limit bypass etməmək üçün 503 verir.
 
 ## Deployment-dən əvvəl
 
@@ -47,4 +52,4 @@ Bu branch production-a avtomatik deploy edilmir. Mövcud sayt native release-də
 
 App: private əvvəlki PM2 config/release-i bərpa edin; `app.env` secret-lərini output-a çıxarmayın. Database: yeni counter cədvəli/func-ları və OFF MFA flag-i köhnə app-ə mane olmur, onları kor-koranə drop etməyin. MFA insidentində root əvvəl DB flag-i false, env policy-ni off edib əvvəlki app-ni bərpa etsin; bu, qorumanın müvəqqəti azalmasıdır, audit və incident qərarı ilə edilməlidir. Yeni profile-column guard normal profil dəyişikliklərinə mane olmamalıdır; unexpected legitimate failure olarsa yalnız `security_guard_profile_write` triggerini root disable edib səbəbi araşdırın. Core RLS-i və bütün triggerləri söndürməyin. Counter cleanup: service role ilə `security_prune_rates()` saatlıq, Redis TTL avtomatik; tətbiq datasına toxunmur.
 
-Nginx: əvvəlki **private** config snapshot-u bərpa et, `nginx -t`, graceful reload. Firewall: əvvəl provider console və SSH/22 allow qaydası; yalnız yeni qaydaları rollback et, `ufw reset` etmə. Dəyişikliklərin heç biri bu branch tərəfindən production-da aktivləşdirilməyib.
+Nginx: əvvəlki **private** config snapshot-u bərpa et, `nginx -t`, graceful reload. Firewall: əvvəl provider console və SSH/22 allow qaydası; yalnız yeni qaydaları rollback et, `ufw reset` etmə. Faktiki aktivləşdirilmiş tədbirlər və xarici sistemdə qalan sazlamalar production hesabatında ayrılıb.

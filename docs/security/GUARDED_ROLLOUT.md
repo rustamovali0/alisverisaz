@@ -1,5 +1,9 @@
 # 2 noyabr təhlükəsizlik release-i üçün konkret keçid
 
+**Bu keçid artıq 18:13:52 UTC-də tamamlanıb.** Cari status və sübutlar
+[production hesabatındadır](PRODUCTION_DEPLOYMENT_20261102.md). Aşağıdakı əmrlər
+icra edilmiş prosedurun sənədidir; uğurlu deployment-i təkrarlamaq üçün deyil.
+
 Bu prosedur yalnız `enterprise-security-20261102/app`, self-hosted
 `alisveris_candidate_20261010` bazası və mövcud `9998` Auth servisinə aiddir.
 Supabase Cloud `fxfycfkwodywmnzgkyvl` dəyişdirilmir. Yeni firewall, SSH, DNS və

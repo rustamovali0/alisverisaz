@@ -2,6 +2,10 @@
 
 Tarix: 2026-11-02. Lokal native Next tətbiqi, PGlite PostgreSQL fixture-ləri və ayrıca legacy frontend. Production-a DDoS, brute-force, stress və ya aktiv zəiflik istismarı göndərilməyib.
 
+**Cari yekun:** təhlükəsizlik release-i 18:13 UTC-də canlıya keçib; 25 canlı smoke
+və ayrıca post-deploy yoxlamalar keçib. Tam nəticə və qalan manual tədbirlər
+[production hesabatında](PRODUCTION_DEPLOYMENT_20261102.md) göstərilib.
+
 | Yoxlama | Nəticə | Sübutun sərhədi |
 |---|---|---|
 | Native Vitest unit/integration/security | **TESTED — 465/465, 68 fayl keçdi** | Auth API və Redis adapter testləri mock istifadə edir; SQL migrations actual PGlite-də çalışır |
@@ -11,14 +15,15 @@ Tarix: 2026-11-02. Lokal native Next tətbiqi, PGlite PostgreSQL fixture-ləri v
 | Legacy frontend Vitest | **TESTED — 10/10 keçdi** | Vitest 5.0.5 yenilənməsindən sonra |
 | Legacy frontend production build | **TESTED — keçdi** | TypeScript + Vite |
 | Gateway regression `node --test deploy/marketplace-gateway.test.mjs` | **TESTED — 12/12 keçdi** | Lokal mock backend/gateway; production hazırda native runtime-dır |
-| Native production runtime HTTP | **TESTED — 2 cavab ssenarisi keçdi** | Yalnız loopback: public sitekey 200 + security headers; limiter store olmadıqda catalog API 503, Retry-After 30, no-store. Ümumilikdə 4 lokal GET, əlavə production trafiki yoxdur |
+| Native local production-mode runtime HTTP | **TESTED — 2 cavab ssenarisi keçdi** | Yalnız lokal loopback: public sitekey 200 + security headers; limiter store olmadıqda catalog API 503, Retry-After 30, no-store. Bu storage-outage testi canlı serverdə edilməyib |
 | Root dependency audit | **TESTED — 0 High/Critical, 8 Moderate** | Eyni minimatch advisory üçün 2026-12-02-dək dar istisna; həll edilməyib |
 | Legacy frontend dependency audit | **TESTED — 0 High/Critical, 11 Moderate** | Əvvəlki 2 kritik paket qeydi aradan qalxıb; qalan minimatch zənciri dar istisnadır |
 | Tracked-file secret scan | **TESTED — tapıntı yoxdur** | Private key/Supabase/GitHub/AWS məlum formatları üçün heuristika; full Git history və bütün mümkün secret formatları audit edilməyib |
-| Python infra nümunələri | **TESTED — syntax compile keçdi** | Config quraşdırılması deyil; firewall/SSH dəyişdirilmədi |
+| Python rollout/retention + Node recovery | **TESTED — 24 Python + 8 Node keçdi** | Guard-lar, backup authentication, hash receipt, temporary schema izoləsiyası, cleanup; firewall/SSH dəyişdirilmədi |
 | `git diff --check` | **TESTED — keçdi** | Whitespace check |
-| Native GoTrue real CAPTCHA / email verification / MFA E2E | **CONFIGURATION REQUIRED** | Ayrı staging GoTrue parametrləri və operator-controlled MFA enrollment tələb olunur; canlı istifadəçi/faktor dəyişdirilmədi |
-| Production RLS/grants/storage policies | **BLOCKED** | Deploy hesabında root/Docker/catalog giriş səlahiyyəti yoxdur; read-only SQL təqdim edilib |
+| Native GoTrue CAPTCHA / email verification configuration | **TESTED** | Real disposable GoTrue CAPTCHA denial keçib; canlı health/settings və root config receipt yoxlanıb. Real signup/reset məktubu E2E edilməyib |
+| Admin MFA / authenticated checkout / mail E2E | **CONFIGURATION REQUIRED** | Operator-controlled enrollment/recovery və uyğun staging test hesabları tələb olunur; mövcud faktor/hesab/sifariş dəyişdirilmədi |
+| Production RLS/grants/storage tam negative audit | **CONFIGURATION REQUIRED** | Root catalog snapshot və üç target migration yoxlanıb/tətbiq edilib; bütün production grants/policy/storage kombinasiyalarının istismar sınağı aparılmayıb |
 | Cloudflare WAF/edge rules, origin restriction, Fail2ban | **CONFIGURATION REQUIRED** | Sadə DNS/HEAD və read-only xidmət vəziyyəti yoxlanılıb, hesab qaydaları aktivləşdirilməyib |
 
 ## Təkrar yoxlama
@@ -80,4 +85,5 @@ Production-a login/brute-force sorğusu göndərilmədi. 17:55 UTC-də real encr
 backup off-server authentication və plaintext ölçü/hash yoxlamasından keçdi.
 Source `e817e97` üçün CI run `41494717933` **success**; bütün 519 test və mövcud
 CI build/type/lint/security addımları keçdi. MFA enrollment və canlı authenticated
-checkout/mail E2E bu nəticələrə daxil deyil. Live cutover receipt-i hələ pending.
+checkout/mail E2E bu nəticələrə daxil deyil. Həmin 17:55 UTC mərhələsindən sonra
+live cutover 18:13:52 UTC-də tamamlanıb; root və app receipt-ləri `deployed`-dir.

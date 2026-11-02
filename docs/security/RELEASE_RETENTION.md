@@ -31,4 +31,4 @@ Repository-dəki `install_cleanup.py` serverdəki **`install-cleanup.py`** adı 
 
 2 noyabr quraşdırma cəhdində köhnə tireli installer ilə yeni underscore adlı nüsxə qarışmışdı; checksum guard silinmədən əvvəl dayandı. Yayımlama aləti və regression testi bu ad/hash uyğunsuzluğunu yoxlayır. Guard saxlanılıb.
 
-Quraşdırılma yoxlaması: 2 noyabr 2026, 19:07 Asia/Baku — nəticə `complete`, 12 release + 7 build surəti silinib, 2 361 569 280 bayt boşalıb. Cron active, əsas tətbiq/RTest/staging restart olmayıb; sayt/Auth/database oxu yoxlamaları 200 keçib. Təhlükəsizlik application rollout-u ayrıca pending qalır.
+Quraşdırılma yoxlaması: 2 noyabr 2026, 19:07 Asia/Baku — nəticə `complete`, 12 release + 7 build surəti silinib, 2 361 569 280 bayt boşalıb. Cron active, həmin təmizləmə addımında əsas tətbiq/RTest/staging restart olmayıb; sayt/Auth/database oxu yoxlamaları 200 keçib. Sonrakı təhlükəsizlik application rollout-u 22:13 Asia/Baku-da tamamlanıb; cari main `enterprise-security-20261102`, birbaşa rollback `header-hover-20261101`-dir. Bu rollout sonrası cleanup yenidən çalışdırılmayıb.

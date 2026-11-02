@@ -28,6 +28,7 @@ docs/security/DEPLOYMENT.md
 docs/security/DEPLOYMENT_STATUS_20261102.md
 docs/security/GUARDED_ROLLOUT.md
 docs/security/INFRASTRUCTURE.md
+docs/security/PRODUCTION_DEPLOYMENT_20261102.md
 docs/security/RELEASE_RETENTION.md
 docs/security/SECURITY_AUDIT.md
 docs/security/SURFACE_INVENTORY.json
