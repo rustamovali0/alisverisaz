@@ -52,3 +52,10 @@ Loglar workspace-in private `work/enterprise-*.log/json` fayllarındadır; crede
 - **CONFIGURATION REQUIRED — root `prepare` / `activate`:** izolə tam restore, real GoTrue CAPTCHA və canlı smoke nəticələri root rollout receipt gələnədək bu lokal testlərin nəticəsi kimi təqdim edilmir.
 
 Əlavə kod yalnız rollout/ops testləri və sənədlərdir; əvvəlki native runtime build-i dəyişməyib. Əvvəlki 487 application/frontend/gateway testi ilə birlikdə 508 avtomatik test var; 508 testin hamısının bu əlavə mərhələdə yenidən çalışdırıldığı iddia edilmir.
+
+İlk izolə Auth timeout-undan sonrakı davam patch-i: **21/21 Python** testi
+keçdi. Yeni 4 test DB/port alias izoləsiyasını, diagnostic redaction-u, mövcud
+backup hash-i uyğun olmadan resume-in rəddini və container cleanup-dan əvvəl
+logun saxlanmasını yoxlayır. CI-yə daxil edilən crypto testləri ilə ops sayı 25,
+bütün suite-lər üzrə say 512-dir. Real Auth startup səbəbi diagnostic alınana
+və isolate health/CAPTCHA keçənə qədər `CONFIGURATION REQUIRED` qalır.

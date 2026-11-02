@@ -71,6 +71,21 @@ yaradılmır. PM2 save edilir, köhnə Auth stopped vəziyyətdə rollback üç�
 
 ## Dayanma və rollback
 
+İlkin `prepare` müvəqqəti Auth health mərhələsində dayanarsa və mövcud
+`database.dump` hash-i receipt ilə eyni qalarsa, ayrıca yoxlanmış davam əmri var:
+
+```sh
+python3 /home/deploy/alisveris-security-setup/rollout.py resume-prepare
+```
+
+Bu əməl `pg_dump` çağırmır və production migration tətbiq etmir. Mövcud arxivi
+oxuyur, canlı PID/Auth/ingress/candidate vəziyyətinin dəyişmədiyini yoxlayır və
+yalnız disposable restore/Auth sınağını yenidən qurur. Eyni resume script hash-i
+ikinci dəfə qəbul edilmir: növbəti cəhddən əvvəl diagnostic yoxlanmalıdır.
+Müvəqqəti Auth-un DB URL və port fallback alias-ləri də izolə hədəfə qoyulur.
+Xəta logu container silinməzdən əvvəl root-private saxlanır; receipt-dəki qısa
+diaqnostikadan env dəyərləri, URL-lər, email və JWT çıxarılır.
+
 `prepare` və `activate` state journal ilə işləyir. Eyni mərhələ tamamlanıbsa və
 ya uğursuzdursa təkrar backup/DDL/switch etmirlər. Əvvəl nəticəni yoxlayın:
 

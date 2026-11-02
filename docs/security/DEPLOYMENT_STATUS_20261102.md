@@ -33,3 +33,12 @@ Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələ
 - Yoxlanmış [guarded rollout](GUARDED_ROLLOUT.md) root operator üçün serverə yüklənib. Yerli/server payload checksum-ları eynidir. Əlavə 7 rollout safety və 4 authenticated-backup testi keçib; əvvəlki 10 retention testi yenidən keçib.
 - `rollout.py prepare` üçün operator sorğusu verilib. Son oxuma anında `rollout-result.json` yoxdur: yeni backup/isolated restore/migration/Auth activation və production switch-in tamamlanması hələ təsdiqlənməyib.
 - Əvvəl `prepare`, sonra off-server backup authentication və ayrıca `activate` tələb olunur. Heç bir mərhələ mövcud journal vəziyyətini yoxlamadan təkrarlanmır. Uğur marker-i alınana qədər release staging kimi qiymətləndirilir.
+
+## İlk root hazırlıq nəticəsi — 17:14 UTC
+
+- `rollout.py prepare` nəticəsi `prepare-failed`, mərhələ `isolated-restore-migration-auth`: müvəqqəti Auth health timeout. Canlı app/Auth/nginx aktivləşdirilməyib.
+- Cari archive **1 283 934 bayt**, SHA256 receipt-də saxlanılıb. Backup creation, TOC/decode və disposable restore/SQL mərhələləri Auth health yoxlamasından əvvəl istisnasız keçib; bütün prepare mərhələsi uğurlu kimi qiymətləndirilmir.
+- İlkin skript temporary container-in logunu silinməzdən əvvəl saxlamadığı üçün konkret startup səbəbi receipt-də yoxdur. Startup log retention/redacted diagnostic və fallback alias isolation əlavə edildi; xəta aradan qalxmış kimi təqdim edilmir.
+- `resume-prepare` yalnız mövcud archive hash-i və dəyişməmiş live/candidate vəziyyəti ilə davam edir. `pg_dump` və production DDL çağırmır. Operator üçün serverdə exact script hash-i və sintaksis yoxlanıb. 4 yeni regression testi daxil olmaqla **21 Python testi** keçib.
+- Son read-only yoxlamada app PID 2607893 və Auth 9998 health dəyişməyib, hər ikisi HTTP 200. Native Auth version v2.197.0. Tətbiq hələ əvvəlki release-dədir.
+- Əvvəlki ops commit `bce88de` üçün GitHub Actions run `41478291127` **success**; yeni resume patch-in CI nəticəsi ayrıca izlənməlidir.

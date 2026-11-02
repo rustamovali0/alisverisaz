@@ -278,6 +278,50 @@ def check_captcha(port):
     raise RolloutError('Isolated Auth did not reject a missing CAPTCHA token.')
 
 
+def isolated_auth_env(auth_env, app_env, temporary_db):
+    if not re.fullmatch(r'alisveris_security_check_[0-9a-f]{12}', temporary_db):
+        raise RolloutError('Invalid isolated database name.')
+    e = dict(auth_env)
+    u = urllib.parse.urlsplit(e['GOTRUE_DB_DATABASE_URL'])
+    temporary_url = urllib.parse.urlunsplit(u._replace(path='/' + temporary_db))
+    # Set the supported fallback aliases too; no inherited production URL/port
+    # may select the live service from the disposable Auth process.
+    e.update(GOTRUE_DB_DATABASE_URL=temporary_url, DATABASE_URL=temporary_url,
+             GOTRUE_API_PORT='19998', PORT='19998', GOTRUE_API_HOST='127.0.0.1',
+             GOTRUE_DISABLE_SIGNUP='false', GOTRUE_SECURITY_CAPTCHA_ENABLED='true',
+             GOTRUE_SECURITY_CAPTCHA_PROVIDER='turnstile',
+             GOTRUE_SECURITY_CAPTCHA_SECRET=app_env['TURNSTILE_SECRET_KEY'],
+             GOTRUE_JWT_SECRET=uuid.uuid4().hex + uuid.uuid4().hex,
+             GOTRUE_MAILER_AUTOCONFIRM='false', GOTRUE_SMTP_HOST='',
+             GOTRUE_SMTP_USER='', GOTRUE_SMTP_PASS='')
+    return e
+
+
+def redact_diagnostic(log, env):
+    # Replace known environment values before returning any diagnostic excerpt.
+    # Raw logs remain root-private; no request payloads are used in this check.
+    for value in sorted({v for v in env.values() if len(v) >= 4}, key=len, reverse=True):
+        log = log.replace(value, '[redacted]')
+    log = re.sub(r'\b(?:postgres(?:ql)?|redis|https?)://[^\s\"\'<>]+', '[url]', log)
+    log = re.sub(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[email]', log)
+    log = re.sub(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', '[token]', log)
+    return log[-1800:]
+
+
+def capture_auth_failure(container, env):
+    raw = subprocess.run(['docker', 'logs', '--tail', '60', container],
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=20)
+    log = raw.stdout + raw.stderr
+    private_write(STATE / 'isolated-auth-startup.log', log)
+    details = json.loads(run(['docker', 'inspect', container]))[0]
+    text = log.decode(errors='replace')
+    diagnostic = {'running': details['State']['Running'],
+                  'exitCode': details['State']['ExitCode'],
+                  'restarts': details.get('RestartCount'),
+                  'excerpt': redact_diagnostic(text, env)}
+    private_write(STATE / 'auth-diagnostic.json', json.dumps(diagnostic, indent=2))
+
+
 def restore_check(dump, source, auth_env, app_env):
     temporary_db = 'alisveris_security_check_' + uuid.uuid4().hex[:12]
     temporary_auth = 'alisveris-security-auth-check-' + uuid.uuid4().hex[:12]
@@ -304,20 +348,17 @@ def restore_check(dump, source, auth_env, app_env):
         if sql('select admin_mfa_required from public.security_configuration where id=true;', temporary_db) != 'f':
             raise RolloutError('Staging MFA flag must remain disabled.')
         # Workers never target this database. The temporary Auth has SMTP disabled.
-        e = dict(auth_env)
-        u = urllib.parse.urlsplit(e['GOTRUE_DB_DATABASE_URL'])
-        e['GOTRUE_DB_DATABASE_URL'] = urllib.parse.urlunsplit(u._replace(path='/' + temporary_db))
-        e.update(GOTRUE_API_PORT='19998', GOTRUE_API_HOST='127.0.0.1', GOTRUE_DISABLE_SIGNUP='false',
-                 GOTRUE_SECURITY_CAPTCHA_ENABLED='true', GOTRUE_SECURITY_CAPTCHA_PROVIDER='turnstile',
-                 GOTRUE_SECURITY_CAPTCHA_SECRET=app_env['TURNSTILE_SECRET_KEY'],
-                 GOTRUE_JWT_SECRET=uuid.uuid4().hex + uuid.uuid4().hex,
-                 GOTRUE_MAILER_AUTOCONFIRM='false', GOTRUE_SMTP_HOST='', GOTRUE_SMTP_USER='', GOTRUE_SMTP_PASS='')
+        e = isolated_auth_env(auth_env, app_env, temporary_db)
         container = create_auth(source, e, temporary_auth)
         run(['docker', 'start', container])
         wait_health(19998)
         check_captcha(19998)
         result.update(fullRestore=True, migrations=True, nativeCaptcha=True)
         return result
+    except Exception:
+        if container:
+            capture_auth_failure(container, e)
+        raise
     finally:
         if container:
             run(['docker', 'rm', '-f', container])
@@ -326,6 +367,72 @@ def restore_check(dump, source, auth_env, app_env):
             if not re.fullmatch(r'alisveris_security_check_[0-9a-f]{12}', temporary_db) or temporary_db == DB:
                 raise RolloutError('Temporary database cleanup guard failed.')
             sql('drop database ' + temporary_db + ' with (force);', 'postgres')
+
+
+def finish_preparation(data, dump, source, auth_env, app_env):
+    data['step'] = 'isolated-restore-migration-auth'
+    save_state(data)
+    try:
+        data['staging'] = restore_check(dump, source, auth_env, app_env)
+        encrypted = STATE / 'database.dump.enc'
+        data['step'] = 'backup-encryption'
+        save_state(data)
+        run(['node', str(STATE / 'payload' / 'backup-crypto.mjs'), 'encrypt', str(dump), str(encrypted), str(STATE / 'payload' / 'public.pem'), DB], timeout=180)
+        data['encryptedSha256'] = digest(encrypted)
+        data['metadataSha256'] = digest(str(encrypted) + '.json')
+        for p in [encrypted, Path(str(encrypted) + '.json')]:
+            destination = BASE / p.name
+            private_write(destination, p.read_bytes())
+            owner = pwd.getpwnam('deploy')
+            os.chown(destination, owner.pw_uid, owner.pw_gid)
+        dump.unlink()
+        check_app()
+        data.pop('authDiagnostic', None)
+        data.pop('errorClass', None)
+        data['phase'] = 'prepared'
+        save_state(data)
+        publish(data)
+        print('Hazırlıq tamamlandı: backup bərpa olundu, migration və CAPTCHA sınağı keçdi. Canlı tətbiq, Auth və Nginx dəyişdirilmədi.')
+    except Exception as error:
+        data.update(phase='prepare-failed', errorClass=type(error).__name__)
+        diagnostic = STATE / 'auth-diagnostic.json'
+        if diagnostic.exists():
+            data['authDiagnostic'] = json.loads(diagnostic.read_text())
+            print('İzolə Auth diaqnostikası: ' + json.dumps(data['authDiagnostic'], ensure_ascii=False), flush=True)
+        save_state(data)
+        publish(data)
+        raise
+
+
+def resume_prepare():
+    data = json.loads((STATE / 'state.json').read_text())
+    if data['phase'] != 'prepare-failed' or data.get('step') != 'isolated-restore-migration-auth':
+        raise RolloutError('Only the inspected isolated-Auth failure may be resumed.')
+    attempt = digest(__file__)
+    if data.get('resumeScriptHash') == attempt:
+        raise RolloutError('This resume attempt already ran; inspect its diagnostic before retrying.')
+    dump = STATE / 'database.dump'
+    if not dump.is_file() or digest(dump) != data.get('backupPlainSha256'):
+        raise RolloutError('Existing backup does not match its receipt; no new dump created.')
+    if dump.stat().st_size != data.get('backupBytes') or (STATE / 'database.dump.enc').exists():
+        raise RolloutError('Backup state requires inspection; nothing repeated.')
+    main = check_app()
+    source, auth_env = inspect_auth()
+    if main['pid'] != data['productionPid'] or any(installed().values()) or not source['State']['Running']:
+        raise RolloutError('Production state changed after the failed isolated check.')
+    if hashlib.sha256(json.dumps(source['Config'], sort_keys=True).encode()).hexdigest() != data['authConfigHash']:
+        raise RolloutError('Production Auth configuration changed.')
+    if candidate_digest() != data['candidateHash'] or digest(SITE) != data['nginx']['siteHash'] or digest('/etc/nginx/nginx.conf') != data['nginx']['rootHash']:
+        raise RolloutError('Prepared candidate/ingress changed.')
+    for name, expected in data['payloadHashes'].items():
+        if digest(STATE / 'payload' / name) != expected:
+            raise RolloutError('Prepared payload changed.')
+    app_env = read_app_env()
+    run(['pg_restore', '--no-owner', '--no-privileges', '--file=/dev/null', str(dump)], timeout=90)
+    data.update(phase='preparing', resumeScriptHash=attempt)
+    save_state(data)
+    print('Mövcud backup hash-i təsdiqləndi. Yeni backup yaradılmır; yalnız izolə Auth yoxlaması davam edir.', flush=True)
+    finish_preparation(data, dump, source, auth_env, app_env)
 
 
 def prepare():
@@ -377,28 +484,7 @@ def prepare():
         data['backupPlainSha256'] = digest(dump)
         data['backupBytes'] = dump.stat().st_size
         print('Backup bərpası və migration-lar izolə bazada yoxlanır.', flush=True)
-        data['step'] = 'isolated-restore-migration-auth'
-        save_state(data)
-        data['staging'] = restore_check(dump, source, auth_env, app_env)
-        encrypted = STATE / 'database.dump.enc'
-        data['step'] = 'backup-encryption'
-        save_state(data)
-        run(['node', str(STATE / 'payload' / 'backup-crypto.mjs'), 'encrypt', str(dump), str(encrypted), str(STATE / 'payload' / 'public.pem'), DB], timeout=180)
-        data['encryptedSha256'] = digest(encrypted)
-        data['metadataSha256'] = digest(str(encrypted) + '.json')
-        for p in [encrypted, Path(str(encrypted) + '.json')]:
-            destination = BASE / p.name
-            private_write(destination, p.read_bytes())
-            owner = pwd.getpwnam('deploy')
-            os.chown(destination, owner.pw_uid, owner.pw_gid)
-        # The only remaining snapshot is authenticated ciphertext. Its recovery
-        # private key lives on the operator's Mac, never on this server.
-        dump.unlink()
-        check_app()
-        data['phase'] = 'prepared'
-        save_state(data)
-        publish(data)
-        print('Hazırlıq tamamlandı: backup bərpa olundu, migration və CAPTCHA sınağı keçdi. Canlı tətbiq, Auth və Nginx dəyişdirilmədi.')
+        finish_preparation(data, dump, source, auth_env, app_env)
     except Exception as error:
         data['phase'] = 'prepare-failed'
         data['errorClass'] = type(error).__name__
@@ -528,12 +614,14 @@ if __name__ == '__main__':
             prepare()
         elif sys.argv[1:] == ['activate']:
             activate()
+        elif sys.argv[1:] == ['resume-prepare']:
+            resume_prepare()
         elif sys.argv[1:] == ['status']:
             data = json.loads((STATE / 'state.json').read_text())
             publish(data)
             print('Rollout mərhələsi: ' + data['phase'] + '. Heç bir iş təkrarlanmadı.')
         else:
-            raise RolloutError('Usage: rollout.py prepare|activate|status')
+            raise RolloutError('Usage: rollout.py prepare|resume-prepare|activate|status')
     except Exception as e:
         # Never echo an unexpected exception that might contain a credential.
         print(str(e) if isinstance(e, RolloutError) else 'Rollout dayandı. Məxfi məlumat çıxarılmadı; vəziyyəti yoxlayın.', file=sys.stderr)
