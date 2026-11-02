@@ -42,6 +42,19 @@ oxuya bilir. Mövcud köhnə DB backup-ları dəyişdirilmir.
 
 ## Serverdən kənar yoxlama və canlıya keçid
 
+Operatorun Mac-ində mövcud private recovery qovluğu ilə avtomatik verification:
+
+```sh
+node deploy/security/verify-offserver.mjs /absolute/private/recovery-directory
+```
+
+Bu lokal köməkçi root receipt-in `prepared` olmasını tələb edir. Mövcud deploy
+SSH açarı ilə yalnız ciphertext/metadata/receipt endirir, private recovery key-i
+heç vaxt serverə ötürmür. GCM authentication, ciphertext/metadata hash-i,
+plaintext ölçü/hash-i yoxlanır; yalnız uğurdan sonra off-server verification
+receipt-i serverə yüklənir. Müvəqqəti plaintext private 0600-dır və finally-də
+silinir. Bu köməkçi özü production deployment başlatmır.
+
 Şifrəli `database.dump.enc` və onun `.json` metadata-sını ayrıca private recovery
 qovluğuna endirin. Ciphertext/metadata SHA256-larını `rollout-result.json` ilə
 müqayisə edin, yerli şəxsi açarla authenticate edin və plaintext SHA256-nı

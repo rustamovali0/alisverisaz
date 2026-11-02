@@ -66,3 +66,9 @@ qorunmasını, search_path düzəlişinin yalnız disposable database-ə aid olm
 production hədəfinin və çatışmayan Auth migration tarixçəsinin rəddini yoxlayır.
 515 ümumi avtomatik test var; son ops-only mərhələdə 28-i yenidən çalışdırılıb.
 İzolə real GoTrue sınağının son nəticəsi operator receipt-i gələnədək pending-dir.
+
+Off-server recovery receipt helper üçün əlavə **4/4 Node** testi keçdi: düzgün
+şifrəli export, səhv ciphertext hash-i, autentik ciphertext içində gözlənilməyən
+plaintext hash-i və hazırlanmamış root state. Uğursuz yoxlama yeni receipt
+yaratmır; müvəqqəti plaintext silinir. Son ops suite **24 Python + 8 Node = 32**
+testdir; tətbiq/frontend/gateway suite-ləri ilə ümumi test sayı 519-dur.

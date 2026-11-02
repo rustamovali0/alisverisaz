@@ -19,6 +19,8 @@ deploy/security/resource-check.py
 deploy/security/rollout.py
 deploy/security/test_release_cleanup.py
 deploy/security/test_rollout.py
+deploy/security/verify-offserver.mjs
+deploy/security/verify-offserver.test.mjs
 docs/CLOUDFLARE_SECURITY_SETUP.md
 docs/security/API_INVENTORY.md
 docs/security/CHANGED_FILES.txt
