@@ -72,3 +72,12 @@ Off-server recovery receipt helper üçün əlavə **4/4 Node** testi keçdi: d�
 plaintext hash-i və hazırlanmamış root state. Uğursuz yoxlama yeni receipt
 yaratmır; müvəqqəti plaintext silinir. Son ops suite **24 Python + 8 Node = 32**
 testdir; tətbiq/frontend/gateway suite-ləri ilə ümumi test sayı 519-dur.
+
+17:54 UTC root receipt ilə real disposable PostgreSQL **tam restore + üç
+migration + auth namespace + native GoTrue v2.197.0 CAPTCHA** sınağı **TESTED**
+oldu. Müvəqqəti Auth-a CAPTCHA-sız tək sorğu CAPTCHA xətası ilə rədd edildi.
+Production-a login/brute-force sorğusu göndərilmədi. 17:55 UTC-də real encrypted
+backup off-server authentication və plaintext ölçü/hash yoxlamasından keçdi.
+Source `e817e97` üçün CI run `41494717933` **success**; bütün 519 test və mövcud
+CI build/type/lint/security addımları keçdi. MFA enrollment və canlı authenticated
+checkout/mail E2E bu nəticələrə daxil deyil. Live cutover receipt-i hələ pending.

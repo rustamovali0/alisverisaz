@@ -50,3 +50,12 @@ Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələ
 - Düzəlişdə **24 Python + 4 Node crypto testi** keçib. Lokal/server canonical `rollout.py` checksum-u eynidir, sintaksis yoxlanıb. Əvvəlki uğursuz cəhdin hash marker-i silinməyib; yeni, fərqli script yalnız bütün state/backup guard-ları yenidən keçəndən sonra sınağa buraxılır.
 - Operatora eyni `resume-prepare` komandası yeni script ilə verilib. Root sınağı uğur marker-i qaytarmayınca native Auth health/CAPTCHA və canlı deployment tamamlanmış hesab edilmir.
 - Son read-only yoxlamada main PID 2607893, staging PID 2699199 dəyişməyib. Main HTTP və Auth health 200; main app hələ `header-hover-20261101/app`-dir.
+
+## Root hazırlıq və off-server recovery təsdiqi — 17:54–17:55 UTC
+
+- Canonical `resume-prepare` receipt-i **prepared**: tam backup restore, üç SQL migration, `auth` namespace və real GoTrue native CAPTCHA sınağı keçdi. İzolə restore 89 public/auth cədvəlini ehtiva edib; real production database-ə restore/DDL edilməyib.
+- Eyni 1 283 934 baytlıq backup istifadə edildi; yeni dump yaradılmadı. SHA256 `51fddc8fe78b0671a88cd68356d1450b5e2695f24bafc4428aa73b8978c50fa7` dəyişməyib.
+- Backup AES-256-GCM/RSA-OAEP ilə şifrələndi; root-private və off-server Mac nüsxəsi saxlanılır. `verify-offserver.mjs` ciphertext/metadata hash-lərini, GCM authentication və plaintext ölçü/hash-ini təsdiqlədi. Temporary plaintext silindi; private RSA key serverə ötürülmədi. Uyğun verification receipt-i serverə yükləndi.
+- Root receipt, off-server receipt və candidate fayl hash-i uyğun gəlib. Main PID hələ 2607893, əvvəlki release; yeni permanent limiter online. Migration/Auth/nginx/app live cutover bu hazırlıqda edilməyib.
+- Source `e817e971d9d27b02f0672bbe30087df2b90312e2` üçün GitHub Actions run `41494717933` **success**. CI-yə daxil edilən 519 test və build/type/lint/security yoxlamaları keçib.
+- Operatora `rollout.py activate` əmri verilib. Yalnız bu əmr üç additive migration, trusted ingress/native Auth və main app switch edir; avtomatik rollback saxlanılır. Aktivləşdirmə uğur receipt-i gələnədək deployment production-da tamamlanmış kimi təqdim edilmir.
