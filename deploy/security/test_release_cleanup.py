@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import os
 import pathlib
@@ -91,6 +92,20 @@ class ReleaseCleanupTests(unittest.TestCase):
             self.assertEqual(cleanup.pending_deployments(base,policy),{'candidate'})
             (base/'candidate/deployment-result.json').write_text('{"status":"deployed"}')
             self.assertEqual(cleanup.pending_deployments(base,policy),set())
+
+    def test_installer_checksum_and_published_filename_match_the_reviewed_bundle(self):
+        location=pathlib.Path(__file__).with_name('publish_cleanup.py')
+        spec=importlib.util.spec_from_file_location('publisher',location)
+        publisher=importlib.util.module_from_spec(spec);spec.loader.exec_module(publisher)
+        bundle=publisher.reviewed_bundle(location.parent)
+        self.assertEqual(set(bundle),{'release_cleanup.py','install-cleanup.py'})
+        self.assertEqual(bundle['install-cleanup.py'],location.with_name('install_cleanup.py').read_bytes())
+        with tempfile.TemporaryDirectory() as directory:
+            base=pathlib.Path(directory)
+            (base/'release_cleanup.py').write_text('unreviewed source')
+            (base/'install_cleanup.py').write_text("EXPECTED_SHA='incorrect'")
+            with self.assertRaisesRegex(RuntimeError,'nothing uploaded'):
+                publisher.reviewed_bundle(base)
 
     def test_raw_secrets_are_not_retained_in_protection_output(self):
         self.assertEqual(cleanup.release_names('{"password":"example-private","cwd":"/srv/alisveris/releases/current/app"}'), {'current'})

@@ -9,6 +9,7 @@ deploy/security/install_cleanup.py
 deploy/security/logrotate.example
 deploy/security/nginx-http.conf.example
 deploy/security/nginx-server.conf.example
+deploy/security/publish_cleanup.py
 deploy/security/release_cleanup.py
 deploy/security/resource-check.py
 deploy/security/test_release_cleanup.py

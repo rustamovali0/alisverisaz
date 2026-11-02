@@ -23,4 +23,10 @@ Son nəticə `/home/deploy/alisveris-disk-cleanup-result.json`, quraşdırma nə
 
 Təmizləmə konfiqurasiyasını geri qaytarmaq üçün cron-u disable edin və əvvəlki root-owned job config-ini nəzərdən keçirin. Bu, silinmiş köhnə release-ləri bərpa etmir; məqsəd işlək release və birbaşa rollback-i silməməkdir. Ləğv edilmiş pending deployment pin-i yalnız operator qərarı ilə çıxarılmalıdır.
 
-Tests: `python3 -m unittest discover -s deploy/security -p test_release_cleanup.py` — rollback, yaş limiti, hardlinks, istifadə edilən build surətləri, symlink asılılıqları və pending release qoruması üçün 9 test.
+Tests: `python3 -m unittest discover -s deploy/security -p test_release_cleanup.py` — rollback, yaş limiti, hardlinks, istifadə edilən build surətləri, symlink asılılıqları və pending release qoruması üçün 10 test.
+
+## Skriptlərin düzgün yayımlanması
+
+Repository-dəki `install_cleanup.py` serverdəki **`install-cleanup.py`** adı ilə yayımlanmalıdır. Adları əl ilə qarışdırmamaq üçün lokal checkout-da `python3 deploy/security/publish_cleanup.py` işlədin. Bu alət əvvəl lokal installer/source checksum cütünü, sonra yüklənmiş hər iki faylın hash-ini yoxlayır və yalnız canonical adları yeniləyir. Root əməliyyatı icra etmir.
+
+2 noyabr quraşdırma cəhdində köhnə tireli installer ilə yeni underscore adlı nüsxə qarışmışdı; checksum guard silinmədən əvvəl dayandı. Yayımlama aləti və regression testi bu ad/hash uyğunsuzluğunu yoxlayır. Guard saxlanılıb.
