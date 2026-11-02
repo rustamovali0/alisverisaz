@@ -1,0 +1,855 @@
+{
+  "routes": [
+    "src/app/[locale]/auth/callback/route.ts",
+    "src/app/[locale]/auth/confirm/route.ts",
+    "src/app/[locale]/logout/route.ts",
+    "src/app/api/auth/session/route.ts",
+    "src/app/api/marketplace/products/route.ts",
+    "src/app/api/marketplace/related-products/route.ts",
+    "src/app/api/marketplace/searches/route.ts",
+    "src/app/api/notifications/route.ts",
+    "src/app/api/products/import-template/route.ts",
+    "src/app/api/security/csp-report/route.ts",
+    "src/app/api/security/turnstile-site-key/route.ts",
+    "src/app/api/telegram/webhook/route.ts",
+    "src/app/auth/callback/route.ts",
+    "src/app/auth/confirm/route.ts",
+    "src/app/email-templates/recovery.html/route.ts"
+  ],
+  "actions": [
+    {
+      "file": "src/lib/activity/actions.ts",
+      "line": 59,
+      "name": "clearUserActivityLogsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/activity/actions.ts",
+      "line": 91,
+      "name": "clearAdminAuditLogsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/analytics/actions.ts",
+      "line": 157,
+      "name": "trackProductViewAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/analytics/actions.ts",
+      "line": 172,
+      "name": "trackStoreViewAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/analytics/actions.ts",
+      "line": 202,
+      "name": "deleteSellerAnalyticsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 220,
+      "name": "registerAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 481,
+      "name": "loginAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 842,
+      "name": "googleOAuthAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 920,
+      "name": "logoutAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 961,
+      "name": "requestPasswordResetAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1095,
+      "name": "updatePasswordAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1186,
+      "name": "updateCustomerProfileAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1270,
+      "name": "updateUserRoleAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1801,
+      "name": "updateUserContactByAdminAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1883,
+      "name": "deactivateUserAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1929,
+      "name": "activateUserAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 1961,
+      "name": "deleteUserAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 2087,
+      "name": "deleteUsersByScopeAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/auth/actions.ts",
+      "line": 2187,
+      "name": "updateUserPasswordByAdminAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cart/actions.ts",
+      "line": 470,
+      "name": "getCartProductsAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/cart/actions.ts",
+      "line": 479,
+      "name": "getAvailablePromoStoreIdsAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/cart/actions.ts",
+      "line": 527,
+      "name": "previewCheckoutPromosAction",
+      "guard": "delegated-review",
+      "rate": true
+    },
+    {
+      "file": "src/lib/cart/actions.ts",
+      "line": 991,
+      "name": "createWhatsAppOrderIntentAction",
+      "guard": "session-or-delegated",
+      "rate": true
+    },
+    {
+      "file": "src/lib/cart/actions.ts",
+      "line": 1253,
+      "name": "createCheckoutOrdersAction",
+      "guard": "session-or-delegated",
+      "rate": true
+    },
+    {
+      "file": "src/lib/categories/actions.ts",
+      "line": 130,
+      "name": "createCategoryAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/categories/actions.ts",
+      "line": 205,
+      "name": "updateCategoryAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/categories/actions.ts",
+      "line": 292,
+      "name": "deleteCategoryAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 227,
+      "name": "updateSiteSettingsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 398,
+      "name": "updateDesignSettingsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 461,
+      "name": "updateHomepageSectionAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 563,
+      "name": "reorderHomepageSectionsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 591,
+      "name": "updateNavigationItemAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 658,
+      "name": "publishThemeAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 768,
+      "name": "updateThemeDraftAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 836,
+      "name": "uploadMediaAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 883,
+      "name": "deleteMediaAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 926,
+      "name": "updatePanelSettingsAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 999,
+      "name": "updateStoreManagementAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 1110,
+      "name": "updateStoreStatusAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 1181,
+      "name": "updateStorefrontAccessAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/cms/actions.ts",
+      "line": 1308,
+      "name": "createAnnouncementAction",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/customer-account/actions.ts",
+      "line": 14,
+      "name": "getFavoriteProductIdsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/customer-account/actions.ts",
+      "line": 29,
+      "name": "setFavoriteProductStateAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/customer-account/actions.ts",
+      "line": 57,
+      "name": "saveDefaultCustomerAddressAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/delivery/actions.ts",
+      "line": 63,
+      "name": "updateDeliverySettingsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/delivery/actions.ts",
+      "line": 136,
+      "name": "updateDeliveryStoreOverrideAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/deposits/actions.ts",
+      "line": 92,
+      "name": "createDepositAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 29,
+      "name": "loadEmailCenter",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 54,
+      "name": "searchEmailRecipients",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 66,
+      "name": "previewAdminEmail",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 86,
+      "name": "queueAdminEmail",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 131,
+      "name": "saveEmailTemplate",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 168,
+      "name": "loadEmailCampaignRecipients",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/admin.ts",
+      "line": 181,
+      "name": "saveSystemEmailTemplate",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/preferences.ts",
+      "line": 6,
+      "name": "getEmailPreferences",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/preferences.ts",
+      "line": 21,
+      "name": "saveEmailPreferences",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/seller.ts",
+      "line": 10,
+      "name": "loadAdminSellerEmailPermissions",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/seller.ts",
+      "line": 13,
+      "name": "setSellerEmailPermission",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/seller.ts",
+      "line": 23,
+      "name": "previewSellerEmail",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/seller.ts",
+      "line": 27,
+      "name": "queueSellerEmail",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/email/seller.ts",
+      "line": 32,
+      "name": "loadSellerEmailCenter",
+      "guard": "delegated-review",
+      "rate": false
+    },
+    {
+      "file": "src/lib/locations/actions.ts",
+      "line": 77,
+      "name": "saveStoreLocationAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/locations/actions.ts",
+      "line": 177,
+      "name": "deactivateStoreLocationAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/messages/actions.ts",
+      "line": 111,
+      "name": "createProductMessageAction",
+      "guard": "session-or-delegated",
+      "rate": true
+    },
+    {
+      "file": "src/lib/messages/actions.ts",
+      "line": 249,
+      "name": "updateProductMessageStatusAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/messages/actions.ts",
+      "line": 300,
+      "name": "replyProductMessageAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/messages/actions.ts",
+      "line": 392,
+      "name": "deleteProductMessageAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/messages/actions.ts",
+      "line": 441,
+      "name": "deleteAllProductMessagesAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/notifications/actions.ts",
+      "line": 41,
+      "name": "loadMyNotificationsAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/notifications/actions.ts",
+      "line": 76,
+      "name": "markAllNotificationsReadAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/notifications/actions.ts",
+      "line": 121,
+      "name": "deleteAllNotificationsAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/orders/actions.ts",
+      "line": 145,
+      "name": "updateOrderStatusAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/orders/actions.ts",
+      "line": 209,
+      "name": "deleteOrderAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/orders/actions.ts",
+      "line": 295,
+      "name": "deleteAllOrdersAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 928,
+      "name": "createStoreProductAction",
+      "guard": "explicit-role",
+      "rate": true
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1155,
+      "name": "updateProductAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1411,
+      "name": "updateProductByAdminAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1418,
+      "name": "deleteProductAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1512,
+      "name": "deleteStoreProductsByAdminAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1641,
+      "name": "deleteProductImageAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1719,
+      "name": "setPrimaryProductImageAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 1885,
+      "name": "createPersonalListingAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/actions.ts",
+      "line": 2019,
+      "name": "confirmPersonalListingPaymentAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/admin-transfer.ts",
+      "line": 75,
+      "name": "getProductTransferData",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/admin-transfer.ts",
+      "line": 121,
+      "name": "transferProductsByAdminAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/approval-actions.ts",
+      "line": 77,
+      "name": "updateProductApprovalSettingsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/approval-actions.ts",
+      "line": 145,
+      "name": "approveProductAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/approval-actions.ts",
+      "line": 204,
+      "name": "rejectProductAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/approval-actions.ts",
+      "line": 265,
+      "name": "deletePendingProductAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/products/import-actions.ts",
+      "line": 10,
+      "name": "productImportAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promos/actions.ts",
+      "line": 246,
+      "name": "saveSellerPromoCodeAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promos/actions.ts",
+      "line": 411,
+      "name": "toggleSellerPromoCodeAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promos/actions.ts",
+      "line": 477,
+      "name": "deleteSellerPromoCodeAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 77,
+      "name": "createPromotionRequestAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 264,
+      "name": "createAdminPromotionAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 364,
+      "name": "approvePromotionRequestAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 432,
+      "name": "cancelPromotionRequestAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 477,
+      "name": "deletePromotionRequestAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/promotions/actions.ts",
+      "line": 548,
+      "name": "rejectPromotionRequestAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/reviews/actions.ts",
+      "line": 75,
+      "name": "upsertProductReviewAction",
+      "guard": "session-or-delegated",
+      "rate": true
+    },
+    {
+      "file": "src/lib/reviews/actions.ts",
+      "line": 204,
+      "name": "deleteProductReviewAction",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/reviews/actions.ts",
+      "line": 266,
+      "name": "updateAdminProductReviewAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/reviews/actions.ts",
+      "line": 318,
+      "name": "archiveAdminProductReviewAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/reviews/actions.ts",
+      "line": 358,
+      "name": "deleteAdminProductReviewAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/search/actions.ts",
+      "line": 14,
+      "name": "updatePopularSearchOverridesAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/security/mfa-actions.ts",
+      "line": 29,
+      "name": "enrollAdminMfa",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/security/mfa-actions.ts",
+      "line": 47,
+      "name": "verifyAdminMfa",
+      "guard": "session-or-delegated",
+      "rate": false
+    },
+    {
+      "file": "src/lib/seller-alerts/actions.ts",
+      "line": 14,
+      "name": "updateSellerDailyAlertAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/settings/actions.ts",
+      "line": 19,
+      "name": "updateDepositSettingsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/store-settings/actions.ts",
+      "line": 105,
+      "name": "updateSellerStoreSettingsAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/subscriptions/actions.ts",
+      "line": 62,
+      "name": "activateFreePlanAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/subscriptions/actions.ts",
+      "line": 73,
+      "name": "createPlanAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/subscriptions/actions.ts",
+      "line": 145,
+      "name": "updatePlanAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/subscriptions/actions.ts",
+      "line": 222,
+      "name": "assignStorePlanAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/subscriptions/actions.ts",
+      "line": 340,
+      "name": "updateStoreProductLimitAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/support/actions.ts",
+      "line": 27,
+      "name": "createSupportMessageAction",
+      "guard": "session-or-delegated",
+      "rate": true
+    },
+    {
+      "file": "src/lib/whatsapp-orders/actions.ts",
+      "line": 44,
+      "name": "updateSellerOrderMethodAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/whatsapp-orders/actions.ts",
+      "line": 115,
+      "name": "updateAdminStoreOrderMethodAction",
+      "guard": "explicit-role",
+      "rate": false
+    },
+    {
+      "file": "src/lib/whatsapp-orders/actions.ts",
+      "line": 182,
+      "name": "updateWhatsAppOrderTemplateAction",
+      "guard": "explicit-role",
+      "rate": false
+    }
+  ],
+  "note": "Static indicators only: delegated-review is not a vulnerability finding."
+}

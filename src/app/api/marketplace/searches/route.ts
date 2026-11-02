@@ -1,3 +1,4 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
@@ -13,6 +14,9 @@ import { readBoundedJson } from "@/lib/http/read-json";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export async function GET() {
+  const limited = await apiRateLimit("search:get", 60);
+  if (limited) return limited;
+
   let searches: string[] = [];
 
   try {
@@ -28,6 +32,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = await apiRateLimit("search:post", 60);
+  if (limited) return limited;
+
   const origin = request.headers.get("origin");
 
   if ((origin && origin !== request.nextUrl.origin) || request.headers.get("sec-fetch-site") === "cross-site") {
@@ -64,7 +71,7 @@ export async function POST(request: NextRequest) {
   const rateLimit = await assertAuthRateLimit(rateLimitRule);
 
   if (!rateLimit.ok) {
-    return new NextResponse(null, { status: 204 });
+    return NextResponse.json({message: rateLimit.message}, { status: 429, headers: {"Retry-After": String(rateLimit.retryAfter), "Cache-Control":"no-store"} });
   }
 
   try {

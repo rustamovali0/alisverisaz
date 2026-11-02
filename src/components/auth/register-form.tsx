@@ -1,4 +1,5 @@
 "use client";
+import { CaptchaField } from "@/components/auth/captcha-field";
 
 import { ArrowLeft, ArrowRight, Chrome, Store, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition, type UIEvent } from "react";
@@ -575,7 +576,7 @@ export function RegisterForm({
               </Button>
             </div>
           )}
-        </form>
+        <CaptchaField action="register" /></form>
       ) : null}
 
       <div className="hidden" aria-hidden="true">
@@ -593,7 +594,7 @@ export function RegisterForm({
               <Chrome className="mr-2 size-4" aria-hidden="true" />
               {isGooglePending ? "Google açılır" : "Google ilə davam et"}
             </Button>
-          </form>
+          <CaptchaField action="register" /></form>
         ) : null}
       </div>
       {legalDialogOpen ? (

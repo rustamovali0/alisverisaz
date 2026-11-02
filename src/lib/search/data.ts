@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { CACHE_TAGS, CACHE_TTL, publicCache } from "@/lib/cache/public-cache";
 
+import { literalContains } from "@/lib/security/postgrest";
+
 const MAX_SEARCH_TERM_LENGTH = 120;
 
 export type PopularSearchTerm = {
@@ -85,12 +87,12 @@ async function getSiteSearchOverrides() {
 
 async function hasPublicSearchResult(term: string) {
   const supabase = createSupabaseAdminClient();
-  const escaped = term.replace(/[%_]/g, "\\$&");
+  const value = literalContains(term);
   const [{ data: products }, { data: stores }] = await Promise.all([
     (supabase as any).from("products").select("id").eq("status", "active")
-      .or(`name.ilike.%${escaped}%,description.ilike.%${escaped}%`).limit(1),
+      .or(`name.ilike.${value},description.ilike.${value}`).limit(1),
     (supabase as any).from("stores").select("id").eq("status", "active")
-      .or(`name.ilike.%${escaped}%,slug.ilike.%${escaped}%`).limit(1),
+      .or(`name.ilike.${value},slug.ilike.${value}`).limit(1),
   ]);
   return Boolean(products?.length || stores?.length);
 }

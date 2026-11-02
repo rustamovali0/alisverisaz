@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/api",()=>({apiRateLimit:async()=>null}));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { readBoundedJson } from "@/lib/http/read-json";

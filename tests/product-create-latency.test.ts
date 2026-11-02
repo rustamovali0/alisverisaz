@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/rate-limit",()=>({consumeRateLimit:async()=>({ok:true})}));
 import { beforeEach, expect, it, vi } from "vitest";
 import { query } from "./query";
 

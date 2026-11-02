@@ -1,7 +1,11 @@
+import { apiRateLimit } from "@/lib/security/api";
 import ExcelJS from "exceljs";
 import { requireRole } from "@/lib/auth/session";
 import { IMPORT_COLUMNS } from "@/lib/products/import-validation";
 export async function GET() {
+  const limited = await apiRateLimit("import_template:get", 10);
+  if (limited) return limited;
+
   await requireRole(["seller"], "/store/dashboard/products/import");
   const book = new ExcelJS.Workbook();
   const sheet = book.addWorksheet("Məhsullar");

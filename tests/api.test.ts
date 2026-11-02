@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/api",()=>({apiRateLimit:async()=>null}));
 import { beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST as webhook } from "@/app/api/telegram/webhook/route";

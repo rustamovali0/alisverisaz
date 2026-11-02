@@ -10,6 +10,8 @@ declare global {
         element: HTMLElement,
         options: {
           sitekey: string;
+          action?: string;
+          size?: "normal" | "compact" | "flexible";
           callback: (token: string) => void;
           "expired-callback": () => void;
           "error-callback": () => void;
@@ -25,9 +27,10 @@ type TurnstileFieldProps = {
   token: string;
   onTokenChange: (token: string) => void;
   siteKey?: string;
+  action?: string;
 };
 
-export function TurnstileField({ token, onTokenChange, siteKey = "" }: TurnstileFieldProps) {
+export function TurnstileField({ token, onTokenChange, siteKey = "", action = "login" }: TurnstileFieldProps) {
   const widgetId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedWidgetIdRef = useRef<string | null>(null);
@@ -97,12 +100,14 @@ export function TurnstileField({ token, onTokenChange, siteKey = "" }: Turnstile
 
     renderedWidgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: normalizedSiteKey,
+      action,
+      size: "flexible",
       appearance: "interaction-only",
       callback: onTokenChange,
       "expired-callback": () => onTokenChange(""),
       "error-callback": () => onTokenChange(""),
     });
-  }, [isReady, normalizedSiteKey, onTokenChange]);
+  }, [isReady, normalizedSiteKey, onTokenChange, action]);
 
   useEffect(() => {
     if (!token && renderedWidgetIdRef.current && window.turnstile) {

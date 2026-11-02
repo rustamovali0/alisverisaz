@@ -9,6 +9,7 @@ import {
   getClientIp,
   recordAuthRateLimitAttempt,
 } from "@/lib/auth/security";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 import { ensureAuthProfile } from "@/lib/auth/profiles";
 import { trackActivityEvent } from "@/lib/activity/events";
@@ -77,6 +78,7 @@ function isValidNormalizedPhone(value: string) {
 
 function parseCartItems(value: string) {
   try {
+    if (value.length > 100_000) return { items: [], tooManyItems: false, invalidItems: true };
     const parsed = JSON.parse(value) as unknown;
     const grouped = new Map<string, CartItem>();
 
@@ -466,22 +468,25 @@ async function applyOrderPromoSnapshots(input: {
 // No SMTP request or after-response task is required for durable delivery.
 
 export async function getCartProductsAction(productIds: string[], locale = "az") {
+  if (!Array.isArray(productIds) || productIds.length > MAX_CHECKOUT_ITEMS * 2) return [];
   const uniqueProductIds = Array.from(
-    new Set(productIds.filter((productId) => UUID_PATTERN.test(productId))),
+    new Set(productIds.filter((id) => typeof id === "string" && UUID_PATTERN.test(id))),
   ).slice(0, MAX_CHECKOUT_ITEMS);
-
+  if (!uniqueProductIds.length || !(await consumeRateLimit("cart_read", await getClientIp(), 120, 60)).ok) return [];
   return getCartProducts(uniqueProductIds, locale);
 }
 
 export async function getAvailablePromoStoreIdsAction(storeIds: string[]) {
+  if (!Array.isArray(storeIds) || storeIds.length > MAX_CHECKOUT_ITEMS * 2) return [];
   const uniqueStoreIds = Array.from(
-    new Set(storeIds.filter((storeId) => UUID_PATTERN.test(storeId))),
+    new Set(storeIds.filter((id) => typeof id === "string" && UUID_PATTERN.test(id))),
   ).slice(0, MAX_CHECKOUT_ITEMS);
 
   if (uniqueStoreIds.length === 0) {
     return [];
   }
 
+  if (!(await consumeRateLimit("cart_promos", await getClientIp(), 120, 60)).ok) return [];
   const supabaseAdmin = createSupabaseAdminClient();
   const { data } = await (supabaseAdmin as any)
     .from("seller_promo_codes")
@@ -538,6 +543,8 @@ export async function previewCheckoutPromosAction(formData: FormData): Promise<
     };
   }
 
+  const rate = await consumeRateLimit("promo_preview", await getClientIp(), 30, 60);
+  if (!rate.ok) return { ok: false, message: rate.message };
   const validatedVariants = await validateCartVariantSelections(cart.items);
 
   if (!validatedVariants.ok) {

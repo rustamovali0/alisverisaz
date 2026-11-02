@@ -1,5 +1,6 @@
 "use client";
 
+import { CaptchaField } from "@/components/auth/captcha-field";
 import { ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
 
@@ -12,7 +13,7 @@ import { appAlert } from "@/lib/alerts/app-alert";
 import { updatePasswordAction } from "@/lib/auth/actions";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({nativeCaptcha=false}:{nativeCaptcha?:boolean}) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [serverError, setServerError] = useState<string | null>(null);
@@ -96,6 +97,7 @@ export function ResetPasswordForm() {
         <Button type="submit" disabled={isPending} className="h-12 w-full rounded-[10px] bg-blue-600 font-semibold text-white shadow-none hover:bg-blue-700">
           {isPending ? "Yenilənir" : "Şifrəni yenilə"}
         </Button>
+      {nativeCaptcha && <CaptchaField action="login" />}
       </form>
     </AuthCard>
   );

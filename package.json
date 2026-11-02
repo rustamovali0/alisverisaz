@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "qa:smoke": "node scripts/qa-smoke.mjs",
-    "qa:perf": "node scripts/qa-performance.mjs"
+    "qa:perf": "node scripts/qa-performance.mjs",
+    "security:secrets": "node scripts/security/secret-scan.mjs",
+    "security:audit": "node scripts/security/dependency-audit.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1114.0",

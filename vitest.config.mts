@@ -9,6 +9,8 @@ export default defineConfig({
     },
   },
   test: {
+    // PostgreSQL WASM fixtures are memory/CPU intensive; keep CI and laptops bounded.
+    maxWorkers: 2,
     include: ["tests/**/*.test.ts"],
     clearMocks: true,
     env: {

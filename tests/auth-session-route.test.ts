@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/api",()=>({apiRateLimit:async()=>null}));
 import { beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/auth/session/route";
@@ -22,7 +23,7 @@ it("does not report a successful login without a persisted session", async () =>
   const response = await GET(new NextRequest("https://example.test/api/auth/session"));
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({ authenticated: false, role: null });
-  expect(response.headers.get("cache-control")).toBe("private, max-age=0, must-revalidate");
+  expect(response.headers.get("cache-control")).toBe("private, no-store");
 });
 it("checks the public seller session", async () => {
   mocks.profile.mockResolvedValue({ role: "seller" });

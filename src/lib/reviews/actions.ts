@@ -1,4 +1,5 @@
 "use server";
+import { verifyFormCaptcha } from "@/lib/auth/security";
 
 import { revalidatePath } from "next/cache";
 import { createHash } from "node:crypto";
@@ -146,6 +147,8 @@ export async function upsertProductReviewAction(
   const ip = await getClientIp();
   const rateRule = { endpoint: "support_message" as const, identifier: `review:${productId}:${guestKey ?? current?.user.id}`, ip, maxAttempts: 5, windowSeconds: 3600, blockSeconds: 3600 };
   const rateLimit = await assertAuthRateLimit(rateRule);
+  const captcha = await verifyFormCaptcha(formData, "review");
+  if (!captcha.ok) return {ok:false,message:captcha.message};
   if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
   if (isGuest) {
     const { data: existing } = await (supabase as any).from("reviews").select("id").eq("product_id", productId).eq("guest_key", guestKey).maybeSingle();

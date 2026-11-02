@@ -1,0 +1,16 @@
+/var/log/nginx/alisveris-security.log {
+ daily
+ rotate 14
+ maxsize 20M
+ compress
+ delaycompress
+ missingok
+ notifempty
+ create 0640 www-data adm
+ sharedscripts
+ postrotate
+   /usr/sbin/nginx -s reopen
+ endscript
+}
+# PM2 logs: configure existing pm2-logrotate max_size 20M, retain 14, compress true.
+# Check current modules first; do not install another logger or truncate audit data.

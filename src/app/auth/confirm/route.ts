@@ -1,3 +1,4 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { NextResponse } from "next/server";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { getPublicAuthOrigin } from "@/lib/auth/public-origin";
@@ -12,26 +13,27 @@ function privateRedirect(url: URL) {
 }
 
 export async function GET(request: Request) {
+  const limited=await apiRateLimit("auth_callback",20);if(limited)return limited;
   const requestUrl = new URL(request.url);
   const origin = getPublicAuthOrigin();
   const tokenHash = requestUrl.searchParams.get("token_hash");
   const type = requestUrl.searchParams.get("type");
   const nextPath = normalizeNextPath(
     requestUrl.searchParams.get("next"),
-    "/reset-password?mode=recovery",
+    type === "signup" ? "/login" : "/reset-password?mode=recovery",
   );
   const expiredUrl = new URL("/forgot-password", origin);
 
   expiredUrl.searchParams.set("reset", "expired");
 
-  if (!tokenHash || type !== "recovery") {
+  if (!tokenHash || (type !== "recovery" && type !== "signup")) {
     return privateRedirect(expiredUrl);
   }
 
   const supabase = await createSupabaseServerClient({ authScope: "public", requireCookieWrite: true });
   const { error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
-    type: "recovery",
+    type,
   });
 
   if (error) {

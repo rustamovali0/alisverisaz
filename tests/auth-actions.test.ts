@@ -4,7 +4,7 @@ import { query } from "./query";
 
 const mocks = vi.hoisted(() => ({
   admin: vi.fn(), server: vi.fn(), from: vi.fn(), getUser: vi.fn(),
-  sendEmail: vi.fn(), assertLimit: vi.fn(), recordAttempt: vi.fn(), verifyCaptcha: vi.fn(),
+  sendEmail: vi.fn(), assertLimit: vi.fn(), recordAttempt: vi.fn(), verifyCaptcha: vi.fn(), formCaptcha: vi.fn(),
   afterTasks: [] as Array<() => Promise<void>>,
 }));
 vi.mock("next/server", () => ({ after: (task: () => Promise<void>) => mocks.afterTasks.push(task) }));
@@ -18,6 +18,7 @@ vi.mock("@/lib/platform/system-settings", () => ({ getSystemFlags: async () => (
 vi.mock("@/lib/auth/security", () => ({
   getClientIp: async () => "127.0.0.1", assertAuthRateLimit: mocks.assertLimit,
   recordAuthRateLimitAttempt: mocks.recordAttempt, resetAuthRateLimit: vi.fn(),
+  verifyFormCaptcha: mocks.formCaptcha,
   readCaptchaToken: (form: FormData) => form.get("captchaToken") ?? "", verifyCaptchaToken: mocks.verifyCaptcha,
 }));
 
@@ -28,6 +29,7 @@ function form(values: Record<string, string>) {
 }
 beforeEach(() => {
   mocks.afterTasks = [];
+  mocks.formCaptcha.mockResolvedValue({ok:true});
   mocks.admin.mockReturnValue({ from: mocks.from, auth: { resetPasswordForEmail: mocks.sendEmail, admin: { getUserById: mocks.getUser } } });
   mocks.from.mockReturnValue(query({ data: { id: "user-1", email: "user@example.test" } }));
   mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1", email: "user@example.test" } } });
@@ -36,38 +38,15 @@ beforeEach(() => {
   mocks.recordAttempt.mockResolvedValue({ isBlocked: false });
   mocks.verifyCaptcha.mockResolvedValue({ ok: false, message: "CAPTCHA required" });
 });
-it("reports unregistered and inactive accounts without queuing a recovery email", async () => {
-  const data = form({ identifier: "user@example.test" });
-  expect((await requestPasswordResetAction(data)).ok).toBe(true);
-  await mocks.afterTasks.pop()?.();
-  mocks.from.mockReturnValue(query());
-  expect(await requestPasswordResetAction(data)).toMatchObject({ok:false,message:"Bu e-poçt ünvanı ilə qeydiyyat tapılmadı. Əvvəlcə qeydiyyatdan keçin."});
-  expect(mocks.afterTasks).toHaveLength(0);
-  mocks.from.mockReturnValue(query({ data: { id: "user-1" } }));
-  mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1", email: "user@example.test", banned_until: "2099-01-01" } } });
-  expect(await requestPasswordResetAction(data)).toMatchObject({ok:false,message:"Bu hesab hazırda aktiv deyil. Dəstək mərkəzinə müraciət edin."});
-  expect(mocks.afterTasks).toHaveLength(0);
-  expect(mocks.sendEmail).toHaveBeenCalledTimes(1);
+it("returns identical recovery responses for active, missing and inactive accounts", async () => {
+ const f=form({identifier:"user@example.test"});const active=await requestPasswordResetAction(f);await mocks.afterTasks.pop()?.();
+ mocks.from.mockReturnValue(query());const missing=await requestPasswordResetAction(f);await mocks.afterTasks.pop()?.();
+ expect(missing).toEqual(active);
+ mocks.from.mockReturnValue(query({data:{id:"user-1"}}));mocks.getUser.mockResolvedValue({data:{user:{id:"user-1",email:"user@example.test",banned_until:"2099-01-01"}}});
+ expect(await requestPasswordResetAction(f)).toEqual(active);await mocks.afterTasks.pop()?.();expect(mocks.sendEmail).toHaveBeenCalledTimes(1);
 });
-it("treats a missing Auth user as unregistered rather than claiming delivery", async () => {
-  mocks.getUser.mockResolvedValue({data:{user:null},error:{status:404,code:"user_not_found"}});
-  expect((await requestPasswordResetAction(form({identifier:"user@example.test"}))).ok).toBe(false);
-  expect(mocks.afterTasks).toHaveLength(0);
-});
-it("does not misreport database failures as an unregistered address", async () => {
-  mocks.from.mockReturnValue(query({error:{message:"database unavailable"}}));
-  const result=await requestPasswordResetAction(form({identifier:"user@example.test"}));
-  expect(result.ok).toBe(false);
-  expect(result.message).not.toContain("qeydiyyat tapılmadı");
-  expect(mocks.afterTasks).toHaveLength(0);
-});
-it("matches email addresses literally instead of treating underscores and percent signs as lookup wildcards", async () => {
-  const email="person_one+%tag@example.test";
-  const profile=query({data:{id:"user-1",email}});mocks.from.mockReturnValue(profile);
-  mocks.getUser.mockResolvedValue({data:{user:{id:"user-1",email}}});
-  expect((await requestPasswordResetAction(form({identifier:email}))).ok).toBe(true);
-  expect(profile.ilike).toHaveBeenCalledWith("email","person\\_one+\\%tag@example.test");
-});
+it("does not disclose lookup failures or invoke SMTP on missing accounts",async()=>{mocks.from.mockReturnValue(query({error:{code:"42P01"}}));expect((await requestPasswordResetAction(form({identifier:"user@example.test"}))).ok).toBe(true);await mocks.afterTasks.pop()?.();expect(mocks.sendEmail).not.toHaveBeenCalled();});
+it("matches recovery email addresses literally during the background lookup",async()=>{const email="person_one+%tag@example.test";const profile=query({data:{id:"user-1",email}});mocks.from.mockReturnValue(profile);mocks.getUser.mockResolvedValue({data:{user:{id:"user-1",email}}});await requestPasswordResetAction(form({identifier:email}));await mocks.afterTasks.pop()?.();expect(profile.ilike).toHaveBeenCalledWith("email","person\\_one+\\%tag@example.test");});
 it("never uses an attacker-controlled host for the emailed recovery token", async () => {
   await requestPasswordResetAction(form({ identifier: "user@example.test" }));
   await mocks.afterTasks.pop()?.();
@@ -83,10 +62,10 @@ it("rejects a blocked password reset before account lookup or email delivery", a
   expect(mocks.admin).not.toHaveBeenCalled();
   expect(mocks.sendEmail).not.toHaveBeenCalled();
 });
-it("checks registration before responding without waiting for SMTP delivery", async () => {
+it("performs registration lookup and SMTP after returning the generic response", async () => {
   expect((await requestPasswordResetAction(form({ identifier: "user@example.test" }))).ok).toBe(true);
-  expect(mocks.admin).toHaveBeenCalled();
-  expect(mocks.getUser).toHaveBeenCalled();
+  expect(mocks.admin).not.toHaveBeenCalled();
+  expect(mocks.getUser).not.toHaveBeenCalled();
   expect(mocks.sendEmail).not.toHaveBeenCalled();
   expect(mocks.afterTasks).toHaveLength(1);
 });
@@ -95,7 +74,7 @@ it("stops reset if recording the attempt fails", async () => {
   expect((await requestPasswordResetAction(form({ identifier: "user@example.test" }))).ok).toBe(false);
   expect(mocks.admin).not.toHaveBeenCalled();
 });
-it("does not break public login when the CAPTCHA token is missing", async () => {
+it("validates email after the CAPTCHA guard accepts the request", async () => {
   mocks.server.mockResolvedValue({});
   const result = await loginAction(form({ identifier: "not-an-email", password: "test-password" }));
 
@@ -257,4 +236,20 @@ it("keeps the old-session boundary if revoking sessions fails", async () => {
   mocks.server.mockResolvedValue({auth:{getUser:async()=>({data:{user:{id:"user-1",email:"user@example.test"}}}),updateUser:async()=>({error:null}),signOut:async()=>({error:null}),signInWithPassword}});
   expect(await updatePasswordAction(form({password:"new-long-password",confirmPassword:"new-long-password"}))).toMatchObject({ok:true,redirectTo:"/login"});
   expect(signInWithPassword).not.toHaveBeenCalled();
+});
+
+it("rejects a CAPTCHA bypass before contacting the Auth password endpoint",async()=>{mocks.formCaptcha.mockResolvedValue({ok:false,message:"Təhlükəsizlik yoxlaması alınmadı."});const result=await loginAction(form({identifier:"user@example.test",password:"valid-test-password"}));expect(result.ok).toBe(false);expect(mocks.server).not.toHaveBeenCalled();});
+
+it("uses public native signup verification and never admin auto-confirm for new registrations", async () => {
+  vi.stubEnv("AUTH_REQUIRE_EMAIL_VERIFICATION", "true");
+  const signUp = vi.fn().mockResolvedValue({data:{user:{id:"fake",identities:[]}},error:null});
+  const createUser=vi.fn();
+  mocks.server.mockResolvedValue({auth:{signUp}});
+  mocks.admin.mockReturnValue({auth:{admin:{createUser}}});
+  const result=await registerAction(form({fullName:"QA Buyer",email:"qa@example.test",phone:"+994501234567",password:"Example-only-StrongPassword1!",confirmPassword:"Example-only-StrongPassword1!",terms:"on",role:"customer"}));
+  expect(result).toMatchObject({ok:true,redirectTo:"/login"});
+  expect(signUp).toHaveBeenCalledWith(expect.objectContaining({options:expect.objectContaining({emailRedirectTo:"https://shop.example.test/auth/confirm"})}));
+  expect(createUser).not.toHaveBeenCalled();
+  expect(mocks.from).not.toHaveBeenCalled();
+  vi.unstubAllEnvs();
 });

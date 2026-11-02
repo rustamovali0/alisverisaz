@@ -1,0 +1,28 @@
+# Merge into EXISTING marketplace server/location blocks; never overwrite TLS,
+# API, media, websocket or certificate-renewal locations with this example.
+client_max_body_size 32m;
+client_body_timeout 20s;
+client_header_timeout 15s;
+limit_req_status 429;
+limit_req zone=security_auth burst=20 nodelay;
+limit_req zone=security_api burst=120 nodelay;
+limit_req zone=security_dynamic burst=120 nodelay;
+error_page 429 = @security_rate_limited;
+location @security_rate_limited {
+ default_type application/json;
+ add_header Retry-After 60 always;
+ add_header Cache-Control no-store always;
+ return 429 '{"ok":false,"message":"Sorğu limiti aşıldı. Bir az sonra yenidən cəhd edin."}';
+}
+# Put inside existing location / and /api/ proxy blocks:
+# proxy_set_header Host $host;
+# proxy_set_header X-Forwarded-Host $host;
+# proxy_set_header X-Forwarded-Proto $scheme;
+# proxy_set_header X-Real-IP $remote_addr;
+# proxy_set_header X-Forwarded-For $remote_addr;
+# proxy_set_header CF-Connecting-IP "";
+# proxy_set_header True-Client-IP "";
+# proxy_set_header X-Vercel-Forwarded-For "";
+# Locations with their own limit_req override inherited limits: merge all applicable zones.
+# Apply a separate, sanitized log without query strings to auth/backend vhosts:
+# access_log /var/log/nginx/alisveris-security.log security_json;

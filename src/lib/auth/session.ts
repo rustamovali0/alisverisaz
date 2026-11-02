@@ -1,3 +1,4 @@
+import { assertAdminMfa } from "@/lib/security/admin-mfa";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { cache } from "react";
@@ -72,6 +73,7 @@ export async function requireRole(allowedRoles: AuthRole[], nextPath?: string) {
     redirect(getDashboardPath(current.role));
   }
 
+  if (current.role === "admin") await assertAdminMfa();
   const flags = await getSystemFlags();
   if (current.role === "admin" && !flags.admin_panel_enabled) {
     throw new Error("Admin panel deaktivdir.");

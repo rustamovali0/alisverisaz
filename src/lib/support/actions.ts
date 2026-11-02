@@ -1,4 +1,5 @@
 "use server";
+import { verifyFormCaptcha } from "@/lib/auth/security";
 
 import { revalidatePath } from "next/cache";
 
@@ -73,6 +74,8 @@ export async function createSupportMessageAction(
     blockSeconds: 15 * 60,
   };
   const rateLimit = await assertAuthRateLimit(rateLimitRule);
+  const captcha = await verifyFormCaptcha(formData, "contact");
+  if (!captcha.ok) return {ok:false,message:captcha.message};
 
   if (!rateLimit.ok) {
     return {

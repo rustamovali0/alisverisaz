@@ -1,3 +1,4 @@
+import { getClientIp } from "@/lib/auth/security";
 import { headers } from "next/headers";
 import { after } from "next/server";
 
@@ -59,11 +60,8 @@ async function getRequestAuditMetadata() {
   try {
     const requestHeaders = await headers();
     const userAgent = requestHeaders.get("user-agent");
-    const forwardedFor = requestHeaders.get("x-forwarded-for");
-    const ip =
-      requestHeaders.get("x-real-ip") ??
-      forwardedFor?.split(",")[0]?.trim() ??
-      null;
+    const resolvedIp=await getClientIp();
+    const ip=resolvedIp==="unknown"?null:resolvedIp;
 
     return {
       ip_address: ip,

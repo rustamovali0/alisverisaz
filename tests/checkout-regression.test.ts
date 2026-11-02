@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getCartProductsAction,
+  getAvailablePromoStoreIdsAction,
+  previewCheckoutPromosAction,
   createCheckoutOrdersAction,
   createWhatsAppOrderIntentAction,
 } from "@/lib/cart/actions";
@@ -11,9 +14,11 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   from: vi.fn(),
   limit: vi.fn(),
+  rate: vi.fn(),
   record: vi.fn(),
   after: vi.fn(),
 }));
+vi.mock("@/lib/security/rate-limit", () => ({consumeRateLimit: mocks.rate}));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUserProfile: mocks.profile }));
 vi.mock("@/lib/cart/data", () => ({ getCartProducts: mocks.products }));
 vi.mock("@/lib/supabase/admin", () => ({
@@ -71,6 +76,7 @@ beforeEach(() => {
   });
   mocks.products.mockResolvedValue([product]);
   mocks.limit.mockResolvedValue({ ok: true });
+  mocks.rate.mockResolvedValue({ok:true});
   mocks.record.mockResolvedValue({ isBlocked: false });
   mocks.from.mockImplementation((table: string) =>
     query({
@@ -218,3 +224,29 @@ it.each([createCheckoutOrdersAction, createWhatsAppOrderIntentAction])(
     expect(mocks.rpc).not.toHaveBeenCalled();
   },
 );
+
+describe("public cart read boundaries", () => {
+  it("rejects non-arrays and oversized arrays before accessing storage", async () => {
+    expect(await getCartProductsAction({} as never)).toEqual([]);
+    expect(await getAvailablePromoStoreIdsAction(null as never)).toEqual([]);
+    expect(await getCartProductsAction(Array(101).fill(productId))).toEqual([]);
+    expect(mocks.products).not.toHaveBeenCalled();
+    expect(mocks.admin).not.toHaveBeenCalled();
+    expect(mocks.rate).not.toHaveBeenCalled();
+  });
+  it("denies cart/promo reads when distributed storage or its budget denies access", async () => {
+    mocks.rate.mockResolvedValue({ok:false, message:"Sorğu limiti aşıldı."});
+    expect(await getCartProductsAction([productId])).toEqual([]);
+    expect(await getAvailablePromoStoreIdsAction([storeId])).toEqual([]);
+    const form=new FormData(); form.set("items", JSON.stringify([{productId,quantity:1}]));
+    expect(await previewCheckoutPromosAction(form)).toEqual({ok:false,message:"Sorğu limiti aşıldı."});
+    expect(mocks.products).not.toHaveBeenCalled();
+    expect(mocks.admin).not.toHaveBeenCalled();
+  });
+  it("rejects oversized serialized carts before parsing or loading products", async () => {
+    const form=new FormData(); form.set("items", " ".repeat(100001));
+    expect((await previewCheckoutPromosAction(form)).ok).toBe(false);
+    expect(mocks.products).not.toHaveBeenCalled();
+    expect(mocks.rate).not.toHaveBeenCalled();
+  });
+});

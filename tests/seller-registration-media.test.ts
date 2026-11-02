@@ -7,6 +7,7 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/cms/data", () => ({ getSiteSettings: async () => ({ userRegistrationEnabled: true, storeRegistrationEnabled: true }) }));
 vi.mock("@/lib/platform/system-settings", () => ({ getSystemFlags: async () => ({ site_enabled: true, seller_panel_enabled: true }) }));
 vi.mock("@/lib/auth/security", () => ({
+  verifyFormCaptcha:async()=>({ok:true}),
   getClientIp: async () => "127.0.0.1", assertAuthRateLimit: async () => ({ ok: true }),
   recordAuthRateLimitAttempt: async () => ({ isBlocked: false }),
 }));
@@ -17,6 +18,7 @@ vi.mock("@/lib/storage/media-assets", () => ({ recordImageMediaAsset: vi.fn() })
 vi.mock("@/lib/telegram/notifications", () => ({ notifySellerRegistered: vi.fn() }));
 
 beforeEach(() => {
+  vi.stubEnv("AUTH_REQUIRE_EMAIL_VERIFICATION","false");
   mocks.createUser.mockResolvedValue({ data: { user: { id: "seller-test", email: "seller@example.test", user_metadata: { requested_role: "seller" } } }, error: null });
   mocks.updateUser.mockResolvedValue({ error: null });
   mocks.upload.mockImplementation(async ({ file }) => ({ url: `https://media.example.test/${file.name}` }));
