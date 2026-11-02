@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { literalContains, validatedCursorDate } from "@/lib/security/postgrest";
 import {
   filterCatalog,
   type CatalogCandidate,
@@ -428,7 +429,7 @@ function decodeProductCursor(
     if (
       parsed.createdAt !== null &&
       parsed.createdAt !== undefined &&
-      Number.isNaN(Date.parse(parsed.createdAt))
+      !validatedCursorDate(parsed.createdAt)
     ) {
       return null;
     }
@@ -442,7 +443,7 @@ function decodeProductCursor(
 
     return {
       id: parsed.id,
-      createdAt: parsed.createdAt ?? null,
+      createdAt: parsed.createdAt == null ? null : validatedCursorDate(parsed.createdAt),
       price: parsed.price === undefined ? undefined : Number(parsed.price),
     };
   } catch {
@@ -698,8 +699,8 @@ async function getMarketplaceProductPageUncached(
   if (normalizedSearch && !input.storeId) {
     const storeFilters = getSearchCandidates(input.searchQuery ?? "").flatMap(
       (candidate) => {
-        const escaped = candidate.replace(/[%_]/g, "\\$&");
-        return [`name.ilike.%${escaped}%`, `slug.ilike.%${escaped}%`];
+        const value = literalContains(candidate);
+        return [`name.ilike.${value}`, `slug.ilike.${value}`];
       },
     );
     const { data: matchingStores } = await (supabase as any)
@@ -744,8 +745,8 @@ async function getMarketplaceProductPageUncached(
     if (normalizedSearch) {
       const filters = getSearchCandidates(input.searchQuery ?? "").flatMap(
         (candidate) => {
-          const escaped = candidate.replace(/[%_]/g, "\\$&");
-          return [`name.ilike.%${escaped}%`, `description.ilike.%${escaped}%`];
+          const value = literalContains(candidate);
+          return [`name.ilike.${value}`, `description.ilike.${value}`];
         },
       );
       if (matchingStoreIds.length > 0) {

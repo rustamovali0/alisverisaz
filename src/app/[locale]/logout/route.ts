@@ -49,10 +49,10 @@ function getPublicOrigin() {
   return configuredOrigin;
 }
 
-export async function GET(request: Request, context: LogoutRouteContext) {
+export async function POST(request: Request, context: LogoutRouteContext) {
   await context.params;
 
-  if (isCrossSiteRequest(request)) {
+  if (isCrossSiteRequest(request) || request.headers.get("origin") !== getPublicOrigin()) {
     return NextResponse.json({ ok: false }, { status: 403 });
   }
 
@@ -70,5 +70,10 @@ export async function GET(request: Request, context: LogoutRouteContext) {
     },
   });
 
-  return NextResponse.redirect(new URL("/login", getPublicOrigin()));
+  return NextResponse.redirect(new URL("/login", getPublicOrigin()),303);
+}
+
+// GET must be side-effect-free (links, crawlers, prefetch and mail scanners).
+export async function GET() {
+  return new Response(`<!doctype html><html lang="az"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hesabdan çıxış</title></head><body><main><h1>Hesabdan çıxış</h1><p>Hesabınızdan çıxmaq istəyirsiniz?</p><form method="post"><button type="submit">Hesabdan çıx</button></form><a href="/">Ana səhifəyə qayıt</a></main></body></html>`,{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store","Referrer-Policy":"no-referrer","X-Robots-Tag":"noindex"}});
 }

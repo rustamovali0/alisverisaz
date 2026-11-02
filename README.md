@@ -52,3 +52,7 @@ npm run qa:perf -- https://alisveris.az
 ```
 
 Smoke yoxlaması açıq səhifələri, giriş yönləndirmələrini və icazəsiz API sorğularının rədd edilməsini yoxlayır. Performans yoxlaması server cavabının tam alınma müddətini ölçür; brauzer göstəricilərini və hesabla edilən alış-veriş axınlarını əvəz etmir.
+
+## Security hardening (staged rollout)
+
+See [the security audit](docs/security/SECURITY_AUDIT.md), [API inventory](docs/security/API_INVENTORY.md), [deployment and rollback](docs/security/DEPLOYMENT.md), and [Cloudflare setup](docs/CLOUDFLARE_SECURITY_SETUP.md). The branch adds application controls and migrations; production infrastructure/GoTrue/MFA activation requires the documented operator steps. Do not deploy without trusted ingress and a working distributed rate-limit store.

@@ -1,4 +1,6 @@
 import "server-only";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { securityEvent } from "@/lib/security/events";
 
 import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
@@ -300,6 +302,14 @@ export async function uploadImageToR2({
   if (looksLikeSvg(input)) {
     throw new Error("SVG şəkillər qəbul edilmir.");
   }
+
+  const budget=await consumeRateLimit("image_upload", folder, 50, 60);
+  if(!budget.ok)throw Error(budget.message);
+  try {
+    const sharp=(await import("sharp")).default;
+    const metadata=await sharp(input,{limitInputPixels:MAX_INPUT_PIXELS}).metadata();
+    if(!metadata.format || !["jpeg","png","webp","gif","heif","avif","tiff"].includes(metadata.format))throw Error("RASTER_REQUIRED");
+  } catch { securityEvent("upload_rejected","image_upload",400);throw Error(IMAGE_PROCESSING_ERROR); }
 
   let processed: ProcessedImage;
 

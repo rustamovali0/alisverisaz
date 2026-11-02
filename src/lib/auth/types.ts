@@ -13,6 +13,8 @@ export type AuthResult =
   | {
       ok: false;
       message: string;
+      status?: number;
+      retryAfter?: number;
     };
 
 export function isAuthRole(value: unknown): value is AuthRole {

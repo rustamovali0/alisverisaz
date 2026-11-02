@@ -1,4 +1,5 @@
 "use server";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
 
 import { allowsPersonalListings } from "@/lib/products/marketplace-policy";
 
@@ -928,6 +929,8 @@ export async function createStoreProductAction(
   formData: FormData,
 ): Promise<ProductActionResult> {
   const current = await requireRole(["seller"], "/store/dashboard/products");
+  const uploadLimit = await consumeRateLimit("product_write", current.user.id, 10, 60);
+  if (!uploadLimit.ok) return {ok:false,message:uploadLimit.message};
   const featureEnabled = await getSellerFeatureAccess(
     current.user.id,
     "products",

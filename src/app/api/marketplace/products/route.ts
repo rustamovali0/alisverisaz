@@ -1,3 +1,4 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { parseCatalogFilters } from "@/lib/catalog/filters";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -26,6 +27,9 @@ function cleanParamList(value: string | null, maxItems = 40, maxLength = 80) {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await apiRateLimit("products:get", 120);
+  if (limited) return limited;
+
   const searchParams = request.nextUrl.searchParams;
   const limit = clampLimit(searchParams.get("limit"));
 

@@ -1,3 +1,4 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getSimilarMarketplaceProductPage } from "@/lib/cart/data";
@@ -17,6 +18,9 @@ function cleanParam(value: string | null, maxLength = 120) {
 }
 
 export async function GET(request: NextRequest) {
+  const limited = await apiRateLimit("related_products:get", 120);
+  if (limited) return limited;
+
   const searchParams = request.nextUrl.searchParams;
   const limit = clampLimit(searchParams.get("limit"));
 

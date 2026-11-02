@@ -1,4 +1,5 @@
 "use client";
+import { CaptchaField } from "@/components/auth/captcha-field";
 
 import { Star } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
@@ -153,6 +154,6 @@ export function ProductReviewForm({
           </Button>
         ) : null}
       </div>
-    </form>
+    <CaptchaField action="review" /></form>
   );
 }

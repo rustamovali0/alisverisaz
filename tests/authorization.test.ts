@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/rate-limit",()=>({consumeRateLimit:async()=>({ok:true})}));
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as approvals from "@/lib/products/approval-actions";

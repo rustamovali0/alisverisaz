@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/api",()=>({apiRateLimit:async()=>null}));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { normalizeNextPath } from "@/lib/auth/safe-redirect";
 import { GET as confirm } from "@/app/auth/confirm/route";

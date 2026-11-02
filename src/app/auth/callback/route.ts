@@ -1,3 +1,4 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { NextResponse } from "next/server";
 
 import { ensureAuthProfile } from "@/lib/auth/profiles";
@@ -19,6 +20,7 @@ function readMetadataString(metadata: Record<string, unknown>, keys: string[]) {
 }
 
 export async function GET(request: Request) {
+  const limited=await apiRateLimit("auth_callback",20);if(limited)return limited;
   const requestUrl = new URL(request.url);
   const origin = getPublicAuthOrigin();
   const code = requestUrl.searchParams.get("code");

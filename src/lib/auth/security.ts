@@ -1,20 +1,13 @@
-import { createHash } from "node:crypto";
-import { isIP } from "node:net";
-
+import { securityEvent } from "@/lib/security/events";
 import { headers } from "next/headers";
 
 import { serverEnv } from "@/lib/config/env.server";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
-type RateLimitBucket = {
-  bucket_key: string;
-  attempts: number;
-  window_start: string;
-  blocked_until: string | null;
-};
+import { consumeRateLimit, clearRateLimit } from "@/lib/security/rate-limit";
+import { resolveClientIp } from "@/lib/security/client-ip";
 
 type RateLimitRule = {
   endpoint:
+    | "admin_mfa"
     | "login"
     | "register"
     | "password_reset"
@@ -27,48 +20,11 @@ type RateLimitRule = {
   blockSeconds?: number;
 };
 
-type BucketInput = {
-  endpoint: string;
-  bucketType: "ip" | "identifier";
-  identifierHash: string | null;
-  ipHash: string | null;
-};
-
-const GENERIC_CAPTCHA_ERROR = "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
-const GENERIC_RATE_LIMIT_ERROR =
-  "Çox sayda cəhd edildi. Bir az sonra yenidən cəhd edin.";
-const RATE_LIMIT_UNAVAILABLE = "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
-
-function hashValue(value: string) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function isSafeIp(value: string) {
-  return isIP(value) !== 0;
-}
-
-function readForwardedIp(value: string | null) {
-  const first = value?.split(",")[0]?.trim() ?? "";
-
-  return isSafeIp(first) ? first : "";
-}
-
 export async function getClientIp() {
-  const headerList = await headers();
-  if (process.env.VERCEL === "1") {
-    // Vercel overwrites these headers. Client-supplied proxy headers are not trusted.
-    return readForwardedIp(headerList.get("x-vercel-forwarded-for")) ||
-      readForwardedIp(headerList.get("x-forwarded-for")) || "unknown";
-  }
-  const directIp =
-    readForwardedIp(headerList.get("cf-connecting-ip")) ||
-    readForwardedIp(headerList.get("true-client-ip")) ||
-    readForwardedIp(headerList.get("x-real-ip")) ||
-    readForwardedIp(headerList.get("x-vercel-forwarded-for")) ||
-    readForwardedIp(headerList.get("x-forwarded-for"));
-
-  return directIp || "unknown";
+  return resolveClientIp(await headers());
 }
+const GENERIC_CAPTCHA_ERROR =
+  "Təhlükəsizlik yoxlaması alınmadı. Yenidən cəhd edin.";
 
 export function readCaptchaToken(formData: FormData) {
   const value = formData.get("captchaToken");
@@ -76,7 +32,11 @@ export function readCaptchaToken(formData: FormData) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-export async function verifyCaptchaToken(token: string, remoteIp: string) {
+export async function verifyCaptchaToken(
+  token: string,
+  remoteIp: string,
+  action: string | readonly string[] = "login",
+) {
   if (!token || token.length > 4096) {
     return {
       ok: false,
@@ -97,7 +57,7 @@ export async function verifyCaptchaToken(token: string, remoteIp: string) {
       response: token,
     });
 
-    if (remoteIp !== "unknown") {
+    if (remoteIp !== "unknown" && !remoteIp.includes("/64")) {
       body.set("remoteip", remoteIp);
     }
 
@@ -109,9 +69,27 @@ export async function verifyCaptchaToken(token: string, remoteIp: string) {
         signal: AbortSignal.timeout(5000),
       },
     );
-    const data = (await response.json()) as { success?: boolean };
+    const data = (await response.json()) as {
+      success?: boolean;
+      hostname?: string;
+      action?: string;
+    };
 
-    if (!response.ok || data.success !== true) {
+    const appHost = new URL(
+      process.env.NEXT_PUBLIC_APP_URL || "https://alisveris.az",
+    ).hostname;
+    const allowed = (process.env.TURNSTILE_ALLOWED_HOSTNAMES || appHost)
+      .split(",")
+      .map((host) => host.trim());
+    if (
+      !response.ok ||
+      data.success !== true ||
+      !data.hostname ||
+      !allowed.includes(data.hostname) ||
+      !(Array.isArray(action)
+        ? action.includes(data.action || "")
+        : data.action === action)
+    ) {
       return {
         ok: false,
         message: GENERIC_CAPTCHA_ERROR,
@@ -130,175 +108,58 @@ export async function verifyCaptchaToken(token: string, remoteIp: string) {
   }
 }
 
-function getBucketKey(input: BucketInput) {
-  const value =
-    input.bucketType === "ip"
-      ? input.ipHash ?? "unknown"
-      : input.identifierHash ?? "unknown";
-
-  return `auth:${input.endpoint}:${input.bucketType}:${value}`;
-}
-
-function getBucketInputs(input: {
-  endpoint: string;
-  identifier: string;
-  ip: string;
-}) {
-  const identifierHash = hashValue(input.identifier || "unknown");
-  const ipHash = hashValue(input.ip || "unknown");
-
-  const buckets = [
-    {
-      endpoint: input.endpoint,
-      bucketType: "ip" as const,
-      identifierHash: null,
-      ipHash,
-    },
-    {
-      endpoint: input.endpoint,
-      bucketType: "identifier" as const,
-      identifierHash,
-      ipHash: null,
-    },
-  ];
-
-  // Public users often share one mobile-provider or office IP. Login attempts are
-  // therefore limited per account identifier; a previous user's failures must
-  // never block another user's first valid attempt on the same public IP.
-  return input.endpoint === "login" ? buckets.slice(1) : buckets;
-}
-
-function isWindowExpired(bucket: RateLimitBucket, now: Date, windowSeconds: number) {
-  return now.getTime() - new Date(bucket.window_start).getTime() >= windowSeconds * 1000;
-}
-
-export async function assertAuthRateLimit(input: RateLimitRule & { ip: string }) {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const now = new Date();
-  const bucketInputs = getBucketInputs({
-    endpoint: input.endpoint,
-    identifier: input.identifier,
-    ip: input.ip,
-  });
-  const bucketKeys = bucketInputs.map(getBucketKey);
-  const { data, error } = await (supabaseAdmin as any)
-    .from("auth_rate_limits")
-    .select("bucket_key,attempts,window_start,blocked_until")
-    .in("bucket_key", bucketKeys);
-  if (error) {
-    console.error("Rate limit lookup failed", { code: error.code });
-    return { ok: false, message: RATE_LIMIT_UNAVAILABLE };
-  }
-  const buckets = new Map(
-    ((data ?? []) as RateLimitBucket[]).map((bucket) => [bucket.bucket_key, bucket]),
-  );
-
-  for (const bucketInput of bucketInputs) {
-    const bucketKey = getBucketKey(bucketInput);
-    const bucket = buckets.get(bucketKey);
-    const blockedUntil = bucket?.blocked_until ? new Date(bucket.blocked_until) : null;
-
-    if (blockedUntil && blockedUntil > now) {
-      return {
-        ok: false,
-        message: GENERIC_RATE_LIMIT_ERROR,
-      };
-    }
-
-    if (
-      bucket &&
-      !isWindowExpired(bucket, now, input.windowSeconds) &&
-      bucket.attempts >= input.maxAttempts
-    ) {
-      return {
-        ok: false,
-        message: GENERIC_RATE_LIMIT_ERROR,
-      };
-    }
-  }
-
-  return {
-    ok: true,
-    message: "",
-  };
-}
-
-export async function recordAuthRateLimitAttempt(
+// Consume BEFORE the operation, atomically, rather than read/check/upsert.
+// The legacy record hook remains a no-op so existing callers do not count twice.
+export async function assertAuthRateLimit(
   input: RateLimitRule & { ip: string },
 ) {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const now = new Date();
-  const windowStart = now.toISOString();
-  const blockMs = (input.blockSeconds ?? input.windowSeconds) * 1000;
-  const bucketInputs = getBucketInputs({
-    endpoint: input.endpoint,
-    identifier: input.identifier,
-    ip: input.ip,
-  });
-  let isBlocked = false;
-
-  for (const bucketInput of bucketInputs) {
-    const bucketKey = getBucketKey(bucketInput);
-    const { data, error } = await (supabaseAdmin as any)
-      .from("auth_rate_limits")
-      .select("bucket_key,attempts,window_start,blocked_until")
-      .eq("bucket_key", bucketKey)
-      .maybeSingle();
-    if (error) {
-      console.error("Rate limit attempt lookup failed", { code: error.code });
-      return { isBlocked: true, message: RATE_LIMIT_UNAVAILABLE };
-    }
-    const bucket = data as RateLimitBucket | null;
-    const expired = !bucket || isWindowExpired(bucket, now, input.windowSeconds);
-    const attempts = expired ? 1 : Number(bucket.attempts ?? 0) + 1;
-    const blockedUntil =
-      attempts >= input.maxAttempts
-        ? new Date(now.getTime() + blockMs).toISOString()
-        : null;
-    isBlocked = isBlocked || Boolean(blockedUntil);
-
-    const { error: writeError } = await (supabaseAdmin as any).from("auth_rate_limits").upsert({
-      bucket_key: bucketKey,
-      endpoint: input.endpoint,
-      bucket_type: bucketInput.bucketType,
-      identifier_hash: bucketInput.identifierHash,
-      ip_hash: bucketInput.ipHash,
-      attempts,
-      window_start: expired ? windowStart : bucket.window_start,
-      blocked_until: blockedUntil,
-    });
-    if (writeError) {
-      console.error("Rate limit attempt write failed", { code: writeError.code });
-      return { isBlocked: true, message: RATE_LIMIT_UNAVAILABLE };
-    }
-  }
-
-  return {
-    isBlocked,
-    message: isBlocked ? GENERIC_RATE_LIMIT_ERROR : "",
-  };
+  const ip = await consumeRateLimit(
+    `${input.endpoint}:ip`,
+    input.ip,
+    input.endpoint === "login" ? 200 : Math.max(30, input.maxAttempts * 10),
+    input.windowSeconds,
+  );
+  if (!ip.ok) return ip;
+  return consumeRateLimit(
+    `${input.endpoint}:identifier`,
+    input.identifier,
+    input.maxAttempts,
+    input.windowSeconds,
+  );
 }
-
+export async function recordAuthRateLimitAttempt(
+  _input: RateLimitRule & { ip: string },
+) {
+  return { isBlocked: false, message: "" };
+}
 export async function resetAuthRateLimit(input: {
-  endpoint:
-    | "login"
-    | "register"
-    | "password_reset"
-    | "guest_checkout"
-    | "marketplace_search"
-    | "support_message";
+  endpoint: RateLimitRule["endpoint"];
   identifier: string;
   ip: string;
 }) {
-  const supabaseAdmin = createSupabaseAdminClient();
-  const bucketKeys = getBucketInputs(input).map(getBucketKey);
+  // A successful account login must not clear the shared IP abuse counter.
+  await clearRateLimit(`${input.endpoint}:identifier`, input.identifier);
+}
 
-  await (supabaseAdmin as any)
-    .from("auth_rate_limits")
-    .update({
-      attempts: 0,
-      blocked_until: null,
-      window_start: new Date().toISOString(),
-    })
-    .in("bucket_key", bucketKeys);
+export async function verifyFormCaptcha(
+  form: FormData,
+  action: string,
+  authFlow = false,
+) {
+  if (!serverEnv.hasTurnstileConfig) return { ok: true, message: "" };
+  const token = readCaptchaToken(form);
+  if (!token || token.length > 2048) {
+    securityEvent("captcha_rejected", action, 403);
+    return { ok: false, message: GENERIC_CAPTCHA_ERROR };
+  }
+  // Native Auth mode delegates the *single* redemption to GoTrue, never both.
+  if (authFlow && process.env.AUTH_CAPTCHA_MODE === "supabase")
+    return { ok: true, message: "" };
+  const result = await verifyCaptchaToken(
+    token,
+    await getClientIp(),
+    action === "oauth" ? ["login", "register"] : action,
+  );
+  if (!result.ok) securityEvent("captcha_rejected", action, 403);
+  return result;
 }

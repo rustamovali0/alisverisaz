@@ -1,50 +1,16 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { assertAuthRateLimit, getClientIp, recordAuthRateLimitAttempt } from "@/lib/auth/security";
-import { query } from "./query";
-
-const mocks = vi.hoisted(() => ({ from: vi.fn(), headers: new Headers() }));
-vi.mock("next/headers", () => ({ headers: async () => mocks.headers }));
-vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: () => ({ from: mocks.from }) }));
-const rule = { endpoint: "password_reset" as const, identifier: "a@example.test", ip: "127.0.0.1", maxAttempts: 5, windowSeconds: 900 };
-afterEach(() => { vi.unstubAllEnvs(); });
-
-beforeEach(() => {
-  mocks.from.mockReturnValue(query({ data: [] }));
-  vi.spyOn(console, "error").mockImplementation(() => {});
-});
-it("allows a fresh rate-limit bucket", async () => {
-  expect((await assertAuthRateLimit(rule)).ok).toBe(true);
-});
-it("fails closed when rate-limit storage cannot be read", async () => {
-  mocks.from.mockReturnValue(query({ error: { code: "42P01" } }));
-  expect((await assertAuthRateLimit(rule)).ok).toBe(false);
-  expect((await recordAuthRateLimitAttempt(rule)).isBlocked).toBe(true);
-});
-it("fails closed when attempts cannot be persisted", async () => {
-  mocks.from.mockReturnValueOnce(query()).mockReturnValueOnce(query({ error: { code: "42501" } }));
-  expect((await recordAuthRateLimitAttempt(rule)).isBlocked).toBe(true);
-});
-it("records both identifier and IP buckets without raw personal data", async () => {
-  const q = query();
-  mocks.from.mockReturnValue(q);
-  expect((await recordAuthRateLimitAttempt(rule)).isBlocked).toBe(false);
-  expect(q.upsert).toHaveBeenCalledTimes(2);
-  const writes = q.upsert.mock.calls.map(([value]: [unknown]) => value);
-  expect(JSON.stringify(writes)).not.toContain(rule.identifier);
-  expect(JSON.stringify(writes)).not.toContain(rule.ip);
-});
-it("blocks an exhausted bucket", async () => {
-  const q = query({ data: { attempts: 4, window_start: new Date().toISOString() } });
-  mocks.from.mockReturnValue(q);
-  expect((await recordAuthRateLimitAttempt(rule)).isBlocked).toBe(true);
-});
-it("ignores forged upstream IP headers on Vercel", async () => {
-  vi.stubEnv("VERCEL", "1");
-  mocks.headers = new Headers({ "cf-connecting-ip": "1.2.3.4", "true-client-ip": "5.6.7.8", "x-vercel-forwarded-for": "203.0.113.10" });
-  expect(await getClientIp()).toBe("203.0.113.10");
-});
-it("does not fall back to spoofable headers if trusted IP headers are missing", async () => {
-  vi.stubEnv("VERCEL", "1");
-  mocks.headers = new Headers({ "cf-connecting-ip": "1.2.3.4", "x-vercel-forwarded-for": "999.999.999.999" });
-  expect(await getClientIp()).toBe("unknown");
-});
+import {afterEach,beforeEach,expect,it,vi} from 'vitest';
+import {assertAuthRateLimit,getClientIp,resetAuthRateLimit} from '@/lib/auth/security';
+const m=vi.hoisted(()=>({rpc:vi.fn(),headers:new Headers()}));
+vi.mock('next/headers',()=>({headers:async()=>m.headers}));
+vi.mock('@/lib/supabase/admin',()=>({createSupabaseAdminClient:()=>({rpc:m.rpc})}));
+const rule={endpoint:'password_reset' as const,identifier:'person@example.test',ip:'203.0.113.1',maxAttempts:3,windowSeconds:3600};
+beforeEach(()=>{vi.stubEnv('REDIS_URL','');vi.stubEnv('SECURITY_REDIS_URL','');m.rpc.mockResolvedValue({data:{allowed:true,retry_after:3600,remaining:2},error:null});});
+afterEach(()=>vi.unstubAllEnvs());
+it('consumes shared atomic IP and identifier counters without raw personal data',async()=>{expect((await assertAuthRateLimit(rule)).ok).toBe(true);expect(m.rpc).toHaveBeenCalledTimes(2);expect(JSON.stringify(m.rpc.mock.calls)).not.toContain(rule.ip);expect(JSON.stringify(m.rpc.mock.calls)).not.toContain(rule.identifier);});
+it('fails closed with 503 if the shared store is unavailable',async()=>{m.rpc.mockResolvedValue({error:{code:'42P01'}});expect(await assertAuthRateLimit(rule)).toMatchObject({ok:false,status:503,retryAfter:30});});
+it('returns 429 and an actual expiry for exhausted counters',async()=>{m.rpc.mockResolvedValue({data:{allowed:false,retry_after:43,remaining:0}});expect(await assertAuthRateLimit(rule)).toMatchObject({ok:false,status:429,retryAfter:43});});
+it('a successful login clears only the account counter, never shared IP',async()=>{await resetAuthRateLimit({...rule,endpoint:'login'});expect(m.rpc).toHaveBeenCalledTimes(1);expect(m.rpc.mock.calls[0][0]).toBe('security_reset_rate');});
+it('rejects all forwarding headers without a configured trusted ingress',async()=>{vi.stubEnv('TRUSTED_PROXY_MODE','');vi.stubEnv('VERCEL','');m.headers=new Headers({'cf-connecting-ip':'1.2.3.4','x-real-ip':'2.3.4.5','x-forwarded-for':'3.4.5.6'});expect(await getClientIp()).toBe('unknown');});
+it('Nginx mode accepts only overwritten X-Real-IP',async()=>{vi.stubEnv('VERCEL','');vi.stubEnv('TRUSTED_PROXY_MODE','nginx');m.headers=new Headers({'cf-connecting-ip':'1.2.3.4','x-real-ip':'203.0.113.9','x-forwarded-for':'4.5.6.7'});expect(await getClientIp()).toBe('203.0.113.9');});
+it('buckets rotating IPv6 interface addresses together and canonicalizes mapped IPv4',async()=>{vi.stubEnv('VERCEL','');vi.stubEnv('TRUSTED_PROXY_MODE','nginx');m.headers=new Headers({'x-real-ip':'2001:db8:ab:cd::1'});const a=await getClientIp();m.headers.set('x-real-ip','2001:0db8:00ab:00cd:ffff::2');expect(await getClientIp()).toBe(a);m.headers.set('x-real-ip','::ffff:192.0.2.3');expect(await getClientIp()).toBe('192.0.2.3');});
+it('Vercel mode never falls back to visitor CF headers or multi-value spoofing',async()=>{vi.stubEnv('VERCEL','1');m.headers=new Headers({'cf-connecting-ip':'1.2.3.4','x-vercel-forwarded-for':'203.0.113.10'});expect(await getClientIp()).toBe('203.0.113.10');m.headers.set('x-vercel-forwarded-for','203.0.113.10, 1.2.3.4');expect(await getClientIp()).toBe('unknown');});

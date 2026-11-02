@@ -1,3 +1,4 @@
+vi.mock("@/lib/security/rate-limit",()=>({consumeRateLimit:async()=>({ok:true})}));
 import { beforeEach, expect, it, vi } from "vitest";
 import sharp from "sharp";
 import { deleteR2ImageByUrl, isR2PublicUrl, uploadImageToR2 } from "@/lib/storage/r2";
@@ -43,3 +44,5 @@ it("strips query and fragment from an owned R2 key", async () => {
   expect(await deleteR2ImageByUrl("https://images.example.test/products/test.webp?width=80#preview")).toBe(true);
   expect(mocks.send.mock.calls[0][0].input.Key).toBe("products/test.webp");
 });
+
+it("rejects a UTF-16 SVG disguised as a PNG before storage",async()=>{const svg=Buffer.from('\ufeff<?xml version="1.0" encoding="utf-16"?><svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8"/></svg>','utf16le');await expect(uploadImageToR2({file:new File([svg],'photo.png',{type:'image/png'}),folder:'test',maxSizeBytes:4096})).rejects.toThrow();expect(mocks.send).not.toHaveBeenCalled();});

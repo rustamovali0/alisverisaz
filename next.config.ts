@@ -1,3 +1,4 @@
+import { reportOnlyCsp, hstsValue } from "./src/lib/security/headers";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -23,6 +24,7 @@ const nextConfig: NextConfig = {
       source: "/:path*",
       headers: [
         { key: "X-Content-Type-Options", value: "nosniff" },
+        {key:"Content-Security-Policy-Report-Only",value:reportOnlyCsp(supabaseConnectSources)},
         { key: "X-Frame-Options", value: "SAMEORIGIN" },
         {
           key: "Content-Security-Policy",
@@ -45,7 +47,7 @@ const nextConfig: NextConfig = {
           ].join("; "),
         },
         { key: "Referrer-Policy", value: "same-origin" },
-        { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains; preload" },
+        { key: "Strict-Transport-Security", value: hstsValue() },
         { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         { key: "X-Permitted-Cross-Domain-Policies", value: "none" },

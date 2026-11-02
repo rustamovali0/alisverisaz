@@ -277,7 +277,7 @@ export function LoginForm({ mode = "public", turnstileSiteKey = "" }: LoginFormP
             </Link>
           ) : null}
         </div>
-        {isAdminMode ? <input type="hidden" name="captchaToken" value="" /> : (
+        {(
           <TurnstileField
             token={captchaToken}
             onTokenChange={setCaptchaToken}

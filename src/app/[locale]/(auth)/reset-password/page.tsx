@@ -22,7 +22,7 @@ export default async function ResetPasswordPage({
   return (
     <AuthSplitScreen variant="login">
       <Suspense fallback={null}>
-        <ResetPasswordForm />
+        <ResetPasswordForm nativeCaptcha={process.env.AUTH_CAPTCHA_MODE === "supabase"} />
       </Suspense>
     </AuthSplitScreen>
   );

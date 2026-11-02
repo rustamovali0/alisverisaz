@@ -139,12 +139,12 @@ function AdminProfileMenu({ userLabel }: { userLabel: string }) {
               Dashboard
             </Link>
             <Link
-              href="/radmin/settings"
+              href="/radmin/mfa"
               className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
               role="menuitem"
               onClick={() => setIsOpen(false)}
             >
-              Parametrlər
+              İki mərhələli təsdiq
             </Link>
             <div className="pt-2">
               <LogoutButton />

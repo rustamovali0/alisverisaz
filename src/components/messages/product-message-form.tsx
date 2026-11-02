@@ -1,4 +1,5 @@
 "use client";
+import { CaptchaField } from "@/components/auth/captcha-field";
 
 import { MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -91,6 +92,6 @@ export function ProductMessageForm({
         <MessageCircle className="mr-2 size-4" aria-hidden="true" />
         {isPending ? "Göndərilir" : "Satıcıya mesaj göndər"}
       </Button>
-    </form>
+    <CaptchaField action="message" /></form>
   );
 }

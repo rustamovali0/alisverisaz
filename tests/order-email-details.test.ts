@@ -113,7 +113,8 @@ it("queues a separate administrator notice only for new orders while delivery is
   } finally {
     await db.close();
   }
-}, 15000);
+// Includes cold PostgreSQL/WASM startup; this is not an HTTP latency budget.
+}, 30000);
 
 import { createEmailDispatcher } from "../supabase/functions/_shared/delivery";
 import { query } from "./query";

@@ -1,5 +1,7 @@
 "use server";
 
+import { securityEvent } from "@/lib/security/events";
+
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { after } from "next/server";
@@ -37,7 +39,7 @@ import {
   readCaptchaToken,
   recordAuthRateLimitAttempt,
   resetAuthRateLimit,
-  verifyCaptchaToken,
+  verifyFormCaptcha,
 } from "@/lib/auth/security";
 import {
   isAuthRole,
@@ -50,7 +52,7 @@ const MAX_AUTH_MEDIA_SIZE = 5 * 1024 * 1024;
 const ALLOWED_AUTH_MEDIA_TYPES = ["image/*"];
 const GENERIC_LOGIN_ERROR = "Email və ya şifrə səhvdir.";
 const ACCEPTED_RESET_RESPONSE =
-  "Bərpa keçidi e-poçtunuza göndərilir. Gələnlər və spam qovluğunu yoxlayın.";
+  "Bu ünvanla hesab varsa, bərpa keçidi göndəriləcək. Gələnlər və spam qovluğunu yoxlayın.";
 const RESET_ACCOUNT_NOT_FOUND =
   "Bu e-poçt ünvanı ilə qeydiyyat tapılmadı. Əvvəlcə qeydiyyatdan keçin.";
 const ACCEPTED_PASSWORD_RESET: AuthResult = {
@@ -149,6 +151,7 @@ async function recordLoginFailure(
   rateLimitRule: Parameters<typeof recordAuthRateLimitAttempt>[0],
   fallbackMessage = GENERIC_LOGIN_ERROR,
 ) {
+  securityEvent("login_failed", rateLimitRule.endpoint, 401);
   const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
 
   return attempt.isBlocked ? attempt.message : fallbackMessage;
@@ -317,52 +320,42 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     endpoint: "register" as const,
     identifier: email,
     ip: await getClientIp(),
-    maxAttempts: 5,
-    windowSeconds: 15 * 60,
+    maxAttempts: 3,
+    windowSeconds: 60 * 60,
     blockSeconds: 15 * 60,
   };
   const rateLimit = await assertAuthRateLimit(rateLimitRule);
-  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message,
+      status:rateLimit.status,retryAfter:rateLimit.retryAfter };
   const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
   if (attempt.isBlocked) return { ok: false, message: attempt.message };
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data, error } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: {
-      full_name: fullName,
-      phone,
-      requested_role: role,
-      seller_application_status: role === "seller" ? "pending" : "active",
-      store_name: storeName || undefined,
-    },
-  });
+  const captcha = await verifyFormCaptcha(formData, "register", true);
+  if (!captcha.ok) return {ok:false,message:captcha.message};
+  const verificationRequired = process.env.AUTH_REQUIRE_EMAIL_VERIFICATION !== "false";
+  const metadata = { full_name: fullName, phone, requested_role: role, seller_application_status: role === "seller" ? "pending" : "active", store_name: storeName || undefined };
+  const signup = verificationRequired ? await createSupabaseServerClient({authScope:"public"}) : null;
+  const {data,error} = signup ? await signup.auth.signUp({email,password,options:{data:metadata,emailRedirectTo:new URL("/auth/confirm",clientEnv.appUrl).toString(),...(process.env.AUTH_CAPTCHA_MODE === "supabase" ? {captchaToken:readCaptchaToken(formData)} : {})}})
+    : await supabaseAdmin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:metadata});
 
+  const registrationAccepted: AuthResult = {ok:true,message:"Qeydiyyat qəbul edildi. E-poçtunuza gələn təsdiq keçidini açın, sonra daxil olun.",redirectTo:"/login"};
   if (error) {
     const lowerMessage = error.message.toLowerCase();
+    if(lowerMessage.includes("already")||lowerMessage.includes("registered")) return registrationAccepted;
 
     return {
       ok: false,
       message:
         lowerMessage.includes("already") || lowerMessage.includes("registered")
-          ? "Bu email ilə hesab artıq mövcuddur."
+          ? "Sorğu qəbul edildi. Hesabınız varsa giriş və ya şifrə bərpasından istifadə edin."
           : lowerMessage.includes("password")
             ? "Şifrə təhlükəsizlik tələblərinə uyğun deyil."
             : "Qeydiyyat tamamlanmadı. Məlumatları yoxlayıb yenidən cəhd edin.",
     };
   }
 
-  if (
-    !data.user ||
-    (Array.isArray(data.user.identities) && data.user.identities.length === 0)
-  ) {
-    return {
-      ok: false,
-      message: "Bu email ilə hesab artıq mövcuddur.",
-    };
-  }
+  if (!data.user || (Array.isArray(data.user.identities) && data.user.identities.length === 0)) return registrationAccepted;
 
   let avatarUrl: string | null = null;
   let bannerUrl: string | null = null;
@@ -420,7 +413,7 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
   after(async () => {
     await trackActivityEvent({
       eventType: "user_register",
-      actorId: data.user.id,
+      actorId: data.user!.id,
       metadata: {
         title: "Yeni qeydiyyat",
         description:
@@ -457,11 +450,13 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
     });
   }
 
+  if (verificationRequired) return registrationAccepted;
   if (role === "customer") {
     const supabase = await createSupabaseServerClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
+      ...(process.env.AUTH_CAPTCHA_MODE === "supabase" ? { options: {captchaToken: readCaptchaToken(formData)} } : {}),
     });
 
     if (signInError) {
@@ -484,6 +479,10 @@ export async function registerAction(formData: FormData): Promise<AuthResult> {
 }
 
 export async function loginAction(formData: FormData): Promise<AuthResult> {
+  return loginWithPassword(formData);
+}
+
+async function loginWithPassword(formData: FormData, recoveredSession = false): Promise<AuthResult> {
   const identifier = normalizeIdentifier(readString(formData, "identifier"));
   const password = readString(formData, "password");
   const nextPath = normalizeNextPath(readString(formData, "next"));
@@ -538,14 +537,12 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
     return {
       ok: false,
       message: rateLimit.message,
+      status:rateLimit.status,retryAfter:rateLimit.retryAfter,
     };
   }
 
   const captchaToken = readCaptchaToken(formData);
-  const captcha =
-    mode === "admin" || !captchaToken || !serverEnv.hasTurnstileConfig
-      ? { ok: true, message: "" }
-      : await verifyCaptchaToken(captchaToken, ip);
+  const captcha = recoveredSession ? { ok: true, message: "" } : await verifyFormCaptcha(formData, "login", true);
 
   if (!captcha.ok) {
     if (mode === "admin") {
@@ -601,6 +598,7 @@ export async function loginAction(formData: FormData): Promise<AuthResult> {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    ...(process.env.AUTH_CAPTCHA_MODE === "supabase" ? {options:{captchaToken}} : {}),
   });
 
   if (error) {
@@ -865,7 +863,7 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
 
   const rateLimit = await assertAuthRateLimit({
     endpoint: "login",
-    identifier: "google-oauth",
+    identifier: `google-oauth:${ip}`,
     ip,
     maxAttempts: 8,
     windowSeconds: 15 * 60,
@@ -876,13 +874,12 @@ export async function googleOAuthAction(formData: FormData): Promise<AuthResult>
     return {
       ok: false,
       message: rateLimit.message,
+      status:rateLimit.status,retryAfter:rateLimit.retryAfter,
     };
   }
 
   const captchaToken = readCaptchaToken(formData);
-  const captcha = serverEnv.hasTurnstileConfig && captchaToken
-    ? await verifyCaptchaToken(captchaToken, ip)
-    : { ok: true, message: "" };
+  const captcha = await verifyFormCaptcha(formData, "oauth");
 
   if (!captcha.ok) {
     return {
@@ -993,29 +990,24 @@ export async function requestPasswordResetAction(formData: FormData): Promise<Au
     endpoint: "password_reset" as const,
     identifier: email,
     ip: await getClientIp(),
-    maxAttempts: 5,
-    windowSeconds: 15 * 60,
+    maxAttempts: 3,
+    windowSeconds: 60 * 60,
     blockSeconds: 15 * 60,
   };
   const rateLimit = await assertAuthRateLimit(rateLimitRule);
-  if (!rateLimit.ok) return { ok: false, message: rateLimit.message };
+  if (!rateLimit.ok) return { ok: false, message: rateLimit.message,
+      status:rateLimit.status,retryAfter:rateLimit.retryAfter };
   const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
   if (attempt.isBlocked) return { ok: false, message: attempt.message };
 
-  // Check registration on the server after rate limiting, as requested by the
-  // account-recovery UI. SMTP delivery remains outside the response path.
-  try {
-    const account = await checkRecoveryAccount(email);
-    if (!account.ok) return account;
-  } catch {
-    return { ok: false, message: PASSWORD_RESET_SEND_ERROR };
-  }
+  const captcha = await verifyFormCaptcha(formData, "password_reset", true);
+  if (!captcha.ok) return {ok: false, message: captcha.message};
+  const token = readCaptchaToken(formData);
   after(async () => {
     try {
-      await sendAccountRecoveryEmail(email);
-    } catch (error) {
-      console.error("Password reset background delivery failed", error);
-    }
+      const account = await checkRecoveryAccount(email);
+      if (account.ok) await sendAccountRecoveryEmail(email, token);
+    } catch { console.error("Password reset delivery unavailable"); }
   });
   return ACCEPTED_PASSWORD_RESET;
 }
@@ -1077,15 +1069,15 @@ async function checkRecoveryAccount(email: string): Promise<AuthResult> {
   return ACCEPTED_PASSWORD_RESET;
 }
 
-async function sendAccountRecoveryEmail(email: string): Promise<AuthResult> {
-  const supabaseAdmin = createSupabaseAdminClient();
+async function sendAccountRecoveryEmail(email: string, captchaToken?: string): Promise<AuthResult> {
+  const supabaseAdmin = process.env.AUTH_CAPTCHA_MODE === "supabase" ? await createSupabaseServerClient({authScope:"public"}) : createSupabaseAdminClient();
   // Supabase Auth owns recovery tokens and mail delivery. Its recovery template
   // uses TokenHash -> /auth/confirm, so no response-time PKCE cookie write or
   // cross-device code verifier is required. Never put recovery tokens in the outbox.
   const redirectUrl = new URL("/reset-password?mode=recovery", await getPublicRequestOrigin());
   try {
     const { error } = await withAuthTimeout(
-      supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl.toString() }),
+      supabaseAdmin.auth.resetPasswordForEmail(email, { redirectTo: redirectUrl.toString(), ...(process.env.AUTH_CAPTCHA_MODE === "supabase" ? {captchaToken} : {}) }),
       "Bərpa emailinin göndərilməsi",
     );
     if (error) {
@@ -1178,9 +1170,10 @@ export async function updatePasswordAction(formData: FormData): Promise<AuthResu
     loginForm.set("identifier", userData.user.email);
     loginForm.set("password", password);
     loginForm.set("mode", "public");
+    loginForm.set("captchaToken",readCaptchaToken(formData));
     loginForm.set("next", normalizeNextPath(readString(formData, "next")));
     // Reuse the normal role, approval, rate-limit and account-access checks.
-    const login = await loginAction(loginForm);
+    const login = await loginWithPassword(loginForm, true);
     return login.ok
       ? { ...login, message: "Şifrə uğurla yeniləndi. Hesabınıza daxil oldunuz." }
       : loginFallback;
@@ -1848,7 +1841,7 @@ export async function updateUserContactByAdminAction(
       ok: false,
       message:
         authError.message.toLowerCase().includes("already")
-          ? "Bu email ilə hesab artıq mövcuddur."
+          ? "Sorğu qəbul edildi. Hesabınız varsa giriş və ya şifrə bərpasından istifadə edin."
           : "İstifadəçi məlumatları yenilənmədi.",
     };
   }

@@ -1,9 +1,13 @@
+import { apiRateLimit } from "@/lib/security/api";
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  const limited = await apiRateLimit("session:get", 120);
+  if (limited) return limited;
+
   const scope = request.nextUrl.searchParams.get("scope") === "admin" ? "admin" : "public";
   const current = await getCurrentUserProfile(scope);
   const includeProfile = request.nextUrl.searchParams.get("profile") === "1";
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest) {
     },
     {
       status: 200,
-      headers: { "Cache-Control": "private, max-age=0, must-revalidate" },
+      headers: { "Cache-Control": "private, no-store" },
     },
   );
 }

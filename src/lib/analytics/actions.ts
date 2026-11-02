@@ -3,10 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 
+import { getClientIp } from "@/lib/auth/security";
+import { consumeRateLimit } from "@/lib/security/rate-limit";
+import { securityEvent } from "@/lib/security/events";
 import { requireRole } from "@/lib/auth/session";
 import { getAnalyticsRangeDates, type AnalyticsRange } from "@/lib/analytics/ranges";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const RESOURCE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ViewSource = "normal" | "share" | "direct";
 type DeleteScope = "all" | "product_views" | "store_views" | "link_views";
@@ -152,20 +157,30 @@ async function recordStoreView(input: {
 export async function trackProductViewAction(input: {
   productId: string; visitorId: string; source?: string | null;
 }) {
-  if (typeof input?.productId !== "string" || typeof input.visitorId !== "string") return;
+  if (typeof input?.productId !== "string" || !RESOURCE_ID.test(input.productId) ||
+      typeof input.visitorId !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(input.visitorId)) return;
+  const ip = await getClientIp();
+  // Keep network/storage work after the response; bots cannot bypass the shared budget.
   after(async () => {
+    const rate = await consumeRateLimit("analytics_view", ip, 120, 60);
+    if (!rate.ok) return;
     try { await recordProductView(input); }
-    catch (error) { console.error("Product view tracking failed", error); }
+    catch { securityEvent("analytics_failed", "product_view", 500); }
   });
 }
 
 export async function trackStoreViewAction(input: {
   storeId: string; visitorId: string; source?: string | null;
 }) {
-  if (typeof input?.storeId !== "string" || typeof input.visitorId !== "string") return;
+  if (typeof input?.storeId !== "string" || !RESOURCE_ID.test(input.storeId) ||
+      typeof input.visitorId !== "string" || !/^[a-zA-Z0-9_-]{1,80}$/.test(input.visitorId)) return;
+  const ip = await getClientIp();
+  // Keep network/storage work after the response; bots cannot bypass the shared budget.
   after(async () => {
+    const rate = await consumeRateLimit("analytics_view", ip, 120, 60);
+    if (!rate.ok) return;
     try { await recordStoreView(input); }
-    catch (error) { console.error("Store view tracking failed", error); }
+    catch { securityEvent("analytics_failed", "store_view", 500); }
   });
 }
 

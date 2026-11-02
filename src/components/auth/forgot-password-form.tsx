@@ -1,4 +1,5 @@
 "use client";
+import { CaptchaField } from "@/components/auth/captcha-field";
 
 import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
@@ -129,7 +130,7 @@ export function ForgotPasswordForm({ initialError = null }: ForgotPasswordFormPr
           <Mail className="mr-2 size-4" aria-hidden="true" />
           {isSubmitting ? "Göndərilir" : "Bərpa linki göndər"}
         </Button>
-      </form>
+      <CaptchaField action="password_reset" /></form>
     </AuthCard>
   );
 }

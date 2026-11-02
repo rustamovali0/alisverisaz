@@ -178,7 +178,7 @@ function createLocalizedRewrite(
 
   if (
     (pathname === "/radmin" || pathname.startsWith("/radmin/")) &&
-    pathname !== "/radmin/login"
+    pathname !== "/radmin/login" && pathname !== "/radmin/mfa"
   ) {
     url.pathname = localizedInternalPath(locale, pathname.replace(/^\/radmin/, "/admin"));
   } else if (pathname === "/admin") {

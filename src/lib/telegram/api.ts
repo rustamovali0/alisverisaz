@@ -1,3 +1,4 @@
+import { fetchTrustedBytes } from "@/lib/security/fetch";
 import { serverEnv } from "@/lib/config/env.server";
 
 type InlineKeyboardButton = {
@@ -172,17 +173,5 @@ export async function downloadTelegramFile(filePath: string) {
   }
 
   const encodedPath = filePath.split("/").map(encodeURIComponent).join("/");
-  const response = await fetch(`https://api.telegram.org/file/bot${token}/${encodedPath}`);
-
-  if (!response.ok) {
-    throw new Error("Telegram şəkli endirilə bilmədi.");
-  }
-
-  const contentType = response.headers.get("content-type") || "application/octet-stream";
-  const arrayBuffer = await response.arrayBuffer();
-
-  return {
-    buffer: Buffer.from(arrayBuffer),
-    contentType,
-  };
+  return fetchTrustedBytes(`https://api.telegram.org/file/bot${token}/${encodedPath}`, "https://api.telegram.org", 10 * 1024 * 1024);
 }
