@@ -25,3 +25,11 @@ Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələ
 - Cleanup sonrası sayt, Auth health və limit=0 database REST SELECT yoxlamaları 200 qaytarıb. Əsas tətbiq PID 2607893, RTest PID 211116 və staging PID 2699199 dəyişməyib; hərəsində 0 restart.
 - Database backup-ları, database və Auth ayarları dəyişdirilməyib. Təmizləmə təkrarlanmayıb; nəticə faylı və canlı servislər yalnız oxunub.
 - **Təhlükəsizlik tətbiq release-i hələ production-a keçirilməyib.** Bu mərhələdə yalnız maintenance retention aktivləşdirilib; yeni backup və üç təhlükəsizlik migration-ı bu əməliyyatda başladılmayıb.
+
+## Canlıya keçidin davamı — root hazırlıq mərhələsi
+
+- `prepare-redis.mjs` ilə ayrıca `alisveris-security-redis` PM2 prosesi yaradılıb və online yoxlanıb. Loopback 16379, 64 MB, `noeviction`, authenticated, AOF/everysec. Mövcud cache Redis və production app dəyişməyib.
+- Candidate private env native `AUTH_CAPTCHA_MODE=supabase`, trusted nginx və ayrıca limiter üçün hazırdır. Turnstile açarlarının mövcudluğu, məlum test sitekey olmadıqları yoxlanıb; dəyərləri çıxarılmayıb.
+- Yoxlanmış [guarded rollout](GUARDED_ROLLOUT.md) root operator üçün serverə yüklənib. Yerli/server payload checksum-ları eynidir. Əlavə 7 rollout safety və 4 authenticated-backup testi keçib; əvvəlki 10 retention testi yenidən keçib.
+- `rollout.py prepare` üçün operator sorğusu verilib. Son oxuma anında `rollout-result.json` yoxdur: yeni backup/isolated restore/migration/Auth activation və production switch-in tamamlanması hələ təsdiqlənməyib.
+- Əvvəl `prepare`, sonra off-server backup authentication və ayrıca `activate` tələb olunur. Heç bir mərhələ mövcud journal vəziyyətini yoxlamadan təkrarlanmır. Uğur marker-i alınana qədər release staging kimi qiymətləndirilir.

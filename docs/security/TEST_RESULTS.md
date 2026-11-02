@@ -43,3 +43,12 @@ Frontend auditini onun `npm ci --prefix frontend` addımından sonra icra edin. 
 Yerli maşının yüklü olduğu əlavə tam təkrarda timeout-lar yarandı. Test worker sayı 2 ilə məhdudlaşdırıldı; bir mövcud sifariş SQL testində cold PostgreSQL/WASM startup daxil olduğu üçün 15s limit digər SQL testləri ilə uyğun 30s edildi. Heç bir assertion və permission/price/stock gözləntisi zəiflədilmədi. Həmin 6 sifariş testi ayrıca keçdi; sonra tam 465 testin hamısı 215 saniyədə keçdi. Bu dəyişiklik production request timeout-u və ya performans hədəfi deyil.
 
 Loglar workspace-in private `work/enterprise-*.log/json` fayllarındadır; credentials/body/token çıxarılmır, Git-ə log əlavə edilmir. Dəqiq runtime yoxlaması `.next` build-in lokal serverində aparıldı; server sınaqdan sonra dayandırıldı.
+
+## Guarded rollout əlavə yoxlamaları
+
+- **TESTED — 17/17 Python:** 10 release retention/publication + 7 rollout safety testi. Mövcud/failed rollout-un təkrarlanmaması, off-server hash receipt, checksum fail-closed, vahid SQL transaction və ingress layout qoruması yoxlanır. Docker/production SQL çağırılmır.
+- **TESTED — 4/4 Node:** AES-GCM backup roundtrip, dəyişdirilmiş ciphertext, dəyişdirilmiş metadata/AAD və yanlış RSA private key. Üç manipulyasiya qəbul edilmir.
+- **TESTED — ops syntax və tracked-file secret scan:** keçdi. Recovery private key repo xaricindədir.
+- **CONFIGURATION REQUIRED — root `prepare` / `activate`:** izolə tam restore, real GoTrue CAPTCHA və canlı smoke nəticələri root rollout receipt gələnədək bu lokal testlərin nəticəsi kimi təqdim edilmir.
+
+Əlavə kod yalnız rollout/ops testləri və sənədlərdir; əvvəlki native runtime build-i dəyişməyib. Əvvəlki 487 application/frontend/gateway testi ilə birlikdə 508 avtomatik test var; 508 testin hamısının bu əlavə mərhələdə yenidən çalışdırıldığı iddia edilmir.
