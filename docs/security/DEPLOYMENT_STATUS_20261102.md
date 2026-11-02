@@ -42,3 +42,11 @@ Saat **14:18 Asia/Baku** yoxlaması yalnız oxuma ilə aparıldı. Bu mərhələ
 - `resume-prepare` yalnız mövcud archive hash-i və dəyişməmiş live/candidate vəziyyəti ilə davam edir. `pg_dump` və production DDL çağırmır. Operator üçün serverdə exact script hash-i və sintaksis yoxlanıb. 4 yeni regression testi daxil olmaqla **21 Python testi** keçib.
 - Son read-only yoxlamada app PID 2607893 və Auth 9998 health dəyişməyib, hər ikisi HTTP 200. Native Auth version v2.197.0. Tətbiq hələ əvvəlki release-dədir.
 - Əvvəlki ops commit `bce88de` üçün GitHub Actions run `41478291127` **success**; yeni resume patch-in CI nəticəsi ayrıca izlənməlidir.
+
+## İzolə Auth səbəbi müəyyən edildi — 17:38 UTC receipt
+
+- Davam cəhdində eyni backup SHA256 təsdiqlənib, yeni dump yaradılmayıb. Startup logunda `schema_migrations` cədvəlinin `public` sxemində yaradılmasına `42501` icazə xətası görünür. Temporary Auth 9 restart edib; finally blokunda həmin temporary container/database silinib.
+- Bu, yeni adlı restore bazasının Auth login `search_path`/namespace konfiqurasiyası ilə bağlıdır. Kod yalnız disposable hədəfdə database/role `search_path=auth,public` və Auth connection URL/namespace ayarlarını uyğunlaşdırır. Restore edilmiş `auth.schema_migrations` mövcudluğu və Auth rolunun həmin schema/table icazələri yoxlanır. `public` üçün əlavə CREATE grant yoxdur; production role/database defaults dəyişmir.
+- Düzəlişdə **24 Python + 4 Node crypto testi** keçib. Lokal/server canonical `rollout.py` checksum-u eynidir, sintaksis yoxlanıb. Əvvəlki uğursuz cəhdin hash marker-i silinməyib; yeni, fərqli script yalnız bütün state/backup guard-ları yenidən keçəndən sonra sınağa buraxılır.
+- Operatora eyni `resume-prepare` komandası yeni script ilə verilib. Root sınağı uğur marker-i qaytarmayınca native Auth health/CAPTCHA və canlı deployment tamamlanmış hesab edilmir.
+- Son read-only yoxlamada main PID 2607893, staging PID 2699199 dəyişməyib. Main HTTP və Auth health 200; main app hələ `header-hover-20261101/app`-dir.

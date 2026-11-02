@@ -283,10 +283,13 @@ def isolated_auth_env(auth_env, app_env, temporary_db):
         raise RolloutError('Invalid isolated database name.')
     e = dict(auth_env)
     u = urllib.parse.urlsplit(e['GOTRUE_DB_DATABASE_URL'])
-    temporary_url = urllib.parse.urlunsplit(u._replace(path='/' + temporary_db))
+    query = [(k, v) for k, v in urllib.parse.parse_qsl(u.query, keep_blank_values=True) if k != 'search_path']
+    query.append(('search_path', 'auth,public'))
+    temporary_url = urllib.parse.urlunsplit(u._replace(path='/' + temporary_db, query=urllib.parse.urlencode(query)))
     # Set the supported fallback aliases too; no inherited production URL/port
     # may select the live service from the disposable Auth process.
     e.update(GOTRUE_DB_DATABASE_URL=temporary_url, DATABASE_URL=temporary_url,
+             DB_NAMESPACE='auth', GOTRUE_DB_NAMESPACE='auth', GOTRUE_DB_DB_NAMESPACE='auth',
              GOTRUE_API_PORT='19998', PORT='19998', GOTRUE_API_HOST='127.0.0.1',
              GOTRUE_DISABLE_SIGNUP='false', GOTRUE_SECURITY_CAPTCHA_ENABLED='true',
              GOTRUE_SECURITY_CAPTCHA_PROVIDER='turnstile',
@@ -295,6 +298,26 @@ def isolated_auth_env(auth_env, app_env, temporary_db):
              GOTRUE_MAILER_AUTOCONFIRM='false', GOTRUE_SMTP_HOST='',
              GOTRUE_SMTP_USER='', GOTRUE_SMTP_PASS='')
     return e
+
+
+def configure_isolated_auth_database(temporary_db, auth_role):
+    if not re.fullmatch(r'alisveris_security_check_[0-9a-f]{12}', temporary_db) or not re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_]*', auth_role):
+        raise RolloutError('Isolated Auth database/role guard failed.')
+    if sql("select to_regclass('auth.schema_migrations') is not null;", temporary_db) != 't':
+        raise RolloutError('Restored Auth migration history is missing; nothing granted.')
+    # pg_dump without CREATE DATABASE does not reproduce per-database GUCs.
+    # Scope defaults to the disposable database and its existing Auth role.
+    # The production role/database and public CREATE grants are untouched.
+    sql('alter database ' + temporary_db + ' set search_path to auth, public;', 'postgres')
+    sql('alter role "' + auth_role + '" in database ' + temporary_db + ' set search_path to auth, public;', 'postgres')
+    result = sql('begin; set local role "' + auth_role + '"; set local search_path to auth, public; '
+                 "select case when current_schema()='auth' and to_regclass('schema_migrations')='auth.schema_migrations'::regclass "
+                 "and has_schema_privilege(current_user,'auth','USAGE') "
+                 "and has_schema_privilege(current_user,'auth','CREATE') "
+                 "and has_table_privilege(current_user,'auth.schema_migrations','SELECT') "
+                 "then 'auth-schema-ready' else 'auth-schema-invalid' end; rollback;", temporary_db)
+    if result != 'auth-schema-ready':
+        raise RolloutError('Restored Auth schema permissions do not match; nothing granted.')
 
 
 def redact_diagnostic(log, env):
@@ -347,13 +370,14 @@ def restore_check(dump, source, auth_env, app_env):
         sql(migration_sql(), temporary_db)
         if sql('select admin_mfa_required from public.security_configuration where id=true;', temporary_db) != 'f':
             raise RolloutError('Staging MFA flag must remain disabled.')
+        configure_isolated_auth_database(temporary_db, auth_role)
         # Workers never target this database. The temporary Auth has SMTP disabled.
         e = isolated_auth_env(auth_env, app_env, temporary_db)
         container = create_auth(source, e, temporary_auth)
         run(['docker', 'start', container])
         wait_health(19998)
         check_captcha(19998)
-        result.update(fullRestore=True, migrations=True, nativeCaptcha=True)
+        result.update(fullRestore=True, migrations=True, authSchema='auth', nativeCaptcha=True)
         return result
     except Exception:
         if container:
@@ -372,6 +396,7 @@ def restore_check(dump, source, auth_env, app_env):
 def finish_preparation(data, dump, source, auth_env, app_env):
     data['step'] = 'isolated-restore-migration-auth'
     save_state(data)
+    (STATE / 'auth-diagnostic.json').unlink(missing_ok=True)
     try:
         data['staging'] = restore_check(dump, source, auth_env, app_env)
         encrypted = STATE / 'database.dump.enc'

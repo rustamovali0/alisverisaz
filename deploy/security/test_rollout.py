@@ -1,6 +1,7 @@
 """Local safety tests; no network, Docker, production SQL or PM2 invocation."""
 import importlib.util
 import json
+import urllib.parse
 from pathlib import Path
 import tempfile
 import unittest
@@ -84,7 +85,10 @@ class RolloutSafety(unittest.TestCase):
         self.assertEqual(result['PORT'], '19998')
         self.assertEqual(result['GOTRUE_API_PORT'], '19998')
         self.assertEqual(result['DATABASE_URL'], result['GOTRUE_DB_DATABASE_URL'])
-        self.assertTrue(result['DATABASE_URL'].endswith('/alisveris_security_check_123456abcdef'))
+        url = urllib.parse.urlsplit(result['DATABASE_URL'])
+        self.assertEqual(url.path, '/alisveris_security_check_123456abcdef')
+        self.assertEqual(urllib.parse.parse_qs(url.query)['search_path'], ['auth,public'])
+        self.assertEqual(result['DB_NAMESPACE'], 'auth')
         self.assertEqual(result['GOTRUE_SMTP_PASS'], '')
         self.assertEqual(original['PORT'], '9998')
         self.assertTrue(original['DATABASE_URL'].endswith('/live'))
@@ -94,6 +98,33 @@ class RolloutSafety(unittest.TestCase):
         result = rollout.redact_diagnostic('fatal ' + secret + ' postgres://name:pass@localhost/db jane@example.test eyJabc.def.ghi', {'SECRET': secret})
         for value in [secret, 'name:pass', 'jane@example.test', 'eyJabc.def.ghi']:
             self.assertNotIn(value, result)
+
+    def test_isolated_auth_search_path_preserves_connection_tls_options(self):
+        result = rollout.isolated_auth_env({'GOTRUE_DB_DATABASE_URL': 'postgres://example:example@localhost/live?sslmode=require&search_path=public'}, {'TURNSTILE_SECRET_KEY': 'fixture'}, 'alisveris_security_check_123456abcdef')
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(result['DATABASE_URL']).query)
+        self.assertEqual(query, {'sslmode': ['require'], 'search_path': ['auth,public']})
+
+    def test_auth_database_fix_is_scoped_to_disposable_db_and_grants_no_create(self):
+        calls = []
+        def sql(query, database):
+            calls.append((query, database))
+            return 't' if query.startswith('select to_regclass') else 'auth-schema-ready'
+        with patch.object(rollout, 'sql', side_effect=sql):
+            rollout.configure_isolated_auth_database('alisveris_security_check_123456abcdef', 'example_auth_role')
+        self.assertTrue(any('alter database alisveris_security_check_123456abcdef set search_path to auth, public' in q for q, _ in calls))
+        self.assertTrue(any('in database alisveris_security_check_123456abcdef set search_path to auth, public' in q for q, _ in calls))
+        self.assertFalse(any('grant ' in q.lower() for q, _ in calls))
+        self.assertFalse(any(database == rollout.DB for _, database in calls))
+
+    def test_auth_database_fix_refuses_production_target_or_missing_history(self):
+        with patch.object(rollout, 'sql') as sql:
+            with self.assertRaises(rollout.RolloutError):
+                rollout.configure_isolated_auth_database(rollout.DB, 'example_auth_role')
+            sql.assert_not_called()
+        with patch.object(rollout, 'sql', return_value='f') as sql:
+            with self.assertRaises(rollout.RolloutError):
+                rollout.configure_isolated_auth_database('alisveris_security_check_123456abcdef', 'example_auth_role')
+            self.assertEqual(sql.call_count, 1)
 
     def test_resume_requires_existing_matching_backup_and_never_creates_new_dump(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(rollout, 'STATE', Path(directory)), patch.object(rollout, 'run') as run:
@@ -120,7 +151,7 @@ class RolloutSafety(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             dump = Path(directory) / 'database.dump'
             dump.write_bytes(b'fixture-only')
-            with patch.object(rollout, 'sql', side_effect=sql), patch.object(rollout, 'run', side_effect=run), patch.object(rollout, 'migration_sql', return_value='select 1;'), patch.object(rollout.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stderr=b'')), patch.object(rollout, 'create_auth', return_value='test-container'), patch.object(rollout, 'wait_health', side_effect=rollout.RolloutError('fixture timeout')), patch.object(rollout, 'capture_auth_failure', side_effect=lambda *a: events.append('capture')):
+            with patch.object(rollout, 'sql', side_effect=sql), patch.object(rollout, 'run', side_effect=run), patch.object(rollout, 'migration_sql', return_value='select 1;'), patch.object(rollout, 'configure_isolated_auth_database'), patch.object(rollout.subprocess, 'run', return_value=SimpleNamespace(returncode=0, stderr=b'')), patch.object(rollout, 'create_auth', return_value='test-container'), patch.object(rollout, 'wait_health', side_effect=rollout.RolloutError('fixture timeout')), patch.object(rollout, 'capture_auth_failure', side_effect=lambda *a: events.append('capture')):
                 with self.assertRaises(rollout.RolloutError):
                     rollout.restore_check(dump, {}, {'GOTRUE_DB_DATABASE_URL': 'postgres://example:example@localhost/live'}, {'TURNSTILE_SECRET_KEY': 'fixture-only'})
         self.assertEqual(events, ['capture', 'remove', 'drop'])

@@ -59,3 +59,10 @@ backup hash-i uyğun olmadan resume-in rəddini və container cleanup-dan əvvə
 logun saxlanmasını yoxlayır. CI-yə daxil edilən crypto testləri ilə ops sayı 25,
 bütün suite-lər üzrə say 512-dir. Real Auth startup səbəbi diagnostic alınana
 və isolate health/CAPTCHA keçənə qədər `CONFIGURATION REQUIRED` qalır.
+
+`42501` startup diagnostic-inə uyğun schema seçimi patch-i: **24/24 Python +
+4/4 crypto** keçdi. Yeni 3 regression testi connection TLS parametrlərinin
+qorunmasını, search_path düzəlişinin yalnız disposable database-ə aid olmasını,
+production hədəfinin və çatışmayan Auth migration tarixçəsinin rəddini yoxlayır.
+515 ümumi avtomatik test var; son ops-only mərhələdə 28-i yenidən çalışdırılıb.
+İzolə real GoTrue sınağının son nəticəsi operator receipt-i gələnədək pending-dir.

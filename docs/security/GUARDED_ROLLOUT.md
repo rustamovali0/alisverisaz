@@ -86,6 +86,14 @@ Müvəqqəti Auth-un DB URL və port fallback alias-ləri də izolə hədəfə q
 Xəta logu container silinməzdən əvvəl root-private saxlanır; receipt-dəki qısa
 diaqnostikadan env dəyərləri, URL-lər, email və JWT çıxarılır.
 
+İzolə Auth üçün restore edilmiş `auth.schema_migrations` tarixçəsi məcburidir.
+`pg_dump`-dan yeni adlı database-ə restore per-database login `search_path`
+ayarlarını avtomatik köçürmür. Ona görə yalnız disposable database və onun Auth
+rolu üçün `search_path=auth,public` qoyulur; eyni seçim yalnız temporary Auth-un
+connection URL/namespace ayarlarına da yazılır. Mövcud `auth` schema/table
+icazələri `SET LOCAL ROLE` ilə yoxlanır. Production database/role defaults
+dəyişmir, `public` üçün CREATE və digər yeni grant verilmir.
+
 `prepare` və `activate` state journal ilə işləyir. Eyni mərhələ tamamlanıbsa və
 ya uğursuzdursa təkrar backup/DDL/switch etmirlər. Əvvəl nəticəni yoxlayın:
 
