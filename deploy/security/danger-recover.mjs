@@ -10,12 +10,14 @@ try {
   const cli=(...command)=>execFileSync('redis-cli',[...args,...command],{env,encoding:'utf8',stdio:['ignore','pipe','ignore'],timeout:5000}).trim();
   const raw=cli('GET',key);const mode=process.argv[2]||'status';
   if(mode==='off'){
+    const auto=JSON.stringify({enabled:false,version:crypto.randomUUID(),changedAt:Date.now()});
     const next=JSON.stringify({enabled:false,version:crypto.randomUUID(),changedAt:Date.now(),expiresAt:0,operator:'ssh-recovery'});
-    const script="local value=redis.call('GET',KEYS[1]) or ''; if value~=ARGV[1] then return 0 end; redis.call('SET',KEYS[1],ARGV[2],'EX',86400);return 1";
-    if(cli('EVAL',script,'1',key,raw,next)!=='1')throw Error('state changed');
+    const script="local value=redis.call('GET',KEYS[1]) or ''; if value~=ARGV[1] then return 0 end; redis.call('SET',KEYS[1],ARGV[2],'EX',86400);redis.call('SET',KEYS[2],ARGV[3]);redis.call('SET',KEYS[3],tostring(tonumber(ARGV[4])+1800000),'EX',1800);return 1";
+    if(cli('EVAL',script,'3',key,'security:danger:auto:v1:config','security:danger:auto:v1:cooldown',raw,next,auto,String(Date.now()))!=='1')throw Error('state changed');
     console.log('Danger söndürüldü. Əsas təhlükəsizlik qorunur.');
   }else if(mode==='status'){
     const state=raw?JSON.parse(raw):{enabled:false,expiresAt:0};
-    console.log(JSON.stringify({enabled:state.enabled===true&&state.expiresAt>Date.now(),expiresAt:state.expiresAt||0}));
+    const automatic=cli('GET','security:danger:auto:v1:config');
+    console.log(JSON.stringify({enabled:state.enabled===true&&state.expiresAt>Date.now(),expiresAt:state.expiresAt||0,automaticEnabled:automatic?JSON.parse(automatic).enabled===true:false}));
   }else throw Error('unknown operation');
 }catch{console.error('Danger vəziyyəti dəyişdirilmədi. Mövcud env və Redis bağlantısını yoxlayın.');process.exitCode=1;}

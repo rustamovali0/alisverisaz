@@ -61,7 +61,7 @@ If a staging check fails, inspect its output/state before repeating preparation.
 An existing SSH operator can inspect or disable this mode without a public bypass or root:
 
 ```sh
-cd /srv/alisveris/releases/danger-mode-20261103/app
+cd /srv/alisveris/releases/danger-auto-20261103/app
 node --env-file=app.env deploy/security/danger-recover.mjs status
 node --env-file=app.env deploy/security/danger-recover.mjs off
 ```
@@ -72,10 +72,29 @@ For an application regression, first disable Danger, then use the private preser
 
 ```sh
 pm2 delete alisveris-vds
-pm2 start /srv/alisveris/releases/danger-mode-20261103/rollback.config.cjs --only alisveris-vds
+pm2 start /srv/alisveris/releases/danger-auto-20261103/rollback.config.cjs --only alisveris-vds
 pm2 save
 ```
 
 Run the previous release's normal smoke script on port 3004. No database restore is needed because this rollout changes no schema or business data.
 
 The standalone runtime uses private loopback ports behind Nginx. Redirect construction is regression-tested against an internal `127.0.0.1:3104` URL so that the private application port never leaks into the public HTTPS checkpoint URL. Staging's verifier uses native HTTP to preserve explicit virtual-host headers; it does not depend on Node fetch preserving `Host`.
+
+## Automatic activation (opt-in)
+
+The second control, **Risk zamanı avtomatik aktivləşmə**, enables a detector; it does not immediately enable Danger. It has its own versioned Redis configuration, AAL2/confirmation requirement, 5/minute shared administrator control budget and audit event. The detector starts OFF. Its setting persists across application restarts.
+
+Only server-observed failed login outcomes and HTTP 429 decisions in login/register/password-reset budgets feed it. Unknown networks, storage errors, successful logins, ordinary views and product/search traffic do not count. The trusted ingress normalizes IPv6 by /64. The detector hashes network identifiers and stores no email, password, token or raw IP.
+
+The rolling five-minute thresholds are fixed:
+
+- 30 failed logins across at least five distinct network buckets; or
+- 60 auth-budget rejections across at least three distinct network buckets.
+
+An atomic Redis Lua operation activates Danger for exactly 15 minutes and records the triggering reason. Requests cannot extend an already active period. A 30-minute cooldown starts at activation; manually returning to normal mode also starts a 30-minute cooldown. Explicitly re-enabling the detector resets its signal windows and cooldown. Turning the detector off stops future automatic activation and does not cancel an independently active Danger period.
+
+Windows are bounded to 60 event IDs / 256 network hashes per signal type, expire after ten minutes, and are pruned by Redis server time. One last-trigger timestamp/reason is retained for seven days and shown in RAdmin. Automatic activations are written to the existing audit mechanism; there is no new email campaign or paid monitoring service. Failure to record a risk signal does not replace an auth error with a new error; existing auth limits/CAPTCHA remain enforced.
+
+This is an application auth-abuse detector, not a volumetric DDoS detector, and does not observe traffic blocked at Cloudflare or direct calls to the separate GoTrue service. Existing native GoTrue CAPTCHA and abuse controls remain necessary. No detector can guarantee recognition of every attack.
+
+The SSH `danger-recover.mjs off` command disables both Danger and the automatic detector, providing an operator escape path without a public bypass. The live release with automatic activation is `/srv/alisveris/releases/danger-auto-20261103/app`; its immediate rollback is the previously verified manual-mode release `/srv/alisveris/releases/danger-mode-20261103/app`. The same application-only rollout process is used, with no database, Auth, firewall or DNS change.

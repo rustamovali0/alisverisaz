@@ -3,15 +3,15 @@ import { requireRadmin } from "@/lib/auth/radmin-auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDangerState } from "@/lib/security/danger-state";
 import { dangerOff } from "@/lib/security/danger-policy";
-import { securityRedisUrl } from "@/lib/security/redis-client";
+import { dangerConfigured, dangerAutoOff, getDangerAutoStatus } from "@/lib/security/danger-auto";
 
 export const dynamic = "force-dynamic";
 export default async function DangerPage() {
   await requireRadmin();
   const db = await createSupabaseServerClient({ authScope: "admin" });
   const assurance = await db.auth.mfa.getAuthenticatorAssuranceLevel();
-  let state = { ...dangerOff }, available = true;
-  try { state = await getDangerState(); } catch { available = false; }
-  const configured = Boolean(securityRedisUrl() && (process.env.DANGER_SIGNING_SECRET?.trim().length || 0) >= 32 && process.env.TURNSTILE_SECRET_KEY && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
-  return <DangerPanel state={state} available={available} configured={configured} mfaReady={!assurance.error && assurance.data?.currentLevel === "aal2"} />;
+  let state = { ...dangerOff }, automatic = { ...dangerAutoOff }, available = true;
+  try { [state, automatic] = await Promise.all([getDangerState(), getDangerAutoStatus()]); } catch { available = false; }
+  const configured = dangerConfigured();
+  return <DangerPanel automatic={automatic} state={state} available={available} configured={configured} mfaReady={!assurance.error && assurance.data?.currentLevel === "aal2"} />;
 }

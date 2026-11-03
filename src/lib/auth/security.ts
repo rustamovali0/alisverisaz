@@ -1,3 +1,4 @@
+import { recordDangerRisk } from "@/lib/security/danger-auto";
 import { securityEvent } from "@/lib/security/events";
 import { headers } from "next/headers";
 
@@ -123,13 +124,15 @@ export async function assertAuthRateLimit(
     input.endpoint === "login" ? 200 : Math.max(30, input.maxAttempts * 10),
     input.windowSeconds,
   );
-  if (!ip.ok) return ip;
-  return consumeRateLimit(
+  if (!ip.ok) { if (ip.status === 429 && ["login", "register", "password_reset"].includes(input.endpoint)) await recordDangerRisk("auth_rate_block", input.ip); return ip; }
+  const identifier = await consumeRateLimit(
     `${input.endpoint}:identifier`,
     input.identifier,
     input.maxAttempts,
     input.windowSeconds,
   );
+  if (!identifier.ok && identifier.status === 429 && ["login", "register", "password_reset"].includes(input.endpoint)) await recordDangerRisk("auth_rate_block", input.ip);
+  return identifier;
 }
 export async function recordAuthRateLimitAttempt(
   _input: RateLimitRule & { ip: string },

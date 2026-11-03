@@ -1,10 +1,12 @@
 "use client";
+import { DangerAutoPanel } from "./danger-auto-panel";
+import type { DangerAutoStatus } from "@/lib/security/danger-auto";
 import { useActionState, useState } from "react";
 import { AlertTriangle, ShieldCheck, Clock3, LockKeyhole, Bot, CheckCircle2 } from "lucide-react";
 import { updateDangerMode } from "@/lib/security/danger-actions";
 import type { DangerState } from "@/lib/security/danger-policy";
 
-export function DangerPanel({ state, mfaReady, configured, available }: { state: DangerState; mfaReady: boolean; configured: boolean; available: boolean }) {
+export function DangerPanel({ state, mfaReady, configured, available, automatic }: { state: DangerState; mfaReady: boolean; configured: boolean; available: boolean; automatic: DangerAutoStatus }) {
   const [result, action, pending] = useActionState(updateDangerMode, { ok: false, message: "" });
   const [confirmed, setConfirmed] = useState(false);
   const features = [
@@ -34,6 +36,7 @@ export function DangerPanel({ state, mfaReady, configured, available }: { state:
         </form>
       </div>
     </section>
+    <DangerAutoPanel settings={automatic} mfaReady={mfaReady} configured={configured} available={available} />
     <aside className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950"><AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" /><div className="text-sm leading-6"><p className="font-semibold">Əlavə tətbiq qoruması</p><p>Turnstile yoxlaması və sərt limitlər serverdə işləyir. Cloudflare-in ayrıca WAF/DDoS və serverə birbaşa giriş qaydaları bu düymə ilə dəyişmir. Cloudflare yoxlamanı bəzən avtomatik tamamlayır.</p></div></aside>
   </div>;
 }

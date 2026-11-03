@@ -1,0 +1,20 @@
+// Retire only the owned disposable Redis after a successful application rollout.
+import fs from 'node:fs';
+import cp from 'node:child_process';
+const root=process.argv[2];
+if(!/^\/srv\/alisveris\/releases\/danger-(?:mode|auto)-20261103$/.test(root||''))throw Error('Explicit reviewed release is required');
+if(JSON.parse(fs.readFileSync(root+'/deployment-result.json')).status!=='deployed')throw Error('Deployment not complete');
+const processes=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8'}));
+if(processes.some(p=>p.name==='alisveris-danger-staging'))throw Error('Staging application still exists');
+const dir=root+'/redis-stage',pid=Number(fs.readFileSync(dir+'/redis.pid','utf8'));
+if(!Number.isInteger(pid)||pid<2)throw Error('Invalid staging PID');
+const status=fs.readFileSync(`/proc/${pid}/status`,'utf8');
+const uid=Number(status.match(/^Uid:\s+(\d+)/m)?.[1]);
+const command=fs.readFileSync(`/proc/${pid}/cmdline`,'utf8');
+if(uid!==process.getuid()||!command.includes('redis-server')||!command.includes(':16380')||fs.readlinkSync(`/proc/${pid}/cwd`)!==dir)throw Error('Staging process ownership changed');
+process.kill(pid,'SIGTERM');
+for(let i=0;i<30&&fs.existsSync(`/proc/${pid}`);i++)await new Promise(r=>setTimeout(r,100));
+if(fs.existsSync(`/proc/${pid}`))throw Error('Staging process has not stopped; files retained');
+fs.rmSync(dir,{recursive:true});
+for(const name of ['stage.env','stage.config.cjs'])fs.rmSync(root+'/'+name,{force:true});
+console.log('Only disposable staging Redis/configuration removed. Live application, security Redis and rollback retained.');

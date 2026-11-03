@@ -42,3 +42,24 @@ export async function updateDangerMode(_previous: DangerActionState, form: FormD
     return { ok: false, message: error instanceof Error && allowed.includes(error.message) ? error.message : "Dəyişiklik saxlanılmadı. Təhlükəsizlik xidmətini yoxlayın." };
   }
 }
+
+export async function updateDangerAuto(_previous: DangerActionState, form: FormData): Promise<DangerActionState> {
+  const current = await requireRadmin();
+  try {
+    const client = await createSupabaseServerClient({ authScope: "admin" });
+    const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assurance.error || assurance.data?.currentLevel !== "aal2") return { ok: false, message: "Əvvəlcə iki mərhələli təsdiqi tamamlayın." };
+    const rate = await consumeRateLimit("admin-danger-change", current.user.id, 5, 60);
+    if (!rate.ok) return { ok: false, message: rate.message };
+    if (!["true", "false"].includes(String(form.get("enabled"))) || form.get("confirm") !== "yes") return { ok: false, message: "Dəyişikliyi təsdiqləyin." };
+    const { changeDangerAuto } = await import("./danger-auto");
+    const enabled = form.get("enabled") === "true";
+    const config = await changeDangerAuto(enabled, String(form.get("version") || ""));
+    await recordAdminAudit({ action: enabled ? "DANGER_AUTO_ENABLED" : "DANGER_AUTO_DISABLED", adminId: current.user.id, metadata: { version: config.version } });
+    revalidatePath("/radmin/danger");
+    return { ok: true, message: enabled ? "Risk zamanı avtomatik qoruma açıldı." : "Avtomatik izləmə söndürüldü. Aktiv Danger rejimini ayrıca söndürə bilərsiniz." };
+  } catch (error) {
+    const allowed = ["Səhifəni yeniləyin.", "Təhlükəsizlik açarları sazlanmayıb.", "Ayar başqa sessiyada dəyişib. Səhifəni yeniləyin."];
+    return { ok: false, message: error instanceof Error && allowed.includes(error.message) ? error.message : "Avtomatik qoruma ayarı saxlanılmadı." };
+  }
+}

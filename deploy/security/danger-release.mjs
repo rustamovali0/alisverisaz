@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
-const root='/srv/alisveris/releases/danger-mode-20261103';
+const root='/srv/alisveris/releases/danger-auto-20261103';
 const app=root+'/app';
-const previousApp='/srv/alisveris/releases/enterprise-security-20261102/app';
+const previousApp='/srv/alisveris/releases/danger-mode-20261103/app';
 const setup='/home/deploy/alisveris-security-setup';
 const pm2=(...args)=>cp.execFileSync('pm2',args,{encoding:'utf8',timeout:30000});
 const processes=()=>JSON.parse(pm2('jlist'));
@@ -18,19 +18,19 @@ async function health(port,path="/",marker="live-home"){
   throw Error('Native runtime failed its readiness check');
 }
 async function prepare(){
-  const archive=setup+'/danger-mode-20261103.tgz',expected=process.argv[3];
+  const archive=setup+'/danger-auto-20261103.tgz',expected=process.argv[3];
   guardMain();if(!/^[a-f0-9]{64}$/.test(expected||'')||hash(archive)!==expected)throw Error('Archive checksum mismatch');
   if(fs.existsSync(root))throw Error('Release exists; inspect before retrying');
   const listeners=cp.execFileSync('ss',['-ltn'],{encoding:'utf8'});
   if(/:(3104|16380)\s/.test(listeners))throw Error('Staging ports are occupied');
   fs.mkdirSync(app,{recursive:true});
-  cp.execFileSync('tar',['-xzf',archive,'-C',app]);
+  cp.execFileSync('tar',['-xzf',archive,'-C',app],{stdio:['ignore','pipe','pipe']});
   for(const name of ['sharp-linux-x64','sharp-libvips-linux-x64']){
     const target=app+'/node_modules/@img/'+name;
     if(!fs.existsSync(target))fs.cpSync(previousApp+'/node_modules/@img/'+name,target,{recursive:true});
   }
   let production=fs.readFileSync(previousApp+'/app.env','utf8');
-  production=setEnv(production,'DANGER_SIGNING_SECRET',crypto.randomBytes(48).toString('base64url'));
+  if(!/^DANGER_SIGNING_SECRET=.{32,}/m.test(production))production=setEnv(production,'DANGER_SIGNING_SECRET',crypto.randomBytes(48).toString('base64url'));
   write(app+'/app.env',production);
   const redisDir=root+'/redis-stage';fs.mkdirSync(redisDir,{mode:0o700});
   const password=crypto.randomBytes(32).toString('hex');
@@ -47,7 +47,7 @@ async function prepare(){
 }
 async function refreshStage(){
   const p=guardMain(),file=root+'/preparation-result.json',prepared=JSON.parse(fs.readFileSync(file));
-  const archive=setup+'/danger-mode-20261103.tgz',expected=process.argv[3];
+  const archive=setup+'/danger-auto-20261103.tgz',expected=process.argv[3];
   if(p.pid!==prepared.previousPid||fs.existsSync(root+'/deployment-result.json')||fs.existsSync(root+'/stage-verification.json'))throw Error('Inspect existing readiness before refreshing staging');
   if(!/^[a-f0-9]{64}$/.test(expected||'')||hash(archive)!==expected)throw Error('Archive checksum mismatch');
   const stage=processes().find(v=>v.name==='alisveris-danger-staging');

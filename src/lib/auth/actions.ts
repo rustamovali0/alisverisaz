@@ -1,4 +1,5 @@
 "use server";
+import { recordDangerRisk } from "@/lib/security/danger-auto";
 
 import { securityEvent } from "@/lib/security/events";
 
@@ -152,6 +153,7 @@ async function recordLoginFailure(
   fallbackMessage = GENERIC_LOGIN_ERROR,
 ) {
   securityEvent("login_failed", rateLimitRule.endpoint, 401);
+  await recordDangerRisk("login_failed", rateLimitRule.ip);
   const attempt = await recordAuthRateLimitAttempt(rateLimitRule);
 
   return attempt.isBlocked ? attempt.message : fallbackMessage;
