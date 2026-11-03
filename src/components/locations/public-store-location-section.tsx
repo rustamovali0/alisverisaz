@@ -1,5 +1,6 @@
 "use client";
 
+import { socialProfileHref } from "@/lib/security/urls";
 import {
   Bus,
   ChevronDown,
@@ -32,23 +33,6 @@ type PublicStoreLocationSectionProps = {
   };
 };
 
-function normalizeSocialHref(kind: "instagram" | "tiktok", value = "") {
-  const cleanValue = value.trim();
-
-  if (!cleanValue) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(cleanValue)) {
-    return cleanValue;
-  }
-
-  const handle = cleanValue.replace(/^@/, "");
-
-  return kind === "instagram"
-    ? `https://instagram.com/${handle}`
-    : `https://tiktok.com/@${handle}`;
-}
 
 function getMapUrl(location: StoreLocation) {
   const mapLink = normalizeGoogleMapLink(location.mapLink ?? "");
@@ -150,13 +134,13 @@ export function PublicStoreLocationSection({
     {
       key: "instagram" as const,
       label: "Instagram",
-      href: normalizeSocialHref("instagram", socialLinks?.instagram),
+      href: socialProfileHref("instagram", socialLinks?.instagram),
       icon: InstagramBrandIcon,
     },
     {
       key: "tiktok" as const,
       label: "TikTok",
-      href: normalizeSocialHref("tiktok", socialLinks?.tiktok),
+      href: socialProfileHref("tiktok", socialLinks?.tiktok),
       icon: TikTokIcon,
     },
   ].filter((item) => item.href);

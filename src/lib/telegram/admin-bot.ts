@@ -1,3 +1,4 @@
+import { literalLike } from "@/lib/security/postgrest";
 import { createHash, randomBytes } from "node:crypto";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
@@ -1212,7 +1213,7 @@ async function findStoreForTelegramProduct(storeRef: string) {
   const { data: byName } = await (supabase as any)
     .from("stores")
     .select("id,owner_id,name,slug,status")
-    .ilike("name", trimmedRef)
+    .ilike("name", literalLike(trimmedRef))
     .limit(1)
     .maybeSingle();
 
@@ -1253,7 +1254,7 @@ async function findCategoryForTelegramProduct(categoryRef: string | null) {
   const { data: byName } = await (supabase as any)
     .from("categories")
     .select("id,name,slug")
-    .ilike("name", trimmedRef)
+    .ilike("name", literalLike(trimmedRef))
     .limit(1)
     .maybeSingle();
 

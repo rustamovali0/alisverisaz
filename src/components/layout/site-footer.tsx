@@ -1,4 +1,5 @@
 "use client";
+import { socialProfileHref } from "@/lib/security/urls";
 import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import {
   ArrowRight,
@@ -24,16 +25,7 @@ type SiteFooterProps = {
   description?: string;
   socialLinks?: { instagram?: string; tiktok?: string; whatsapp?: string };
 };
-function socialHref(kind: string, value?: string) {
-  if (!value?.trim()) return "";
-  const text = value.trim();
-  if (/^https?:\/\//i.test(text)) return text;
-  return kind === "whatsapp"
-    ? `https://wa.me/${text.replace(/\D/g, "")}`
-    : kind === "instagram"
-      ? `https://instagram.com/${text.replace(/^@/, "")}`
-      : `https://tiktok.com/@${text.replace(/^@/, "")}`;
-}
+
 export function SiteFooter({
   siteName = "alışveriş",
   logoUrl,
@@ -51,17 +43,17 @@ export function SiteFooter({
   const socials = [
     {
       label: "Instagram",
-      href: socialHref("instagram", socialLinks?.instagram),
+      href: socialProfileHref("instagram", socialLinks?.instagram),
       Icon: InstagramBrandIcon,
     },
     {
       label: "TikTok",
-      href: socialHref("tiktok", socialLinks?.tiktok),
+      href: socialProfileHref("tiktok", socialLinks?.tiktok),
       Icon: TikTokIcon,
     },
     {
       label: "WhatsApp",
-      href: socialHref("whatsapp", socialLinks?.whatsapp),
+      href: socialProfileHref("whatsapp", socialLinks?.whatsapp),
       Icon: WhatsAppIcon,
     },
   ].filter((s) => s.href);

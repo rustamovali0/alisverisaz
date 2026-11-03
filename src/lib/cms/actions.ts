@@ -1,5 +1,6 @@
 "use server";
 
+import { safeLinkHref, socialProfileHref } from "@/lib/security/urls";
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
@@ -173,8 +174,8 @@ function normalizeSocialLinks(formData: FormData) {
     normalizeAzerbaijanPhone(readString(formData, "socialWhatsapp")) ||
     normalizeAzerbaijanPhone(readString(formData, "whatsapp"));
 
-  links.instagram = readString(formData, "socialInstagram");
-  links.tiktok = readString(formData, "socialTiktok");
+  links.instagram = socialProfileHref("instagram", readString(formData, "socialInstagram"));
+  links.tiktok = socialProfileHref("tiktok", readString(formData, "socialTiktok"));
   links.whatsapp = whatsapp;
 
   return Object.fromEntries(
@@ -227,6 +228,10 @@ async function audit(action: string, entityType: string, metadata: Record<string
 export async function updateSiteSettingsAction(
   formData: FormData,
 ): Promise<CmsActionResult> {
+  for (const kind of ["instagram", "tiktok"] as const) {
+    const value = readString(formData, kind === "instagram" ? "socialInstagram" : "socialTiktok");
+    if (value && !socialProfileHref(kind, value)) return { ok: false, message: "Sosial şəbəkə keçidi düzgün deyil. Profil ünvanını və ya istifadəçi adını yazın." };
+  }
   const current = await audit("update_site_settings", "platform_settings", {
     key: "site",
   });
@@ -465,6 +470,10 @@ export async function updateHomepageSectionAction(
     id: readString(formData, "sectionId"),
   });
   const sectionId = readString(formData, "sectionId");
+  const buttonUrlInput = readString(formData, "buttonUrl");
+  const buttonUrl = safeLinkHref(buttonUrlInput, { allowContact: true });
+  if (buttonUrlInput && !buttonUrl) return { ok: false, message: "Düymə keçidi düzgün deyil. Saytdaxili yol və ya http/https ünvanı yazın." };
+
 
   if (!sectionId) {
     return {
@@ -522,7 +531,7 @@ export async function updateHomepageSectionAction(
       image_url: imageUrl,
       settings,
       button_label: readString(formData, "buttonLabel"),
-      button_url: readString(formData, "buttonUrl"),
+      button_url: buttonUrl,
       item_limit: Math.max(Math.trunc(readNumber(formData, "itemLimit")), 0),
       data_filter: readString(formData, "dataFilter") || "manual",
       sort_order: Math.trunc(readNumber(formData, "sortOrder")),
@@ -617,9 +626,11 @@ export async function updateNavigationItemAction(
     };
   }
 
-  const nextHref = existing?.is_system
+  const requestedHref = existing?.is_system
     ? existing.href
     : readString(formData, "href") || existing?.href || "/";
+  const nextHref = safeLinkHref(requestedHref, { allowContact: true });
+  if (!nextHref) return { ok: false, message: "Menyu keçidi düzgün deyil. Saytdaxili yol və ya http/https ünvanı yazın." };
 
   const { error } = await (supabaseAdmin as any)
     .from("navigation_items")

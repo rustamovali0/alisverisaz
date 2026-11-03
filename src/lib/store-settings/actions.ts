@@ -1,5 +1,6 @@
 "use server";
 
+import { socialProfileHref } from "@/lib/security/urls";
 import { revalidatePath } from "next/cache";
 
 import { requireRole } from "@/lib/auth/session";
@@ -115,6 +116,10 @@ export async function updateSellerStoreSettingsAction(
   const aboutContent = readString(formData, "aboutContent");
   const socialInstagram = readString(formData, "socialInstagram");
   const socialTiktok = readString(formData, "socialTiktok");
+  if ((socialInstagram && !socialProfileHref("instagram", socialInstagram)) || (socialTiktok && !socialProfileHref("tiktok", socialTiktok))) {
+    return { ok: false, message: "Sosial şəbəkə keçidi düzgün deyil. Profil ünvanını və ya istifadəçi adını yazın." };
+  }
+
   const logoFile = readFile(formData, "logo");
   const bannerFile = readFile(formData, "banner");
   const storefrontHeroFile = readFile(formData, "storefrontHero");

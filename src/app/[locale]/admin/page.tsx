@@ -1,12 +1,19 @@
-import { EmptyState } from "@/components/common/empty-state";
-import { DashboardPanel } from "@/components/dashboard/dashboard-panel";
-import { StatGrid } from "@/components/dashboard/stat-card";
+import { ArrowUpRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getAdminActivityOverview } from "@/lib/activity/data";
 import { requireRole } from "@/lib/auth/session";
 import { getAdminOverview } from "@/lib/dashboard/data";
 
 export const dynamic = "force-dynamic";
+const metricPaths = ["users", "stores", "products", "orders", "subscriptions"];
+const shortcuts = [
+  ["Məhsulları idarə et", "products"],
+  ["Sifarişlərə bax", "orders"],
+  ["Mağazaları idarə et", "stores"],
+  ["İstifadəçilərə bax", "users"],
+  ["E-poçt mərkəzini aç", "email"],
+  ["Təhlükəsizlik ayarları", "danger"],
+];
 
 export default async function AdminPage() {
   await requireRole(["admin"], "/radmin/panel");
@@ -14,53 +21,56 @@ export default async function AdminPage() {
     getAdminOverview(),
     getAdminActivityOverview(),
   ]);
-
   return (
-    <div className="space-y-6">
-      <StatGrid items={overview.stats} />
-      <DashboardPanel
-        title="Fəaliyyətlər"
-        description="Klik, login/logout, mesaj və sifariş aktivliyinin qısa xülasəsi."
-      >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <>
+      <div className="ra-welcome">
+        <h2>Platformanı bir yerdən idarə edin</h2>
+        <p>
+          Əsas göstəricilər, son fəaliyyətlər və tez istifadə olunan bölmələr.
+        </p>
+      </div>
+      <div className="ra-metrics">
+        {overview.stats.map((item, index) => (
+          <Link
+            key={item.label}
+            href={`/radmin/${metricPaths[index]}`}
+            className="ra-metric"
+          >
+            <p>{item.label}</p>
+            <strong>{item.value}</strong>
+            <span>Bölməyə keç ↗</span>
+          </Link>
+        ))}
+      </div>
+      <div className="ra-overview-columns">
+        <section
+          className="ra-overview-panel"
+          aria-labelledby="ra-activity-title"
+        >
+          <h2 id="ra-activity-title">Platformada fəaliyyət</h2>
           {activity.stats.slice(0, 8).map((item) => (
-            <div key={item.label} className="rounded-lg border bg-background p-4">
-              <p className="text-sm text-muted-foreground">{item.label}</p>
-              <p className="mt-2 text-2xl font-black">{item.value}</p>
+            <div key={item.label} className="ra-activity-row">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
             </div>
           ))}
-        </div>
-        <Link
-          href="/radmin/activity"
-          className="mt-4 inline-flex text-sm font-semibold text-primary hover:underline"
+          <Link href="/radmin/activity" className="ra-text-link">
+            Bütün fəaliyyətlərə bax →
+          </Link>
+        </section>
+        <section
+          className="ra-overview-panel"
+          aria-labelledby="ra-shortcuts-title"
         >
-          Ətraflı fəaliyyətlərə bax
-        </Link>
-      </DashboardPanel>
-      <DashboardPanel
-        title="Platforma xülasəsi"
-        description="Admin roluna açıq real Supabase sayları"
-      >
-        {overview.stats.every((item) => Number(item.value) === 0) ? (
-          <EmptyState
-            className="min-h-56"
-            title="Məlumat yoxdur"
-            description="Platforma cədvəllərində real qeyd yarandıqda burada görünəcək."
-          />
-        ) : (
-          <div className="grid gap-3 text-sm text-muted-foreground">
-            {overview.stats.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between rounded-md border bg-background p-3"
-              >
-                <span>{item.label}</span>
-                <span className="font-medium text-foreground">{item.value}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </DashboardPanel>
-    </div>
+          <h2 id="ra-shortcuts-title">Sürətli keçidlər</h2>
+          {shortcuts.map(([title, path]) => (
+            <Link key={path} href={`/radmin/${path}`} className="ra-quick-link">
+              <span>{title}</span>
+              <ArrowUpRight size={17} aria-hidden="true" />
+            </Link>
+          ))}
+        </section>
+      </div>
+    </>
   );
 }

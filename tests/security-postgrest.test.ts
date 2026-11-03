@@ -1,6 +1,10 @@
 import { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { literalContains, validatedCursorDate } from "@/lib/security/postgrest";
+import {
+  literalContains,
+  literalLike,
+  validatedCursorDate,
+} from "@/lib/security/postgrest";
 let db: PGlite;
 beforeAll(async () => {
   db = new PGlite();
@@ -48,3 +52,14 @@ it("preserves sub-millisecond cursor precision for PostgreSQL pagination", () =>
     "2026-11-02T00:00:00.123456+00:00",
   );
 });
+
+it.each(["Store%_", "x' OR 1=1 --", "x),or(id.not.is.null)", "Əli\\Dükan"])(
+  "keeps exact-name filters literal: %s",
+  async (term) => {
+    const result = await db.query<{ own: boolean; other: boolean }>(
+      "select $1::text ilike $2::text as own, $3::text ilike $2::text as other",
+      [term, literalLike(term), "Unrelated store"],
+    );
+    expect(result.rows[0]).toEqual({ own: true, other: false });
+  },
+);

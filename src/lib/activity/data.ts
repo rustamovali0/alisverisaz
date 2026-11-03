@@ -1,3 +1,4 @@
+import { literalContains } from "@/lib/security/postgrest";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type { ActivityEventType } from "@/lib/activity/events";
 
@@ -284,9 +285,9 @@ export async function getAdminUserActivityLog(filters: AdminUserActivityFilters)
   }
 
   if (query) {
-    const safeQuery = query.replace(/[^a-zA-Z0-9@\s.+_-]/g, "").trim();
+    const safeQuery = literalContains(query.slice(0, 120));
     profileQuery = profileQuery.or(
-      `email.ilike.%${safeQuery}%,full_name.ilike.%${safeQuery}%,phone.ilike.%${safeQuery}%`,
+      `email.ilike.${safeQuery},full_name.ilike.${safeQuery},phone.ilike.${safeQuery}`,
     );
   }
 
