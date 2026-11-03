@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(page, {
       headers: {
-        "Cache-Control": searchParams.get("q")
+        "Cache-Control": request.headers.get("x-alisveris-danger") === "1" ? "private, no-store" : searchParams.get("q")
           ? "no-store"
           : "public, s-maxage=30, stale-while-revalidate=60",
       },

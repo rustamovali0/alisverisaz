@@ -14,6 +14,8 @@ import { clientEnv } from "@/lib/config/env.client";
 import { serverEnv } from "@/lib/config/env.server";
 import { getSystemFlagsForProxy } from "@/lib/platform/system-settings-proxy";
 import { updateSession } from "@/lib/supabase/middleware";
+import { dangerGate } from "@/lib/security/danger-gate";
+import { dangerExemptPath } from "@/lib/security/danger-policy";
 
 function resolveCookieLocale(request: NextRequest) {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
@@ -367,9 +369,24 @@ export async function proxy(request: NextRequest) {
   }
 
   const nativeStoreSubdomainSlug = getStoreSubdomainSlug(request.headers.get("host"));
-  const customDomainStoreSlug = nativeStoreSubdomainSlug
-    ? null
-    : await getCustomDomainStoreSlug(request.headers.get("host"));
+  const customDomainStoreSlug = nativeStoreSubdomainSlug ? null : await getCustomDomainStoreSlug(request.headers.get("host"));
+
+  if (visiblePathname === "/security-check" || visiblePathname.startsWith("/api/") || dangerExemptPath(visiblePathname)) {
+    const gated = await dangerGate(request, visiblePathname, Boolean(customDomainStoreSlug));
+    if (gated.response) return gated.response;
+    if (visiblePathname.startsWith("/api/")) {
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-alisveris-danger", gated.active ? "1" : "0");
+      const response = NextResponse.next({ request: { headers: requestHeaders } });
+      if (gated.active) response.headers.set("Cache-Control", "private, no-store");
+      return response;
+    }
+    if (["/security-check", "/security-return"].includes(visiblePathname) || visiblePathname.startsWith("/api/") || ["/marketplace/", "/brand/", "/email-templates/"].some(p => visiblePathname.startsWith(p)) || (visiblePathname.startsWith("/auth/") && /\.(?:png|jpe?g|webp|avif|svg|gif|ico|css|woff2?)$/i.test(visiblePathname)) || ["/robots.txt", "/sitemap.xml", "/favicon.ico", "/favicon.png", "/icon.svg", "/icon.png", "/apple-icon.png", "/manifest.webmanifest"].includes(visiblePathname)) return NextResponse.next();
+  } else {
+    const gated = await dangerGate(request, visiblePathname, Boolean(customDomainStoreSlug));
+    if (gated.response) return gated.response;
+  }
+
   const storeSubdomainSlug = nativeStoreSubdomainSlug ?? customDomainStoreSlug;
   const firstPathSegment = visiblePathname.split("/").filter(Boolean)[0] ?? "";
   const possibleStoreSlug = storeSubdomainSlug ?? firstPathSegment;
@@ -430,5 +447,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|trpc|_next|_vercel|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!_next/|_vercel/|trpc/).*)"],
 };

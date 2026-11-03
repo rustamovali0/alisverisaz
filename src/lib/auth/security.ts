@@ -36,6 +36,7 @@ export async function verifyCaptchaToken(
   token: string,
   remoteIp: string,
   action: string | readonly string[] = "login",
+  expectedHostname?: string,
 ) {
   if (!token || token.length > 4096) {
     return {
@@ -81,11 +82,14 @@ export async function verifyCaptchaToken(
     const allowed = (process.env.TURNSTILE_ALLOWED_HOSTNAMES || appHost)
       .split(",")
       .map((host) => host.trim());
+    const visitHostAllowed = action === "danger_visit" && expectedHostname && data.hostname === expectedHostname &&
+      (allowed.includes(expectedHostname) || allowed.some(root => expectedHostname.endsWith("." + root) && expectedHostname.slice(0, -(root.length + 1)).match(/^[a-z0-9][a-z0-9-]{0,62}$/)));
     if (
       !response.ok ||
       data.success !== true ||
       !data.hostname ||
-      !allowed.includes(data.hostname) ||
+      !(allowed.includes(data.hostname) || visitHostAllowed) ||
+      (expectedHostname && data.hostname !== expectedHostname) ||
       !(Array.isArray(action)
         ? action.includes(data.action || "")
         : data.action === action)

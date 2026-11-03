@@ -316,6 +316,7 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       href: "/radmin/settings",
       icon: "settings",
     },
+    { title: "Danger", href: "/radmin/danger", icon: "shield" },
     {
       title: "Audit log",
       href: "/radmin/audit-log",

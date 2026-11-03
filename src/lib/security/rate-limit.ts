@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { createClient } from "redis";
+import { securityRedisClient, securityRedisUrl } from "./redis-client";
+import { DANGER_STATE_KEY, dangerLimit } from "./danger-policy";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { securityEvent } from "./events";
 
@@ -15,28 +16,14 @@ export type LimitResult = {
   remaining: number;
   message: string;
 };
-export const RATE_SCRIPT = `local n = tonumber(redis.call('GET', KEYS[1]) or '0')
-if n >= tonumber(ARGV[1]) then return {0, math.max(1, redis.call('PTTL', KEYS[1])), 0} end
+export const RATE_SCRIPT = `local limit=tonumber(ARGV[1]); local raw=redis.call('GET',KEYS[2])
+if raw then local state=cjson.decode(raw); local t=redis.call('TIME'); local now=tonumber(t[1])*1000+math.floor(tonumber(t[2])/1000)
+ if state.enabled==true and tonumber(state.expiresAt)>now then limit=math.min(limit,tonumber(ARGV[3])) end end
+local n = tonumber(redis.call('GET', KEYS[1]) or '0')
+if n >= limit then return {0, math.max(1, redis.call('PTTL', KEYS[1])), 0} end
 n = redis.call('INCR', KEYS[1])
 if n == 1 then redis.call('PEXPIRE', KEYS[1], ARGV[2]) end
-return {1, math.max(1, redis.call('PTTL', KEYS[1])), tonumber(ARGV[1])-n}`;
-let redis: ReturnType<typeof createClient> | undefined;
-let connecting: Promise<unknown> | undefined;
-async function redisClient(url: string) {
-  redis ??= createClient({
-    url,
-    socket: { connectTimeout: 1500, reconnectStrategy: false },
-    disableOfflineQueue: true,
-  });
-  if (!redis.listenerCount("error")) redis.on("error", () => {});
-  if (!redis.isOpen) {
-    connecting ??= redis.connect().finally(() => {
-      connecting = undefined;
-    });
-    await connecting;
-  }
-  return redis;
-}
+return {1, math.max(1, redis.call('PTTL', KEYS[1])), limit-n}`;
 export function rateKey(scope: string, identity: string) {
   return `security:v1:${createHash("sha256").update(`${scope}\0${identity}`).digest("hex")}`;
 }
@@ -49,14 +36,14 @@ export async function consumeRateLimit(
   const key = rateKey(scope, identity);
   try {
     let allowed: boolean, retry: number, remaining: number;
-    const url = process.env.SECURITY_REDIS_URL || process.env.REDIS_URL;
+    const url = securityRedisUrl();
     if (url) {
-      const client = await redisClient(url);
+      const client = await securityRedisClient();
       const values = (await client
         .withCommandOptions({ abortSignal: AbortSignal.timeout(1500) })
         .eval(RATE_SCRIPT, {
-          keys: [key],
-          arguments: [String(limit), String(windowSeconds * 1000)],
+          keys: [key, DANGER_STATE_KEY],
+          arguments: [String(limit), String(windowSeconds * 1000), String(dangerLimit(scope, limit))],
         })) as number[];
       allowed = values[0] === 1;
       retry = Math.ceil(values[1] / 1000);
@@ -95,10 +82,10 @@ export async function consumeRateLimit(
 }
 export async function clearRateLimit(scope: string, identity: string) {
   const key = rateKey(scope, identity),
-    url = process.env.SECURITY_REDIS_URL || process.env.REDIS_URL;
+    url = securityRedisUrl();
   try {
     if (url)
-      await (await redisClient(url))
+      await (await securityRedisClient())
         .withCommandOptions({ abortSignal: AbortSignal.timeout(1500) })
         .del(key);
     else

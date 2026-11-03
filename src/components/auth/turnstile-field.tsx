@@ -28,9 +28,10 @@ type TurnstileFieldProps = {
   onTokenChange: (token: string) => void;
   siteKey?: string;
   action?: string;
+  appearance?: "always" | "execute" | "interaction-only";
 };
 
-export function TurnstileField({ token, onTokenChange, siteKey = "", action = "login" }: TurnstileFieldProps) {
+export function TurnstileField({ token, onTokenChange, siteKey = "", action = "login", appearance = "interaction-only" }: TurnstileFieldProps) {
   const widgetId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedWidgetIdRef = useRef<string | null>(null);
@@ -102,12 +103,12 @@ export function TurnstileField({ token, onTokenChange, siteKey = "", action = "l
       sitekey: normalizedSiteKey,
       action,
       size: "flexible",
-      appearance: "interaction-only",
+      appearance,
       callback: onTokenChange,
       "expired-callback": () => onTokenChange(""),
       "error-callback": () => onTokenChange(""),
     });
-  }, [isReady, normalizedSiteKey, onTokenChange, action]);
+  }, [isReady, normalizedSiteKey, onTokenChange, action, appearance]);
 
   useEffect(() => {
     if (!token && renderedWidgetIdRef.current && window.turnstile) {
