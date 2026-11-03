@@ -14,6 +14,7 @@ import {
   useState,
   type CSSProperties,
   type MouseEvent,
+  type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
 
@@ -131,6 +132,8 @@ type ProductMarketplaceProps = {
 
 type StorefrontProps = {
   store: MarketplaceStore;
+  initialSort?: MarketplaceProductSort;
+  collectionFilters?: Pick<CatalogFilters, "discount" | "vip">;
   categories: CategoryOption[];
   locations?: StoreLocation[];
   selectedCategoryId?: string;
@@ -1724,6 +1727,36 @@ export function InfiniteProductGrid({
   );
 }
 
+function ResponsiveCatalogFilters({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const t = useTranslations("marketplace");
+  const [mobile, setMobile] = useState(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
+    const update = () => setMobile(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    const element = dialog.current;
+    if (mobile && element && !element.open) element.showModal();
+  }, [mobile]);
+
+  if (!mobile) return children;
+  return (
+    <dialog ref={dialog} aria-label={t("filters")}
+      className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-2xl border bg-card p-4 text-foreground backdrop:bg-black/40"
+      onCancel={(event) => { event.preventDefault(); onClose(); }}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="font-semibold">{t("filters")}</h2>
+        <Button type="button" onClick={onClose}>{t("applyFilters")}</Button>
+      </div>
+      {children}
+    </dialog>
+  );
+}
+
 export function ProductMarketplace({
   initialFilters = {},
   initialFilterError = "",
@@ -2058,6 +2091,7 @@ export function ProductMarketplace({
               </div>
             </div>
             {isFiltersOpen ? (
+              <ResponsiveCatalogFilters onClose={() => setIsFiltersOpen(false)}>
               <div id="marketplace-filters" className="relative z-20 w-full space-y-3">
                 {stores.length > 0 && (
                   <label className="flex flex-wrap items-center gap-2 text-sm font-medium">
@@ -2108,6 +2142,7 @@ export function ProductMarketplace({
                   layout="wide"
                 />
               </div>
+              </ResponsiveCatalogFilters>
             ) : null}
             <div className="flex flex-wrap gap-2" aria-label={t("filters")}>
               {([
@@ -2154,6 +2189,8 @@ export function Storefront({
   isStoreOwner = false,
   legacyLayout = false,
   storeSubdomainSlug,
+  initialSort = "newest",
+  collectionFilters = {},
   productsOnly = false,
   contactOnly = false,
 }: StorefrontProps) {
@@ -2162,14 +2199,14 @@ export function Storefront({
   const storefront = useTranslations("storefront");
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
   const [activeSort, setActiveSort] =
-    useState<MarketplaceProductSort>("newest");
+    useState<MarketplaceProductSort>(initialSort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [colorFilter, setColorFilter] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [remoteFilters, setRemoteFilters] = useState<CatalogFilters>({});
+  const [remoteFilters, setRemoteFilters] = useState<CatalogFilters>(collectionFilters);
   const categoryQueryIds = useMemo(
     () => getDescendantCategoryIds(categories, activeCategoryId),
     [categories, activeCategoryId],
@@ -2243,18 +2280,19 @@ export function Storefront({
         (min !== undefined && max !== undefined && min > max)
       )
         return;
-      setRemoteFilters({
+      setRemoteFilters((current) => ({
+        ...current,
         color: colorFilter || undefined,
         size: sizeFilter || undefined,
         minPrice: minPrice || undefined,
         maxPrice: maxPrice || undefined,
         inStock: inStockOnly,
-      });
+      }));
     }, 350);
     return () => window.clearTimeout(timer);
   }, [colorFilter, sizeFilter, minPrice, maxPrice, inStockOnly]);
   const hasLocalFilters = Boolean(
-    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly,
+    colorFilter || sizeFilter || minPrice || maxPrice || inStockOnly || remoteFilters.discount || remoteFilters.vip,
   );
   const hasActiveProductFilters = Boolean(
     activeCategoryId || activeSort !== "newest" || hasLocalFilters,
@@ -2374,6 +2412,9 @@ export function Storefront({
     setMinPrice("");
     setMaxPrice("");
     setInStockOnly(false);
+    setRemoteFilters({});
+    updateFilterQuery("discount", "");
+    updateFilterQuery("vip", "");
     selectCategory();
     selectSort("newest");
     ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
@@ -2429,6 +2470,8 @@ export function Storefront({
       options={[
         { value: "newest", label: t("sortNewest") },
         { value: "oldest", label: t("sortOldest") },
+        { value: "discount", label: t("sortDiscount") },
+        ...(searchQuery ? [{ value: "relevance", label: t("sortRelevance") }] : []),
         { value: "price_asc", label: t("sortPriceAsc") },
         { value: "price_desc", label: t("sortPriceDesc") },
       ]}
@@ -2658,6 +2701,19 @@ export function Storefront({
           {filterBar}
         </div>
       ) : null}
+      <nav className="mb-4 flex flex-wrap gap-2" aria-label={t("productsNavigation")}>
+        {([
+          ["", t("allProducts")],
+          ["?sort=newest", t("sortNewest")],
+          ["?discount=1&sort=discount", t("sortDiscount")],
+          ["?vip=1", "VIP"],
+        ] as const).map(([query, label]) => (
+          <Link key={query} href={`${storeBaseHref === "/" ? "" : storeBaseHref || getStorePath(store.slug)}/products${query}`}
+            className="inline-flex min-h-10 items-center rounded-full border bg-card px-3 text-sm font-medium hover:border-primary">
+            {label}
+          </Link>
+        ))}
+      </nav>
       {infinite.isRefreshing ? (
         <div
           className="flex min-h-64 items-center justify-center"

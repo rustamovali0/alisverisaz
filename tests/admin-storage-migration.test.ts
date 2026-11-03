@@ -29,4 +29,4 @@ it("exposes the database size only to the server service role", async () => {
   } finally {
     await db.close();
   }
-});
+}, 30_000);

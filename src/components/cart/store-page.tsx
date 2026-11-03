@@ -6,7 +6,10 @@ import { headers } from "next/headers";
 import { ViewTracker } from "@/components/analytics/view-tracker";
 import { Storefront } from "@/components/cart/product-marketplace";
 import { BreadcrumbJsonLd, StoreJsonLd } from "@/components/seo/json-ld";
-import { getMarketplaceProductPage, getMarketplaceStoreBySlug } from "@/lib/cart/data";
+import {
+  getMarketplaceProductPage,
+  getMarketplaceStoreBySlug,
+} from "@/lib/cart/data";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import {
@@ -30,6 +33,8 @@ export type StorePageProps = {
     category?: string;
     q?: string;
     sort?: string;
+    discount?: string;
+    vip?: string;
   }>;
 };
 
@@ -75,7 +80,11 @@ export async function generateMetadata({
     currentPath === `/store/${store.slug}` ||
     currentPath.startsWith(`/store/${store.slug}/`);
   const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
-  if (!isMarketplaceRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
+  if (
+    !isMarketplaceRoute &&
+    storeSubdomainSlug !== store.slug &&
+    !isCustomStorefrontAllowed
+  ) {
     return {};
   }
   if (storeSubdomainSlug === store.slug && !isCustomStorefrontAllowed) {
@@ -162,7 +171,8 @@ export async function renderStorePage(
     getCurrentUserProfile(),
   ]);
   const selectedCategory = categories.find(
-    (category) => category.slug === search?.category || category.id === search?.category,
+    (category) =>
+      category.slug === search?.category || category.id === search?.category,
   );
   const store = await getMarketplaceStoreBySlug({
     slug: storeSlug,
@@ -188,7 +198,11 @@ export async function renderStorePage(
     currentPath.startsWith(`/${locale}/store/${store.slug}/`);
   const isCustomStorefrontAllowed = store.customStorefrontEnabled === true;
 
-  if (!isLegacyStoreRoute && storeSubdomainSlug !== store.slug && !isCustomStorefrontAllowed) {
+  if (
+    !isLegacyStoreRoute &&
+    storeSubdomainSlug !== store.slug &&
+    !isCustomStorefrontAllowed
+  ) {
     redirect(marketplaceHomeRedirect);
   }
 
@@ -196,23 +210,36 @@ export async function renderStorePage(
     redirect(marketplaceHomeRedirect);
   }
 
-  const storeBaseHref = storeSubdomainSlug === store.slug
-    ? "/"
-    : isLegacyStoreRoute
-      ? getStorePath(store.slug)
-      : `/${store.slug}`;
+  const storeBaseHref =
+    storeSubdomainSlug === store.slug
+      ? "/"
+      : isLegacyStoreRoute
+        ? getStorePath(store.slug)
+        : `/${store.slug}`;
   const canonicalStoreUrl = isCustomStorefrontAllowed
     ? getStorefrontUrl(store.slug)
     : `${siteConfig.url}/store/${store.slug}`;
 
   const storeLocations = await getLocationsForStores([store.id]);
   const productSort =
-    search?.sort === "oldest" || search?.sort === "price_asc" || search?.sort === "price_desc"
+    search?.sort === "oldest" ||
+    search?.sort === "price_asc" ||
+    search?.sort === "price_desc" ||
+    search?.sort === "discount" ||
+    search?.sort === "relevance" ||
+    search?.sort === "newest"
       ? search.sort
-      : "newest";
+      : search?.q?.trim()
+        ? "relevance"
+        : "newest";
+  const collectionFilters = {
+    discount: search?.discount === "1",
+    vip: search?.vip === "1",
+  };
   const productPage = options.productsOnly
     ? await getMarketplaceProductPage(locale, {
         categoryId: selectedCategory?.id,
+        filters: collectionFilters,
         searchQuery: search?.q,
         sort: productSort,
         storeId: store.id,
@@ -248,7 +275,9 @@ export async function renderStorePage(
           { name: "Alışveriş", item: siteConfig.url },
           {
             name: isLegacyStoreRoute ? "Mağazalar" : store.name,
-            item: isLegacyStoreRoute ? `${siteConfig.url}/stores` : canonicalStoreUrl,
+            item: isLegacyStoreRoute
+              ? `${siteConfig.url}/stores`
+              : canonicalStoreUrl,
           },
           ...(isLegacyStoreRoute
             ? [{ name: store.name, item: canonicalStoreUrl }]
@@ -256,6 +285,7 @@ export async function renderStorePage(
         ]}
       />
       <Storefront
+        key={JSON.stringify([store.id, options.productsOnly, search])}
         store={renderedStore}
         categories={categories}
         locations={storeLocations}
@@ -267,6 +297,8 @@ export async function renderStorePage(
         legacyLayout={isLegacyStoreRoute}
         storeSubdomainSlug={storeSubdomainSlug}
         isStoreOwner={isStoreOwner}
+        initialSort={productSort}
+        collectionFilters={collectionFilters}
         productsOnly={options.productsOnly}
         contactOnly={options.contactOnly}
         footer={{
@@ -277,7 +309,8 @@ export async function renderStorePage(
           socialLinks: {
             instagram: siteSettings.socialLinks.instagram,
             tiktok: siteSettings.socialLinks.tiktok,
-            whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
+            whatsapp:
+              siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
           },
         }}
         labels={{

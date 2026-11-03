@@ -578,7 +578,7 @@ export async function reorderHomepageSectionsAction(
   });
   const supabaseAdmin = createSupabaseAdminClient();
 
-  await Promise.all(
+  const results = await Promise.all(
     orderedIds.map((id, index) =>
       (supabaseAdmin as any)
         .from("homepage_sections")
@@ -588,6 +588,11 @@ export async function reorderHomepageSectionsAction(
         .eq("id", id),
     ),
   );
+
+  if (results.some((result) => result.error)) {
+    invalidateHomepagePublicData();
+    return { ok: false, message: "Bölmələrin sırası tam saxlanmadı. Səhifəni yeniləyib yenidən cəhd edin." };
+  }
 
   invalidateHomepagePublicData();
   revalidateLocalizedPath("/radmin/homepage-sections");

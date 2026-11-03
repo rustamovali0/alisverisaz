@@ -474,7 +474,8 @@
   border-radius: 12px;
   overflow: hidden;
 }
-.live-hero > img {
+.live-hero > img,
+.live-hero > picture > img {
   position: absolute;
   inset: 0;
   width: 100%;

@@ -171,205 +171,249 @@ export function HomeExperience({
       whatsapp: siteSettings.socialLinks.whatsapp || siteSettings.whatsapp,
     },
   };
+  const orderedBlocks = [
+    {
+      order: hero?.sortOrder ?? 1,
+      content: (
+        <>
+          <div className={`live-hero-grid ${homepageVisibilityClass(hero)}`}>
+            <section className="live-hero">
+              <picture className="contents">
+                {slide === 0 &&
+                  typeof hero?.settings.mobileImageUrl === "string" &&
+                  hero.settings.mobileImageUrl && (
+                    <source
+                      media="(max-width: 767px)"
+                      srcSet={hero.settings.mobileImageUrl}
+                    />
+                  )}
+                <img
+                  src={heroImage}
+                  alt={text("ALISVERIS.AZ yeni məhsul və mağaza kəşfləri")}
+                  fetchPriority="high"
+                />
+              </picture>
+              <div className="live-hero-copy">
+                <span className="live-hero-label">
+                  <i />
+                  {text("YENİ KƏŞFLƏR. SİZƏ ÖZƏL SEÇİMLƏR.")}
+                </span>
+                <h1>
+                  {slide === 0 ? (
+                    isDefaultTitle ? (
+                      <>
+                        {text("Hər ehtiyacına")}
+                        <br />
+                        {text("bir")} <em>{text("tapıntı.")}</em>
+                      </>
+                    ) : (
+                      text(hero.title)
+                    )
+                  ) : slide === 1 ? (
+                    <>
+                      {text("Sevdiyin stil.")}
+                      <br />
+                      {text("Sənin")} <em>{text("seçimin.")}</em>
+                    </>
+                  ) : (
+                    <>
+                      {text("Evinə yeni")}
+                      <br />
+                      {text("bir")} <em>{text("nəfəs.")}</em>
+                    </>
+                  )}
+                </h1>
+                <p>
+                  {slide === 0 && hero?.description && !isDefaultTitle ? (
+                    text(hero.description)
+                  ) : (
+                    <>
+                      {text("Sevdiyin məhsullar, etibarlı mağazalar.")}
+                      <br />
+                      {text("Hamısı bir ünvanda — alışveriş.az-da.")}
+                    </>
+                  )}
+                </p>
+                <Link
+                  className="live-btn"
+                  href={
+                    hero?.buttonUrl && slide === 0 && !isDefaultTitle
+                      ? hero.buttonUrl
+                      : slide === 1
+                        ? "/products?q=geyim"
+                        : slide === 2
+                          ? "/products?q=ev"
+                          : "/products"
+                  }
+                >
+                  {hero?.buttonLabel && slide === 0 && !isDefaultTitle
+                    ? text(hero.buttonLabel)
+                    : text("Məhsulları kəşf et")}
+                  <ArrowRight size={17} />
+                </Link>
+                {(initialRole == null || initialRole === "seller") && (
+                  <Link
+                    href={
+                      initialRole === "seller"
+                        ? "/store/dashboard"
+                        : "/register?role=seller"
+                    }
+                    className="live-hero-seller-link"
+                  >
+                    {text(
+                      initialRole === "seller" ? "Satıcı paneli" : "Satıcı ol",
+                    )}
+                  </Link>
+                )}
+                <div
+                  className="live-hero-dots"
+                  aria-label={text("Kampaniya slaydları")}
+                >
+                  {[0, 1, 2].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setSlide(n)}
+                      className={slide === n ? "active" : ""}
+                      aria-label={text("{number}-ci slayd", { number: n + 1 })}
+                      aria-pressed={slide === n}
+                    />
+                  ))}
+                </div>
+              </div>
+              <span className="live-hero-sticker">
+                <ShieldCheck size={22} />
+                <span>
+                  {text("Əminliklə seç.")}
+                  <strong>{text("Sevərək istifadə et.")}</strong>
+                </span>
+              </span>
+            </section>
+            <section className="live-side-offer">
+              <span className="live-eyebrow">{text("KATEQORİYALAR")}</span>
+              <h2>{text("Məhsulları kəşf et")}</h2>
+              <ul className="live-hero-category-links">
+                {activeCategories.slice(0, 4).map((category) => (
+                  <li key={category.id}>
+                    <Link
+                      href={`/products?category=${encodeURIComponent(category.slug)}`}
+                    >
+                      {text(category.name)} <ArrowUpRight size={16} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <Link className="live-text-link" href="/products">
+                {text("Bütün məhsullar")} <ArrowRight size={16} />
+              </Link>
+            </section>
+          </div>
+          <div className="live-benefits">
+            {[
+              {
+                Icon: Truck,
+                title: text("Mağazadan çatdırılma"),
+                text: text("Şərtlər məhsul səhifəsində"),
+                href: "/help",
+              },
+              {
+                Icon: ShieldCheck,
+                title: text("Etibarlı alış-veriş"),
+                text: text("Mağazalarla birbaşa əlaqə"),
+                href: "/stores",
+              },
+              {
+                Icon: MessageCircle,
+                title: text("Satıcıya sual verin"),
+                text: text("Məhsul üzrə mesajlaşma"),
+                href: "/products",
+              },
+              {
+                Icon: Headphones,
+                title: text("Hər zaman yanınızda"),
+                text: text("Yardım və dəstək mərkəzi"),
+                href: "/help",
+              },
+            ].map(({ Icon, title, text: detail, href }) => (
+              <Link key={text(title)} href={href}>
+                <Icon size={25} />
+                <span>
+                  <strong>{text(title)}</strong>
+                  <small>{detail}</small>
+                </span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ),
+    },
+    {
+      order: categorySection?.sortOrder ?? 2,
+      content: activeCategories.length > 0 && (
+        <section
+          className={`live-section live-category-section ${homepageVisibilityClass(categorySection)}`}
+        >
+          <SectionHeading
+            eyebrow={text("SƏNİN DÜNYAN, SƏNİN SEÇİMİN")}
+            title={categorySection?.title || text("Nə axtarırsınız?")}
+            href={categorySection?.buttonUrl || "/categories"}
+            action={text(categorySection?.buttonLabel || "Bütün kateqoriyalar")}
+          />
+          <div className="live-categories">
+            {activeCategories.map((c, i) => {
+              const Icon = getCategoryIcon(c);
+              return (
+                <Link
+                  key={c.id}
+                  href={`/products?category=${encodeURIComponent(c.slug)}`}
+                >
+                  <span
+                    className={`live-category-art live-category-tone-${i % 8}`}
+                  >
+                    {getCategoryImage(c) ? (
+                      <img
+                        src={getCategoryImage(c)!}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <Icon strokeWidth={1.2} size={45} />
+                    )}
+                  </span>
+                  <strong>{text(c.name)}</strong>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      ),
+    },
+    {
+      order: featuredSection?.sortOrder ?? 3,
+      content: featuredStores.length > 0 && (
+        <section
+          className={`live-section ${homepageVisibilityClass(featuredSection)}`}
+        >
+          <SectionHeading
+            eyebrow={text("YAXŞI SEÇİMLƏRİN ÜNVANI")}
+            title={featuredSection?.title || text("Seçilmiş mağazalar")}
+            href={featuredSection?.buttonUrl || "/stores"}
+            action={text(featuredSection?.buttonLabel || "Bütün mağazalar")}
+          />
+          <div className="live-store-grid">
+            {featuredStores.map((s) => (
+              <LiveStoreCard key={s.id} store={s} />
+            ))}
+          </div>
+        </section>
+      ),
+    },
+  ].sort((left, right) => left.order - right.order);
   return (
     <main className="live-home">
       <div className="live-wrap">
-        <div className={`live-hero-grid ${homepageVisibilityClass(hero)}`}>
-          <section className="live-hero">
-            <img
-              src={heroImage}
-              alt={text("ALISVERIS.AZ yeni məhsul və mağaza kəşfləri")}
-              fetchPriority="high"
-            />
-            <div className="live-hero-copy">
-              <span className="live-hero-label">
-                <i />
-                {text("YENİ KƏŞFLƏR. SİZƏ ÖZƏL SEÇİMLƏR.")}
-              </span>
-              <h1>
-                {slide === 0 ? (
-                  isDefaultTitle ? (
-                    <>
-                      {text("Hər ehtiyacına")}
-                      <br />
-                      {text("bir")} <em>{text("tapıntı.")}</em>
-                    </>
-                  ) : (
-                    text(hero.title)
-                  )
-                ) : slide === 1 ? (
-                  <>
-                    {text("Sevdiyin stil.")}
-                    <br />
-                    {text("Sənin")} <em>{text("seçimin.")}</em>
-                  </>
-                ) : (
-                  <>
-                    {text("Evinə yeni")}
-                    <br />
-                    {text("bir")} <em>{text("nəfəs.")}</em>
-                  </>
-                )}
-              </h1>
-              <p>
-                {slide === 0 && hero?.description && !isDefaultTitle ? (
-                  text(hero.description)
-                ) : (
-                  <>
-                    {text("Sevdiyin məhsullar, etibarlı mağazalar.")}
-                    <br />
-                    {text("Hamısı bir ünvanda — alışveriş.az-da.")}
-                  </>
-                )}
-              </p>
-              <Link
-                className="live-btn"
-                href={
-                  hero?.buttonUrl && slide === 0 && !isDefaultTitle
-                    ? hero.buttonUrl
-                    : slide === 1
-                      ? "/products?q=geyim"
-                      : slide === 2
-                        ? "/products?q=ev"
-                        : "/products"
-                }
-              >
-                {hero?.buttonLabel && slide === 0 && !isDefaultTitle
-                  ? text(hero.buttonLabel)
-                  : text("Məhsulları kəşf et")}
-                <ArrowRight size={17} />
-              </Link>
-              {(initialRole == null || initialRole === "seller") && (
-                <Link
-                  href={
-                    initialRole === "seller"
-                      ? "/store/dashboard"
-                      : "/register?role=seller"
-                  }
-                  className="live-hero-seller-link"
-                >
-                  {text(
-                    initialRole === "seller" ? "Satıcı paneli" : "Satıcı ol",
-                  )}
-                </Link>
-              )}
-              <div
-                className="live-hero-dots"
-                aria-label={text("Kampaniya slaydları")}
-              >
-                {[0, 1, 2].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setSlide(n)}
-                    className={slide === n ? "active" : ""}
-                    aria-label={text("{number}-ci slayd", { number: n + 1 })}
-                    aria-pressed={slide === n}
-                  />
-                ))}
-              </div>
-            </div>
-            <span className="live-hero-sticker">
-              <ShieldCheck size={22} />
-              <span>
-                {text("Əminliklə seç.")}
-                <strong>{text("Sevərək istifadə et.")}</strong>
-              </span>
-            </span>
-          </section>
-          <section className="live-side-offer">
-            <span className="live-eyebrow">{text("KATEQORİYALAR")}</span>
-            <h2>{text("Məhsulları kəşf et")}</h2>
-            <ul className="live-hero-category-links">
-              {activeCategories.slice(0, 4).map((category) => (
-                <li key={category.id}>
-                  <Link
-                    href={`/products?category=${encodeURIComponent(category.slug)}`}
-                  >
-                    {text(category.name)} <ArrowUpRight size={16} />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <Link className="live-text-link" href="/products">
-              {text("Bütün məhsullar")} <ArrowRight size={16} />
-            </Link>
-          </section>
-        </div>
-        <div className="live-benefits">
-          {[
-            {
-              Icon: Truck,
-              title: text("Mağazadan çatdırılma"),
-              text: text("Şərtlər məhsul səhifəsində"),
-              href: "/help",
-            },
-            {
-              Icon: ShieldCheck,
-              title: text("Etibarlı alış-veriş"),
-              text: text("Mağazalarla birbaşa əlaqə"),
-              href: "/stores",
-            },
-            {
-              Icon: MessageCircle,
-              title: text("Satıcıya sual verin"),
-              text: text("Məhsul üzrə mesajlaşma"),
-              href: "/products",
-            },
-            {
-              Icon: Headphones,
-              title: text("Hər zaman yanınızda"),
-              text: text("Yardım və dəstək mərkəzi"),
-              href: "/help",
-            },
-          ].map(({ Icon, title, text: detail, href }) => (
-            <Link key={text(title)} href={href}>
-              <Icon size={25} />
-              <span>
-                <strong>{text(title)}</strong>
-                <small>{detail}</small>
-              </span>
-            </Link>
-          ))}
-        </div>
-        {activeCategories.length > 0 && (
-          <section
-            className={`live-section live-category-section ${homepageVisibilityClass(categorySection)}`}
-          >
-            <SectionHeading
-              eyebrow={text("SƏNİN DÜNYAN, SƏNİN SEÇİMİN")}
-              title={categorySection?.title || text("Nə axtarırsınız?")}
-              href="/categories"
-              action={text("Bütün kateqoriyalar")}
-            />
-            <div className="live-categories">
-              {activeCategories.map((c, i) => {
-                const Icon = getCategoryIcon(c);
-                return (
-                  <Link
-                    key={c.id}
-                    href={`/products?category=${encodeURIComponent(c.slug)}`}
-                  >
-                    <span
-                      className={`live-category-art live-category-tone-${i % 8}`}
-                    >
-                      {getCategoryImage(c) ? (
-                        <img
-                          src={getCategoryImage(c)!}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <Icon strokeWidth={1.2} size={45} />
-                      )}
-                    </span>
-                    <strong>{text(c.name)}</strong>
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        )}
+        {orderedBlocks[0].content}
+        {orderedBlocks[1].content}
         {(
           [
             ["featured", "Sizin üçün seçilmiş məhsullar", "/products"],
@@ -405,10 +449,17 @@ export function HomeExperience({
         })}
         {productSections.categorySections.map(({ category, products }) => (
           <section key={category.id} className="live-section">
-            <SectionHeading eyebrow={text("KATEQORİYADAN SEÇİMLƏR")} title={text(category.name)}
-              href={`/products?category=${encodeURIComponent(category.slug)}`} />
+            <SectionHeading
+              eyebrow={text("KATEQORİYADAN SEÇİMLƏR")}
+              title={text(category.name)}
+              href={`/products?category=${encodeURIComponent(category.slug)}`}
+            />
             <div className="live-home-products">
-              <ProductGrid products={products} labels={{ stock: text("Stok") }} compactMobileCards />
+              <ProductGrid
+                products={products}
+                labels={{ stock: text("Stok") }}
+                compactMobileCards
+              />
             </div>
           </section>
         ))}
@@ -449,23 +500,7 @@ export function HomeExperience({
             <Leaf size={145} strokeWidth={0.55} />
           </Link>
         </section>
-        {featuredStores.length > 0 && (
-          <section
-            className={`live-section ${homepageVisibilityClass(featuredSection)}`}
-          >
-            <SectionHeading
-              eyebrow={text("YAXŞI SEÇİMLƏRİN ÜNVANI")}
-              title={featuredSection?.title || text("Seçilmiş mağazalar")}
-              href="/stores"
-              action={text("Bütün mağazalar")}
-            />
-            <div className="live-store-grid">
-              {featuredStores.map((s) => (
-                <LiveStoreCard key={s.id} store={s} />
-              ))}
-            </div>
-          </section>
-        )}
+        {orderedBlocks[2].content}
         {(initialRole == null || initialRole === "seller") && (
           <section className="live-seller-banner">
             <Store size={54} strokeWidth={1.2} />
