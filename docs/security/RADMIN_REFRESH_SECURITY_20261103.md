@@ -36,7 +36,13 @@ Execution evidence before production activation:
 - 584 tests / 83 files passed on Node 22; TypeScript and final Next standalone build passed.
 - Staging verification passed at 2026-11-03 15:24 Baku: 27 normal marketplace checks plus 9 grouped security scenarios (10 recorded groups total). Actual Redis Lua/CAS, token replay denial, cross-origin rejection, custom-domain return, expiry, automatic detector thresholds and SSH recovery were exercised only in isolated staging storage.
 - Reviewed archive SHA-256: `1de7ad4905f67e4a3ae2dfe2c3af2f4126ad5eae0420227586320be9c95e15a0`.
-- Production activation and ordinary live checks are recorded after the switch.
+- **IMPLEMENTED, TESTED — deployed:** 2026-11-03 15:28:19 Baku, source commit `9e1ec28f6e3aee98f75520f5df6ce6241f84fe7a`, PM2 PID `2874258`, release `/srv/alisveris/releases/radmin-refresh-20261103/app`.
+- 27 native live smoke checks and 27 checks through `https://alisveris.az` passed. Public headers report Cloudflare, CSP and `nosniff`; Auth health is HTTP 200. No production attack scans were run.
+- Manual Danger stayed off; automatic risk monitoring was already on immediately before deployment and remained on afterward. The production security Redis PID `2739017` and RTest PID `211116` stayed unchanged; the new main process had zero restarts at verification.
+- 24 Python operations tests and 8 backup/receipt fixture tests passed locally without creating or restoring a production backup.
+- [GitHub source verification run 135](https://github.com/rustamovali0/alisverisaz/actions/runs/41627452596) completed successfully. [Draft PR #12](https://github.com/rustamovali0/alisverisaz/pull/12) contains the reviewed changes.
+- Disposable staging Redis/configuration and the SHA-verified uploaded archive were removed. Rollback remains; disk is 48% used with about 15 GiB free.
+- Interactive visual testing remains **BLOCKED** by the browser tool response `Local browser use is disabled in Work settings`, despite the user's screenshot showing the Browser preference enabled. No alternative browser route was used to bypass that access control.
 
 ## Remaining limitations
 
