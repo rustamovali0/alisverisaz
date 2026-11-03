@@ -46,7 +46,7 @@ Provider references: [server-side validation](https://developers.cloudflare.com/
 
 Unit/integration cases cover RAdmin/AAL2, CAS/expiry, MAC binding, single-use/replay denial, redirect sanitization, malformed/oversized requests, CSRF, rate responses and storage failure. `deploy/security/verify-danger-staging.mjs` refuses all storage except isolated loopback Redis **16380** and operates against staged app **3104**. Its signed fixtures are produced by the staging operator using a separate staging key; no test bypass exists in application code. No customers, orders or emails are created.
 
-Application release: `/srv/alisveris/releases/danger-mode-20261103/app`.
+Application release: `/srv/alisveris/releases/danger-admin-final-20261103/app`.
 
 1. Build standalone with public build configuration; package static/public assets and recovery/smoke scripts, excluding all environment files.
 2. Verify archive SHA-256. `danger-release.mjs prepare <sha256>` requires the current production release, free staging ports and no existing destination; it copies the private environment and generates separate production/staging signing keys. Production Redis is never used for staging mode fixtures.
@@ -61,7 +61,7 @@ If a staging check fails, inspect its output/state before repeating preparation.
 An existing SSH operator can inspect or disable this mode without a public bypass or root:
 
 ```sh
-cd /srv/alisveris/releases/danger-password-20261103/app
+cd /srv/alisveris/releases/danger-admin-final-20261103/app
 node --env-file=app.env deploy/security/danger-recover.mjs status
 node --env-file=app.env deploy/security/danger-recover.mjs off
 ```
@@ -72,7 +72,7 @@ For an application regression, first disable Danger, then use the private preser
 
 ```sh
 pm2 delete alisveris-vds
-pm2 start /srv/alisveris/releases/danger-password-20261103/rollback.config.cjs --only alisveris-vds
+pm2 start /srv/alisveris/releases/danger-admin-final-20261103/rollback.config.cjs --only alisveris-vds
 pm2 save
 ```
 
@@ -105,3 +105,5 @@ The SSH `danger-recover.mjs off` command disables both Danger and the automatic 
 The password field is shown for each manual and automatic mode operation. Credentials are checked only for the current server-verified administrator's email and user ID; submitted email/role/ID fields cannot select another account. A fresh non-persistent public Supabase client performs native password/CAPTCHA verification without writing the administrator's cookies. Its temporary session is revoked with `scope: "local"`; global sign-out is never used. Passwords, returned tokens and provider errors are not included in logs, audit metadata or action results. Client password/token fields clear after submission.
 
 The existing Turnstile/GoTrue configuration remains enforced. Native Auth mode redeems the token once in GoTrue. An account has a five-attempt/15-minute verification budget, with a separate 20-attempt/IP budget and the existing 5/minute setting-change budget. Successful verification resets only the account's password-check counter. No shared static admin PIN or new credential is created. Auth requests have a five-second request timeout. This password step has lower assurance than an independent second factor; it implements the explicitly requested existing-password confirmation.
+
+The final application release is `/srv/alisveris/releases/danger-admin-final-20261103/app`, with `/srv/alisveris/releases/danger-password-20261103/app` retained as immediate rollback. The shared Redis client awaits readiness (including AUTH/handshake), not just socket opening. A concurrent first-render regression test prevents a false unavailable-state warning when manual and automatic settings load together.

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
 import { parseEnv } from 'node:util';
-const root='/srv/alisveris/releases/danger-password-20261103';
+const root='/srv/alisveris/releases/danger-admin-final-20261103';
 const app=root+'/app';
 const env=parseEnv(fs.readFileSync(root+'/stage.env','utf8'));
 const redisUrl=new URL(env.SECURITY_REDIS_URL);

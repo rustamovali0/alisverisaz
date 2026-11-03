@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.stubEnv("SECURITY_REDIS_URL", "redis://127.0.0.1:16379");
   m.client = {
     isOpen: true,
+    isReady: true,
     listenerCount: () => 1,
     withCommandOptions: m.options,
   };
