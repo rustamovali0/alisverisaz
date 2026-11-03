@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "@/app/radmin.css";
 
 import { RadminDashboardShell } from "@/components/radmin/radmin-dashboard-shell";
 import { requireRadmin } from "@/lib/auth/radmin-auth";

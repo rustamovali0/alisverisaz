@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import cp from 'node:child_process';
 const root=process.argv[2];
-if(!/^\/srv\/alisveris\/releases\/danger-(?:mode|auto|password|admin-final)-20261103$/.test(root||''))throw Error('Explicit reviewed release is required');
+if(!/^\/srv\/alisveris\/releases\/(?:danger-(?:mode|auto|password|admin-final)|radmin-refresh)-20261103$/.test(root||''))throw Error('Explicit reviewed release is required');
 if(JSON.parse(fs.readFileSync(root+'/deployment-result.json')).status!=='deployed')throw Error('Deployment not complete');
 const processes=JSON.parse(cp.execFileSync('pm2',['jlist'],{encoding:'utf8'}));
 if(processes.some(p=>p.name==='alisveris-danger-staging'))throw Error('Staging application still exists');

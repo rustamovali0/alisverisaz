@@ -1,10 +1,15 @@
+/** Escape a value passed directly to a parameterized PostgREST LIKE filter. */
+export function literalLike(value: string) {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 /**
  * A literal contains-pattern for PostgREST's raw or grammar. Supabase encodes
  * the URL; escaping here is for the PostgREST quoted value and SQL LIKE layers.
  * https://docs.postgrest.org/en/stable/references/api/url_grammar.html
  */
 export function literalContains(value: string) {
-  const pattern = "%" + value.replace(/[\\%_]/g, "\\$&") + "%";
+  const pattern = "%" + literalLike(value) + "%";
   return '"' + pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
 }
 

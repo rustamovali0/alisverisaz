@@ -1,3 +1,4 @@
+import { safeLinkHref } from "@/lib/security/urls";
 import {
   CACHE_TAGS,
   CACHE_TTL,
@@ -228,7 +229,7 @@ function readHomepageSection(row: any): HomepageSection {
     showDescription:
       settings.showDescription !== false && settings.show_description !== false,
     buttonLabel: row.button_label ?? "",
-    buttonUrl: row.button_url ?? "",
+    buttonUrl: safeLinkHref(row.button_url, { allowContact: true }),
     itemLimit: Number(row.item_limit ?? 0),
     dataFilter: row.data_filter ?? "manual",
     sortOrder: Number(row.sort_order ?? 0),
@@ -504,7 +505,7 @@ function readNavigationItem(row: any): ManagedNavigationItem {
     id: row.id,
     menuId: row.menu_id,
     title: row.title,
-    href: row.href,
+    href: safeLinkHref(row.href, { allowContact: true }) || "/",
     icon: row.icon_name ?? "home",
     sortOrder: Number(row.sort_order ?? 0),
     isActive: Boolean(row.is_active),

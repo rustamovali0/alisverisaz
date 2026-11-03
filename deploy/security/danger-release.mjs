@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import cp from 'node:child_process';
-const root='/srv/alisveris/releases/danger-admin-final-20261103';
+const root='/srv/alisveris/releases/radmin-refresh-20261103';
 const app=root+'/app';
-const previousApp='/srv/alisveris/releases/danger-password-20261103/app';
+const previousApp='/srv/alisveris/releases/danger-admin-final-20261103/app';
 const setup='/home/deploy/alisveris-security-setup';
 const pm2=(...args)=>cp.execFileSync('pm2',args,{encoding:'utf8',timeout:30000});
 const processes=()=>JSON.parse(pm2('jlist'));
@@ -18,7 +18,7 @@ async function health(port,path="/",marker="live-home"){
   throw Error('Native runtime failed its readiness check');
 }
 async function prepare(){
-  const archive=setup+'/danger-admin-final-20261103.tgz',expected=process.argv[3];
+  const archive=setup+'/radmin-refresh-20261103.tgz',expected=process.argv[3];
   guardMain();if(!/^[a-f0-9]{64}$/.test(expected||'')||hash(archive)!==expected)throw Error('Archive checksum mismatch');
   if(fs.existsSync(root))throw Error('Release exists; inspect before retrying');
   const listeners=cp.execFileSync('ss',['-ltn'],{encoding:'utf8'});
@@ -47,7 +47,7 @@ async function prepare(){
 }
 async function refreshStage(){
   const p=guardMain(),file=root+'/preparation-result.json',prepared=JSON.parse(fs.readFileSync(file));
-  const archive=setup+'/danger-admin-final-20261103.tgz',expected=process.argv[3];
+  const archive=setup+'/radmin-refresh-20261103.tgz',expected=process.argv[3];
   if(p.pid!==prepared.previousPid||fs.existsSync(root+'/deployment-result.json')||fs.existsSync(root+'/stage-verification.json'))throw Error('Inspect existing readiness before refreshing staging');
   if(!/^[a-f0-9]{64}$/.test(expected||'')||hash(archive)!==expected)throw Error('Archive checksum mismatch');
   const stage=processes().find(v=>v.name==='alisveris-danger-staging');

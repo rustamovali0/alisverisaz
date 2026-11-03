@@ -1,3 +1,4 @@
+import { safeLinkHref, socialProfileHref } from "@/lib/security/urls";
 import type {
   MarketplaceProductDetail,
   MarketplaceStore,
@@ -13,15 +14,8 @@ function sanitizeJsonLd(data: Record<string, unknown>) {
 }
 
 function absoluteUrl(value?: string | null) {
-  if (!value) {
-    return undefined;
-  }
-
-  try {
-    return new URL(value).toString();
-  } catch {
-    return `${siteConfig.url}${value.startsWith("/") ? value : `/${value}`}`;
-  }
+  const href = safeLinkHref(value);
+  return href ? new URL(href, siteConfig.url).href : undefined;
 }
 
 function compact<T>(values: Array<T | null | undefined | false>) {
@@ -29,21 +23,7 @@ function compact<T>(values: Array<T | null | undefined | false>) {
 }
 
 function socialUrl(kind: "instagram" | "tiktok", value?: string | null) {
-  const trimmed = value?.trim();
-
-  if (!trimmed) {
-    return undefined;
-  }
-
-  try {
-    return new URL(trimmed).toString();
-  } catch {
-    const handle = trimmed.replace(/^@/, "");
-
-    return kind === "instagram"
-      ? `https://www.instagram.com/${handle}`
-      : `https://www.tiktok.com/@${handle}`;
-  }
+  return socialProfileHref(kind, value) || undefined;
 }
 
 export function JsonLd({ data }: JsonLdProps) {

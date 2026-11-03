@@ -1,4 +1,5 @@
 "use client";
+import { socialProfileHref } from "@/lib/security/urls";
 import type { CatalogFilters } from "@/lib/catalog/filters";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { productQueryOptions } from "@/lib/query/product-options";
@@ -325,26 +326,6 @@ function scrollToPageTop(updateUrl?: string) {
   }
 }
 
-function normalizeStoreSocialHref(
-  kind: "instagram" | "tiktok",
-  value?: string | null,
-) {
-  const cleanValue = value?.trim();
-
-  if (!cleanValue) {
-    return "";
-  }
-
-  if (/^https?:\/\//i.test(cleanValue)) {
-    return cleanValue;
-  }
-
-  const handle = cleanValue.replace(/^@/, "");
-
-  return kind === "instagram"
-    ? `https://instagram.com/${handle}`
-    : `https://tiktok.com/@${handle}`;
-}
 
 export function CustomStorefrontHeader({
   store,
@@ -396,13 +377,13 @@ export function CustomStorefrontHeader({
     {
       key: "instagram" as const,
       label: "Instagram",
-      href: normalizeStoreSocialHref("instagram", store.socialInstagram),
+      href: socialProfileHref("instagram", store.socialInstagram),
       icon: InstagramBrandIcon,
     },
     {
       key: "tiktok" as const,
       label: "TikTok",
-      href: normalizeStoreSocialHref("tiktok", store.socialTiktok),
+      href: socialProfileHref("tiktok", store.socialTiktok),
       icon: TikTokIcon,
     },
   ].filter((item) => item.href);
