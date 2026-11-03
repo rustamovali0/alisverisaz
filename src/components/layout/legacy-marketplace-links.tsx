@@ -27,7 +27,7 @@ export function LegacyMarketplaceLinks() {
           profile.status === "authenticated" && profile.role === "seller"
             ? "/store/dashboard"
             : profile.status === "authenticated" && profile.role === "admin"
-              ? "/radmin"
+              ? "/radmin/panel"
               : "/dashboard";
       }
       if (!target) return;

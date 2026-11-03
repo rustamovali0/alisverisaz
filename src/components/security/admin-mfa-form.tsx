@@ -73,7 +73,7 @@ export function AdminMfaForm({
                 setMessage(result.message);
                 setCode("");
                 if (result.ok) {
-                  router.replace("/radmin");
+                  router.replace("/radmin/panel");
                   router.refresh();
                 }
               } catch {

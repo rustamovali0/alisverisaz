@@ -212,7 +212,7 @@ async function uploadCmsMediaFile(input: {
 }
 
 async function audit(action: string, entityType: string, metadata: Record<string, unknown>) {
-  const current = await requireRole(["admin"], "/radmin");
+  const current = await requireRole(["admin"], "/radmin/panel");
 
   await recordAdminAudit({
     adminId: current.user.id,

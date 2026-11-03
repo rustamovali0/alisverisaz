@@ -1,4 +1,5 @@
 "use client";
+import { DangerPasswordFields } from "./danger-password-fields";
 import { DangerAutoPanel } from "./danger-auto-panel";
 import type { DangerAutoStatus } from "@/lib/security/danger-auto";
 import { useActionState, useState } from "react";
@@ -6,8 +7,13 @@ import { AlertTriangle, ShieldCheck, Clock3, LockKeyhole, Bot, CheckCircle2 } fr
 import { updateDangerMode } from "@/lib/security/danger-actions";
 import type { DangerState } from "@/lib/security/danger-policy";
 
-export function DangerPanel({ state, mfaReady, configured, available, automatic }: { state: DangerState; mfaReady: boolean; configured: boolean; available: boolean; automatic: DangerAutoStatus }) {
-  const [result, action, pending] = useActionState(updateDangerMode, { ok: false, message: "" });
+export function DangerPanel({ state, siteKey, captchaRequired, configured, available, automatic }: { state: DangerState; siteKey: string; captchaRequired: boolean; configured: boolean; available: boolean; automatic: DangerAutoStatus }) {
+  const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [result, action, pending] = useActionState(async (previous: { ok: boolean; message: string }, form: FormData) => {
+    try { return await updateDangerMode(previous, form); }
+    finally { setPassword(""); setCaptchaToken(""); }
+  }, { ok: false, message: "" });
   const [confirmed, setConfirmed] = useState(false);
   const features = [
     { icon: Bot, title: "Hər yeni açılışda yoxlama", description: "Sayta daxil olanda və səhifəni yeniləyəndə Cloudflare Turnstile yoxlaması göstərilir." },
@@ -25,18 +31,19 @@ export function DangerPanel({ state, mfaReady, configured, available, automatic 
       <div className="space-y-5 p-5 sm:p-6">
         {!available && <p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">Təhlükəsizlik yaddaşı əlçatan deyil. Dəyişiklik etmək mümkün deyil.</p>}
         {!configured && <p role="alert" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Rejimi aktivləşdirmək üçün serverdə təhlükəsizlik açarları sazlanmalıdır.</p>}
-        {!mfaReady && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><p className="font-semibold">İki mərhələli təsdiq tələb olunur</p><p>Bu vacib ayarı dəyişmək üçün Authenticator ilə təsdiqləyin.</p><a href="/radmin/mfa" className="mt-2 inline-flex min-h-11 items-center font-semibold underline underline-offset-4">Təsdiq səhifəsinə keç →</a></div>}
+
         <form action={action} className="space-y-5">
           <input type="hidden" name="version" value={state.version} /><input type="hidden" name="enabled" value={String(!state.enabled)} />
           {!state.enabled && <div className="max-w-sm"><label htmlFor="danger-duration" className="mb-2 block text-sm font-medium">Rejim nə qədər aktiv qalsın?</label><select id="danger-duration" name="seconds" defaultValue="3600" className="min-h-12 w-full rounded-xl border bg-background px-3 text-base"><option value="900">15 dəqiqə</option><option value="3600">1 saat</option><option value="21600">6 saat</option></select></div>}
           {state.enabled && <input type="hidden" name="seconds" value="0" />}
           <label className="flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border p-4"><input type="checkbox" name="confirm" value="yes" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} className="mt-0.5 size-5 shrink-0 accent-red-600" /><span className="text-sm leading-6">{state.enabled ? "Əlavə rejimi söndürüb normal qorumanı saxlamaq istəyirəm." : "Əlavə yoxlamaların istifadəçilərə də göstəriləcəyini anlayıram və aktivləşdirməni təsdiqləyirəm."}</span></label>
-          <button disabled={pending || !confirmed || !mfaReady || (!state.enabled && !configured) || !available} className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-6 font-semibold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${state.enabled ? "bg-[#17634b] hover:bg-[#124d3a] focus-visible:outline-emerald-600" : "bg-red-600 hover:bg-red-700 focus-visible:outline-red-600"}`}><ShieldCheck className="size-5" aria-hidden="true" />{pending ? "Saxlanılır…" : state.enabled ? "Normal rejimə qayıt" : "Danger rejimini aktivləşdir"}</button>
+          <DangerPasswordFields password={password} onPassword={setPassword} token={captchaToken} onToken={setCaptchaToken} siteKey={siteKey} />
+          <button disabled={pending || !confirmed || !password || (captchaRequired && !captchaToken) || (!state.enabled && !configured) || !available} className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-6 font-semibold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${state.enabled ? "bg-[#17634b] hover:bg-[#124d3a] focus-visible:outline-emerald-600" : "bg-red-600 hover:bg-red-700 focus-visible:outline-red-600"}`}><ShieldCheck className="size-5" aria-hidden="true" />{pending ? "Saxlanılır…" : state.enabled ? "Normal rejimə qayıt" : "Danger rejimini aktivləşdir"}</button>
           {result.message && <p role={result.ok ? "status" : "alert"} className={`rounded-xl p-4 text-sm ${result.ok ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-900"}`}>{result.ok && <CheckCircle2 className="mr-2 inline size-4" aria-hidden="true" />}{result.message}</p>}
         </form>
       </div>
     </section>
-    <DangerAutoPanel settings={automatic} mfaReady={mfaReady} configured={configured} available={available} />
+    <DangerAutoPanel settings={automatic} siteKey={siteKey} captchaRequired={captchaRequired} configured={configured} available={available} />
     <aside className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-950"><AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" /><div className="text-sm leading-6"><p className="font-semibold">Əlavə tətbiq qoruması</p><p>Turnstile yoxlaması və sərt limitlər serverdə işləyir. Cloudflare-in ayrıca WAF/DDoS və serverə birbaşa giriş qaydaları bu düymə ilə dəyişmir. Cloudflare yoxlamanı bəzən avtomatik tamamlayır.</p></div></aside>
   </div>;
 }

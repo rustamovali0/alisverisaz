@@ -2,7 +2,7 @@ import type { AuthRole } from "@/lib/auth/types";
 
 export function getDashboardPath(role: AuthRole) {
   if (role === "admin") {
-    return "/radmin";
+    return "/radmin/panel";
   }
 
   if (role === "seller") {

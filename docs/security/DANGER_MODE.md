@@ -2,7 +2,7 @@
 
 ## Operator use
 
-Open **RAdmin → Danger** (`/radmin/danger`). Complete Authenticator verification at `/radmin/mfa` if requested. Choose **15 minutes, 1 hour or 6 hours**, confirm the notice and activate. The same page returns to normal mode. Enabling or disabling requires an authenticated administrator with current **AAL2**; hiding a menu is not authorization. Mode changes have a per-admin budget and audit entry. Existing administrators are not globally forced into MFA by deploying this feature.
+Open the dashboard at **`/radmin/panel`**, then **Danger** (`/radmin/danger`). Choose **15 minutes, 1 hour or 6 hours**, confirm the notice and enter the existing RAdmin login password. The same page returns to normal mode. Every manual/automatic setting change requires an authenticated administrator and fresh server-side password verification. The Danger-specific Authenticator requirement was replaced at the user's explicit request; global MFA policy and existing factors remain unchanged. Mode changes have shared per-admin/IP budgets and audit entries. Bare `/radmin` and the legacy `/administrator/...` namespace redirect straight to the main homepage.
 
 Mode is **OFF by default**. It affects all public storefronts while active and expires automatically; baseline protection remains after expiry. Do not leave it on as a substitute for edge DDoS protection.
 
@@ -61,7 +61,7 @@ If a staging check fails, inspect its output/state before repeating preparation.
 An existing SSH operator can inspect or disable this mode without a public bypass or root:
 
 ```sh
-cd /srv/alisveris/releases/danger-auto-20261103/app
+cd /srv/alisveris/releases/danger-password-20261103/app
 node --env-file=app.env deploy/security/danger-recover.mjs status
 node --env-file=app.env deploy/security/danger-recover.mjs off
 ```
@@ -72,7 +72,7 @@ For an application regression, first disable Danger, then use the private preser
 
 ```sh
 pm2 delete alisveris-vds
-pm2 start /srv/alisveris/releases/danger-auto-20261103/rollback.config.cjs --only alisveris-vds
+pm2 start /srv/alisveris/releases/danger-password-20261103/rollback.config.cjs --only alisveris-vds
 pm2 save
 ```
 
@@ -82,7 +82,7 @@ The standalone runtime uses private loopback ports behind Nginx. Redirect constr
 
 ## Automatic activation (opt-in)
 
-The second control, **Risk zamanı avtomatik aktivləşmə**, enables a detector; it does not immediately enable Danger. It has its own versioned Redis configuration, AAL2/confirmation requirement, 5/minute shared administrator control budget and audit event. The detector starts OFF. Its setting persists across application restarts.
+The second control, **Risk zamanı avtomatik aktivləşmə**, enables a detector; it does not immediately enable Danger. It has its own versioned Redis configuration, current-password/confirmation requirement, 5/minute shared administrator control budget and audit event. The detector starts OFF. Its setting persists across application restarts.
 
 Only server-observed failed login outcomes and HTTP 429 decisions in login/register/password-reset budgets feed it. Unknown networks, storage errors, successful logins, ordinary views and product/search traffic do not count. The trusted ingress normalizes IPv6 by /64. The detector hashes network identifiers and stores no email, password, token or raw IP.
 
@@ -97,4 +97,11 @@ Windows are bounded to 60 event IDs / 256 network hashes per signal type, expire
 
 This is an application auth-abuse detector, not a volumetric DDoS detector, and does not observe traffic blocked at Cloudflare or direct calls to the separate GoTrue service. Existing native GoTrue CAPTCHA and abuse controls remain necessary. No detector can guarantee recognition of every attack.
 
-The SSH `danger-recover.mjs off` command disables both Danger and the automatic detector, providing an operator escape path without a public bypass. The live release with automatic activation is `/srv/alisveris/releases/danger-auto-20261103/app`; its immediate rollback is the previously verified manual-mode release `/srv/alisveris/releases/danger-mode-20261103/app`. The same application-only rollout process is used, with no database, Auth, firewall or DNS change.
+The SSH `danger-recover.mjs off` command disables both Danger and the automatic detector, providing an operator escape path without a public bypass. The live release with automatic activation is `/srv/alisveris/releases/danger-password-20261103/app`; its immediate rollback is the previously verified manual-mode release `/srv/alisveris/releases/danger-mode-20261103/app`. The same application-only rollout process is used, with no database, Auth, firewall or DNS change.
+
+
+## Password confirmation
+
+The password field is shown for each manual and automatic mode operation. Credentials are checked only for the current server-verified administrator's email and user ID; submitted email/role/ID fields cannot select another account. A fresh non-persistent public Supabase client performs native password/CAPTCHA verification without writing the administrator's cookies. Its temporary session is revoked with `scope: "local"`; global sign-out is never used. Passwords, returned tokens and provider errors are not included in logs, audit metadata or action results. Client password/token fields clear after submission.
+
+The existing Turnstile/GoTrue configuration remains enforced. Native Auth mode redeems the token once in GoTrue. An account has a five-attempt/15-minute verification budget, with a separate 20-attempt/IP budget and the existing 5/minute setting-change budget. Successful verification resets only the account's password-check counter. No shared static admin PIN or new credential is created. Auth requests have a five-second request timeout. This password step has lower assurance than an independent second factor; it implements the explicitly requested existing-password confirmation.

@@ -1,3 +1,4 @@
+import { isHiddenAdminEntry, radminInternalPath } from "@/lib/auth/radmin-paths";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { routing } from "@/i18n/routing";
@@ -182,7 +183,7 @@ function createLocalizedRewrite(
     (pathname === "/radmin" || pathname.startsWith("/radmin/")) &&
     pathname !== "/radmin/login" && pathname !== "/radmin/mfa"
   ) {
-    url.pathname = localizedInternalPath(locale, pathname.replace(/^\/radmin/, "/admin"));
+    url.pathname = localizedInternalPath(locale, radminInternalPath(pathname));
   } else if (pathname === "/admin") {
     url.pathname = localizedInternalPath(locale, "/store/dashboard");
   } else if (pathname.startsWith("/admin/")) {
@@ -363,6 +364,12 @@ async function mergeSessionIntoRewrite(request: NextRequest, rewriteResponse: Ne
 export async function proxy(request: NextRequest) {
   const { locale, visiblePathname, shouldRedirectClean, shouldSetLocaleCookie } = splitLocalePath(request);
   const safeLocale = locale ?? routing.defaultLocale;
+
+  if (isHiddenAdminEntry(visiblePathname)) {
+    const response = createMarketplaceHomeRedirect(request);
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
+  }
 
   if (shouldRedirectClean) {
     return createCleanLocaleRedirect(request, visiblePathname, safeLocale);

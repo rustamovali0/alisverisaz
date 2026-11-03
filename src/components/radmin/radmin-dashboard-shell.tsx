@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname } from "@/i18n/navigation";
 import type { DashboardNavItem } from "@/lib/dashboard/navigation";
+import { radminPanelHref } from "@/lib/auth/radmin-paths";
 import { cn } from "@/lib/utils";
 
 type RadminDashboardShellProps = {
@@ -20,13 +21,7 @@ type RadminDashboardShellProps = {
   darkLogoUrl?: string | null;
 };
 
-function normalizePath(href: string) {
-  if (href === "/radmin") {
-    return href;
-  }
-
-  return href.replace(/^\/(admin|store\/dashboard)/, "/radmin");
-}
+function normalizePath(href: string) { return radminPanelHref(href); }
 
 function getActiveNavHref(navItems: DashboardNavItem[], pathname: string) {
   return navItems
@@ -131,7 +126,7 @@ function AdminProfileMenu({ userLabel }: { userLabel: string }) {
           </div>
           <div className="mt-2 grid gap-2">
             <Link
-              href="/radmin"
+              href="/radmin/panel"
               className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-[#17634b] hover:text-white focus-visible:bg-[#17634b] focus-visible:text-white"
               role="menuitem"
               onClick={() => setIsOpen(false)}
@@ -223,7 +218,7 @@ export function RadminDashboardShell({
             )}
           >
             <Link
-              href="/radmin"
+              href="/radmin/panel"
               className={cn("flex items-center", isCollapsed ? "justify-center" : "gap-3")}
             >
               <span className="grid size-12 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-base font-black text-[#061323] shadow-lg shadow-amber-500/20">
@@ -345,7 +340,7 @@ export function RadminDashboardShell({
           />
           <div className="absolute inset-y-0 left-0 w-[min(88vw,20rem)] max-w-full bg-[linear-gradient(180deg,#061323_0%,#0b3048_52%,#072033_100%)] text-white shadow-2xl">
             <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
-              <Link href="/radmin" className="flex items-center gap-3">
+              <Link href="/radmin/panel" className="flex items-center gap-3">
                 <span className="grid size-11 place-items-center overflow-hidden rounded-xl bg-[#f4b740] text-sm font-black text-[#061323]">
                   {sidebarLogoUrl ? (
                     <img src={sidebarLogoUrl} alt={siteName} className="h-full w-full object-contain p-0.5" />

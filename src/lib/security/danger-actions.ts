@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireRadmin } from "@/lib/auth/radmin-auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { verifyDangerPassword } from "./danger-password";
 import { recordAdminAudit } from "@/lib/admin/audit";
 import { consumeRateLimit } from "./rate-limit";
 import { changeDangerState } from "./danger-state";
@@ -13,15 +13,14 @@ export type DangerActionState = { ok: boolean; message: string };
 export async function updateDangerMode(_previous: DangerActionState, form: FormData): Promise<DangerActionState> {
   const current = await requireRadmin();
   try {
-    const client = await createSupabaseServerClient({ authScope: "admin" });
-    const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (assurance.error || assurance.data?.currentLevel !== "aal2") return { ok: false, message: "Əvvəlcə iki mərhələli təsdiqi tamamlayın." };
     const rate = await consumeRateLimit("admin-danger-change", current.user.id, 5, 60);
     if (!rate.ok) return { ok: false, message: rate.message };
     const enabled = form.get("enabled") === "true";
     if (!["true", "false"].includes(String(form.get("enabled"))) || form.get("confirm") !== "yes") return { ok: false, message: "Dəyişikliyi təsdiqləyin." };
+    const verified = await verifyDangerPassword(current.user, form);
+    if (!verified.ok) return verified;
     const state = await changeDangerState(enabled, Number(form.get("seconds")), String(form.get("version") || ""));
-    // The AAL2 operator can still turn the mode off from the current page.
+    // The password-verified operator can still turn the mode off from the current page.
     // No entry ticket is granted: a subsequent full navigation is challenged.
     try {
       const h = await headers(), jar = await cookies(), names = dangerCookieNames();
@@ -46,12 +45,11 @@ export async function updateDangerMode(_previous: DangerActionState, form: FormD
 export async function updateDangerAuto(_previous: DangerActionState, form: FormData): Promise<DangerActionState> {
   const current = await requireRadmin();
   try {
-    const client = await createSupabaseServerClient({ authScope: "admin" });
-    const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (assurance.error || assurance.data?.currentLevel !== "aal2") return { ok: false, message: "Əvvəlcə iki mərhələli təsdiqi tamamlayın." };
     const rate = await consumeRateLimit("admin-danger-change", current.user.id, 5, 60);
     if (!rate.ok) return { ok: false, message: rate.message };
     if (!["true", "false"].includes(String(form.get("enabled"))) || form.get("confirm") !== "yes") return { ok: false, message: "Dəyişikliyi təsdiqləyin." };
+    const verified = await verifyDangerPassword(current.user, form);
+    if (!verified.ok) return verified;
     const { changeDangerAuto } = await import("./danger-auto");
     const enabled = form.get("enabled") === "true";
     const config = await changeDangerAuto(enabled, String(form.get("version") || ""));

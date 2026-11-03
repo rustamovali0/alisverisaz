@@ -36,7 +36,7 @@ type HeaderAccountActionsProps = {
 function getPanelPath(role: AuthRole) {
   if (role === "admin") {
     return {
-      href: "/radmin",
+      href: "/radmin/panel",
       labelKey: "adminPanel",
       icon: ShieldCheck,
     };

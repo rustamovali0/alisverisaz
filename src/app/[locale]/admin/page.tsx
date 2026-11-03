@@ -9,7 +9,7 @@ import { getAdminOverview } from "@/lib/dashboard/data";
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  await requireRole(["admin"], "/radmin");
+  await requireRole(["admin"], "/radmin/panel");
   const [overview, activity] = await Promise.all([
     getAdminOverview(),
     getAdminActivityOverview(),

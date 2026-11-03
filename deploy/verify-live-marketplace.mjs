@@ -13,9 +13,13 @@ assert(homepage.includes("live-home"), "Native marketplace homepage missing");
 assert(homepage.includes("/_next/"), "Next application assets missing");
 assert(!homepage.includes("/marketplace/assets/"), "Prototype runtime still owns homepage");
 for (const path of ["/products", "/login", "/register", "/cart", "/stores", "/categories", "/marketplace/images/hero.jpg", "/marketplace/fonts/manrope.css", "/api/auth/session"]) await request(path);
-for (const path of ["/dashboard", "/store/dashboard", "/radmin"]) {
+for (const path of ["/dashboard", "/store/dashboard", "/radmin/panel"]) {
   const response = await request(path, 307);
   assert(response.headers.get("location")?.includes("login"), "Protected route must require login");
+}
+for (const path of ["/radmin", "/administrator/panel"]) {
+  const response = await request(path, [307, 308]);
+  assert(new URL(response.headers.get("location"), base).pathname === "/", "Hidden admin entry must go straight to homepage");
 }
 const favorites = await request("/favorites", [200, 307]);
 if (favorites.status === 200) assert((await favorites.text()).includes("/login?next="), "Guest favorites must redirect to login");
