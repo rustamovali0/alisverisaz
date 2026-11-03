@@ -51,5 +51,6 @@ for (const [filter, matches] of [
 if (all.length) {
   const product = all[0];
   await request(`/store/${product.storeSlug}/products/${product.slug}`);
+  await request(`/store/${encodeURIComponent(product.storeSlug)}/products?vip=1`);
 }
 console.log(JSON.stringify({status:"passed",base,productsAcrossPages:all.length,checks:results},null,2));
