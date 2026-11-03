@@ -21,7 +21,7 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <RadminDashboardShell
       userLabel={userLabel}
-      navItems={navItems}
+      navItems={navItems.some(item => item.href.replace(/^\/admin/, "/radmin") === "/radmin/danger") ? navItems : [...navItems, { title: "Danger", href: "/radmin/danger", icon: "shield" }]}
       siteName={siteSettings.shortName || siteSettings.siteName || "Alisveris.az"}
       logoUrl={siteSettings.logoUrl}
       darkLogoUrl={siteSettings.darkLogoUrl}

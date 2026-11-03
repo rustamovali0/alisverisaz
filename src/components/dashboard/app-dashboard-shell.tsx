@@ -44,7 +44,7 @@ export function AppDashboardShell({ title, description, userLabel, navItems, ret
   const selectedHref = useMemo(() => findActive(navItems, pathname), [navItems, pathname]);
   const selected = navItems.find((item) => item.href === selectedHref);
   const selectedTitle = selected ? (selected.titleKey ? t(selected.titleKey as never) : selected.title) : title;
-  const root = pathname.startsWith("/radmin") ? "/radmin" : pathname.startsWith("/store/dashboard") || pathname.startsWith("/sell/product") ? "/store/dashboard" : "/dashboard";
+  const root = pathname.startsWith("/radmin") ? "/radmin/panel" : pathname.startsWith("/store/dashboard") || pathname.startsWith("/sell/product") ? "/store/dashboard" : "/dashboard";
   const isRoot = pathname === root;
   const notifications = navItems.find((item) => item.href.includes("notifications") || item.href.includes("messages"));
 

@@ -41,6 +41,8 @@ export const RESERVED_STORE_SUBDOMAINS = [
   "faq",
   "guide",
   "rules",
+  "security-check",
+  "security-return",
 ] as const;
 
 const RESERVED_STORE_SUBDOMAIN_SET = new Set<string>(RESERVED_STORE_SUBDOMAINS);

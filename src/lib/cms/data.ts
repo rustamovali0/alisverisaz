@@ -665,6 +665,7 @@ async function applyDashboardFeatureFilters(
 
 function normalizeDashboardHref(role: "seller" | "customer" | "admin", href: string) {
   if (role === "admin" && (href === "/admin" || href.startsWith("/admin/"))) {
+    if (href === "/admin" || href === "/radmin") return "/radmin/panel";
     return href.replace(/^\/admin/, "/radmin");
   }
 

@@ -46,7 +46,7 @@ export function SiteFooter({
     role === "seller"
       ? "/store/dashboard"
       : role === "admin"
-        ? "/radmin"
+        ? "/radmin/panel"
         : "/dashboard";
   const socials = [
     {

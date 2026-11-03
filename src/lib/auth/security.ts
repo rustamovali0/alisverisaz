@@ -1,3 +1,4 @@
+import { recordDangerRisk } from "@/lib/security/danger-auto";
 import { securityEvent } from "@/lib/security/events";
 import { headers } from "next/headers";
 
@@ -36,6 +37,7 @@ export async function verifyCaptchaToken(
   token: string,
   remoteIp: string,
   action: string | readonly string[] = "login",
+  expectedHostname?: string,
 ) {
   if (!token || token.length > 4096) {
     return {
@@ -81,11 +83,14 @@ export async function verifyCaptchaToken(
     const allowed = (process.env.TURNSTILE_ALLOWED_HOSTNAMES || appHost)
       .split(",")
       .map((host) => host.trim());
+    const visitHostAllowed = action === "danger_visit" && expectedHostname && data.hostname === expectedHostname &&
+      (allowed.includes(expectedHostname) || allowed.some(root => expectedHostname.endsWith("." + root) && expectedHostname.slice(0, -(root.length + 1)).match(/^[a-z0-9][a-z0-9-]{0,62}$/)));
     if (
       !response.ok ||
       data.success !== true ||
       !data.hostname ||
-      !allowed.includes(data.hostname) ||
+      !(allowed.includes(data.hostname) || visitHostAllowed) ||
+      (expectedHostname && data.hostname !== expectedHostname) ||
       !(Array.isArray(action)
         ? action.includes(data.action || "")
         : data.action === action)
@@ -119,13 +124,15 @@ export async function assertAuthRateLimit(
     input.endpoint === "login" ? 200 : Math.max(30, input.maxAttempts * 10),
     input.windowSeconds,
   );
-  if (!ip.ok) return ip;
-  return consumeRateLimit(
+  if (!ip.ok) { if (ip.status === 429 && ["login", "register", "password_reset"].includes(input.endpoint)) await recordDangerRisk("auth_rate_block", input.ip); return ip; }
+  const identifier = await consumeRateLimit(
     `${input.endpoint}:identifier`,
     input.identifier,
     input.maxAttempts,
     input.windowSeconds,
   );
+  if (!identifier.ok && identifier.status === 429 && ["login", "register", "password_reset"].includes(input.endpoint)) await recordDangerRisk("auth_rate_block", input.ip);
+  return identifier;
 }
 export async function recordAuthRateLimitAttempt(
   _input: RateLimitRule & { ip: string },

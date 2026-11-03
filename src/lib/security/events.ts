@@ -3,6 +3,7 @@ import "server-only";
 // payloads must never accidentally enter security logs.
 export function securityEvent(
   event:
+    | "danger_auto_activated"
     | "analytics_failed"
     | "login_failed"
     | "rate_limit"

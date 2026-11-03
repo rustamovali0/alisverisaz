@@ -27,7 +27,7 @@ jobs:
       - run: npm run security:secrets
       - run: python3 -m unittest discover -s deploy/security -p 'test_*.py'
       - run: node --test deploy/security/backup-crypto.test.mjs deploy/security/verify-offserver.test.mjs
-      - run: node --check deploy/security/prepare-redis.mjs && node --check deploy/security/activate-app.mjs
+      - run: node --check deploy/security/prepare-redis.mjs && node --check deploy/security/activate-app.mjs && node --check deploy/security/danger-release.mjs && node --check deploy/security/danger-recover.mjs && node --check deploy/security/verify-danger-staging.mjs && node --check deploy/security/retire-danger-staging.mjs
       - run: npm test
       - run: npm run typecheck
       - run: npm run build

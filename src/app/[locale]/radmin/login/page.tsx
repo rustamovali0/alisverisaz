@@ -5,11 +5,11 @@ import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentUserProfile } from "@/lib/auth/session";
 
 export default async function AdminLoginPage() {
-  const current = await getCurrentUserProfile();
+  const current = await getCurrentUserProfile("admin");
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   if (current?.role === "admin") {
-    redirect("/radmin");
+    redirect("/radmin/panel");
   }
 
   return (

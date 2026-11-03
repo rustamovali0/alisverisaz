@@ -14,6 +14,7 @@ beforeEach(() => {
   vi.stubEnv("SECURITY_REDIS_URL", "redis://127.0.0.1:16379");
   m.client = {
     isOpen: true,
+    isReady: true,
     listenerCount: () => 1,
     withCommandOptions: m.options,
   };
@@ -29,7 +30,7 @@ it("uses one bounded atomic Lua command for a Redis-backed budget", async () => 
   });
   expect(m.options.mock.calls[0][0].abortSignal).toBeInstanceOf(AbortSignal);
   const [, options] = m.eval.mock.calls[0];
-  expect(options.arguments).toEqual(["5", "60000"]);
+  expect(options.arguments).toEqual(["5", "60000", "5"]);
   expect(options.keys[0]).not.toContain("test");
 });
 it("fails closed on Redis outage without switching to a fresh PostgreSQL counter", async () => {
