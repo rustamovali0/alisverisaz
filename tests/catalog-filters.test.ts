@@ -73,3 +73,20 @@ it("normalizes true/1 flags and isolates filter query caches", () => {
     productQueryOptions({ locale: "az", filters: { vip: true } }).queryKey,
   ).not.toEqual(productQueryOptions({ locale: "az" }).queryKey);
 });
+
+it("sorts by discount percentage without moving VIP behind regular products", () => {
+  const largerAbsoluteDiscount = {
+    id: "expensive",
+    price_amount: 400,
+    discount_amount: 100,
+    stock_quantity: 1,
+  };
+  expect(
+    filterCatalog(
+      [...rows, largerAbsoluteDiscount],
+      {},
+      new Set(["vip"]),
+      "discount",
+    ).map(({ id }) => id),
+  ).toEqual(["vip", "new", "expensive", "sold"]);
+});

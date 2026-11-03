@@ -1,5 +1,6 @@
 "use server";
 
+import { storePolicyFields, storePolicyMaxLength } from "./policies";
 import { socialProfileHref } from "@/lib/security/urls";
 import { revalidatePath } from "next/cache";
 
@@ -114,6 +115,12 @@ export async function updateSellerStoreSettingsAction(
   const heroSubtitle = readString(formData, "heroSubtitle");
   const customDomain = normalizeHostname(readString(formData, "customDomain"));
   const aboutContent = readString(formData, "aboutContent");
+  const policyChanges = storePolicyFields
+    .filter(({ key }) => formData.has(key))
+    .map(({ key }) => ({ key, value: readString(formData, key) }));
+  if (policyChanges.some(({ value }) => value.length > storePolicyMaxLength)) {
+    return { ok: false, message: "Hər alış şərti ən çox 1200 simvol ola bilər." };
+  }
   const socialInstagram = readString(formData, "socialInstagram");
   const socialTiktok = readString(formData, "socialTiktok");
   if ((socialInstagram && !socialProfileHref("instagram", socialInstagram)) || (socialTiktok && !socialProfileHref("tiktok", socialTiktok))) {
@@ -223,6 +230,7 @@ export async function updateSellerStoreSettingsAction(
     const payload: Record<string, unknown> = { name, slug: nextSlug };
 
     if (
+      policyChanges.length > 0 ||
       formData.has("heroTitle") ||
       formData.has("heroSubtitle") ||
       formData.has("customDomain") ||
@@ -233,6 +241,10 @@ export async function updateSellerStoreSettingsAction(
       Object.keys(bannerPosition).length > 0
     ) {
       const settings = currentSettings;
+      for (const { key, value } of policyChanges) {
+        if (value) settings[key] = value;
+        else delete settings[key];
+      }
       if (formData.has("profitTrackingPresent")) {
         settings.profitTrackingEnabled = formData.get("profitTrackingEnabled") === "on";
       }

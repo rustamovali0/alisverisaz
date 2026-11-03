@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { KeyRound, Mail, Trash2, UserCheck, UserX } from "lucide-react";
 
+import { matchesAdminSearch } from "@/lib/dashboard/admin-search";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
 import { appAlert } from "@/lib/alerts/app-alert";
@@ -69,10 +70,24 @@ function getUnknownActionMessage(error: unknown) {
 
 export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   const router = useRouter();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const visibleUsers = users.filter(
+    (user) =>
+      (!roleFilter || user.role === roleFilter) &&
+      matchesAdminSearch(query, [user.full_name, user.email, user.phone]),
+  );
   const [isPending, startTransition] = useTransition();
-  const [draftRoles, setDraftRoles] = useState<Record<string, AssignableRole>>({});
-  const [contactDrafts, setContactDrafts] = useState<Record<string, { fullName: string; email: string; phone: string }>>({});
-  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
+  const [draftRoles, setDraftRoles] = useState<Record<string, AssignableRole>>(
+    {},
+  );
+  const [contactDrafts, setContactDrafts] = useState<
+    Record<string, { fullName: string; email: string; phone: string }>
+  >({});
+  const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>(
+    {},
+  );
   const [pendingActionKey, setPendingActionKey] = useState<string | null>(null);
   const initialRoles = useMemo(
     () =>
@@ -131,7 +146,9 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
 
   function runMutation(
     actionKey: string,
-    work: () => Promise<{ ok: true; message: string } | { ok: false; message: string }>,
+    work: () => Promise<
+      { ok: true; message: string } | { ok: false; message: string }
+    >,
     successTitle: string,
   ) {
     startTransition(async () => {
@@ -140,7 +157,10 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         const result = await work();
 
         if (!result.ok) {
-          void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
+          void appAlert.error(
+            getActionMessage(result.message),
+            "Əməliyyat alınmadı",
+          );
           return;
         }
 
@@ -216,7 +236,10 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
           const result = await work();
 
           if (!result.ok) {
-            void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
+            void appAlert.error(
+              getActionMessage(result.message),
+              "Əməliyyat alınmadı",
+            );
             return;
           }
 
@@ -252,7 +275,9 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   function handleBulkDelete(scope: "customers" | "sellers") {
     const isSellerScope = scope === "sellers";
     const count = isSellerScope ? bulkCounts.sellers : bulkCounts.customers;
-    const title = isSellerScope ? "Satıcılar silinsin?" : "İstifadəçilər silinsin?";
+    const title = isSellerScope
+      ? "Satıcılar silinsin?"
+      : "İstifadəçilər silinsin?";
     const targetLabel = isSellerScope ? "satıcı" : "istifadəçi";
     const actionKey = `bulk:${scope}`;
 
@@ -287,7 +312,10 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         const result = await deleteUsersByScopeAction(scope);
 
         if (!result.ok) {
-          void appAlert.error(getActionMessage(result.message), "Əməliyyat alınmadı");
+          void appAlert.error(
+            getActionMessage(result.message),
+            "Əməliyyat alınmadı",
+          );
           return;
         }
 
@@ -297,7 +325,10 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
         );
         router.refresh();
       } catch (error) {
-        void appAlert.error(getUnknownActionMessage(error), "Əməliyyat alınmadı");
+        void appAlert.error(
+          getUnknownActionMessage(error),
+          "Əməliyyat alınmadı",
+        );
       } finally {
         setPendingActionKey(null);
       }
@@ -313,284 +344,373 @@ export function UserRoleManager({ users }: { users: AdminUserRow[] }) {
   }
 
   return (
-    <div className="grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-red-950 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-100">
-        <div className="min-w-0">
-          <p className="text-sm font-bold">Kütləvi silmə</p>
-          <p className="text-xs text-red-700 dark:text-red-200">
-            Admin hesablar qorunur. Hər əməliyyatda iki dəfə təsdiq tələb olunur.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={
-              bulkCounts.customers === 0 ||
-              (isPending && pendingActionKey === "bulk:customers")
-            }
-            onClick={() => handleBulkDelete("customers")}
-          >
-            <Trash2 className="mr-2 size-4" aria-hidden="true" />
-            İstifadəçiləri sil ({bulkCounts.customers})
-          </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={
-              bulkCounts.sellers === 0 ||
-              (isPending && pendingActionKey === "bulk:sellers")
-            }
-            onClick={() => handleBulkDelete("sellers")}
-          >
-            <Trash2 className="mr-2 size-4" aria-hidden="true" />
-            Satıcıları sil ({bulkCounts.sellers})
-          </Button>
-        </div>
+    <div className="ra-editor-list">
+      <div className="ra-section-toolbar">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Ad, e-poçt və ya telefonla axtar..."
+          aria-label="İstifadəçi axtar"
+        />
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+          aria-label="İstifadəçi rolu"
+          className="min-h-11 rounded-lg border bg-card px-3"
+        >
+          <option value="">Bütün rollar</option>
+          <option value="customer">Alıcılar</option>
+          <option value="seller">Satıcılar</option>
+          <option value="admin">Adminlər</option>
+        </select>
       </div>
-      {users.map((user) => {
-        const currentRole = draftRoles[user.id] ?? initialRoles[user.id] ?? "customer";
+      <details>
+        <summary>Əlavə əməliyyatlar</summary>
+        <div className="ra-editor-body">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-red-950 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-100">
+            <div className="min-w-0">
+              <p className="text-sm font-bold">Kütləvi silmə</p>
+              <p className="text-xs text-red-700 dark:text-red-200">
+                Admin hesablar qorunur. Hər əməliyyatda iki dəfə təsdiq tələb
+                olunur.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={
+                  bulkCounts.customers === 0 ||
+                  (isPending && pendingActionKey === "bulk:customers")
+                }
+                onClick={() => handleBulkDelete("customers")}
+              >
+                <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                İstifadəçiləri sil ({bulkCounts.customers})
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={
+                  bulkCounts.sellers === 0 ||
+                  (isPending && pendingActionKey === "bulk:sellers")
+                }
+                onClick={() => handleBulkDelete("sellers")}
+              >
+                <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                Satıcıları sil ({bulkCounts.sellers})
+              </Button>
+            </div>
+          </div>
+        </div>
+      </details>
+      {!visibleUsers.length && (
+        <p role="status" className="p-4 text-muted-foreground">
+          Uyğun istifadəçi tapılmadı.
+        </p>
+      )}
+      {visibleUsers.map((user) => {
+        const currentRole =
+          draftRoles[user.id] ?? initialRoles[user.id] ?? "customer";
         const isSellerPending =
           user.requested_role === "seller" &&
           user.seller_application_status === "pending";
 
         return (
-          <article
+          <details
             key={user.id}
-            className="grid gap-4 rounded-xl border border-border/80 bg-card p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_220px] md:items-start"
+            open={expandedId === user.id}
+            onToggle={(e) => {
+              if (e.currentTarget.open) setExpandedId(user.id);
+              else
+                setExpandedId((current) =>
+                  current === user.id ? null : current,
+                );
+            }}
           >
-            <div className="min-w-0 space-y-3">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">
-                    {user.full_name || user.email || user.id}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-muted-foreground">
-                    {user.email ?? user.id}
-                  </p>
-                  {user.phone ? (
-                    <p className="mt-1 text-xs text-muted-foreground">{user.phone}</p>
+            <summary>
+              <span className="inline-flex flex-wrap items-center gap-3">
+                <span>{user.full_name || user.email || "İstifadəçi"}</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {roleLabels[currentRole]} ·{" "}
+                  {user.is_deactivated ? "Deaktiv" : "Aktiv"}
+                  {isSellerPending ? " · Satıcı müraciəti" : ""}
+                </span>
+              </span>
+            </summary>
+            {expandedId === user.id && (
+              <div className="ra-editor-body grid gap-4 lg:grid-cols-[minmax(0,1fr)_200px]">
+                <div className="min-w-0 space-y-3">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">
+                        {user.full_name || user.email || user.id}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {user.email ?? user.id}
+                      </p>
+                      {user.phone ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {user.phone}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                        {roleLabels[currentRole]}
+                      </span>
+                      {user.is_deactivated ? (
+                        <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-700">
+                          Deaktiv
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                          Aktiv
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>ID: {user.id}</span>
+                    <span>Qeydiyyat: {formatDate(user.created_at)}</span>
+                    {user.banned_until ? (
+                      <span>Blok: {formatDate(user.banned_until)}</span>
+                    ) : null}
+                  </div>
+
+                  {isSellerPending ? (
+                    <p className="inline-flex rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700">
+                      Satıcı müraciəti gözləyir
+                    </p>
                   ) : null}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-                    {roleLabels[currentRole]}
-                  </span>
-                  {user.is_deactivated ? (
-                    <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-700">
-                      Deaktiv
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                      Aktiv
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <span>ID: {user.id}</span>
-                <span>Qeydiyyat: {formatDate(user.created_at)}</span>
-                {user.banned_until ? <span>Blok: {formatDate(user.banned_until)}</span> : null}
-              </div>
-
-              {isSellerPending ? (
-                <p className="inline-flex rounded-md bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-700">
-                  Satıcı müraciəti gözləyir
-                </p>
-              ) : null}
-
-              <div className="grid gap-3 xl:grid-cols-3">
-                <form action={handleContactSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
-                  <input type="hidden" name="userId" value={user.id} />
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Ad soyad
-                    <input
-                      name="fullName"
-                      value={contactDrafts[user.id]?.fullName ?? ""}
-                      onChange={(event) =>
-                        setContactDrafts((current) => ({
-                          ...current,
-                          [user.id]: {
-                            fullName: event.target.value,
-                            email: current[user.id]?.email ?? "",
-                            phone: current[user.id]?.phone ?? "",
-                          },
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="Ad Soyad"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Email
-                    <input
-                      name="email"
-                      type="email"
-                      value={contactDrafts[user.id]?.email ?? ""}
-                      onChange={(event) =>
-                        setContactDrafts((current) => ({
-                          ...current,
-                          [user.id]: {
-                            fullName: current[user.id]?.fullName ?? "",
-                            email: event.target.value,
-                            phone: current[user.id]?.phone ?? "",
-                          },
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
-                  </label>
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Telefon
-                    <input
-                      name="phone"
-                      value={contactDrafts[user.id]?.phone ?? ""}
-                      onChange={(event) =>
-                        setContactDrafts((current) => ({
-                          ...current,
-                          [user.id]: {
-                            fullName: current[user.id]?.fullName ?? "",
-                            email: current[user.id]?.email ?? "",
-                            phone: event.target.value,
-                          },
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="+994 77 666 44 33"
-                    />
-                  </label>
-                  <Button
-                    type="submit"
-                    variant="outline"
-                    disabled={isPending && pendingActionKey === `contact:${user.id}`}
-                  >
-                    <Mail className="mr-2 size-4" aria-hidden="true" />
-                    Məlumatları saxla
-                  </Button>
-                </form>
-
-                <form action={handleRoleSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
-                  <input type="hidden" name="userId" value={user.id} />
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Rol
-                    <select
-                      name="role"
-                      value={currentRole}
-                      onChange={(event) =>
-                        setDraftRoles((current) => ({
-                          ...current,
-                          [user.id]: event.target.value as AssignableRole,
-                        }))
-                      }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  <div className="grid gap-3 xl:grid-cols-3">
+                    <form
+                      action={handleContactSubmit}
+                      className="grid gap-2 rounded-lg border border-border/70 p-3"
                     >
-                      {(["customer", "seller", "admin"] as AssignableRole[]).map((role) => (
-                        <option key={role} value={role}>
-                          {roleLabels[role]}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {isSellerPending ? (
-                      <>
-                        <Button
-                          type="submit"
-                          name="applicationAction"
-                          value="approve"
-                          disabled={isPending && pendingActionKey === `role:${user.id}`}
-                        >
-                          Təsdiqlə
-                        </Button>
-                        <Button
-                          type="submit"
-                          name="applicationAction"
-                          value="reject"
-                          variant="outline"
-                          disabled={isPending && pendingActionKey === `role:${user.id}`}
-                        >
-                          İmtina et
-                        </Button>
-                      </>
-                    ) : (
+                      <input type="hidden" name="userId" value={user.id} />
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        Ad soyad
+                        <input
+                          name="fullName"
+                          value={contactDrafts[user.id]?.fullName ?? ""}
+                          onChange={(event) =>
+                            setContactDrafts((current) => ({
+                              ...current,
+                              [user.id]: {
+                                fullName: event.target.value,
+                                email: current[user.id]?.email ?? "",
+                                phone: current[user.id]?.phone ?? "",
+                              },
+                            }))
+                          }
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          placeholder="Ad Soyad"
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        Email
+                        <input
+                          name="email"
+                          type="email"
+                          value={contactDrafts[user.id]?.email ?? ""}
+                          onChange={(event) =>
+                            setContactDrafts((current) => ({
+                              ...current,
+                              [user.id]: {
+                                fullName: current[user.id]?.fullName ?? "",
+                                email: event.target.value,
+                                phone: current[user.id]?.phone ?? "",
+                              },
+                            }))
+                          }
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      </label>
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        Telefon
+                        <input
+                          name="phone"
+                          value={contactDrafts[user.id]?.phone ?? ""}
+                          onChange={(event) =>
+                            setContactDrafts((current) => ({
+                              ...current,
+                              [user.id]: {
+                                fullName: current[user.id]?.fullName ?? "",
+                                email: current[user.id]?.email ?? "",
+                                phone: event.target.value,
+                              },
+                            }))
+                          }
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          placeholder="+994 77 666 44 33"
+                        />
+                      </label>
                       <Button
                         type="submit"
-                        disabled={isPending && pendingActionKey === `role:${user.id}`}
+                        variant="outline"
+                        disabled={
+                          isPending && pendingActionKey === `contact:${user.id}`
+                        }
                       >
-                        Saxla
+                        <Mail className="mr-2 size-4" aria-hidden="true" />
+                        Məlumatları saxla
                       </Button>
-                    )}
-                  </div>
-                </form>
+                    </form>
 
-                <form action={handlePasswordSubmit} className="grid gap-2 rounded-lg border border-border/70 p-3">
+                    <form
+                      action={handleRoleSubmit}
+                      className="grid gap-2 rounded-lg border border-border/70 p-3"
+                    >
+                      <input type="hidden" name="userId" value={user.id} />
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        Rol
+                        <select
+                          name="role"
+                          value={currentRole}
+                          onChange={(event) =>
+                            setDraftRoles((current) => ({
+                              ...current,
+                              [user.id]: event.target.value as AssignableRole,
+                            }))
+                          }
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          {(
+                            ["customer", "seller", "admin"] as AssignableRole[]
+                          ).map((role) => (
+                            <option key={role} value={role}>
+                              {roleLabels[role]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {isSellerPending ? (
+                          <>
+                            <Button
+                              type="submit"
+                              name="applicationAction"
+                              value="approve"
+                              disabled={
+                                isPending &&
+                                pendingActionKey === `role:${user.id}`
+                              }
+                            >
+                              Təsdiqlə
+                            </Button>
+                            <Button
+                              type="submit"
+                              name="applicationAction"
+                              value="reject"
+                              variant="outline"
+                              disabled={
+                                isPending &&
+                                pendingActionKey === `role:${user.id}`
+                              }
+                            >
+                              İmtina et
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            type="submit"
+                            disabled={
+                              isPending &&
+                              pendingActionKey === `role:${user.id}`
+                            }
+                          >
+                            Saxla
+                          </Button>
+                        )}
+                      </div>
+                    </form>
+
+                    <form
+                      action={handlePasswordSubmit}
+                      className="grid gap-2 rounded-lg border border-border/70 p-3"
+                    >
+                      <input type="hidden" name="userId" value={user.id} />
+                      <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+                        Yeni şifrə
+                        <input
+                          name="password"
+                          type="password"
+                          value={passwordDrafts[user.id] ?? ""}
+                          onChange={(event) =>
+                            setPasswordDrafts((current) => ({
+                              ...current,
+                              [user.id]: event.target.value,
+                            }))
+                          }
+                          className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          placeholder="Minimum 8 simvol"
+                        />
+                      </label>
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        disabled={
+                          isPending &&
+                          pendingActionKey === `password:${user.id}`
+                        }
+                      >
+                        <KeyRound className="mr-2 size-4" aria-hidden="true" />
+                        Şifrəni dəyiş
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+
+                <form action={handleStatusSubmit} className="grid gap-2">
                   <input type="hidden" name="userId" value={user.id} />
-                  <label className="grid gap-1 text-xs font-medium text-muted-foreground">
-                    Yeni şifrə
-                    <input
-                      name="password"
-                      type="password"
-                      value={passwordDrafts[user.id] ?? ""}
-                      onChange={(event) =>
-                        setPasswordDrafts((current) => ({
-                          ...current,
-                          [user.id]: event.target.value,
-                        }))
+                  {user.is_deactivated ? (
+                    <Button
+                      type="submit"
+                      name="userAction"
+                      value="activate"
+                      variant="outline"
+                      disabled={
+                        isPending && pendingActionKey === `activate:${user.id}`
                       }
-                      className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      placeholder="Minimum 8 simvol"
-                    />
-                  </label>
+                    >
+                      <UserCheck className="mr-2 size-4" aria-hidden="true" />
+                      Aktiv et
+                    </Button>
+                  ) : (
+                    <Button
+                      type="submit"
+                      name="userAction"
+                      value="deactivate"
+                      variant="outline"
+                      disabled={
+                        isPending &&
+                        pendingActionKey === `deactivate:${user.id}`
+                      }
+                    >
+                      <UserX className="mr-2 size-4" aria-hidden="true" />
+                      Deaktiv et
+                    </Button>
+                  )}
                   <Button
                     type="submit"
-                    variant="outline"
-                    disabled={isPending && pendingActionKey === `password:${user.id}`}
+                    name="userAction"
+                    value="delete"
+                    variant="destructive"
+                    disabled={
+                      isPending && pendingActionKey === `delete:${user.id}`
+                    }
                   >
-                    <KeyRound className="mr-2 size-4" aria-hidden="true" />
-                    Şifrəni dəyiş
+                    <Trash2 className="mr-2 size-4" aria-hidden="true" />
+                    Sil
                   </Button>
                 </form>
               </div>
-            </div>
-
-            <form action={handleStatusSubmit} className="grid gap-2">
-              <input type="hidden" name="userId" value={user.id} />
-              {user.is_deactivated ? (
-                <Button
-                  type="submit"
-                  name="userAction"
-                  value="activate"
-                  variant="outline"
-                  disabled={isPending && pendingActionKey === `activate:${user.id}`}
-                >
-                  <UserCheck className="mr-2 size-4" aria-hidden="true" />
-                  Aktiv et
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  name="userAction"
-                  value="deactivate"
-                  variant="outline"
-                  disabled={isPending && pendingActionKey === `deactivate:${user.id}`}
-                >
-                  <UserX className="mr-2 size-4" aria-hidden="true" />
-                  Deaktiv et
-                </Button>
-              )}
-              <Button
-                type="submit"
-                name="userAction"
-                value="delete"
-                variant="destructive"
-                disabled={isPending && pendingActionKey === `delete:${user.id}`}
-              >
-                <Trash2 className="mr-2 size-4" aria-hidden="true" />
-                Sil
-              </Button>
-            </form>
-          </article>
+            )}
+          </details>
         );
       })}
     </div>

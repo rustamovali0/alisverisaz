@@ -14,7 +14,7 @@ import { ToastViewport } from "@/components/ui/toast-viewport";
 import { routing, type Locale } from "@/i18n/routing";
 import { getMarketplaceStores } from "@/lib/cart/data";
 import { getCurrentUserProfile } from "@/lib/auth/session";
-import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
+import { getActiveHomeThemeSetting, getSiteSettings, getNavigationMenus } from "@/lib/cms/data";
 import {
   defaultHomeThemeColors,
   homeThemeColorPresets,
@@ -167,7 +167,7 @@ export default async function LocaleLayout({
   );
   const storeSubdomainSlug = getStoreSubdomainSlug(requestHeaders.get("host"));
   const loadPublicNavigation = shouldLoadPublicNavigation(visiblePathname);
-  const [messages, siteSettings, navStores, navCategories, currentUser, activeTheme] = await Promise.all([
+  const [messages, siteSettings, navStores, navCategories, currentUser, activeTheme, navigationMenus] = await Promise.all([
     getMessages({
       locale,
     }),
@@ -180,6 +180,7 @@ export default async function LocaleLayout({
       : Promise.resolve([]),
     loadPublicNavigation ? getCurrentUserProfile() : Promise.resolve(null),
     getActiveHomeThemeSetting(),
+    loadPublicNavigation ? getNavigationMenus().catch(() => []) : Promise.resolve([]),
   ]);
   const activeThemeConfig =
     activeTheme.config && typeof activeTheme.config === "object" ? activeTheme.config : {};
@@ -241,6 +242,7 @@ export default async function LocaleLayout({
           </main>
         ) : (
           <PublicNavigationShell
+            headerItems={navigationMenus.find(menu=>menu.location === "header" && menu.isActive)?.items.filter(item=>item.isActive)}
             siteName={siteSettings.shortName || siteSettings.siteName}
             logoUrl={siteSettings.logoUrl}
             darkLogoUrl={siteSettings.darkLogoUrl}

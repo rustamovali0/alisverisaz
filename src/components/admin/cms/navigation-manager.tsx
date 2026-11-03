@@ -1,118 +1,123 @@
 "use client";
-
 import { useTransition } from "react";
-
 import { Button } from "@/components/ui/button";
 import { updateNavigationItemAction } from "@/lib/cms/actions";
 import type { ManagedNavigationMenu } from "@/lib/cms/types";
 import { appAlert } from "@/lib/alerts/app-alert";
-
-type NavigationManagerProps = {
+export function NavigationManager({
+  menus,
+}: {
   menus: ManagedNavigationMenu[];
-};
-
-export function NavigationManager({ menus }: NavigationManagerProps) {
-  const [isPending, startTransition] = useTransition();
-
-  function handleSubmit(formData: FormData) {
+}) {
+  const [pending, startTransition] = useTransition();
+  function save(form: FormData) {
     startTransition(async () => {
-      const result = await updateNavigationItemAction(formData);
-
+      const result = await updateNavigationItemAction(form);
       if (!result.ok) {
-        void appAlert.error(result.message, "Menyu saxlanmadı");
+        void appAlert.error(result.message, "Saxlanmadı");
         return;
       }
-
       void appAlert.success("Menyu saxlandı", result.message);
     });
   }
-
   return (
-    <div className="grid gap-5">
+    <div className="ra-editor-list">
+      {!menus.length && (
+        <p role="status">Menyular yüklənmədi. Yenidən cəhd edin.</p>
+      )}
       {menus.map((menu) => (
-        <section key={menu.id} className="rounded-md border bg-card p-4 shadow-sm">
-          <div className="mb-4">
-            <h3 className="font-semibold tracking-normal">{menu.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {menu.location} · {menu.items.length} element
-            </p>
-          </div>
-          <div className="grid gap-3">
+        <details key={menu.id} open={menu.location === "header"}>
+          <summary>
+            {menu.title}{" "}
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              {menu.items.length} keçid
+            </span>
+          </summary>
+          <div className="ra-editor-body ra-editor-list">
             {menu.items.map((item) => (
-              <form
-                key={item.id}
-                action={handleSubmit}
-                className="grid gap-3 rounded-md border bg-background p-3"
-              >
-                <input type="hidden" name="itemId" value={item.id} />
-                <div className="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_120px_120px]">
-                  <input
-                    name="title"
-                    defaultValue={item.title}
-                    placeholder="Menyu adı"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <input
-                    name="href"
-                    defaultValue={item.href}
-                    readOnly={item.isSystem}
-                    placeholder="/products"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <input
-                    name="iconName"
-                    defaultValue={item.icon}
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <input
-                    name="sortOrder"
-                    type="number"
-                    defaultValue={item.sortOrder}
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <input
-                    name="badgeText"
-                    defaultValue={item.badgeText ?? ""}
-                    placeholder="Badge"
-                    className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                </div>
-                {item.isSystem ? (
-                  <p className="text-xs text-muted-foreground">
-                    Sistem linkidir, URL dəyişdirilmir.
-                  </p>
-                ) : null}
-                <div className="flex flex-wrap gap-4 text-sm">
-                  {[
-                    ["isActive", "Aktiv", item.isActive],
-                    ["isExternal", "Xarici link", item.isExternal],
-                    ["openInNewTab", "Yeni tab", item.openInNewTab],
-                    ["showMobile", "Mobil", item.showMobile],
-                    ["showDesktop", "Desktop", item.showDesktop],
-                  ].map(([name, label, checked]) => (
-                    <label key={String(name)} className="flex items-center gap-2">
-                      <input
-                        name={String(name)}
-                        type="checkbox"
-                        defaultChecked={Boolean(checked)}
-                        className="size-4 rounded border-input"
-                      />
-                      {label}
+              <details key={item.id}>
+                <summary>
+                  {item.title}
+                  <span className="ml-3 text-sm font-normal text-muted-foreground">
+                    {item.isActive ? "Görünür" : "Gizlidir"}
+                  </span>
+                </summary>
+                <form action={save} className="ra-editor-body grid gap-4">
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <div className="ra-form-grid">
+                    <label className="ra-field">
+                      Menyu adı
+                      <input name="title" defaultValue={item.title} required />
                     </label>
-                  ))}
-                  {item.isSystem ? (
-                    <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                      Kritik route
-                    </span>
-                  ) : null}
-                </div>
-                <Button type="submit" className="w-fit" disabled={isPending}>
-                  Saxla
-                </Button>
-              </form>
+                    <label className="ra-field">
+                      Keçid
+                      <input
+                        name="href"
+                        defaultValue={item.href}
+                        readOnly={item.isSystem}
+                        required
+                      />
+                    </label>
+                    <label className="ra-field">
+                      Sıra
+                      <input
+                        name="sortOrder"
+                        type="number"
+                        defaultValue={item.sortOrder}
+                      />
+                    </label>
+                    <label className="ra-field">
+                      Nişan yazısı (istəyə görə)
+                      <input
+                        name="badgeText"
+                        defaultValue={item.badgeText || ""}
+                      />
+                    </label>
+                  </div>
+                  <input type="hidden" name="iconName" value={item.icon} />
+                  <input
+                    type="hidden"
+                    name="requiredFeature"
+                    value={item.requiredFeature || ""}
+                  />
+                  <div className="flex flex-wrap gap-4">
+                    {[
+                      ["isActive", "Görünsün", item.isActive],
+                      ["showMobile", "Mobil", item.showMobile],
+                      ["showDesktop", "Kompüter", item.showDesktop],
+                      ["openInNewTab", "Yeni pəncərə", item.openInNewTab],
+                    ].map(([name, label, checked]) => (
+                      <label
+                        key={String(name)}
+                        className="flex items-center gap-2"
+                      >
+                        <input
+                          name={String(name)}
+                          type="checkbox"
+                          defaultChecked={Boolean(checked)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                  <input
+                    type="hidden"
+                    name="isExternal"
+                    value={item.isExternal ? "on" : ""}
+                  />
+                  {item.isSystem && (
+                    <p className="text-sm text-muted-foreground">
+                      Bu bölmənin sistem keçidi qorunur.
+                    </p>
+                  )}
+                  <Button type="submit" disabled={pending} className="w-fit">
+                    Yadda saxla
+                  </Button>
+                </form>
+              </details>
             ))}
           </div>
-        </section>
+        </details>
       ))}
     </div>
   );

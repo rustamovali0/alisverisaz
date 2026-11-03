@@ -1,3 +1,4 @@
+import { readStorePolicies } from "@/lib/store-settings/policies";
 import { createHash } from "node:crypto";
 import { literalContains, validatedCursorDate } from "@/lib/security/postgrest";
 import {
@@ -330,6 +331,12 @@ function normalizeRawSearchValue(value: string | null | undefined) {
 function getSearchCandidates(value: string) {
   const source = value.toLocaleLowerCase("az-AZ");
   const candidates = new Set([source, normalizeSearchValue(source)]);
+  const laptopAliases = /\b(?:noutbuk|notbuk|laptop)\b/giu;
+  if (source.search(laptopAliases) >= 0) {
+    for (const alias of ["noutbuk", "notbuk", "laptop"]) {
+      candidates.add(source.replace(laptopAliases, alias));
+    }
+  }
   const substitutions: Record<string, string> = {
     c: "ç",
     g: "ğ",
@@ -383,7 +390,7 @@ function clampProductLimit(limit: number | undefined) {
 function normalizeProductSort(
   sort: string | null | undefined,
 ): MarketplaceProductSort {
-  if (sort === "oldest" || sort === "price_asc" || sort === "price_desc") {
+  if (sort === "oldest" || sort === "price_asc" || sort === "price_desc" || sort === "discount" || sort === "relevance") {
     return sort;
   }
 
@@ -563,7 +570,7 @@ export async function getMarketplaceProductPage(
   const rawSearch = normalizeRawSearchValue(input.searchQuery);
   const normalizedSearch = normalizeSearchValue(rawSearch);
   const limit = clampProductLimit(input.limit);
-  const sort = normalizeProductSort(input.sort);
+  const sort = normalizeProductSort(input.sort ?? (normalizedSearch ? "relevance" : "newest"));
 
   if (!normalizedSearch && !input.cursor && sort === "newest") {
     return publicCache(
@@ -764,6 +771,7 @@ async function getMarketplaceProductPageUncached(
     const rows: CatalogCandidate[] = [];
     const columns =
       "id,created_at,price_amount,discount_amount,stock_quantity,metadata,stores!inner(status)" +
+      (input.sort === "relevance" ? ",name" : "") +
       (input.filters?.color || input.filters?.size
         ? ",product_options(type,is_enabled,product_option_values(value))"
         : "");
@@ -802,6 +810,7 @@ async function getMarketplaceProductPageUncached(
     input.filters ?? {},
     promotedProductIds,
     input.sort,
+    input.searchQuery,
   );
   let afterId = "";
   try {
@@ -1098,6 +1107,22 @@ export async function getMarketplaceStores(
   )();
 }
 
+export const getMarketplaceStoreOptions = publicCache(
+  async (): Promise<Array<{ id: string; name: string }>> => {
+    const { data, error } = await (createSupabasePublicClient() as any)
+      .from("stores")
+      .select("id,name")
+      .eq("status", "active")
+      .order("name")
+      .order("id")
+      .limit(MAX_PUBLIC_LIST_LIMIT);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  },
+  ["marketplace-store-options"],
+  { revalidate: CACHE_TTL.SHORT, tags: [CACHE_TAGS.marketplaceStores] },
+);
+
 export async function getMarketplaceStoreCards(
   input: {
     limit?: number;
@@ -1292,6 +1317,7 @@ async function getMarketplaceStoreBySlugUncached(input: {
     slug: store.slug,
     description: readPublicStoreDescription(store.description),
     aboutContent: readSetting(store.settings, "aboutContent"),
+    policies: readStorePolicies(store.settings),
     heroTitle: readSetting(store.settings, "heroTitle"),
     heroSubtitle: readSetting(store.settings, "heroSubtitle"),
     bannerPositionX:
@@ -1484,6 +1510,7 @@ async function getMarketplaceProductByIdUncached(input: {
       slug: row.stores.slug,
       description: row.stores.description,
       aboutContent: readSetting(row.stores.settings, "aboutContent"),
+      policies: readStorePolicies(row.stores.settings),
       socialInstagram: readSetting(row.stores.settings, "socialInstagram"),
       socialTiktok: readSetting(row.stores.settings, "socialTiktok"),
       address: readSetting(row.stores.settings, "address"),

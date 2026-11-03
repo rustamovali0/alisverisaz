@@ -1,4 +1,5 @@
 "use client";
+import { StorePolicies } from "@/components/storefront/store-policies";
 import { socialProfileHref } from "@/lib/security/urls";
 import type { CatalogFilters } from "@/lib/catalog/filters";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -117,6 +118,8 @@ type ProductMarketplaceProps = {
   nextCursor?: string | null;
   hasMore?: boolean;
   categories: CategoryOption[];
+  stores?: Array<{ id: string; name: string }>;
+  selectedStoreId?: string;
   selectedCategoryId?: string;
   locale: string;
   searchQuery?: string;
@@ -1308,7 +1311,7 @@ export function ProductGrid({
             onFocusCapture={() => router.prefetch(detailHref)}
             onTouchStart={() => router.prefetch(detailHref)}
             className={cn(
-              "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-orange-200 md:hover:shadow-[0_20px_48px_rgba(15,23,42,0.12)]",
+              "product-card group relative flex min-w-0 cursor-pointer flex-col overflow-hidden rounded-[20px] border border-slate-200/90 bg-white text-slate-950 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition-[transform,border-color,box-shadow] duration-200 ease-out [contain:layout_paint_style] [content-visibility:auto] [contain-intrinsic-size:380px] dark:border-slate-800 dark:bg-card dark:text-slate-100 md:hover:-translate-y-1.5 md:hover:border-primary/40 md:hover:shadow-md focus-within:ring-2 focus-within:ring-primary/50",
               compactMobileCards && "max-sm:rounded-xl",
               isLiquidGlass &&
                 "liquid-glass-product-card border-white/70 bg-white/60 dark:border-white/10 dark:bg-white/10 md:hover:border-orange-200/80",
@@ -1324,16 +1327,6 @@ export function ProductGrid({
               >
                 {product.imageUrl ? (
                   <>
-                    <OptimizedImage
-                      src={product.imageUrl}
-                      alt=""
-                      fill
-                      sizes="(max-width: 1023px) 50vw, (max-width: 1279px) 25vw, 320px"
-                      loading="lazy"
-                      decoding="async"
-                      aria-hidden="true"
-                      className="scale-110 object-cover opacity-45 blur-xl saturate-125 dark:opacity-35"
-                    />
                     <OptimizedImage
                       src={product.imageUrl}
                       alt={product.name}
@@ -1739,6 +1732,8 @@ export function ProductMarketplace({
   hasMore,
   categories,
   selectedCategoryId,
+  stores = [],
+  selectedStoreId,
   locale,
   searchQuery,
   sort = "newest",
@@ -1747,7 +1742,9 @@ export function ProductMarketplace({
   labels,
 }: ProductMarketplaceProps) {
   const t = useTranslations("marketplace");
+  const defaultSort = searchQuery?.trim() ? "relevance" : "newest";
   const [activeCategoryId, setActiveCategoryId] = useState(selectedCategoryId);
+  const [storeId, setStoreId] = useState(selectedStoreId);
   const [activeSort, setActiveSort] = useState<MarketplaceProductSort>(sort);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [colorFilter, setColorFilter] = useState(initialFilters.color ?? "");
@@ -1774,6 +1771,7 @@ export function ProductMarketplace({
     locale,
     categoryId: activeCategoryId,
     categoryIds: categoryQueryIds,
+    storeId,
     searchQuery,
     sort: activeSort,
     filters: remoteFilters,
@@ -1840,7 +1838,7 @@ export function ProductMarketplace({
     remoteFilters.commerceType,
   );
   const hasActiveProductFilters = Boolean(
-    activeCategoryId || activeSort !== "newest" || hasLocalFilters,
+    activeCategoryId || storeId || activeSort !== defaultSort || hasLocalFilters,
   );
   const priceError =
     minPrice && maxPrice && Number(minPrice) > Number(maxPrice)
@@ -1893,7 +1891,7 @@ export function ProductMarketplace({
     }
 
     const url = new URL(window.location.href);
-    if (nextSort === "newest") {
+    if (nextSort === defaultSort) {
       url.searchParams.delete("sort");
     } else {
       url.searchParams.set("sort", nextSort);
@@ -1919,8 +1917,10 @@ export function ProductMarketplace({
     ["discount", "vip", "commerceType"].forEach((key) =>
       updateFilterQuery(key, ""),
     );
+    setStoreId(undefined);
+    updateFilterQuery("storeId", "");
     selectCategory();
-    selectSort("newest");
+    selectSort(defaultSort);
     ["color", "size", "minPrice", "maxPrice", "inStock"].forEach((key) =>
       updateFilterQuery(key, ""),
     );
@@ -1999,10 +1999,12 @@ export function ProductMarketplace({
       label={t("sortFilter")}
       value={activeSort}
       options={[
+        ...(searchQuery?.trim() ? [{ value: "relevance", label: t("sortRelevance") }] : []),
         { value: "newest", label: t("sortNewest") },
         { value: "oldest", label: t("sortOldest") },
         { value: "price_asc", label: t("sortPriceAsc") },
         { value: "price_desc", label: t("sortPriceDesc") },
+        { value: "discount", label: t("sortDiscount") },
       ]}
       onChange={(value) => selectSort(value as MarketplaceProductSort)}
     />
@@ -2056,7 +2058,21 @@ export function ProductMarketplace({
               </div>
             </div>
             {isFiltersOpen ? (
-              <div id="marketplace-filters" className="relative z-20 w-full">
+              <div id="marketplace-filters" className="relative z-20 w-full space-y-3">
+                {stores.length > 0 && (
+                  <label className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {t("store")}
+                    <select value={storeId ?? ""} className="premium-input min-h-11 min-w-0 max-w-full px-3"
+                      onChange={(event) => {
+                        const nextStore = event.currentTarget.value;
+                        setStoreId(nextStore || undefined);
+                        updateFilterQuery("storeId", nextStore);
+                      }}>
+                      <option value="">{t("stores")}</option>
+                      {stores.map((store) => <option key={store.id} value={store.id}>{store.name}</option>)}
+                    </select>
+                  </label>
+                )}
                 <MarketplaceFilterBar
                   categories={visibleCategoryOptions}
                   selectedCategoryId={activeCategoryId}
@@ -2093,6 +2109,28 @@ export function ProductMarketplace({
                 />
               </div>
             ) : null}
+            <div className="flex flex-wrap gap-2" aria-label={t("filters")}>
+              {([
+                ["discount", "Endirimli", remoteFilters.discount],
+                ["vip", "VIP", remoteFilters.vip],
+                ["rental", "İcarə", remoteFilters.commerceType === "rental"],
+                ["sale", "Satış", remoteFilters.commerceType === "sale"],
+              ] as const).map(([key, label, selected]) => (
+                <Button key={key} type="button" variant={selected ? "default" : "outline"}
+                  aria-pressed={Boolean(selected)} className="min-h-10 rounded-full"
+                  onClick={() => {
+                    if (key === "discount" || key === "vip") {
+                      setRemoteFilters((current) => ({ ...current, [key]: !selected }));
+                      updateFilterQuery(key, selected ? "" : "1");
+                    } else {
+                      setRemoteFilters((current) => ({ ...current, commerceType: selected ? undefined : key }));
+                      updateFilterQuery("commerceType", selected ? "" : key);
+                    }
+                  }}>
+                  {label}
+                </Button>
+              ))}
+            </div>
             {productGrid}
           </section>
         </div>
@@ -2860,6 +2898,7 @@ export function Storefront({
 
           {modernCategoriesSection}
           {aboutSection}
+          <StorePolicies policies={store.policies} />
           {modernProductsSection}
           <div id="store-info">
             <PublicStoreLocationSection
@@ -3019,6 +3058,7 @@ export function Storefront({
         {modernProductsSection}
         {customCategorySection}
         {aboutSection}
+          <StorePolicies policies={store.policies} />
         <div id="contact" className="scroll-mt-28">
           <PublicStoreLocationSection
             locations={locations}

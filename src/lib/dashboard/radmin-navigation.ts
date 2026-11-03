@@ -46,6 +46,7 @@ const sections = [
     id: "system",
     title: "Sistem və təhlükəsizlik",
     paths: [
+      "storage",
       "settings",
       "danger",
       "audit-log",

@@ -1,3 +1,4 @@
+import { normalizeSearchText, productSearchRelevance } from "@/lib/search/relevance";
 import type { MarketplaceProductSort } from "@/lib/cart/types";
 
 export type CatalogFilters = {
@@ -12,6 +13,7 @@ export type CatalogFilters = {
 };
 export type CatalogCandidate = {
   id: string;
+  name?: string;
   created_at?: string | null;
   price_amount: number | string;
   discount_amount?: number | string | null;
@@ -62,12 +64,22 @@ export function catalogPrice(row: CatalogCandidate) {
     Number(row.price_amount) - Number(row.discount_amount ?? 0),
   );
 }
+function discountRate(row: CatalogCandidate) {
+  const price = Number(row.price_amount);
+  return price > 0 ? (price - catalogPrice(row)) / price : 0;
+}
+
 export function filterCatalog(
   rows: CatalogCandidate[],
   filters: CatalogFilters,
   promoted: Set<string>,
   sort: MarketplaceProductSort,
+  search = "",
 ) {
+  const query = normalizeSearchText(search);
+  const relevance = sort === "relevance" && query
+    ? new Map(rows.map((row) => [row.id, productSearchRelevance(row.name ?? "", query)]))
+    : null;
   return rows
     .filter((row) => {
       const price = catalogPrice(row);
@@ -105,8 +117,12 @@ export function filterCatalog(
     .sort((a, b) => {
       const vip = Number(promoted.has(b.id)) - Number(promoted.has(a.id));
       if (vip) return vip;
+      const rank = (relevance?.get(b.id) ?? 0) - (relevance?.get(a.id) ?? 0);
+      if (rank) return rank;
       const value =
-        sort === "price_asc"
+        sort === "discount"
+          ? discountRate(b) - discountRate(a)
+          : sort === "price_asc"
           ? catalogPrice(a) - catalogPrice(b)
           : sort === "price_desc"
             ? catalogPrice(b) - catalogPrice(a)

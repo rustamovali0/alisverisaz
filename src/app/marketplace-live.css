@@ -2937,3 +2937,35 @@
     padding-top: 4px;
   }
 }
+
+.live-hidden-all {display:none!important;}
+@media(max-width:767px){.live-hidden-mobile {display:none!important;}}
+@media(min-width:768px){.live-hidden-desktop {display:none!important;}}
+
+.live-hero-category-links {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+.live-hero-category-links a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.75rem;
+  padding-inline: 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+}
+.live-hero-category-links a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.live-hero-seller-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-inline-start: 0.75rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

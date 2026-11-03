@@ -1,3 +1,4 @@
+import type { StorePolicies } from "@/lib/store-settings/policies";
 import type {
   ProductOptionInput,
   ProductVariantCombinationInput,
@@ -28,7 +29,7 @@ export type CartProduct = {
   isPromoted?: boolean;
 };
 
-export type MarketplaceProductSort = "newest" | "oldest" | "price_asc" | "price_desc";
+export type MarketplaceProductSort = "newest" | "oldest" | "price_asc" | "price_desc" | "discount" | "relevance";
 
 export type MarketplaceProductPage = {
   products: CartProduct[];
@@ -48,6 +49,7 @@ export type MarketplaceStore = {
   slug: string;
   description: string | null;
   aboutContent?: string | null;
+  policies?: StorePolicies;
   heroTitle?: string | null;
   heroSubtitle?: string | null;
   bannerPositionX?: number;

@@ -116,7 +116,8 @@ export type ManagedNavigationMenu = {
   items: ManagedNavigationItem[];
 };
 
-export type ManagedNavigationItem = DashboardNavItem & {
+export type ManagedNavigationItem = Omit<DashboardNavItem, "badgeText" | "icon"> & {
+  icon: string;
   id: string;
   menuId: string;
   sortOrder: number;

@@ -103,6 +103,8 @@
     "sendDeposit": "Send deposit",
     "allProductsShown": "All products are shown",
     "sortNewest": "Newest",
+    "sortRelevance": "Most relevant",
+    "sortDiscount": "Biggest discount",
     "sortOldest": "Oldest",
     "sortPriceAsc": "Price: low to high",
     "sortPriceDesc": "Price: high to low",

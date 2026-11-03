@@ -1,6 +1,12 @@
 "use client";
 
-import { Monitor, RotateCcw, Save, Smartphone, UploadCloud } from "lucide-react";
+import {
+  Monitor,
+  RotateCcw,
+  Save,
+  Smartphone,
+  UploadCloud,
+} from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { GlobalLoader } from "@/components/common/global-loader";
@@ -47,14 +53,14 @@ type DesignSection =
 const sectionTabs: Array<{ key: DesignSection; label: string }> = [
   { key: "theme", label: "Ümumi tema" },
   { key: "colors", label: "Rənglər" },
-  { key: "navbar", label: "Navbar" },
+  { key: "navbar", label: "Üst menyu" },
   { key: "homepage", label: "Ana səhifə" },
   { key: "product-cards", label: "Məhsul kartları" },
   { key: "product-detail", label: "Məhsul səhifəsi" },
   { key: "panels", label: "Panellər" },
-  { key: "ui-elements", label: "UI elementləri" },
-  { key: "loading", label: "Loading" },
-  { key: "typography-spacing", label: "Typography & spacing" },
+  { key: "ui-elements", label: "Düymə və xanalar" },
+  { key: "loading", label: "Yüklənmə" },
+  { key: "typography-spacing", label: "Yazı və boşluqlar" },
 ];
 
 const colorGroups: Array<{
@@ -68,8 +74,16 @@ const colorGroups: Array<{
   {
     title: "Əsas rənglər",
     fields: [
-      { key: "pageBackground", name: "pageBackgroundColor", label: "Page background" },
-      { key: "cardBackground", name: "cardBackgroundColor", label: "Card background" },
+      {
+        key: "pageBackground",
+        name: "pageBackgroundColor",
+        label: "Page background",
+      },
+      {
+        key: "cardBackground",
+        name: "cardBackgroundColor",
+        label: "Card background",
+      },
       { key: "text", name: "textColor", label: "Text" },
       { key: "mutedText", name: "mutedTextColor", label: "Muted text" },
       { key: "border", name: "borderColor", label: "Border" },
@@ -80,20 +94,48 @@ const colorGroups: Array<{
   {
     title: "Düymə rəngləri",
     fields: [
-      { key: "buttonBackground", name: "buttonBackgroundColor", label: "Düymə fonu" },
-      { key: "buttonHoverBackground", name: "buttonHoverBackgroundColor", label: "Düymə hover fonu" },
+      {
+        key: "buttonBackground",
+        name: "buttonBackgroundColor",
+        label: "Düymə fonu",
+      },
+      {
+        key: "buttonHoverBackground",
+        name: "buttonHoverBackgroundColor",
+        label: "Düymə hover fonu",
+      },
       { key: "buttonText", name: "buttonTextColor", label: "Düymə yazısı" },
-      { key: "buttonHoverText", name: "buttonHoverTextColor", label: "Düymə hover yazısı" },
+      {
+        key: "buttonHoverText",
+        name: "buttonHoverTextColor",
+        label: "Düymə hover yazısı",
+      },
     ],
   },
   {
     title: "Bölmə fonları",
     fields: [
       { key: "heroBackground", name: "heroBackgroundColor", label: "Hero" },
-      { key: "categoriesBackground", name: "categoriesBackgroundColor", label: "Categories" },
-      { key: "storesBackground", name: "storesBackgroundColor", label: "Stores" },
-      { key: "productsBackground", name: "productsBackgroundColor", label: "Products" },
-      { key: "benefitsBackground", name: "benefitsBackgroundColor", label: "Məlumat bloku" },
+      {
+        key: "categoriesBackground",
+        name: "categoriesBackgroundColor",
+        label: "Categories",
+      },
+      {
+        key: "storesBackground",
+        name: "storesBackgroundColor",
+        label: "Stores",
+      },
+      {
+        key: "productsBackground",
+        name: "productsBackgroundColor",
+        label: "Products",
+      },
+      {
+        key: "benefitsBackground",
+        name: "benefitsBackgroundColor",
+        label: "Məlumat bloku",
+      },
     ],
   },
 ];
@@ -142,7 +184,8 @@ const colorControlGroups: Array<{
 }> = [
   {
     title: "Bütün bölmələr",
-    description: "Səhifə, hero, kateqoriya, mağaza, məhsul və məlumat bloklarına eyni fon rəngi verir.",
+    description:
+      "Səhifə, hero, kateqoriya, mağaza, məhsul və məlumat bloklarına eyni fon rəngi verir.",
     fields: [
       "pageBackground",
       "heroBackground",
@@ -156,7 +199,8 @@ const colorControlGroups: Array<{
   },
   {
     title: "Bütün düymələr",
-    description: "Əsas rəngi və bütün əsas düymələrin fon rəngini birlikdə dəyişir.",
+    description:
+      "Əsas rəngi və bütün əsas düymələrin fon rəngini birlikdə dəyişir.",
     fields: ["primary", "buttonBackground"],
     choices: brandColorChoices,
   },
@@ -282,9 +326,9 @@ const loadingPresetToLoaderType: Record<string, string> = {
 };
 
 function getThemeDefaults(themeKey: string): HomeThemeColors {
-  const preset = (homeThemeColorPresets as Record<string, Partial<HomeThemeColors>>)[
-    themeKey
-  ];
+  const preset = (
+    homeThemeColorPresets as Record<string, Partial<HomeThemeColors>>
+  )[themeKey];
 
   return {
     ...defaultHomeThemeColors,
@@ -294,9 +338,12 @@ function getThemeDefaults(themeKey: string): HomeThemeColors {
 
 function readThemeColors(theme: ThemeSetting): HomeThemeColors {
   const defaults = getThemeDefaults(theme.themeKey);
-  const config = theme.config && typeof theme.config === "object" ? theme.config : {};
+  const config =
+    theme.config && typeof theme.config === "object" ? theme.config : {};
   const colors =
-    config.colors && typeof config.colors === "object" && !Array.isArray(config.colors)
+    config.colors &&
+    typeof config.colors === "object" &&
+    !Array.isArray(config.colors)
       ? (config.colors as Record<string, unknown>)
       : {};
   const nextColors = { ...defaults };
@@ -346,9 +393,11 @@ function Badge({
     <span
       className={cn(
         "rounded-full px-2.5 py-1 text-[11px] font-bold",
-        tone === "active" && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200",
+        tone === "active" &&
+          "bg-emerald-500/10 text-emerald-700 dark:text-emerald-200",
         tone === "published" && "bg-primary/10 text-primary",
-        tone === "draft" && "bg-amber-500/10 text-amber-700 dark:text-amber-200",
+        tone === "draft" &&
+          "bg-amber-500/10 text-amber-700 dark:text-amber-200",
         tone === "muted" && "bg-muted text-muted-foreground",
       )}
     >
@@ -415,36 +464,91 @@ function ThemePreview({
     >
       <div
         className="flex items-center gap-2 border-b px-3 py-2"
-        style={{ borderColor: colors.border, backgroundColor: colors.cardBackground }}
+        style={{
+          borderColor: colors.border,
+          backgroundColor: colors.cardBackground,
+        }}
       >
         <span
           className="grid size-7 place-items-center rounded-md text-xs font-black"
-          style={{ backgroundColor: colors.buttonBackground, color: colors.buttonText }}
+          style={{
+            backgroundColor: colors.buttonBackground,
+            color: colors.buttonText,
+          }}
         >
           a
         </span>
         <div
           className="h-7 flex-1 rounded-md border"
-          style={{ borderColor: colors.border, backgroundColor: colors.pageBackground }}
+          style={{
+            borderColor: colors.border,
+            backgroundColor: colors.pageBackground,
+          }}
         />
-        <span className="size-7 rounded-md border" style={{ borderColor: colors.border }} />
+        <span
+          className="size-7 rounded-md border"
+          style={{ borderColor: colors.border }}
+        />
       </div>
       <div className={compact ? "space-y-2 p-3" : "space-y-3 p-4"}>
-        <div className="rounded-lg border p-3" style={{ borderColor: colors.border, backgroundColor: colors.heroBackground }}>
-          <div className="h-2 w-16 rounded-full" style={{ backgroundColor: colors.accent }} />
-          <div className="mt-3 h-6 w-2/3 rounded-md" style={{ backgroundColor: colors.text, opacity: 0.1 }} />
+        <div
+          className="rounded-lg border p-3"
+          style={{
+            borderColor: colors.border,
+            backgroundColor: colors.heroBackground,
+          }}
+        >
+          <div
+            className="h-2 w-16 rounded-full"
+            style={{ backgroundColor: colors.accent }}
+          />
+          <div
+            className="mt-3 h-6 w-2/3 rounded-md"
+            style={{ backgroundColor: colors.text, opacity: 0.1 }}
+          />
           <div className="mt-3 flex gap-2">
-            <div className="h-8 flex-1 rounded-md border" style={{ borderColor: colors.border, backgroundColor: colors.cardBackground }} />
-            <div className="h-8 w-20 rounded-md" style={{ backgroundColor: colors.buttonBackground }} />
-            <div className="h-8 w-20 rounded-md" style={{ backgroundColor: colors.buttonHoverBackground }} />
+            <div
+              className="h-8 flex-1 rounded-md border"
+              style={{
+                borderColor: colors.border,
+                backgroundColor: colors.cardBackground,
+              }}
+            />
+            <div
+              className="h-8 w-20 rounded-md"
+              style={{ backgroundColor: colors.buttonBackground }}
+            />
+            <div
+              className="h-8 w-20 rounded-md"
+              style={{ backgroundColor: colors.buttonHoverBackground }}
+            />
           </div>
         </div>
-        <div className={cn("grid gap-2", mode === "desktop" ? "grid-cols-3" : "grid-cols-2")}>
-          {[colors.categoriesBackground, colors.storesBackground, colors.productsBackground].map((backgroundColor, index) => (
-            <div key={`${backgroundColor}-${index}`} className="rounded-md border p-2" style={{ borderColor: colors.border, backgroundColor }}>
+        <div
+          className={cn(
+            "grid gap-2",
+            mode === "desktop" ? "grid-cols-3" : "grid-cols-2",
+          )}
+        >
+          {[
+            colors.categoriesBackground,
+            colors.storesBackground,
+            colors.productsBackground,
+          ].map((backgroundColor, index) => (
+            <div
+              key={`${backgroundColor}-${index}`}
+              className="rounded-md border p-2"
+              style={{ borderColor: colors.border, backgroundColor }}
+            >
               <div className="aspect-[4/3] rounded bg-white/70" />
-              <div className="mt-2 h-2 rounded-full" style={{ backgroundColor: colors.mutedText, opacity: 0.18 }} />
-              <div className="mt-2 h-3 w-2/3 rounded-full" style={{ backgroundColor: colors.primary, opacity: 0.26 }} />
+              <div
+                className="mt-2 h-2 rounded-full"
+                style={{ backgroundColor: colors.mutedText, opacity: 0.18 }}
+              />
+              <div
+                className="mt-2 h-3 w-2/3 rounded-full"
+                style={{ backgroundColor: colors.primary, opacity: 0.26 }}
+              />
             </div>
           ))}
         </div>
@@ -476,7 +580,13 @@ function PresetPreview({
   if (type === "buttonPreset") {
     return (
       <div className="grid h-20 place-items-center rounded-lg border bg-background">
-        <span className={cn("rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground", value === "pill" && "rounded-full", value === "square" && "rounded-sm")}>
+        <span
+          className={cn(
+            "rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground",
+            value === "pill" && "rounded-full",
+            value === "square" && "rounded-sm",
+          )}
+        >
           Səbətə at
         </span>
       </div>
@@ -486,7 +596,13 @@ function PresetPreview({
   if (type === "inputPreset") {
     return (
       <div className="grid h-20 place-items-center rounded-lg border bg-background px-4">
-        <span className={cn("w-full rounded-md border px-3 py-2 text-sm text-muted-foreground", value === "filled" && "bg-muted", value === "underline" && "rounded-none border-x-0 border-t-0")}>
+        <span
+          className={cn(
+            "w-full rounded-md border px-3 py-2 text-sm text-muted-foreground",
+            value === "filled" && "bg-muted",
+            value === "underline" && "rounded-none border-x-0 border-t-0",
+          )}
+        >
           Axtar...
         </span>
       </div>
@@ -496,7 +612,14 @@ function PresetPreview({
   if (type === "cardPreset") {
     return (
       <div className="grid h-20 place-items-center rounded-lg border bg-background p-3">
-        <span className={cn("block h-full w-full rounded-md border bg-card", value === "soft-shadow" && "shadow-md", value === "elevated" && "shadow-lg", value === "glass-lite" && "bg-white/70 shadow-sm")}>
+        <span
+          className={cn(
+            "block h-full w-full rounded-md border bg-card",
+            value === "soft-shadow" && "shadow-md",
+            value === "elevated" && "shadow-lg",
+            value === "glass-lite" && "bg-white/70 shadow-sm",
+          )}
+        >
           <span className="mx-3 mt-3 block h-2 w-1/2 rounded-full bg-primary/30" />
           <span className="mx-3 mt-2 block h-2 w-3/4 rounded-full bg-muted" />
         </span>
@@ -507,8 +630,21 @@ function PresetPreview({
   if (type === "typographyPreset") {
     return (
       <div className="grid h-20 content-center rounded-lg border bg-background p-3">
-        <p className={cn("font-black", value === "editorial" ? "text-xl" : value === "compact" ? "text-base" : "text-lg")}>Heading</p>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">Body text preview</p>
+        <p
+          className={cn(
+            "font-black",
+            value === "editorial"
+              ? "text-xl"
+              : value === "compact"
+                ? "text-base"
+                : "text-lg",
+          )}
+        >
+          Heading
+        </p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Body text preview
+        </p>
       </div>
     );
   }
@@ -516,7 +652,16 @@ function PresetPreview({
   if (type === "spacingPreset") {
     return (
       <div className="grid h-20 place-items-center rounded-lg border bg-background p-3">
-        <span className={cn("grid w-full rounded-md border bg-card", value === "compact" ? "gap-1 p-2" : value === "spacious" ? "gap-3 p-4" : "gap-2 p-3")}>
+        <span
+          className={cn(
+            "grid w-full rounded-md border bg-card",
+            value === "compact"
+              ? "gap-1 p-2"
+              : value === "spacious"
+                ? "gap-3 p-4"
+                : "gap-2 p-3",
+          )}
+        >
           <span className="h-2 rounded bg-primary/30" />
           <span className="h-2 w-2/3 rounded bg-muted" />
         </span>
@@ -549,44 +694,30 @@ function PresetCardGrid({
   onChange: (key: DesignPresetKey, value: string) => void;
 }) {
   return (
-    <div className="grid min-w-0 gap-6">
+    <div className="ra-form-grid">
       {fields.map((field) => (
-        <section key={field.key} className="grid min-w-0 gap-3">
-          <div>
-            <h3 className="text-base font-bold">{field.title}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Variantı seçin və yuxarıdakı action bar-dan saxlayın.
-            </p>
-          </div>
-          <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
-            {designPresetOptions[field.key].map(([value, label]) => {
-              const active = values[field.key] === value;
-
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => onChange(field.key, value)}
-                  className={cn(
-                    "min-w-0 rounded-xl border bg-card p-3 text-left shadow-sm transition hover:border-primary/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    active && "border-primary ring-2 ring-primary/15",
-                  )}
-                >
-                  <PresetPreview type={field.key} value={value} />
-                  <div className="mt-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-bold">{label}</p>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                        {presetDescriptions[value] ?? "Preset preview"}
-                      </p>
-                    </div>
-                    {active ? <Badge tone="active">Aktiv</Badge> : <Badge>Seç</Badge>}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <div key={field.key} className="ra-field">
+          <label htmlFor={`preset-${field.key}`}>{field.title}</label>
+          <select
+            id={`preset-${field.key}`}
+            value={values[field.key]}
+            onChange={(event) => onChange(field.key, event.target.value)}
+          >
+            {designPresetOptions[field.key].map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <details>
+            <summary className="cursor-pointer text-sm text-muted-foreground">
+              Görünüş nümunəsi
+            </summary>
+            <div className="mt-3">
+              <PresetPreview type={field.key} value={values[field.key]} />
+            </div>
+          </details>
+        </div>
       ))}
     </div>
   );
@@ -598,15 +729,20 @@ export function ThemeManager({
   initialSection = "theme",
 }: ThemeManagerProps) {
   const [isPending, startTransition] = useTransition();
-  const [activeSection, setActiveSection] = useState<DesignSection>(initialSection);
+  const [activeSection, setActiveSection] =
+    useState<DesignSection>(initialSection);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop");
   const [design, setDesign] = useState<SiteDesignSettings>(siteSettings.design);
   const activeTheme = useMemo(
     () => themes.find((theme) => theme.isActive) ?? themes[0] ?? null,
     [themes],
   );
-  const [selectedThemeKey, setSelectedThemeKey] = useState(activeTheme?.themeKey ?? "");
-  const [draftColorsByTheme, setDraftColorsByTheme] = useState<Record<string, HomeThemeColors>>({});
+  const [selectedThemeKey, setSelectedThemeKey] = useState(
+    activeTheme?.themeKey ?? "",
+  );
+  const [draftColorsByTheme, setDraftColorsByTheme] = useState<
+    Record<string, HomeThemeColors>
+  >({});
   const selectedTheme =
     themes.find((theme) => theme.themeKey === selectedThemeKey) ?? activeTheme;
   const selectedThemeColors = useMemo(
@@ -616,7 +752,9 @@ export function ThemeManager({
   const selectedColors = selectedTheme
     ? (draftColorsByTheme[selectedTheme.themeKey] ?? selectedThemeColors)
     : null;
-  const colorFormId = selectedTheme ? `theme-editor-${selectedTheme.id}` : undefined;
+  const colorFormId = selectedTheme
+    ? `theme-editor-${selectedTheme.id}`
+    : undefined;
 
   useEffect(() => {
     if (!selectedTheme || !selectedThemeColors) {
@@ -670,7 +808,11 @@ export function ThemeManager({
       return;
     }
 
-    setThemeUpdatePayload(formData, theme, colorsFromForm(formData, theme.themeKey));
+    setThemeUpdatePayload(
+      formData,
+      theme,
+      colorsFromForm(formData, theme.themeKey),
+    );
 
     startTransition(async () => {
       const result = await updateThemeDraftAction(formData);
@@ -744,75 +886,58 @@ export function ThemeManager({
   function renderSection() {
     if (activeSection === "theme") {
       return (
-        <div className="grid gap-5">
-          <section className="grid gap-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-bold">Theme seçimi</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Bir tema seçin, önizləyin və aktiv edin.
-                </p>
-              </div>
-              <PreviewToggle value={previewMode} onChange={setPreviewMode} />
-            </div>
-            <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3 min-[1800px]:grid-cols-4">
-              {themes.map((theme) => {
-                const colors = readThemeColors(theme);
-                const selected = selectedTheme?.themeKey === theme.themeKey;
-
-                return (
-                  <article
-                    key={theme.id}
-                    className={cn(
-                      "min-w-0 overflow-hidden rounded-xl border bg-card shadow-sm transition",
-                      theme.isActive && "border-emerald-500 ring-2 ring-emerald-500/15",
-                      selected && !theme.isActive && "border-primary ring-2 ring-primary/15",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedThemeKey(theme.themeKey)}
-                      className="block w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <ThemePreview colors={colors} mode="desktop" compact />
-                      <div className="mt-3 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h4 className="truncate text-sm font-black">{theme.name}</h4>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                            {presetDescriptions[theme.themeKey] ?? "Marketplace theme"}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-1">
-                          {theme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
-                          <Badge tone={theme.status === "published" ? "published" : "draft"}>
-                            {theme.status === "published" ? "Published" : "Draft"}
-                          </Badge>
-                        </div>
-                      </div>
-                    </button>
-                    <div className="flex gap-2 border-t bg-muted/25 p-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setSelectedThemeKey(theme.themeKey)}
-                      >
-                        Önizlə
-                      </Button>
-                      <form action={handlePublish} className="flex-1">
-                        <input type="hidden" name="themeKey" value={theme.themeKey} />
-                        <Button type="submit" className="w-full" disabled={isPending || theme.isActive}>
-                          {theme.isActive ? "Aktiv temadır" : "Aktiv et"}
-                        </Button>
-                      </form>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-        </div>
+        <section className="grid gap-5">
+          <label className="ra-field">
+            Saytın teması
+            <select
+              value={selectedThemeKey}
+              onChange={(event) => setSelectedThemeKey(event.target.value)}
+            >
+              {themes.map((theme) => (
+                <option key={theme.id} value={theme.themeKey}>
+                  {theme.name}
+                  {theme.isActive ? " — Hazırda aktiv" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedTheme && (
+            <>
+              <form action={handlePublish}>
+                <input
+                  type="hidden"
+                  name="themeKey"
+                  value={selectedTheme.themeKey}
+                />
+                <Button
+                  type="submit"
+                  disabled={isPending || selectedTheme.isActive}
+                >
+                  {selectedTheme.isActive
+                    ? "Bu tema aktivdir"
+                    : "Temanı aktivləşdir"}
+                </Button>
+              </form>
+              <details>
+                <summary className="cursor-pointer font-medium">
+                  Görünüşə bax
+                </summary>
+                <div className="ra-theme-preview">
+                  <PreviewToggle
+                    value={previewMode}
+                    onChange={setPreviewMode}
+                  />
+                  <div className="mt-3">
+                    <ThemePreview
+                      colors={readThemeColors(selectedTheme)}
+                      mode={previewMode}
+                    />
+                  </div>
+                </div>
+              </details>
+            </>
+          )}
+        </section>
       );
     }
 
@@ -823,7 +948,8 @@ export function ThemeManager({
             <div>
               <h3 className="text-lg font-black">Rənglər</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Saytın əsas rənglərini və bütün əsas düymələrin rəngini buradan idarə edin.
+                Saytın əsas rənglərini və bütün əsas düymələrin rəngini buradan
+                idarə edin.
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <select
@@ -837,8 +963,14 @@ export function ThemeManager({
                     </option>
                   ))}
                 </select>
-                {selectedTheme.isActive ? <Badge tone="active">Aktiv</Badge> : null}
-                <Badge tone={selectedTheme.status === "published" ? "published" : "draft"}>
+                {selectedTheme.isActive ? (
+                  <Badge tone="active">Aktiv</Badge>
+                ) : null}
+                <Badge
+                  tone={
+                    selectedTheme.status === "published" ? "published" : "draft"
+                  }
+                >
                   {selectedTheme.status === "published" ? "Published" : "Draft"}
                 </Badge>
               </div>
@@ -846,7 +978,14 @@ export function ThemeManager({
             <PreviewToggle value={previewMode} onChange={setPreviewMode} />
           </div>
 
-          <ThemePreview colors={selectedColors} mode={previewMode} />
+          <details>
+            <summary className="cursor-pointer font-medium">
+              Rənglərin görünüşünə bax
+            </summary>
+            <div className="ra-theme-preview">
+              <ThemePreview colors={selectedColors} mode={previewMode} />
+            </div>
+          </details>
 
           <form
             key={selectedTheme.id}
@@ -854,7 +993,11 @@ export function ThemeManager({
             action={handleSaveColors}
             className="grid gap-5"
           >
-            <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
+            <input
+              type="hidden"
+              name="themeKey"
+              value={selectedTheme.themeKey}
+            />
             {colorFields.map((field) => (
               <input
                 key={field.key}
@@ -863,49 +1006,20 @@ export function ThemeManager({
                 value={selectedColors[field.key]}
               />
             ))}
-            <div className="grid gap-3">
+            <div>
               {colorControlGroups.map((group) => (
-                <div key={group.title} className="grid gap-3 rounded-lg border bg-background p-4">
-                  <div>
-                    <p className="text-sm font-black">{group.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                      {group.description}
-                    </p>
-                  </div>
-                  <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                    {group.choices.map((choice) => {
-                      const active = group.fields.every(
-                        (field) => selectedColors[field] === choice.value,
-                      );
-
-                      return (
-                        <button
-                          key={`${group.title}-${choice.value}`}
-                          type="button"
-                          disabled={isPending}
-                          onClick={() => updateColorSelection(group.fields, choice.value)}
-                          className={cn(
-                            "flex min-h-12 items-center gap-3 rounded-lg border bg-card px-3 py-2 text-left text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
-                            active
-                              ? "border-primary ring-2 ring-primary/20"
-                              : "border-border hover:border-primary/50",
-                          )}
-                        >
-                          <span
-                            className="size-7 shrink-0 rounded-md border shadow-inner"
-                            style={{
-                              backgroundColor: choice.value,
-                              borderColor:
-                                choice.value === "#ffffff" ? "#dbe3ea" : choice.value,
-                            }}
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0 flex-1 truncate">{choice.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <label key={group.title} className="ra-color-row">
+                  <span>{group.title}</span>
+                  <input
+                    type="color"
+                    aria-label={group.title}
+                    value={selectedColors[group.fields[0]]}
+                    disabled={isPending}
+                    onChange={(event) =>
+                      updateColorSelection(group.fields, event.target.value)
+                    }
+                  />
+                </label>
               ))}
             </div>
           </form>
@@ -936,7 +1050,9 @@ export function ThemeManager({
     if (activeSection === "product-cards") {
       return (
         <PresetCardGrid
-          fields={[{ key: "productCardPreset", title: "Məhsul kartı variantları" }]}
+          fields={[
+            { key: "productCardPreset", title: "Məhsul kartı variantları" },
+          ]}
           values={design}
           onChange={updateDesignValue}
         />
@@ -946,7 +1062,12 @@ export function ThemeManager({
     if (activeSection === "product-detail") {
       return (
         <PresetCardGrid
-          fields={[{ key: "productDetailPreset", title: "Məhsul səhifəsi variantları" }]}
+          fields={[
+            {
+              key: "productDetailPreset",
+              title: "Məhsul səhifəsi variantları",
+            },
+          ]}
           values={design}
           onChange={updateDesignValue}
         />
@@ -957,9 +1078,9 @@ export function ThemeManager({
       return (
         <PresetCardGrid
           fields={[
-            { key: "sellerPanelPreset", title: "Seller panel" },
-            { key: "customerPanelPreset", title: "Customer panel" },
-            { key: "adminPanelPreset", title: "Admin panel" },
+            { key: "sellerPanelPreset", title: "Satıcı paneli" },
+            { key: "customerPanelPreset", title: "Alıcı paneli" },
+            { key: "adminPanelPreset", title: "İdarəetmə paneli" },
           ]}
           values={design}
           onChange={updateDesignValue}
@@ -971,9 +1092,9 @@ export function ThemeManager({
       return (
         <PresetCardGrid
           fields={[
-            { key: "buttonPreset", title: "Button formaları" },
-            { key: "inputPreset", title: "Inputs" },
-            { key: "cardPreset", title: "Cards" },
+            { key: "buttonPreset", title: "Düymə formaları" },
+            { key: "inputPreset", title: "Məlumat xanaları" },
+            { key: "cardPreset", title: "Kartlar" },
           ]}
           values={design}
           onChange={updateDesignValue}
@@ -1010,94 +1131,135 @@ export function ThemeManager({
     );
   }
 
+  const advancedSection = !["theme", "colors"].includes(activeSection);
   return (
-    <div className="grid min-w-0 max-w-full gap-4 overflow-hidden">
-      <div className="sticky top-16 z-20 min-w-0 max-w-full overflow-hidden rounded-xl border bg-card/95 p-3 shadow-sm backdrop-blur">
-        <div className="grid min-w-0 gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-          <div className="min-w-0 max-w-full overflow-x-auto pb-1">
-            <div className="flex w-max gap-2">
-              {sectionTabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setActiveSection(tab.key)}
-                  className={cn(
-                    "rounded-full border px-3 py-2 text-sm font-semibold text-muted-foreground transition hover:border-primary/40 hover:text-foreground",
-                    activeSection === tab.key && "border-primary bg-primary text-primary-foreground",
-                  )}
-                >
+    <div className="grid min-w-0 gap-6">
+      <div className="ra-theme-controls">
+        <button
+          type="button"
+          aria-pressed={activeSection === "theme"}
+          onClick={() => setActiveSection("theme")}
+        >
+          Tema
+        </button>
+        <button
+          type="button"
+          aria-pressed={activeSection === "colors"}
+          onClick={() => setActiveSection("colors")}
+        >
+          Rənglər
+        </button>
+        <button
+          type="button"
+          aria-pressed={advancedSection}
+          onClick={() => setActiveSection("navbar")}
+        >
+          Əlavə ayarlar
+        </button>
+      </div>
+      {advancedSection && (
+        <label className="ra-field">
+          Nəyi dəyişmək istəyirsiniz?
+          <select
+            value={activeSection}
+            onChange={(event) =>
+              setActiveSection(event.target.value as DesignSection)
+            }
+          >
+            {sectionTabs
+              .filter((tab) => !["theme", "colors"].includes(tab.key))
+              .map((tab) => (
+                <option key={tab.key} value={tab.key}>
                   {tab.label}
-                </button>
+                </option>
               ))}
-            </div>
-          </div>
-
-          {activeSection === "colors" && selectedTheme ? (
-            <div className="grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-              <form action={handleResetColors} className="min-w-0">
-                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-                <Button type="submit" variant="outline" disabled={isPending} className="w-full sm:w-auto">
-                  <RotateCcw className="mr-2 size-4" aria-hidden="true" />
-                  Dəyişiklikləri sıfırla
+          </select>
+        </label>
+      )}
+      <div>{renderSection()}</div>
+      {activeSection === "colors" && selectedTheme && (
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" form={colorFormId} disabled={isPending}>
+            Rəngləri saxla
+          </Button>
+          <details>
+            <summary className="cursor-pointer py-3 text-sm text-muted-foreground">
+              Digər əməliyyatlar
+            </summary>
+            <div className="flex flex-wrap gap-3 py-3">
+              <form action={handleResetColors}>
+                <input
+                  type="hidden"
+                  name="themeKey"
+                  value={selectedTheme.themeKey}
+                />
+                <Button type="submit" variant="outline" disabled={isPending}>
+                  Standart rənglərə qayıt
                 </Button>
               </form>
+              <form action={handlePublish}>
+                <input
+                  type="hidden"
+                  name="themeKey"
+                  value={selectedTheme.themeKey}
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  disabled={isPending || selectedTheme.isActive}
+                >
+                  Temanı aktivləşdir
+                </Button>
+              </form>
+            </div>
+          </details>
+        </div>
+      )}
+      {advancedSection && (
+        <form
+          id="design-settings-form"
+          action={handleDesignSubmit}
+          className="grid gap-3"
+        >
+          {Object.entries(design).map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value} />
+          ))}
+          <Button
+            type="submit"
+            name="intent"
+            value="publish"
+            disabled={isPending}
+            className="w-fit"
+          >
+            Yadda saxla
+          </Button>
+          <details>
+            <summary className="cursor-pointer py-2 text-sm text-muted-foreground">
+              Digər əməliyyatlar
+            </summary>
+            <div className="flex flex-wrap gap-3 py-3">
               <Button
                 type="submit"
-                form={colorFormId}
-                variant="secondary"
-                disabled={isPending || !colorFormId}
-                className="w-full sm:w-auto"
+                name="intent"
+                value="draft"
+                variant="outline"
+                disabled={isPending}
               >
-                <Save className="mr-2 size-4" aria-hidden="true" />
-                Draft saxla
+                Qaralama saxla
               </Button>
-              <form action={handlePublish} className="min-w-0">
-                <input type="hidden" name="themeKey" value={selectedTheme.themeKey} />
-                <Button type="submit" disabled={isPending || selectedTheme.isActive} className="w-full sm:w-auto">
-                  <UploadCloud className="mr-2 size-4" aria-hidden="true" />
-                  {selectedTheme.isActive ? "Aktiv temadır" : "Publish"}
-                </Button>
-              </form>
+              <Button
+                type="submit"
+                name="intent"
+                value="reset"
+                variant="outline"
+                disabled={isPending}
+              >
+                Standart ayarlara qayıt
+              </Button>
             </div>
-          ) : (
-            <div className="min-w-0">
-              <form id="design-settings-form" action={handleDesignSubmit} className="grid min-w-0 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-                {Object.entries(design).map(([key, value]) => (
-                  <input key={key} type="hidden" name={key} value={value} />
-                ))}
-                <Button
-                  type="submit"
-                  name="intent"
-                  value="reset"
-                  variant="outline"
-                  disabled={isPending}
-                  className="w-full sm:w-auto"
-                >
-                  <RotateCcw className="mr-2 size-4" aria-hidden="true" />
-                  Dəyişiklikləri sıfırla
-                </Button>
-                <Button
-                  type="submit"
-                  name="intent"
-                  value="draft"
-                  variant="secondary"
-                  disabled={isPending}
-                  className="w-full sm:w-auto"
-                >
-                  <Save className="mr-2 size-4" aria-hidden="true" />
-                  Draft saxla
-                </Button>
-                <Button type="submit" name="intent" value="publish" disabled={isPending} className="w-full sm:w-auto">
-                  <UploadCloud className="mr-2 size-4" aria-hidden="true" />
-                  Publish
-                </Button>
-              </form>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="min-w-0 max-w-full overflow-hidden">{renderSection()}</div>
+          </details>
+        </form>
+      )}
     </div>
   );
 }

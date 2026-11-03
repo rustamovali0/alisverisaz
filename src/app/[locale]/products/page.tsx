@@ -1,7 +1,7 @@
 import { parseCatalogFilters } from "@/lib/catalog/filters";
 import type { Metadata } from "next";
 import { ProductMarketplace } from "@/components/cart/product-marketplace";
-import { getMarketplaceProductPage } from "@/lib/cart/data";
+import { getMarketplaceProductPage, getMarketplaceStoreOptions } from "@/lib/cart/data";
 import { getActiveHomeThemeSetting, getSiteSettings } from "@/lib/cms/data";
 import { getCategoryOptions } from "@/lib/products/data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -73,10 +73,11 @@ export default async function ProductsPage({
   setRequestLocale(locale);
   const t = await getTranslations("marketplace");
   const common = await getTranslations("common");
-  const [categories, siteSettings, activeTheme] = await Promise.all([
+  const [categories, siteSettings, activeTheme, stores] = await Promise.all([
     getCategoryOptions(),
     getSiteSettings(),
     getActiveHomeThemeSetting(),
+    getMarketplaceStoreOptions().catch(() => []),
   ]);
   const selectedCategory = categories.find(
     (category) =>
@@ -95,8 +96,10 @@ export default async function ProductsPage({
   } catch {
     filterError = "Qiymət aralığını düzgün daxil edin.";
   }
+  const selectedStoreId = stores.find((store) => store.id === search?.storeId)?.id;
   const productPage = await getMarketplaceProductPage(locale, {
     filters,
+    storeId: selectedStoreId,
     categoryId: selectedCategory?.id,
     categoryIds: getDescendantCategoryIds(categories, selectedCategory?.id),
     searchQuery: search?.q,
@@ -108,6 +111,7 @@ export default async function ProductsPage({
     <ProductMarketplace
       key={JSON.stringify({
         category: selectedCategory?.id,
+        store: selectedStoreId,
         query: search?.q,
         sort: search?.sort,
         filters,
@@ -118,15 +122,20 @@ export default async function ProductsPage({
       nextCursor={productPage.nextCursor}
       hasMore={productPage.hasMore}
       categories={categories}
+      stores={stores}
+      selectedStoreId={selectedStoreId}
       selectedCategoryId={selectedCategory?.id}
       locale={locale}
       searchQuery={search?.q}
       sort={
         search?.sort === "oldest" ||
         search?.sort === "price_asc" ||
-        search?.sort === "price_desc"
+        search?.sort === "price_desc" ||
+        search?.sort === "discount" ||
+        search?.sort === "relevance" ||
+        search?.sort === "newest"
           ? search.sort
-          : "newest"
+          : search?.q?.trim() ? "relevance" : "newest"
       }
       productCardVariant={activeTheme.productCardVariant}
       footer={{

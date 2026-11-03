@@ -15,7 +15,7 @@ export default async function AdminThemesPage() {
   return (
     <DashboardPanel
       title="Dizayn"
-      description="Global tema, navbar, homepage, product card/detail və panel presetlərini idarə edin."
+      description="Saytın temasını seçin, rəngləri və görünüş ayarlarını dəyişin."
     >
       <ThemeManager themes={themes} siteSettings={siteSettings} />
     </DashboardPanel>

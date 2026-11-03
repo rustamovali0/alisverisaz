@@ -1,3 +1,4 @@
+import { StorePolicies } from "@/components/storefront/store-policies";
 import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Pencil, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -454,6 +455,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                 </Link>
               </Button>
             ) : null}
+            <div className="mt-4 empty:hidden"><StorePolicies policies={detail.store.policies} /></div>
             {!isStoreOwner ? (
               <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-4 rounded-xl p-3"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
                 <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">

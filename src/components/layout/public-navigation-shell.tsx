@@ -13,6 +13,7 @@ import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 
 type PublicNavigationShellProps = {
+  headerItems?: import("@/lib/cms/types").ManagedNavigationItem[];
   children: ReactNode;
   siteName?: string;
   logoUrl?: string;
@@ -71,6 +72,7 @@ function isProductDetailPath(pathname: string) {
 }
 
 export function PublicNavigationShell({
+  headerItems,
   children,
   siteName,
   logoUrl,
@@ -125,6 +127,7 @@ export function PublicNavigationShell({
       <PendingFavoritesSync />
       {showNavigation ? (
         <MarketplaceHeader
+          headerItems={headerItems}
           siteName={
             isIsolatedStorefront && activeStore ? activeStore.name : siteName
           }

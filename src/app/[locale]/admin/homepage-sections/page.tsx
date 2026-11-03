@@ -19,7 +19,7 @@ export default async function AdminHomepageSectionsPage() {
   return (
     <DashboardPanel
       title="Ana səhifə bölmələri"
-      description="Bölmələri aktiv/deaktiv edin, mətnləri dəyişin və drag-and-drop ilə sıranı idarə edin."
+      description="Ana səhifənin bannerini, kateqoriyalarını və seçilmiş mağazalarını idarə edin."
     >
       <HomepageSectionsManager
         sections={sections}

@@ -1,5 +1,6 @@
 "use server";
 
+import { promotionDuration, promotionEnd } from "@/lib/promotions/duration";
 import { revalidatePath } from "next/cache";
 
 import { recordAdminAudit } from "@/lib/admin/audit";
@@ -269,6 +270,9 @@ export async function createAdminPromotionAction(
   const storeId = readString(formData, "storeId");
   const productId = readString(formData, "productId");
   const adminNote = readString(formData, "adminNote").slice(0, 600) || null;
+  const duration = promotionDuration(readString(formData,"durationUnit") || "lifetime",readString(formData,"durationAmount"));
+  if(!duration) return {ok:false,message:"Müddət 1–90 gün və ya 1–3 ay olmalıdır."};
+
 
   if (!targetType || !UUID_PATTERN.test(storeId)) {
     return {
@@ -293,6 +297,7 @@ export async function createAdminPromotionAction(
     .eq("target_type", targetType)
     .eq("store_id", storeId)
     .eq("status", "approved")
+    .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
     .limit(1);
 
   activeQuery =
@@ -319,18 +324,18 @@ export async function createAdminPromotionAction(
       store_id: storeId,
       product_id: targetType === "product" ? resolved.product!.id : null,
       status: "approved",
-      requested_days: 1,
+      requested_days: duration.days,
       daily_price_amount: 0,
       total_amount: 0,
       currency: "AZN",
       starts_at: startsAt.toISOString(),
-      ends_at: null,
+      ends_at: duration.lifetime ? null : promotionEnd(startsAt,duration.days),
       approved_by: current.user.id,
       approved_at: startsAt.toISOString(),
-      admin_note: adminNote || "RAdmin tərəfindən ömürlük önə çıxarıldı.",
+      admin_note: adminNote || `RAdmin tərəfindən ${duration.label.toLocaleLowerCase("az-AZ")} önə çıxarıldı.`,
       metadata: {
-        source: "radmin_lifetime",
-        lifetime: true,
+        source: "radmin",
+        lifetime: duration.lifetime,
         product_name: resolved.product?.name ?? null,
       },
     })
@@ -357,7 +362,7 @@ export async function createAdminPromotionAction(
 
   return {
     ok: true,
-    message: "Ömürlük önə çıxarma aktiv edildi.",
+    message: `${duration.label} önə çıxarma aktiv edildi.`,
   };
 }
 
@@ -393,22 +398,25 @@ export async function approvePromotionRequestAction(
 
   const startsAt = new Date();
   const supabase = createSupabaseAdminClient();
-  const { error } = await (supabase as any)
+  const { data, error } = await (supabase as any)
     .from("promotion_requests")
     .update({
       status: "approved",
       starts_at: startsAt.toISOString(),
-      ends_at: null,
+      ends_at: promotionEnd(startsAt, request.requestedDays),
       approved_by: current.user.id,
       approved_at: startsAt.toISOString(),
-      admin_note: adminNote || "Admin təsdiqi ilə ömürlük aktiv edildi.",
+      admin_note: adminNote || `Admin təsdiqi ilə ${request.requestedDays} günlük aktiv edildi.`,
     })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
+  if (error || !data) {
     return {
       ok: false,
-      message: error.message,
+      message: error?.message ?? "Sorğunun vəziyyəti dəyişib. Siyahını yeniləyin.",
     };
   }
 

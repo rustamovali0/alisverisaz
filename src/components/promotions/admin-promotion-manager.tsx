@@ -1,6 +1,14 @@
 "use client";
 
-import { BadgePlus, Check, Crown, Package, Store, Trash2, X } from "lucide-react";
+import {
+  BadgePlus,
+  Check,
+  Crown,
+  Package,
+  Store,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -41,16 +49,25 @@ function formatMoney(value: number, currency = "AZN") {
 
 function formatDate(value: string | null) {
   if (!value) {
-    return "Ömürlük";
+    return "—";
   }
 
   return new Intl.DateTimeFormat("az-AZ", {
-    dateStyle: "medium",
-    timeStyle: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Baku",
   }).format(new Date(value));
 }
 
-function statusLabel(status: PromotionRequest["status"]) {
+function statusLabel(
+  status: PromotionRequest["status"],
+  endsAt?: string | null,
+) {
+  if (status === "approved" && endsAt && Date.parse(endsAt) <= Date.now())
+    return "Müddət bitib";
   if (status === "approved") return "Aktiv";
   if (status === "rejected") return "Rədd edildi";
   if (status === "canceled") return "Ləğv edildi";
@@ -110,14 +127,16 @@ function DeletePromotionButton({ request }: { request: PromotionRequest }) {
 
   function handleDelete() {
     startTransition(async () => {
-      const target = request.targetType === "store"
-        ? request.storeName
-        : request.productName ?? "Məhsul";
+      const target =
+        request.targetType === "store"
+          ? request.storeName
+          : (request.productName ?? "Məhsul");
       const confirmed = await appAlert.confirm({
         title: "Önə çıxarma qeydi silinsin?",
-        message: request.status === "approved"
-          ? `“${target}” artıq önə çıxarılmayacaq və qeyd siyahıdan silinəcək.`
-          : `“${target}” üçün bu qeyd siyahıdan silinəcək.`,
+        message:
+          request.status === "approved"
+            ? `“${target}” artıq önə çıxarılmayacaq və qeyd siyahıdan silinəcək.`
+            : `“${target}” üçün bu qeyd siyahıdan silinəcək.`,
         confirmText: "Sil",
         cancelText: "Ləğv et",
         variant: "danger",
@@ -136,7 +155,13 @@ function DeletePromotionButton({ request }: { request: PromotionRequest }) {
   }
 
   return (
-    <Button type="button" size="sm" variant="destructive" disabled={isPending} onClick={handleDelete}>
+    <Button
+      type="button"
+      size="sm"
+      variant="destructive"
+      disabled={isPending}
+      onClick={handleDelete}
+    >
       <Trash2 className="mr-2 size-4" aria-hidden="true" />
       {isPending ? "Silinir" : "Sil"}
     </Button>
@@ -150,6 +175,7 @@ function AdminDirectPromotionForm({
   stores: StoreOption[];
   products: ManagedProduct[];
 }) {
+  const [durationUnit, setDurationUnit] = useState("lifetime");
   const [targetType, setTargetType] = useState<PromotionTargetType>("store");
   const [storeId, setStoreId] = useState(stores[0]?.id ?? "");
   const [isPending, startTransition] = useTransition();
@@ -175,8 +201,11 @@ function AdminDirectPromotionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 rounded-xl border bg-background p-4">
-      <div className="grid gap-2 md:grid-cols-[220px_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+    <form
+      onSubmit={handleSubmit}
+      className="grid gap-4 rounded-xl border bg-background p-4"
+    >
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 md:items-end">
         <div className="grid gap-2">
           <span className="text-sm font-black">Tip</span>
           <div className="grid grid-cols-2 gap-2">
@@ -244,9 +273,36 @@ function AdminDirectPromotionForm({
           <input type="hidden" name="productId" value="" />
         )}
 
+        <label className="grid gap-2 text-sm font-semibold">
+          Müddət
+          <select
+            name="durationUnit"
+            value={durationUnit}
+            onChange={(e) => setDurationUnit(e.target.value)}
+            className="min-h-11 rounded-lg border bg-card px-3"
+          >
+            <option value="lifetime">Ömürlük</option>
+            <option value="days">Günlə</option>
+            <option value="months">Ayla (30 gün)</option>
+          </select>
+        </label>
+        {durationUnit !== "lifetime" && (
+          <label className="grid gap-2 text-sm font-semibold">
+            {durationUnit === "months" ? "Ay sayı" : "Gün sayı"}
+            <input
+              name="durationAmount"
+              type="number"
+              min="1"
+              max={durationUnit === "months" ? 3 : 90}
+              defaultValue={1}
+              required
+              className="min-h-11 rounded-lg border bg-card px-3"
+            />
+          </label>
+        )}
         <Button type="submit" disabled={isPending || stores.length === 0}>
           <BadgePlus className="mr-2 size-4" aria-hidden="true" />
-          {isPending ? "Aktiv edilir" : "Ömürlük önə çıxar"}
+          {isPending ? "Aktiv edilir" : "Önə çıxar"}
         </Button>
       </div>
     </form>
@@ -258,24 +314,50 @@ export function AdminPromotionManager({
   products,
   requests,
 }: AdminPromotionManagerProps) {
+  const [filter, setFilter] = useState(
+    requests.some((r) => r.status === "pending") ? "pending" : "all",
+  );
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+  const visible = requests.filter(
+    (r) => filter === "all" || r.status === filter,
+  );
   return (
     <div className="grid gap-4">
       <AdminDirectPromotionForm stores={stores} products={products} />
 
-      {requests.length === 0 ? (
+      <div className="ra-theme-controls">
+        {[
+          ["pending", `İstəklər (${pendingCount})`],
+          ["approved", "Təsdiqlənmiş"],
+          ["all", "Hamısı"],
+        ].map(([value, label]) => (
+          <button
+            type="button"
+            key={value}
+            aria-pressed={filter === value}
+            onClick={() => setFilter(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {visible.length === 0 ? (
         <div className="rounded-xl border bg-background p-8 text-sm text-muted-foreground">
           Hələ önə çıxarma sorğusu yoxdur.
         </div>
       ) : null}
 
-      {requests.map((request) => (
-        <article key={request.id} className="rounded-xl border bg-background p-4">
+      {visible.map((request) => (
+        <article
+          key={request.id}
+          className="rounded-xl border bg-background p-4"
+        >
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-700">
                   <Crown className="size-3.5" aria-hidden="true" />
-                  {statusLabel(request.status)}
+                  {statusLabel(request.status, request.endsAt)}
                 </span>
                 <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold">
                   {request.targetType === "store" ? "Mağaza" : "Məhsul"}
@@ -284,13 +366,16 @@ export function AdminPromotionManager({
               <h3 className="break-words text-base font-black">
                 {request.targetType === "store"
                   ? request.storeName
-                  : request.productName ?? "Məhsul"}
+                  : (request.productName ?? "Məhsul")}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Mağaza: {request.storeName}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Satıcı: {request.requesterName ?? request.requesterEmail ?? request.requesterId}
+                Satıcı:{" "}
+                {request.requesterName ??
+                  request.requesterEmail ??
+                  request.requesterId}
               </p>
               <p className="mt-2 text-sm font-black">
                 {request.status === "approved" && !request.endsAt
@@ -300,9 +385,20 @@ export function AdminPromotionManager({
               <div className="mt-3 grid gap-1 text-xs text-muted-foreground">
                 <span>Yaradıldı: {formatDate(request.createdAt)}</span>
                 <span>Başlama: {formatDate(request.startsAt)}</span>
-                <span>Bitmə: {formatDate(request.endsAt)}</span>
-                {request.sellerNote ? <span>Satıcı qeydi: {request.sellerNote}</span> : null}
-                {request.adminNote ? <span>Admin qeydi: {request.adminNote}</span> : null}
+                <span>
+                  Bitmə:{" "}
+                  {request.endsAt
+                    ? formatDate(request.endsAt)
+                    : request.status === "approved"
+                      ? "Ömürlük"
+                      : "Təsdiqdən sonra"}
+                </span>
+                {request.sellerNote ? (
+                  <span>Satıcı qeydi: {request.sellerNote}</span>
+                ) : null}
+                {request.adminNote ? (
+                  <span>Admin qeydi: {request.adminNote}</span>
+                ) : null}
               </div>
             </div>
 

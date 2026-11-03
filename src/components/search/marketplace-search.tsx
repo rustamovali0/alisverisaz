@@ -2,18 +2,32 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, PackageSearch, Search, Store, TrendingUp, X } from "lucide-react";
+import {
+  ArrowRight,
+  PackageSearch,
+  Search,
+  Store,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
-import type { CartProduct, MarketplaceProductPage, MarketplaceStore } from "@/lib/cart/types";
+import type {
+  CartProduct,
+  MarketplaceProductPage,
+  MarketplaceStore,
+} from "@/lib/cart/types";
+import type { CategoryOption } from "@/lib/products/types";
 import { cn } from "@/lib/utils";
 import { getStorePath } from "@/lib/config/domains";
+import { normalizeSearchText as normalize } from "@/lib/search/relevance";
 import { buildMarketplaceSearchHref } from "@/lib/search/navigation";
 
 type MarketplaceSearchProps = {
   stores: MarketplaceStore[];
+  categories?: CategoryOption[];
   defaultValue?: string;
   className?: string;
   inputClassName?: string;
@@ -33,7 +47,7 @@ type SearchSuggestion = {
   key: string;
   label: string;
   description: string;
-  type: "store" | "product";
+  type: "store" | "product" | "category";
   href?: string;
   imageUrl?: string | null;
 };
@@ -41,14 +55,6 @@ type SearchSuggestion = {
 const SEARCH_SYNC_EVENT = "alisveris-marketplace-search-sync";
 const SEARCH_SYNC_STORAGE_KEY = "alisveris_marketplace_search_query";
 const SEARCH_SCROLL_OFFSET = 110;
-
-function normalize(value: string) {
-  return value
-    .toLocaleLowerCase("az-AZ")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
 
 function suggestionIcon(type: SearchSuggestion["type"]) {
   if (type === "store") {
@@ -69,8 +75,14 @@ function scrollToResultsAnchor(anchorId: string) {
     return;
   }
 
-  const header = document.querySelector<HTMLElement>("[data-storefront-header], .marketplace-header");
-  const offset = Math.max(header?.offsetHeight ?? SEARCH_SCROLL_OFFSET, SEARCH_SCROLL_OFFSET) + 18;
+  const header = document.querySelector<HTMLElement>(
+    "[data-storefront-header], .marketplace-header",
+  );
+  const offset =
+    Math.max(
+      header?.offsetHeight ?? SEARCH_SCROLL_OFFSET,
+      SEARCH_SCROLL_OFFSET,
+    ) + 18;
   const top = element.getBoundingClientRect().top + window.scrollY - offset;
 
   window.scrollTo({
@@ -108,6 +120,7 @@ function scheduleScrollToResultsAnchor(anchorId: string) {
 
 export function MarketplaceSearch({
   stores,
+  categories = [],
   defaultValue = "",
   className,
   inputClassName,
@@ -130,10 +143,13 @@ export function MarketplaceSearch({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchInputId = useId();
+  const suggestionListId = useId();
+  const [activeSuggestion, setActiveSuggestion] = useState<string | null>(null);
   const resolvedButtonLabel = buttonLabel ?? common("search");
   const normalizedQuery = useMemo(() => normalize(query), [query]);
   const selectedStore = useMemo(
-    () => (storeSlug ? stores.find((store) => store.slug === storeSlug) : undefined),
+    () =>
+      storeSlug ? stores.find((store) => store.slug === storeSlug) : undefined,
     [storeSlug, stores],
   );
   const syncScope = storeSlug ? `store:${storeSlug}` : "marketplace";
@@ -141,7 +157,10 @@ export function MarketplaceSearch({
   const trimmedQuery = query.trim();
   const [debouncedQuery, setDebouncedQuery] = useState(trimmedQuery);
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedQuery(trimmedQuery), 180);
+    const timeout = window.setTimeout(
+      () => setDebouncedQuery(trimmedQuery),
+      180,
+    );
     return () => window.clearTimeout(timeout);
   }, [trimmedQuery]);
   const popularQuery = useQuery({
@@ -153,23 +172,45 @@ export function MarketplaceSearch({
       return response.json();
     },
   });
-  const popularSearches = (popularQuery.data?.searches ?? []).filter(term => typeof term === "string").slice(0, 4);
-  const canSearch = isFocused && normalizedQuery.length >= 2 && (!storeSlug || Boolean(selectedStore));
+  const popularSearches = (popularQuery.data?.searches ?? [])
+    .filter((term) => typeof term === "string")
+    .slice(0, 4);
+  const canSearch =
+    isFocused &&
+    normalizedQuery.length >= 2 &&
+    (!storeSlug || Boolean(selectedStore));
   const suggestionsQuery = useQuery({
-    queryKey: ["marketplace-search", locale, debouncedQuery, selectedStore?.id ?? ""],
+    queryKey: [
+      "marketplace-search",
+      locale,
+      debouncedQuery,
+      selectedStore?.id ?? "",
+    ],
     enabled: canSearch && debouncedQuery === trimmedQuery,
     queryFn: async ({ signal }): Promise<MarketplaceProductPage> => {
-      const params = new URLSearchParams({ q: debouncedQuery, locale, limit: "6" });
+      const params = new URLSearchParams({
+        q: debouncedQuery,
+        locale,
+        limit: "6",
+      });
       if (selectedStore?.id) params.set("storeId", selectedStore.id);
-      const response = await fetch(`/api/marketplace/products?${params}`, { signal });
+      const response = await fetch(`/api/marketplace/products?${params}`, {
+        signal,
+      });
       if (!response.ok) throw new Error("SEARCH_FAILED");
       return response.json();
     },
   });
-  const remoteProducts: CartProduct[] | null = storeSlug && !selectedStore
-    ? []
-    : debouncedQuery !== trimmedQuery ? null : suggestionsQuery.data?.products ?? (suggestionsQuery.isError ? [] : null);
-  const isSearching = canSearch && (debouncedQuery !== trimmedQuery || suggestionsQuery.isFetching);
+  const remoteProducts: CartProduct[] | null =
+    storeSlug && !selectedStore
+      ? []
+      : debouncedQuery !== trimmedQuery
+        ? null
+        : (suggestionsQuery.data?.products ??
+          (suggestionsQuery.isError ? [] : null));
+  const isSearching =
+    canSearch &&
+    (debouncedQuery !== trimmedQuery || suggestionsQuery.isFetching);
 
   function syncSearchQuery(value: string) {
     if (typeof window === "undefined") {
@@ -191,9 +232,11 @@ export function MarketplaceSearch({
   }
 
   const suggestionGroups = useMemo(() => {
-    const scopedStores = storeSlug ? stores.filter((store) => store.slug === storeSlug) : stores;
+    const scopedStores = storeSlug
+      ? stores.filter((store) => store.slug === storeSlug)
+      : stores;
     if (!normalizedQuery) {
-      return { stores: [], products: [] };
+      return { stores: [], products: [], categories: [] };
     }
 
     const storeSuggestions: SearchSuggestion[] = storeSlug
@@ -206,33 +249,74 @@ export function MarketplaceSearch({
             href: getStorePath(store.slug),
             type: "store",
             label: store.name,
-            description: marketplace("productCount", { count: store.productCount }),
+            description: marketplace("productCount", {
+              count: store.productCount,
+            }),
             imageUrl: store.logoUrl,
           }));
-    const searchProducts = remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
-    const productSuggestions: SearchSuggestion[] = searchProducts.map((product) => {
-      const productStore = scopedStores.find((store) => store.id === product.storeId);
-      const productStoreName = product.storeName ?? productStore?.name ?? marketplace("store");
+    const searchProducts =
+      remoteProducts ?? scopedStores.flatMap((store) => store.sampleProducts);
+    const productSuggestions: SearchSuggestion[] = searchProducts.map(
+      (product) => {
+        const productStore = scopedStores.find(
+          (store) => store.id === product.storeId,
+        );
+        const productStoreName =
+          product.storeName ?? productStore?.name ?? marketplace("store");
 
-      return {
-        key: `product-${product.id}`,
-        type: "product" as const,
-        label: product.name,
-        description: productStoreName,
-        imageUrl: product.imageUrl,
-      };
-    });
+        return {
+          key: `product-${product.id}`,
+          type: "product" as const,
+          href:
+            product.storeSlug && !storeSlug
+              ? `${getStorePath(product.storeSlug)}/products/${encodeURIComponent(product.slug)}`
+              : undefined,
+          label: product.name,
+          description: productStoreName,
+          imageUrl: product.imageUrl,
+        };
+      },
+    );
 
     return {
       stores: storeSuggestions,
+      categories: storeSlug
+        ? []
+        : categories
+            .filter((category) =>
+              normalize(category.name).includes(normalizedQuery),
+            )
+            .slice(0, 4)
+            .map((category): SearchSuggestion => ({
+              key: `category-${category.id}`,
+              type: "category",
+              label: category.name,
+              description: marketplace("category"),
+              href: `/products?category=${encodeURIComponent(category.slug)}`,
+            })),
       products: productSuggestions
-        .filter((suggestion) => normalize(suggestion.label).includes(normalizedQuery))
+        .filter(
+          (suggestion) =>
+            remoteProducts ||
+            normalize(suggestion.label).includes(normalizedQuery),
+        )
         .slice(0, 6),
     };
-  }, [marketplace, normalizedQuery, remoteProducts, storeSlug, stores]);
+  }, [
+    categories,
+    marketplace,
+    normalizedQuery,
+    remoteProducts,
+    storeSlug,
+    stores,
+  ]);
 
   const suggestions = useMemo(
-    () => [...suggestionGroups.stores, ...suggestionGroups.products],
+    () => [
+      ...suggestionGroups.categories,
+      ...suggestionGroups.stores,
+      ...suggestionGroups.products,
+    ],
     [suggestionGroups],
   );
 
@@ -260,7 +344,9 @@ export function MarketplaceSearch({
 
   useEffect(() => {
     function handleSearchSync(event: Event) {
-      const detail = (event as CustomEvent<{ query?: unknown; scope?: unknown }>).detail;
+      const detail = (
+        event as CustomEvent<{ query?: unknown; scope?: unknown }>
+      ).detail;
 
       if (detail?.scope !== syncScope || typeof detail.query !== "string") {
         return;
@@ -271,9 +357,9 @@ export function MarketplaceSearch({
 
     window.addEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
 
-    return () => window.removeEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
+    return () =>
+      window.removeEventListener(SEARCH_SYNC_EVENT, handleSearchSync);
   }, [syncScope]);
-
 
   function recordSearch(value: string) {
     const term = value.trim();
@@ -292,8 +378,13 @@ export function MarketplaceSearch({
 
   function submitSearch(value: string) {
     const searchQuery = value.trim();
-    const baseHref = searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
-    const nextHref = buildMarketplaceSearchHref(baseHref, searchQuery, resultsAnchorId);
+    const baseHref =
+      searchBaseHref ?? (storeSlug ? `/${storeSlug}` : "/products");
+    const nextHref = buildMarketplaceSearchHref(
+      baseHref,
+      searchQuery,
+      resultsAnchorId,
+    );
 
     setQuery(searchQuery);
     syncSearchQuery(searchQuery);
@@ -334,8 +425,12 @@ export function MarketplaceSearch({
   }
 
   const showPopularSearches =
-    canShowPopularSearches && isFocused && !query.trim() && popularSearches.length > 0;
-  const showSuggestions = isFocused && query.trim().length > 0 && suggestions.length > 0;
+    canShowPopularSearches &&
+    isFocused &&
+    !query.trim() &&
+    popularSearches.length > 0;
+  const showSuggestions =
+    isFocused && query.trim().length > 0 && suggestions.length > 0;
   const showNoResults =
     isFocused &&
     normalizedQuery.length >= 2 &&
@@ -363,10 +458,25 @@ export function MarketplaceSearch({
       }}
     >
       <div className="relative min-w-0 flex-1">
-        <label className="sr-only" htmlFor={searchInputId}>{common("search")}</label>
-        <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <label className="sr-only" htmlFor={searchInputId}>
+          {common("search")}
+        </label>
+        <Search
+          className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
         <input
           id={searchInputId}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={showSuggestions}
+          aria-controls={showSuggestions ? suggestionListId : undefined}
+          aria-activedescendant={
+            showSuggestions &&
+            suggestions.some(({ key }) => key === activeSuggestion)
+              ? `${suggestionListId}-${activeSuggestion}`
+              : undefined
+          }
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
@@ -385,6 +495,7 @@ export function MarketplaceSearch({
           value={query}
           onChange={(event) => {
             setIsFocused(true);
+            setActiveSuggestion(null);
             setQuery(event.target.value);
             syncSearchQuery(event.target.value);
           }}
@@ -392,7 +503,28 @@ export function MarketplaceSearch({
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               setIsFocused(false);
+              setActiveSuggestion(null);
               event.stopPropagation();
+              return;
+            }
+            if (!showSuggestions) return;
+            const index = suggestions.findIndex(
+              ({ key }) => key === activeSuggestion,
+            );
+            if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+              event.preventDefault();
+              const next =
+                event.key === "ArrowDown"
+                  ? (index + 1) % suggestions.length
+                  : index <= 0
+                    ? suggestions.length - 1
+                    : index - 1;
+              setActiveSuggestion(suggestions[next].key);
+            }
+            if (event.key === "Enter" && index >= 0) {
+              event.preventDefault();
+              selectSuggestion(suggestions[index]);
+              setActiveSuggestion(null);
             }
           }}
         />
@@ -414,7 +546,8 @@ export function MarketplaceSearch({
         className={cn(
           stackOnMobile && "w-auto shrink-0 sm:w-auto",
           compactActions && "!size-11 !min-w-11 !max-w-11 shrink-0 p-0",
-          compactActions && "text-white [&>svg]:block [&>svg]:shrink-0 [&>svg]:stroke-white",
+          compactActions &&
+            "text-white [&>svg]:block [&>svg]:shrink-0 [&>svg]:stroke-white",
           buttonClassName,
         )}
         onPointerDown={(event) => {
@@ -425,17 +558,27 @@ export function MarketplaceSearch({
         }}
         aria-label={resolvedButtonLabel}
       >
-        {compactActions ? <Search className="size-5 stroke-[2.4]" aria-hidden="true" /> : resolvedButtonLabel}
+        {compactActions ? (
+          <Search className="size-5 stroke-[2.4]" aria-hidden="true" />
+        ) : (
+          resolvedButtonLabel
+        )}
         {!compactActions && buttonSize === "lg" ? (
           <ArrowRight className="ml-2 size-4" aria-hidden="true" />
         ) : null}
       </Button>
-      {showPopularSearches || showSuggestions || showNoResults ? (
+      {showPopularSearches ||
+      showSuggestions ||
+      showNoResults ||
+      isSearching ? (
         <div className="absolute left-0 top-[calc(100%+8px)] z-[90] max-h-[min(24rem,55dvh)] w-full max-w-full overflow-y-auto overscroll-contain rounded-lg border bg-popover p-1 text-popover-foreground shadow-xl">
           {showPopularSearches ? (
             <div className="border-b px-3 py-3 last:border-b-0">
               <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                <TrendingUp className="size-4 text-primary" aria-hidden="true" />
+                <TrendingUp
+                  className="size-4 text-primary"
+                  aria-hidden="true"
+                />
                 {marketplace("popularSearches")}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -454,12 +597,28 @@ export function MarketplaceSearch({
             </div>
           ) : null}
           {showSuggestions ? (
-            <div className="py-1">
+            <div
+              id={suggestionListId}
+              role="listbox"
+              aria-label={common("search")}
+              className="py-1"
+            >
+              {suggestionGroups.categories.length > 0 && (
+                <SearchSuggestionGroup
+                  label={marketplace("category")}
+                  suggestions={suggestionGroups.categories}
+                  onSelect={selectSuggestion}
+                  listId={suggestionListId}
+                  activeKey={activeSuggestion}
+                />
+              )}
               {suggestionGroups.stores.length > 0 ? (
                 <SearchSuggestionGroup
                   label={marketplace("stores")}
                   suggestions={suggestionGroups.stores}
                   onSelect={selectSuggestion}
+                  listId={suggestionListId}
+                  activeKey={activeSuggestion}
                 />
               ) : null}
               {suggestionGroups.products.length > 0 ? (
@@ -467,9 +626,19 @@ export function MarketplaceSearch({
                   label={common("products")}
                   suggestions={suggestionGroups.products}
                   onSelect={selectSuggestion}
+                  listId={suggestionListId}
+                  activeKey={activeSuggestion}
                 />
               ) : null}
             </div>
+          ) : null}
+          {isSearching && !showSuggestions ? (
+            <p
+              role="status"
+              className="px-4 py-3 text-sm text-muted-foreground"
+            >
+              {marketplace("loadingMore")}
+            </p>
           ) : null}
           {showNoResults ? (
             <div className="px-4 py-5 text-center text-sm text-muted-foreground">
@@ -486,30 +655,55 @@ function SearchSuggestionGroup({
   label,
   suggestions,
   onSelect,
+  listId,
+  activeKey,
 }: {
   label: string;
+  listId: string;
+  activeKey: string | null;
   suggestions: SearchSuggestion[];
   onSelect: (suggestion: SearchSuggestion) => void;
 }) {
   return (
-    <section className="border-b px-1 py-1 last:border-b-0">
-      <p className="px-2 pb-1 pt-1 text-xs font-semibold text-muted-foreground">{label}</p>
+    <section
+      role="group"
+      aria-label={label}
+      className="border-b px-1 py-1 last:border-b-0"
+    >
+      <p className="px-2 pb-1 pt-1 text-xs font-semibold text-muted-foreground">
+        {label}
+      </p>
       {suggestions.map((suggestion) => (
         <button
           key={suggestion.key}
+          id={`${listId}-${suggestion.key}`}
+          role="option"
+          aria-selected={activeKey === suggestion.key}
+          tabIndex={-1}
           type="button"
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition md:hover:bg-muted"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm transition aria-selected:bg-muted md:hover:bg-muted"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => onSelect(suggestion)}
         >
           <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-lg bg-primary/10 ring-1 ring-slate-200/70 dark:ring-slate-700">
             {suggestion.imageUrl ? (
-              <img src={suggestion.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-            ) : suggestionIcon(suggestion.type)}
+              <img
+                src={suggestion.imageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              suggestionIcon(suggestion.type)
+            )}
           </span>
           <span className="min-w-0">
-            <span className="block truncate font-semibold">{suggestion.label}</span>
-            <span className="block truncate text-xs text-muted-foreground">{suggestion.description}</span>
+            <span className="block truncate font-semibold">
+              {suggestion.label}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {suggestion.description}
+            </span>
           </span>
         </button>
       ))}

@@ -1,4 +1,8 @@
 "use client";
+import {
+  heroPresentation,
+  homepageVisibilityClass,
+} from "@/lib/cms/home-presentation";
 import { useMarketplaceText } from "@/i18n/marketplace-copy";
 import { useState } from "react";
 import {
@@ -13,18 +17,15 @@ import {
   Store,
   Truck,
 } from "lucide-react";
-import {
-  ProductGrid,
-  InfiniteProductGrid,
-} from "@/components/cart/product-marketplace";
+import { ProductGrid } from "@/components/cart/product-marketplace";
 import { getCategoryImage } from "@/lib/categories/images";
 import { getCategoryIcon } from "@/components/categories/category-icons";
 import { OptimizedImage } from "@/components/common/optimized-image";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Link } from "@/i18n/navigation";
 import { getStorePath } from "@/lib/config/domains";
-import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
-import type { CartProduct, MarketplaceStore } from "@/lib/cart/types";
+import type { getHomepageProductSections } from "@/lib/home/product-sections";
+import type { MarketplaceStore } from "@/lib/cart/types";
 import type { HomepageSection, SiteSettings } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 import type { AuthRole } from "@/lib/auth/types";
@@ -35,9 +36,7 @@ type HomeExperienceProps = {
   activeTheme: string;
   themeConfig?: Record<string, unknown>;
   stores: MarketplaceStore[];
-  products: CartProduct[];
-  productNextCursor?: string | null;
-  productHasMore?: boolean;
+  productSections: ReturnType<typeof getHomepageProductSections>;
   categories: CategoryOption[];
   popularSearches?: string[];
   title: string;
@@ -105,10 +104,7 @@ function LiveStoreCard({ store }: { store: MarketplaceStore }) {
       </Link>
       <div className="live-store-body">
         <Link href={getStorePath(store.slug)}>
-          <h3>
-            {store.name}
-            <ShieldCheck size={15} />
-          </h3>
+          <h3>{store.name}</h3>
         </Link>
         <p>{store.description || text("Seçilmiş məhsulların ünvanı")}</p>
         <div>
@@ -128,13 +124,10 @@ function LiveStoreCard({ store }: { store: MarketplaceStore }) {
   );
 }
 export function HomeExperience({
-  locale,
   siteSettings,
   sections,
   stores,
-  products,
-  productNextCursor,
-  productHasMore,
+  productSections,
   categories,
   initialRole,
 }: HomeExperienceProps) {
@@ -158,22 +151,9 @@ export function HomeExperience({
     0,
     Math.min(categorySection?.itemLimit || 8, 16),
   );
-  const featuredProducts = [...products]
-    .sort((a, b) => Number(!!b.isPromoted) - Number(!!a.isPromoted))
-    .slice(0, 5);
-  const offer = products.find((p) => p.discountAmount > 0) || products[0];
-  const offerHref = offer?.storeSlug
-    ? `${getStorePath(offer.storeSlug)}/products/${offer.slug}`
-    : "/products";
-  const isDefaultTitle =
-    !hero?.title ||
-    /Alışverişdə hər mağaza|Alışverişin ünvanı|^alisveris.az$/i.test(
-      hero.title,
-    );
-  const heroCustomImage =
-    hero?.imageUrl && !hero.imageUrl.includes("/auth/")
-      ? hero.imageUrl
-      : undefined;
+  const presentation = heroPresentation(hero);
+  const isDefaultTitle = !hero?.title || presentation.title !== hero.title;
+  const heroCustomImage = presentation.imageUrl;
   const heroImage =
     slide === 0
       ? heroCustomImage || "/marketplace/images/hero.jpg"
@@ -194,7 +174,7 @@ export function HomeExperience({
   return (
     <main className="live-home">
       <div className="live-wrap">
-        <div className="live-hero-grid">
+        <div className={`live-hero-grid ${homepageVisibilityClass(hero)}`}>
           <section className="live-hero">
             <img
               src={heroImage}
@@ -245,7 +225,7 @@ export function HomeExperience({
               <Link
                 className="live-btn"
                 href={
-                  hero?.buttonUrl && slide === 0
+                  hero?.buttonUrl && slide === 0 && !isDefaultTitle
                     ? hero.buttonUrl
                     : slide === 1
                       ? "/products?q=geyim"
@@ -254,11 +234,25 @@ export function HomeExperience({
                         : "/products"
                 }
               >
-                {hero?.buttonLabel && slide === 0
+                {hero?.buttonLabel && slide === 0 && !isDefaultTitle
                   ? text(hero.buttonLabel)
-                  : text("İndi kəşf et")}
+                  : text("Məhsulları kəşf et")}
                 <ArrowRight size={17} />
               </Link>
+              {(initialRole == null || initialRole === "seller") && (
+                <Link
+                  href={
+                    initialRole === "seller"
+                      ? "/store/dashboard"
+                      : "/register?role=seller"
+                  }
+                  className="live-hero-seller-link"
+                >
+                  {text(
+                    initialRole === "seller" ? "Satıcı paneli" : "Satıcı ol",
+                  )}
+                </Link>
+              )}
               <div
                 className="live-hero-dots"
                 aria-label={text("Kampaniya slaydları")}
@@ -283,57 +277,21 @@ export function HomeExperience({
             </span>
           </section>
           <section className="live-side-offer">
-            <span className="live-eyebrow">
-              {offer?.discountAmount
-                ? text("SƏRFƏLİ TAPINTI")
-                : text("YENİ MƏHSULLAR")}
-            </span>
-            <h2>
-              {offer?.discountAmount ? (
-                <>
-                  {text("Yaxşı seçim.")}
-                  <br />
-                  {text("Daha yaxşı qiymət.")}
-                </>
-              ) : (
-                <>
-                  {text("Axtardığınız")}
-                  <br />
-                  {text("burada ola bilər.")}
-                </>
-              )}
-            </h2>
-            {offer ? (
-              <>
-                <p>{offer.name}</p>
-                <strong>
-                  {formatAznDiscountedPrice(
-                    offer.priceAmount,
-                    offer.discountAmount,
-                  )}
-                </strong>
-                {offer.discountAmount > 0 && (
-                  <del>{formatAznPrice(offer.priceAmount)}</del>
-                )}
-                {offer.imageUrl && (
-                  <OptimizedImage
-                    src={offer.imageUrl}
-                    alt={offer.name}
-                    width={230}
-                    height={200}
-                    className="live-offer-image"
-                  />
-                )}
-              </>
-            ) : (
-              <p>{text("Mağazaların yeni məhsulları ilə tanış olun.")}</p>
-            )}
-            <Link
-              className="live-circle-arrow"
-              href={offerHref}
-              aria-label={text("Məhsula bax")}
-            >
-              <ArrowUpRight size={22} />
+            <span className="live-eyebrow">{text("KATEQORİYALAR")}</span>
+            <h2>{text("Məhsulları kəşf et")}</h2>
+            <ul className="live-hero-category-links">
+              {activeCategories.slice(0, 4).map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={`/products?category=${encodeURIComponent(category.slug)}`}
+                  >
+                    {text(category.name)} <ArrowUpRight size={16} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <Link className="live-text-link" href="/products">
+              {text("Bütün məhsullar")} <ArrowRight size={16} />
             </Link>
           </section>
         </div>
@@ -374,7 +332,9 @@ export function HomeExperience({
           ))}
         </div>
         {activeCategories.length > 0 && (
-          <section className="live-section live-category-section">
+          <section
+            className={`live-section live-category-section ${homepageVisibilityClass(categorySection)}`}
+          >
             <SectionHeading
               eyebrow={text("SƏNİN DÜNYAN, SƏNİN SEÇİMİN")}
               title={categorySection?.title || text("Nə axtarırsınız?")}
@@ -410,36 +370,48 @@ export function HomeExperience({
             </div>
           </section>
         )}
-        <section className="live-section">
-          <SectionHeading
-            eyebrow={text("SEÇİLMİŞ MƏHSULLAR")}
-            title={text("Bəyənəcəyinizi düşündük")}
-          />
-          <div className="live-section-tabs">
-            <Link href="/products" className="active">
-              {text("Sizin üçün")}
-            </Link>
-            {activeCategories.slice(0, 4).map((c) => (
-              <Link
-                key={c.id}
-                href={`/products?category=${encodeURIComponent(c.slug)}`}
-              >
-                {text(c.name)}
-              </Link>
-            ))}
-            <span>
-              <Crown size={14} />
-              {text("Mağazalardan yeni tapıntılar")}
-            </span>
-          </div>
-          <div className="live-home-products">
-            <ProductGrid
-              products={featuredProducts}
-              labels={{ stock: text("Stok") }}
-              compactMobileCards
-            />
-          </div>
-        </section>
+        {(
+          [
+            ["featured", "Sizin üçün seçilmiş məhsullar", "/products"],
+            ["newest", "Yeni məhsullar", "/products?sort=newest"],
+            [
+              "discounts",
+              "Endirimli məhsullar",
+              "/products?discount=1&sort=discount",
+            ],
+            ["storePicks", "Mağazalardan seçimlər", "/stores"],
+            ["vip", "VIP məhsullar", "/products?vip=1"],
+            ["rentals", "İcarə məhsulları", "/products?commerceType=rental"],
+          ] as const
+        ).map(([key, label, href]) => {
+          const products = productSections[key];
+          if (products.length === 0) return null;
+          return (
+            <section key={key} className="live-section">
+              <SectionHeading
+                eyebrow={text("MƏHSULLAR")}
+                title={text(label)}
+                href={href}
+              />
+              <div className="live-home-products">
+                <ProductGrid
+                  products={products}
+                  labels={{ stock: text("Stok") }}
+                  compactMobileCards
+                />
+              </div>
+            </section>
+          );
+        })}
+        {productSections.categorySections.map(({ category, products }) => (
+          <section key={category.id} className="live-section">
+            <SectionHeading eyebrow={text("KATEQORİYADAN SEÇİMLƏR")} title={text(category.name)}
+              href={`/products?category=${encodeURIComponent(category.slug)}`} />
+            <div className="live-home-products">
+              <ProductGrid products={products} labels={{ stock: text("Stok") }} compactMobileCards />
+            </div>
+          </section>
+        ))}
         <section className="live-promo-banners">
           <Link href="/products?q=ev" className="live-interior-promo">
             <img
@@ -478,7 +450,9 @@ export function HomeExperience({
           </Link>
         </section>
         {featuredStores.length > 0 && (
-          <section className="live-section">
+          <section
+            className={`live-section ${homepageVisibilityClass(featuredSection)}`}
+          >
             <SectionHeading
               eyebrow={text("YAXŞI SEÇİMLƏRİN ÜNVANI")}
               title={featuredSection?.title || text("Seçilmiş mağazalar")}
@@ -492,21 +466,6 @@ export function HomeExperience({
             </div>
           </section>
         )}
-        <section className="live-section">
-          <SectionHeading
-            eyebrow={text("YENİ GƏLƏNLƏR")}
-            title={text("Kəşf etməyə davam edin")}
-          />
-          <InfiniteProductGrid
-            initialProducts={products}
-            initialCursor={productNextCursor}
-            initialHasMore={productHasMore}
-            locale={locale}
-            sort="newest"
-            labels={{ stock: text("Stok") }}
-            compactMobileCards
-          />
-        </section>
         {(initialRole == null || initialRole === "seller") && (
           <section className="live-seller-banner">
             <Store size={54} strokeWidth={1.2} />

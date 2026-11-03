@@ -1,3 +1,4 @@
+import { LegalDocument } from "@/components/help/legal-document";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SupportMessageForm } from "@/components/support/support-message-form";
 import {
@@ -106,6 +107,8 @@ export async function HelpDocumentPage({
     page.slug === "contact" ? getCurrentUserProfile() : Promise.resolve(null),
   ]);
   const footer = footerFromSettings(settings);
+  if (["terms","privacy","rules"].includes(page.slug)) return <><LegalDocument page={page}/><SiteFooter {...footer}/></>;
+
 
   return (
     <>

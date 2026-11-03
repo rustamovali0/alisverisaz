@@ -306,16 +306,12 @@ export const dashboardNavigation: Record<AuthRole, DashboardNavItem[]> = {
       icon: "mail",
     },
     {
-      title: "Media",
-      href: "/radmin/media",
-      icon: "image",
-    },
-    {
       title: "Sistem ayarları",
       titleKey: "systemSettings",
       href: "/radmin/settings",
       icon: "settings",
     },
+    { title: "Yaddaş və istifadə", href:"/radmin/storage", icon:"barChart" },
     { title: "Danger", href: "/radmin/danger", icon: "shield" },
     {
       title: "Audit log",

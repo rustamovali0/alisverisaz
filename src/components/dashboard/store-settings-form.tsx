@@ -1,5 +1,6 @@
 "use client";
 
+import { storePolicyFields, storePolicyMaxLength } from "@/lib/store-settings/policies";
 import { Copy, ExternalLink, ImagePlus, Loader2, Save } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 
@@ -397,6 +398,18 @@ export function StoreSettingsForm({ store, availableCategories = [] }: StoreSett
             Bu mətn /{store.slug} və {store.slug}.alisveris.az mağaza səhifəsində “Haqqında” bölməsində görünəcək.
           </span>
         </label>
+        <fieldset className="grid gap-3">
+          <legend className="mb-2 text-base font-semibold">Alış şərtləri</legend>
+          <p className="text-sm text-muted-foreground">Yazdığınız şərtlər mağazada və məhsul səhifələrində görünəcək.</p>
+          {storePolicyFields.map(({ key, label }) => (
+            <label key={key} className="grid gap-1.5 text-sm font-medium">
+              {label}
+              <textarea name={key} maxLength={storePolicyMaxLength}
+                defaultValue={readSetting(store.settings, key)}
+                className="premium-input min-h-20 resize-y py-2" />
+            </label>
+          ))}
+        </fieldset>
         {saveButton("Vitrin məzmununu saxla")}
         </section>
         <section className="premium-card grid gap-4 p-4 sm:p-5">

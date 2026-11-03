@@ -1,3 +1,6 @@
+import { publicHomepageSection } from "@/lib/cms/home-presentation";
+import { defaultNavigationSeedMenus } from "@/lib/cms/navigation-defaults";
+import { loadFallbackNavigation } from "@/lib/cms/navigation-fallback";
 import { safeLinkHref } from "@/lib/security/urls";
 import {
   CACHE_TAGS,
@@ -273,8 +276,6 @@ const getCachedHomepageSections = publicCache(
       .select(
         "id,key,title,description,image_url,settings,button_label,button_url,item_limit,data_filter,sort_order,is_active,show_mobile,show_desktop,theme_variant,status",
       )
-      .eq("is_active", true)
-      .eq("status", "published")
       .order("sort_order", {
         ascending: true,
       });
@@ -284,7 +285,7 @@ const getCachedHomepageSections = publicCache(
     }
 
     const sections = filterRealHomepageSections(
-      ((data ?? []) as any[]).map(readHomepageSection),
+      ((data ?? []) as any[]).map(readHomepageSection).map(publicHomepageSection),
     );
 
     return sections.length ? sections : fallbackHomepageSections();
@@ -452,53 +453,6 @@ export async function getActiveHomeThemeSetting() {
   return active;
 }
 
-type NavigationSeedMenu = {
-  key: string;
-  title: string;
-  location: string;
-  items: Array<DashboardNavItem & {
-    requiredRole?: "seller" | "customer" | "admin" | null;
-  }>;
-};
-
-const defaultNavigationSeedMenus: NavigationSeedMenu[] = [
-  {
-    key: "main_header",
-    title: "Əsas header menyusu",
-    location: "header",
-    items: [
-      { title: "Məhsullar", href: "/products", icon: "box" },
-      { title: "Haqqında", href: "/about", icon: "sparkles" },
-    ],
-  },
-  {
-    key: "seller_sidebar",
-    title: "Satıcı sidebar",
-    location: "seller_sidebar",
-    items: dashboardNavigation.seller.map((item) => ({
-      ...item,
-      requiredRole: "seller",
-    })),
-  },
-  {
-    key: "customer_sidebar",
-    title: "İstifadəçi sidebar",
-    location: "customer_sidebar",
-    items: dashboardNavigation.customer.map((item) => ({
-      ...item,
-      requiredRole: "customer",
-    })),
-  },
-  {
-    key: "admin_extra",
-    title: "Admin menyusu",
-    location: "admin_extra",
-    items: dashboardNavigation.admin.map((item) => ({
-      ...item,
-      requiredRole: "admin",
-    })),
-  },
-];
 
 function readNavigationItem(row: any): ManagedNavigationItem {
   return {
@@ -522,13 +476,13 @@ function readNavigationItem(row: any): ManagedNavigationItem {
 
 async function fetchNavigationMenus() {
     const supabase = createSupabaseAdminClient();
-    const { data: menus } = await (supabase as any)
+    const { data: menus, error: menuError } = await (supabase as any)
       .from("navigation_menus")
       .select("id,key,title,location,is_active,is_system")
       .order("created_at", {
         ascending: true,
       });
-    const { data: items } = await (supabase as any)
+    const { data: items, error: itemError } = await (supabase as any)
       .from("navigation_items")
       .select(
         "id,menu_id,title,href,icon_name,sort_order,is_active,is_system,is_external,open_in_new_tab,show_mobile,show_desktop,required_role,required_feature,badge_text",
@@ -537,6 +491,7 @@ async function fetchNavigationMenus() {
         ascending: true,
       });
 
+    if (menuError || itemError || !menus?.length) return loadFallbackNavigation();
     return ((menus ?? []) as any[]).map(
       (menu): ManagedNavigationMenu => ({
         id: menu.id,
@@ -619,8 +574,7 @@ export async function getNavigationMenus(options?: { ensureDefaults?: boolean })
       return menus;
     }
 
-    await ensureDefaultNavigationMenus();
-    return fetchNavigationMenus();
+    return loadFallbackNavigation();
   }
 
   return getCachedNavigationMenus();
@@ -632,7 +586,7 @@ async function applyDashboardFeatureFilters(
 ) {
   if (role === "admin") {
     return items.filter(
-      (item) => item.titleKey !== "deposits" && !item.href.includes("/deposits"),
+      (item) => item.titleKey !== "deposits" && !item.href.includes("/deposits") && !/^\/(?:radmin|admin)\/media(?:[/?#]|$)/.test(item.href),
     );
   }
 
@@ -731,7 +685,7 @@ export async function getDashboardNavigationForRole(role: "seller" | "customer" 
     return applyDashboardFeatureFilters(role, [...merged, ...extra]);
   } catch (error) {
     console.error("Dashboard navigation could not be loaded", error);
-    return fallback;
+    return applyDashboardFeatureFilters(role, fallback);
   }
 }
 

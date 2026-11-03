@@ -1,5 +1,6 @@
 "use client";
 
+import {sellerPromotionDays} from "@/lib/promotions/duration";
 import { BadgePlus, Crown, Package, Store } from "lucide-react";
 import { useMemo, useState, useTransition, type FormEvent } from "react";
 
@@ -165,9 +166,9 @@ export function SellerPromotionManager({
             onChange={(event) => setDays(Number(event.target.value))}
             className="h-11 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            {[1, 3, 5, 7, 14, 30].map((value) => (
+            {sellerPromotionDays.map((value) => (
               <option key={value} value={value}>
-                {value} gün
+                {value === 30 ? "1 ay (30 gün)" : `${value} gün`}
               </option>
             ))}
           </select>

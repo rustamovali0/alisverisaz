@@ -35,6 +35,7 @@ import type { MobileNavbarVariant } from "@/lib/cms/types";
 import type { CategoryOption } from "@/lib/products/types";
 
 type MarketplaceHeaderProps = {
+  headerItems?: import("@/lib/cms/types").ManagedNavigationItem[];
   storeId?: string;
   isolatedStorefront?: boolean;
   siteName?: string;
@@ -73,6 +74,7 @@ function cartCount(storeId?: string) {
   }
 }
 export function MarketplaceHeader({
+  headerItems,
   siteName = "alışveriş",
   logoUrl,
   stores = [],
@@ -232,6 +234,7 @@ export function MarketplaceHeader({
             <div className="live-header-search">
               <MarketplaceSearch
                 stores={stores}
+                categories={categories}
                 defaultValue={searchDefaultValue}
                 placeholder={text("Nə axtarırsınız?")}
                 storeSlug={searchStoreSlug ?? undefined}
@@ -299,6 +302,7 @@ export function MarketplaceHeader({
                 {text("Bütün kateqoriyalar")}
                 <ChevronDown size={14} />
               </button>
+              {!isolatedStorefront && headerItems ? headerItems.filter(item=>item.showDesktop && !item.requiredRole && !item.requiredFeature).map(item=><Link key={item.id} href={item.href} target={item.openInNewTab ? "_blank" : undefined} rel={item.openInNewTab ? "noopener noreferrer" : undefined} aria-current={pathname === item.href ? "page" : undefined}>{text(item.title)}{item.badgeText && <small>{item.badgeText}</small>}</Link>) : <>
               <Link
                 href={storeHomeHref}
                 aria-current={pathname === storeHomeHref ? "page" : undefined}
@@ -346,6 +350,7 @@ export function MarketplaceHeader({
                   </Link>
                 </>
               )}
+              </>}
               <Link
                 href={`${scopedProducts}?sort=newest`}
                 className="live-new-collection"
@@ -389,6 +394,7 @@ export function MarketplaceHeader({
               />
               <ThemeToggle />
             </div>
+            {!isolatedStorefront && headerItems && <nav className="mb-4 border-b pb-4 md:hidden" aria-label={text("Əsas menyu")}>{headerItems.filter(item=>item.showMobile && !item.requiredRole && !item.requiredFeature).map(item=><Link key={item.id} href={item.href} onClick={()=>setMenu(false)} target={item.openInNewTab?"_blank":undefined} rel={item.openInNewTab?"noopener noreferrer":undefined}>{text(item.title)}<ArrowRight size={15}/></Link>)}</nav>}
             <nav>
               {categories.map((category) => {
                 const Icon = getCategoryIcon(category);

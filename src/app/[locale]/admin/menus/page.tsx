@@ -12,7 +12,7 @@ export default async function AdminMenusPage() {
   return (
     <DashboardPanel
       title="Menyu idarəetməsi"
-      description="Header, mobil, footer və panel sidebar menyularını database üzərindən idarə edin."
+      description="Saytın əsas menyusunu və kabinet bölmələrini idarə edin."
     >
       <NavigationManager menus={menus} />
     </DashboardPanel>

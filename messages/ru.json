@@ -103,6 +103,8 @@
     "sendDeposit": "Отправить аванс",
     "allProductsShown": "Показаны все товары",
     "sortNewest": "Сначала новые",
+    "sortRelevance": "По релевантности",
+    "sortDiscount": "Самая большая скидка",
     "sortOldest": "Сначала старые",
     "sortPriceAsc": "Цена: по возрастанию",
     "sortPriceDesc": "Цена: по убыванию",

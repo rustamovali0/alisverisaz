@@ -1,5 +1,6 @@
 "use server";
 
+import { loadFallbackNavigation, saveFallbackNavigationItem } from "@/lib/cms/navigation-fallback";
 import { safeLinkHref, socialProfileHref } from "@/lib/security/urls";
 import { revalidatePath } from "next/cache";
 
@@ -613,11 +614,10 @@ export async function updateNavigationItemAction(
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
-  const { data: existing } = await (supabaseAdmin as any)
-    .from("navigation_items")
-    .select("is_system,href")
-    .eq("id", itemId)
-    .maybeSingle();
+  const fallbackItem = itemId.startsWith("builtin:") ? (await loadFallbackNavigation()).flatMap(menu=>menu.items).find(item=>item.id===itemId) : null;
+  const {data: databaseItem} = fallbackItem ? {data:null} : await (supabaseAdmin as any).from("navigation_items").select("is_system,href").eq("id",itemId).maybeSingle();
+  const existing = fallbackItem ? {is_system:fallbackItem.isSystem,href:fallbackItem.href} : databaseItem;
+  if(!existing) return {ok:false,message:"Menyu elementi tapılmadı."};
 
   if (existing?.is_system && !readBoolean(formData, "isActive")) {
     return {
@@ -632,23 +632,10 @@ export async function updateNavigationItemAction(
   const nextHref = safeLinkHref(requestedHref, { allowContact: true });
   if (!nextHref) return { ok: false, message: "Menyu keçidi düzgün deyil. Saytdaxili yol və ya http/https ünvanı yazın." };
 
-  const { error } = await (supabaseAdmin as any)
-    .from("navigation_items")
-    .update({
-      title: readString(formData, "title"),
-      href: nextHref,
-      icon_name: readString(formData, "iconName") || "home",
-      sort_order: Math.trunc(readNumber(formData, "sortOrder")),
-      is_active: readBoolean(formData, "isActive"),
-      is_external: readBoolean(formData, "isExternal"),
-      open_in_new_tab: readBoolean(formData, "openInNewTab"),
-      show_mobile: readBoolean(formData, "showMobile"),
-      show_desktop: readBoolean(formData, "showDesktop"),
-      required_feature: readString(formData, "requiredFeature") || null,
-      badge_text: readString(formData, "badgeText") || null,
-      updated_by: current.user.id,
-    })
-    .eq("id", itemId);
+  const patch = {
+    title: readString(formData,"title"), href:nextHref, icon:readString(formData,"iconName") || "home", sortOrder:Math.trunc(readNumber(formData,"sortOrder")),isActive:readBoolean(formData,"isActive"),isExternal:readBoolean(formData,"isExternal"),openInNewTab:readBoolean(formData,"openInNewTab"),showMobile:readBoolean(formData,"showMobile"),showDesktop:readBoolean(formData,"showDesktop"),badgeText:readString(formData,"badgeText") || null,
+  };
+  const error = fallbackItem ? await saveFallbackNavigationItem(itemId,patch) : (await (supabaseAdmin as any).from("navigation_items").update({title:patch.title,href:patch.href,icon_name:patch.icon,sort_order:patch.sortOrder,is_active:patch.isActive,is_external:patch.isExternal,open_in_new_tab:patch.openInNewTab,show_mobile:patch.showMobile,show_desktop:patch.showDesktop,required_feature:readString(formData,"requiredFeature") || null,badge_text:patch.badgeText,updated_by:current.user.id}).eq("id",itemId)).error;
 
   if (error) {
     return {

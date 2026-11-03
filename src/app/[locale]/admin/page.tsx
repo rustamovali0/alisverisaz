@@ -1,3 +1,4 @@
+import { getMachineUsage, formatBytes } from "@/lib/admin/storage/data";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getAdminActivityOverview } from "@/lib/activity/data";
@@ -17,9 +18,10 @@ const shortcuts = [
 
 export default async function AdminPage() {
   await requireRole(["admin"], "/radmin/panel");
-  const [overview, activity] = await Promise.all([
+  const [overview, activity, usage] = await Promise.all([
     getAdminOverview(),
     getAdminActivityOverview(),
+    getMachineUsage(),
   ]);
   return (
     <>
@@ -42,6 +44,21 @@ export default async function AdminPage() {
           </Link>
         ))}
       </div>
+      <section className="ra-overview-panel mb-5">
+        <div className="ra-section-toolbar">
+          <div>
+            <h2>Yaddaş və istifadə</h2>
+            <p className="text-sm text-muted-foreground">
+              VDS disk: {formatBytes(usage.disk.used)} /{" "}
+              {formatBytes(usage.disk.total)} · RAM:{" "}
+              {formatBytes(usage.ram.used)} / {formatBytes(usage.ram.total)}
+            </p>
+          </div>
+          <Link href="/radmin/storage" className="ra-text-link">
+            Cloudflare, Supabase və fayl detalları →
+          </Link>
+        </div>
+      </section>
       <div className="ra-overview-columns">
         <section
           className="ra-overview-panel"

@@ -21,7 +21,7 @@
   min-height: 100dvh;
   background: #f6f7f9;
   color: var(--ra-text);
-  font-size: 14px;
+  font-size: 16px;
   overflow-wrap: anywhere;
 }
 .dark .radmin-shell.ra-shell {
@@ -49,7 +49,7 @@
   display: flex;
   position: fixed;
   inset: 0 auto 0 0;
-  width: 248px;
+  width: 264px;
   z-index: 40;
   flex-direction: column;
   background: var(--ra-surface);
@@ -86,7 +86,7 @@
   object-fit: contain;
 }
 .radmin-shell .ra-brand-name {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 750;
   line-height: 1.4;
   overflow: hidden;
@@ -96,7 +96,7 @@
 .radmin-shell .ra-brand-name small {
   display: block;
   color: var(--ra-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
 }
 .radmin-shell .ra-icon-button {
@@ -146,7 +146,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ra-text);
   box-shadow: none;
   border-radius: 0;
@@ -179,7 +179,7 @@
   margin: 2px 0;
   border-radius: 7px;
   color: var(--ra-muted);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.5;
 }
@@ -200,7 +200,7 @@
 }
 .radmin-shell .ra-nav-link small {
   margin-left: auto;
-  font-size: 10px;
+  font-size: 12px;
 }
 .radmin-shell .ra-group-toggle {
   width: 100%;
@@ -212,7 +212,7 @@
   gap: 5px;
   padding: 8px 10px;
   color: var(--ra-text);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 .radmin-shell .ra-group-toggle:hover {
@@ -229,7 +229,7 @@
 .radmin-shell .ra-no-results {
   padding: 12px 10px;
   color: var(--ra-muted);
-  font-size: 13px;
+  font-size: 16px;
 }
 .radmin-shell .ra-sidebar-footer {
   padding: 12px;
@@ -241,7 +241,7 @@
 .radmin-shell .ra-account {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-size: 14px;
 }
 .radmin-shell .ra-account strong {
   display: block;
@@ -253,11 +253,11 @@
 .radmin-shell .ra-account span {
   display: block;
   color: var(--ra-muted);
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 3px;
 }
 .radmin-shell .ra-workspace {
-  margin-left: 248px;
+  margin-left: 264px;
   min-width: 0;
 }
 .radmin-shell .ra-topbar {
@@ -280,12 +280,12 @@
   gap: 8px;
 }
 .radmin-shell .ra-page-heading p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ra-muted);
   margin-bottom: 2px;
 }
 .radmin-shell .ra-page-heading h1 {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 650;
   line-height: 1.4;
 }
@@ -301,7 +301,7 @@
   gap: 5px;
   min-height: 44px;
   padding: 8px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ra-muted);
 }
 .radmin-shell .ra-site-link:hover {
@@ -313,7 +313,7 @@
   border-radius: 50%;
   background: var(--ra-active);
   color: hsl(var(--primary));
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 .radmin-shell .ra-profile {
@@ -335,7 +335,7 @@
   display: block;
 }
 .radmin-shell .ra-profile-menu span {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ra-muted);
   margin: 4px 0 10px;
 }
@@ -344,7 +344,7 @@
   align-items: center;
   min-height: 44px;
   margin-bottom: 8px;
-  font-size: 13px;
+  font-size: 16px;
 }
 .radmin-shell .ra-content {
   max-width: 1480px;
@@ -385,10 +385,10 @@
   letter-spacing: -0.015em;
 }
 .radmin-shell .ra-content table {
-  font-size: 13px;
+  font-size: 16px;
 }
 .radmin-shell .ra-content th {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 .radmin-shell
@@ -398,7 +398,7 @@
     select,
     textarea
   ) {
-  font-size: 14px;
+  font-size: 16px;
   border-radius: 8px;
 }
 .radmin-shell .ra-welcome {
@@ -429,7 +429,7 @@
 }
 .radmin-shell .ra-metric p {
   color: var(--ra-muted);
-  font-size: 12px;
+  font-size: 14px;
 }
 .radmin-shell .ra-metric strong {
   display: block;
@@ -440,7 +440,7 @@
 }
 .radmin-shell .ra-metric span {
   color: var(--ra-muted);
-  font-size: 11px;
+  font-size: 13px;
 }
 .radmin-shell .ra-overview-columns {
   display: grid;
@@ -454,7 +454,7 @@
   padding: 20px;
 }
 .radmin-shell .ra-overview-panel h2 {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 650;
   margin-bottom: 16px;
 }
@@ -478,7 +478,7 @@
   color: hsl(var(--primary));
   font-weight: 550;
   margin-top: 8px;
-  font-size: 13px;
+  font-size: 16px;
 }
 .radmin-shell .ra-quick-link {
   display: flex;
@@ -487,7 +487,7 @@
   min-height: 52px;
   border-bottom: 1px solid var(--ra-border);
   gap: 12px;
-  font-size: 13px;
+  font-size: 16px;
 }
 .radmin-shell .ra-quick-link:hover {
   color: hsl(var(--primary));
@@ -571,7 +571,7 @@
     gap: 4px;
   }
   .radmin-shell .ra-page-heading h1 {
-    font-size: 15px;
+    font-size: 17px;
   }
   .radmin-shell .ra-page-heading p {
     display: none;
@@ -586,7 +586,7 @@
       select,
       textarea
     ) {
-    font-size: 16px;
+    font-size: 18px;
   }
   .radmin-shell .ra-welcome h2 {
     font-size: 22px;
@@ -644,3 +644,28 @@
   background: var(--ra-hover);
   color: var(--ra-muted);
 }
+
+/* Readable type throughout the administration forms. */
+.radmin-shell .ra-content .text-sm { font-size: 16px; }
+.radmin-shell .ra-content .text-xs { font-size: 14px; }
+.radmin-shell .ra-content .premium-card > div:first-child > h2 { font-size: 20px; }
+.radmin-shell .ra-compact-summary { display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px; }
+.radmin-shell .ra-editor-list { display:grid;gap:12px; }
+.radmin-shell .ra-editor-list details { background:var(--ra-surface);border:1px solid var(--ra-border);border-radius:10px; }
+.radmin-shell .ra-editor-list summary { cursor:pointer;padding:16px;font-weight:600; }
+.radmin-shell .ra-editor-body { padding:0 16px 16px; }
+.radmin-shell .ra-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px; }
+.radmin-shell .ra-field { display:grid;gap:7px;min-width:0;font-size:16px; }
+.radmin-shell .ra-field :is(input,select,textarea) { width:100%;min-width:0;min-height:44px;border:1px solid var(--ra-border);border-radius:8px;background:hsl(var(--background));padding:10px 12px; }
+.radmin-shell .ra-field textarea { min-height:96px; }
+.radmin-shell .ra-section-toolbar { display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap; }
+.radmin-shell .ra-section-toolbar input { min-width:0;flex:1;min-height:44px;border:1px solid var(--ra-border);border-radius:8px;padding:10px 12px;background:var(--ra-surface); }
+.radmin-shell .ra-simple-table { width:100%;border-collapse:collapse; }
+.radmin-shell .ra-simple-table :is(th,td) { text-align:left;border-bottom:1px solid var(--ra-border);padding:14px 12px; }
+.radmin-shell .ra-theme-controls { display:flex;flex-wrap:wrap;gap:8px; }
+.radmin-shell .ra-theme-controls button { padding:10px 16px;min-height:44px;border:1px solid var(--ra-border);border-radius:8px; }
+.radmin-shell .ra-theme-controls button[aria-pressed=true] { background:var(--ra-active);color:var(--ra-accent);border-color:var(--ra-accent); }
+.radmin-shell .ra-theme-preview { max-width:600px;margin-top:16px; }
+.radmin-shell .ra-color-row { display:flex;align-items:center;gap:16px;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--ra-border); }
+.radmin-shell .ra-color-row input[type=color] { height:44px;width:64px;cursor:pointer;border:1px solid var(--ra-border);border-radius:8px;padding:4px; }
+@media(max-width:639px) { .radmin-shell .ra-form-grid { grid-template-columns:1fr; } .radmin-shell .ra-content :is(input,select,textarea) { font-size:16px; } }

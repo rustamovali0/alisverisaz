@@ -1,3 +1,4 @@
+import { getHomepageProductSections } from "@/lib/home/product-sections";
 import { HomeExperience } from "@/components/home/home-experience";
 import { getHomepageSections, getSiteSettings, getActiveHomeThemeSetting } from "@/lib/cms/data";
 import { getMarketplaceProductPage, getMarketplaceStoreCards } from "@/lib/cart/data";
@@ -23,8 +24,8 @@ export default async function HomePage({ params }: HomePageProps) {
       getHomepageSections(),
       getActiveHomeThemeSetting(),
       getMarketplaceStoreCards({ limit: 16 }),
-      getMarketplaceProductPage(locale, { limit: 8 }),
-      getCategoryOptions({ rootOnly: true }),
+      getMarketplaceProductPage(locale, { limit: 24, filters: { inStock: true } }),
+      getCategoryOptions(),
       getPopularMarketplaceSearches(),
       getCurrentUserProfile(),
     ]);
@@ -37,10 +38,8 @@ export default async function HomePage({ params }: HomePageProps) {
       activeTheme={activeTheme.themeKey}
       themeConfig={activeTheme.config}
       stores={stores}
-      products={productPage.products}
-      productNextCursor={productPage.nextCursor}
-      productHasMore={productPage.hasMore}
-      categories={categories}
+      productSections={getHomepageProductSections(productPage.products, categories)}
+      categories={categories.filter((category) => !category.parentId)}
       popularSearches={popularSearches}
       title={t("title")}
       description={t("description")}
