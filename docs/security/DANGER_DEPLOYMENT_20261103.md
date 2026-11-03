@@ -1,5 +1,17 @@
 # Danger deployment — 2026-11-03
 
+## Latest follow-up — password confirmation and panel entry
+
+- Current application source **`ede72b7afdaa134f9ae0cfddc9218ca9dd1ffb55`**; release **`/srv/alisveris/releases/danger-admin-final-20261103/app`**, PM2 PID **2852280**, online/zero restarts. Cutover: **2026-11-03 08:10:47 UTC / 12:10:47 Asia/Baku**. Immediate rollback: `/srv/alisveris/releases/danger-password-20261103/app`.
+- The current dashboard entry is **`/radmin/panel`**. Bare `/radmin` and legacy `/administrator/...` return a direct homepage redirect without a 404 notice. Authenticated dashboard navigation was verified in the user's existing browser session; anonymous access still redirects to admin login. Existing admin subsection paths are retained.
+- At the user's explicit request, Danger-specific AAL2 confirmation was replaced with verification of the **existing RAdmin login password** on every manual/automatic setting change. No new PIN was created. Native Turnstile, authenticated admin role checks, shared attempt limits and audit events remain. Global MFA policy/factors were not changed.
+- A concurrent first-render Redis readiness race found in the real authenticated browser was fixed and regression-tested. The final release's first authenticated Danger load showed **no storage warning, no Authenticator-required prompt, and two password-type current-password fields**.
+- **535 native tests passed**, production build/TypeScript passed, and the final code's [GitHub Actions run 133](https://github.com/rustamovali0/alisverisaz/actions/runs/41601016031) succeeded. Staging and production smoke each passed **27 ordinary checks**; automatic risk/ticket/CAS/CSRF/expiry/recovery staging checks also passed. Password-provider behavior uses fixtures; no real administrator password or CAPTCHA was submitted by the agent.
+- Verified modes remain **OFF / automatic OFF**. Auth health returned 200; permanent Redis and RTest kept their original PIDs. Disposable staging was retired using PID/UID/cwd/port ownership checks. No business database, Auth settings, firewall, DNS or SSH changes were made.
+- Final archive SHA-256: `aaddffdb8b3b77e7a26624b8349c2b7159e4e6553552426ad01b09a9d8777fc4`. Environment files were excluded. Emergency recovery and current password-confirmation behavior are documented in [DANGER_MODE.md](DANGER_MODE.md).
+
+The sections below record the earlier manual/automatic rollout before these follow-up requests.
+
 ## Live state
 
 - **IMPLEMENTED / TESTED**: manual Danger and opt-in automatic risk detection are deployed at `https://alisveris.az/radmin/danger`.
