@@ -28,6 +28,7 @@ type WhatsAppOrderButtonProps = {
   selectionReady?: boolean;
   className?: string;
   disabled?: boolean;
+  orderQuantity?: number;
 };
 
 function toWhatsAppPhone(value: string) {
@@ -70,16 +71,18 @@ export function WhatsAppOrderButton({
   selectionReady = true,
   className,
   disabled = false,
+  orderQuantity = 1,
 }: WhatsAppOrderButtonProps) {
   const [isPending, startTransition] = useTransition();
   const [checkoutRequestId, setCheckoutRequestId] = useState(() => crypto.randomUUID());
   const isSubmittingRef = useRef(false);
-  const quantity = 1;
   const normalizedSelection = normalizeProductVariantSelection(selectedOptions);
   const selectedVariant = findMatchingProductVariant(
     product.variantCombinations ?? [],
     normalizedSelection,
   );
+  const stock = selectedVariant?.stockQuantity ?? product.stockQuantity;
+  const quantity = Math.max(1, Math.min(orderQuantity, stock));
   const unitPrice = getProductVariantUnitPrice({
     priceAmount: product.priceAmount,
     discountAmount: product.discountAmount,

@@ -98,6 +98,7 @@ export function AddToCartButton({
   className,
   disabled = false,
   isolatedStoreSlug,
+  initialAddQuantity = 1,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
@@ -107,6 +108,7 @@ export function AddToCartButton({
   className?: string;
   disabled?: boolean;
   isolatedStoreSlug?: string | null;
+  initialAddQuantity?: number;
 }) {
   const t = useTranslations("marketplace");
   const [quantity, setQuantity] = useState(0);
@@ -239,7 +241,7 @@ export function AddToCartButton({
     setQuantity(safeQuantity);
   }
 
-  function handleAdd() {
+  function handleAdd(amount = 1) {
     if (quantity >= stockLimit) {
       showToast({
         title: t("stockLimitTitle"),
@@ -249,7 +251,7 @@ export function AddToCartButton({
       return;
     }
 
-    updateQuantity(quantity + 1);
+    updateQuantity(quantity + amount);
     showCartToast();
   }
 
@@ -283,7 +285,7 @@ export function AddToCartButton({
         <button
           type="button"
           className="grid h-full min-h-11 place-items-center border-l border-primary-foreground/25 text-primary-foreground transition hover:bg-primary-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 disabled:cursor-not-allowed disabled:opacity-45"
-          onClick={handleAdd}
+          onClick={() => handleAdd()}
           disabled={quantity >= stockLimit}
           aria-label={t("increaseCartQuantity")}
         >
@@ -297,7 +299,7 @@ export function AddToCartButton({
     <Button
       type="button"
       variant="outline"
-      onClick={handleAdd}
+      onClick={() => handleAdd(initialAddQuantity)}
       disabled={isUnavailable}
       className={cn(
         "!h-11 min-h-11 min-w-0 justify-center gap-1.5 overflow-hidden rounded-xl px-2 text-[12px] font-black leading-none text-primary hover:text-primary min-[360px]:text-[13px] sm:!h-12 sm:gap-2 sm:px-4 sm:text-sm",
@@ -322,6 +324,7 @@ export function BuyNowButton({
   disabled = false,
   isolatedStoreSlug,
   isolatedStoreBaseHref,
+  orderQuantity = 1,
 }: {
   product: CartProduct;
   viewerRole?: AuthRole | null;
@@ -331,6 +334,7 @@ export function BuyNowButton({
   disabled?: boolean;
   isolatedStoreSlug?: string | null;
   isolatedStoreBaseHref?: string | null;
+  orderQuantity?: number;
 }) {
   const t = useTranslations("marketplace");
   const router = useRouter();
@@ -376,7 +380,7 @@ export function BuyNowButton({
         productId: product.id,
         storeId: product.storeId,
         storeSlug: product.storeSlug ?? isolatedStoreSlug ?? null,
-        quantity: 1,
+        quantity: Math.min(orderQuantity, stockLimit),
         selectedOptions: normalizedSelection,
         variantKey: getProductVariantKey(product.id, normalizedSelection),
       },

@@ -1,5 +1,5 @@
-import { StorePolicies } from "@/components/storefront/store-policies";
-import { Clock3, ExternalLink, MapPin, MessageCircle, Package, Pencil, Star } from "lucide-react";
+import "@/components/products/product-detail.css";
+import { ArrowLeft, ArrowUpRight, MapPin, MessageCircle, Pencil, Star, Store, Truck } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -14,17 +14,17 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import {
   ProductReviewList,
 } from "@/components/products/product-feedback-lists";
+import { ProductDetailPrice } from "@/components/products/product-detail-price";
+import { storePolicyFields } from "@/lib/store-settings/policies";
+import { getEnabledProductOptions } from "@/lib/products/variant-utils";
 import { ProductPurchaseOptions } from "@/components/products/product-purchase-options";
 import { RelatedProductList } from "@/components/products/related-product-list";
 import {
-  ProductBackButton,
   ProductDetailGallery,
 } from "@/components/products/product-detail-gallery";
 import { ProductDetailScrollReset } from "@/components/products/product-detail-scroll-reset";
-import { CollapsibleProductDescription } from "@/components/products/collapsible-product-description";
 import { ProductReviewForm } from "@/components/reviews/product-review-form";
 import { BreadcrumbJsonLd, ProductJsonLd } from "@/components/seo/json-ld";
-import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { trackActivityEvent } from "@/lib/activity/events";
 import { getCurrentUserProfile } from "@/lib/auth/session";
@@ -32,7 +32,7 @@ import { getMarketplaceProductById } from "@/lib/cart/data";
 import { getSiteSettings } from "@/lib/cms/data";
 import { getStorePath, getStorefrontUrl, getStoreSubdomainSlug } from "@/lib/config/domains";
 import { siteConfig } from "@/lib/config/site";
-import { formatAznDiscountedPrice } from "@/lib/format";
+import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
 import {
   getLocationsForStores,
   getPublicProductLocations,
@@ -76,23 +76,6 @@ function formatShortLocation(location: ProductLocationAvailability["location"] |
   }
 
   return [location.city, location.district, location.address].filter(Boolean).join(", ");
-}
-
-function formatLastActive(value?: string | null) {
-  if (!value) {
-    return "Son aktiv: bu yaxınlarda";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Son aktiv: bu yaxınlarda";
-  }
-
-  return `Son aktiv: ${new Intl.DateTimeFormat("az-AZ", {
-    day: "2-digit",
-    month: "short",
-  }).format(date)}`;
 }
 
 export async function generateMetadata({
@@ -236,13 +219,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             location,
           }));
   const sellerLocation =
-    visibleProductLocations.find((item) => item.location.showAddress)?.location ??
-    visibleProductLocations[0]?.location ??
-    null;
+    visibleProductLocations.find((item) => item.location.showAddress)?.location ?? null;
   const sellerAddress = formatShortLocation(sellerLocation) ?? detail.store.address;
   const sellerPhone =
     detail.store.whatsappPhone?.trim() ||
-    sellerLocation?.phone?.trim() ||
+    (sellerLocation ?? visibleProductLocations[0]?.location)?.phone?.trim() ||
     detail.store.phone?.trim() ||
     "";
   const sellerMapUrl = sellerLocation
@@ -287,8 +268,12 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const breadcrumbHomeLabel = isCustomStorefrontProduct ? "Ana səhifə" : "Mağazalar";
   const breadcrumbHomeHref = isCustomStorefrontProduct ? storeBaseHref : "/stores";
 
+  const options = getEnabledProductOptions(detail.product.options ?? []);
+  const hasPolicies = storePolicyFields.some(({ key }) => Boolean(detail.store.policies?.[key]));
+  const questionsHref = `${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`;
+
   return (
-    <main className="min-h-screen w-full max-w-full overflow-x-clip bg-slate-50 pb-0 text-slate-950 dark:bg-slate-950 dark:text-slate-50">
+    <main className={viewerRole === "seller" ? "pdp" : "pdp pdp-has-buy-bar"}>
       <ProductDetailScrollReset />
       <ProductJsonLd
         detail={detail}
@@ -309,247 +294,152 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         ]}
       />
       {!isStoreOwner ? <ViewTracker productId={detail.product.id} /> : null}
-      <div className={`mx-auto w-full max-w-[1280px] ${isCustomStorefrontProduct ? "px-3 py-2 sm:px-5 sm:py-4 lg:px-6" : "px-3 py-2 sm:px-6 sm:py-3 md:py-5 lg:px-8"}`}>
-        {isCustomStorefrontProduct ? (
-          <div className="mb-2 sm:mb-3">
-            <ProductBackButton compact />
-          </div>
-        ) : null}
-        {!isCustomStorefrontProduct ? (
-          <nav className="mb-3 min-w-0 text-sm text-slate-500 dark:text-slate-400 sm:mb-4 md:mb-5">
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-              <ProductBackButton />
-              <div className="flex min-w-0 items-center overflow-hidden">
-                <Link href={breadcrumbHomeHref} className="hover:text-orange-600 dark:hover:text-orange-300">
-                  {breadcrumbHomeLabel}
-                </Link>
-                <span className="mx-2">·</span>
-                <Link href={storeBaseHref} className="min-w-0 truncate hover:text-orange-600 dark:hover:text-orange-300">
-                  {detail.store.name}
-                </Link>
-                <span className="mx-2">·</span>
-                <span className="min-w-0 truncate font-medium text-slate-900 dark:text-slate-100">
-                  {detail.product.name}
-                </span>
-              </div>
-            </div>
-          </nav>
-        ) : null}
+      <div className="pdp-container">
+        <nav className="pdp-breadcrumb" aria-label="Səhifənin yolu">
+          <Link href={breadcrumbHomeHref}><ArrowLeft size={16} aria-hidden /> {breadcrumbHomeLabel}</Link>
+          {!isCustomStorefrontProduct && <Link href={storeBaseHref}>{detail.store.name}</Link>}
+          <span aria-current="page" title={detail.product.name}>{detail.product.name}</span>
+        </nav>
 
-        <section className={`grid min-w-0 ${isCustomStorefrontProduct ? "gap-3 sm:gap-5" : "gap-3 sm:gap-5 md:gap-6"} lg:grid-cols-[minmax(0,0.56fr)_minmax(360px,0.44fr)] lg:items-start`}>
-          <ProductDetailGallery
-            images={detail.product.images}
-            fallbackImageUrl={detail.product.imageUrl}
-            product={detail.product}
-            productName={detail.product.name}
-            viewerRole={viewerRole}
-            compact={isCustomStorefrontProduct}
-          />
-          <div className={`min-w-0 border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-2xl p-3 sm:p-5" : "rounded-2xl p-3 sm:rounded-[24px] sm:p-5 md:p-6"}`}>
-            <p className={`${isCustomStorefrontProduct ? "text-xs" : "text-sm"} truncate font-medium text-slate-500 dark:text-slate-400`}>{detail.store.name}</p>
-            <div className={`${isCustomStorefrontProduct ? "mt-1" : "mt-2"} flex min-w-0 items-start justify-between gap-3`}>
-              <h1 className={`min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50 ${isCustomStorefrontProduct ? "text-xl sm:text-[28px]" : "text-[22px] sm:text-[26px] md:text-[30px]"}`}>
-                {detail.product.name}
-              </h1>
-              {!isStoreOwner && !isCustomStorefrontProduct ? (
-                <FavoriteToggleButton
-                  productId={detail.product.id}
-                  productName={detail.product.name}
-                  favoriteCount={detail.favoriteCount}
-                  className="shrink-0"
-                />
-              ) : null}
-            </div>
-            {detail.product.commerceType === "rental" ? (
-              <span className="mt-2 inline-flex w-fit rounded-full bg-orange-500 px-2.5 py-1 text-xs font-black text-white">
-                İcarə məhsulu
-              </span>
-            ) : null}
-            {detail.category ? (
-              <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                <span>Kateqoriya:</span>
-                {detail.category.parent ? (
-                  <>
-                    <Link
-                      href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.parent.slug}`}
-                      className="rounded-md bg-slate-100 px-2 py-1 text-slate-700 hover:text-orange-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:text-orange-300"
-                    >
-                      {detail.category.parent.name}
-                    </Link>
-                    <span aria-hidden="true">›</span>
-                  </>
-                ) : null}
-                <Link
-                  href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${detail.category.slug}`}
-                  className="rounded-md bg-orange-50 px-2 py-1 text-orange-700 hover:bg-orange-100 dark:bg-orange-500/10 dark:text-orange-200"
-                >
-                  {detail.category.name}
-                </Link>
+        <div className="pdp-overview">
+          <ProductDetailGallery key={detail.product.id} images={detail.product.images}
+            fallbackImageUrl={detail.product.imageUrl} product={detail.product} viewerRole={viewerRole}
+            isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : undefined} />
+          <section className="pdp-information" aria-labelledby="product-title">
+            <div className="pdp-title-row">
+              <div>
+                <Link className="pdp-eyebrow" href={storeBaseHref}>{detail.store.name}</Link>
+                <h1 id="product-title">{detail.product.name}</h1>
               </div>
-            ) : null}
-            <div className={`${isCustomStorefrontProduct ? "mt-2.5" : "mt-4"} flex min-w-0 flex-wrap items-center gap-2`}>
-              {reviewSummary.count ? (
-                <>
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((value) => (
-                      <Star
-                        key={value}
-                        className={
-                          value <= Math.round(reviewSummary.average)
-                            ? "size-4 fill-amber-400 text-amber-400"
-                            : "size-4 text-muted-foreground"
-                        }
-                        aria-hidden="true"
-                      />
-                  ))}
-                  </div>
-                  <span className="text-sm text-slate-500 dark:text-slate-400">
-                    {reviewSummary.average} / 5 ({reviewSummary.count} rəy)
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs text-slate-500 dark:text-slate-400 sm:text-sm">Hələ rəy yoxdur</span>
+              {!isStoreOwner && !isCustomStorefrontProduct && (
+                <FavoriteToggleButton productId={detail.product.id} productName={detail.product.name}
+                  favoriteCount={detail.favoriteCount} className="shrink-0" />
               )}
             </div>
-            <p className={`${isCustomStorefrontProduct ? "mt-3 text-2xl sm:mt-4 sm:text-[30px]" : "mt-3 text-[26px] sm:mt-4 sm:text-[28px] md:text-[30px]"} break-words font-semibold leading-none text-slate-950 dark:text-slate-50`}>
-              {formatAznDiscountedPrice(
-                detail.product.priceAmount,
-                detail.product.discountAmount,
+
+            <div className="pdp-meta">
+              {reviewSummary.count > 0 && (
+                <a href="#pdp-reviews" className="pdp-rating">
+                  <Star size={16} fill="currentColor" aria-hidden />
+                  <strong>{reviewSummary.average} / 5</strong> ({reviewSummary.count} rəy)
+                </a>
               )}
-            </p>
-            {detail.product.stockTrackingEnabled !== false ? <p className={canBuy ? "mt-2 text-xs text-slate-500 dark:text-slate-400 sm:mt-3 sm:text-sm" : "mt-2 text-xs font-semibold text-destructive sm:mt-3 sm:text-sm"}>
-              {canBuy ? `Stok: ${detail.product.stockQuantity}` : "Stokda yoxdur"}
-            </p> : null}
-            {detail.product.description ? (
-              <div className={isCustomStorefrontProduct ? "mt-2.5 sm:mt-3" : "mt-2.5 sm:mt-4"}>
-                <CollapsibleProductDescription text={detail.product.description} />
-              </div>
-            ) : null}
+              {detail.category && <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products?category=${encodeURIComponent(detail.category.slug)}`}>{detail.category.name}</Link>}
+              {detail.product.commerceType === "rental" && <span>İcarə</span>}
+              {detail.product.isPromoted && <span>VIP</span>}
+            </div>
+
             {isStoreOwner ? (
-              <Button asChild className="mt-3 h-10 w-full rounded-xl bg-orange-500 text-white hover:bg-orange-600 sm:mt-4 sm:h-11">
-                <Link href={`/sell/product/${detail.product.id}/edit`}>
-                  <Pencil className="mr-2 size-4" aria-hidden="true" />
-                  Redaktə et
+              <>
+                <ProductDetailPrice product={detail.product} stock={detail.product.stockQuantity} />
+                <Link className="pdp-secondary-action" href={`/sell/product/${detail.product.id}/edit`}>
+                  <Pencil size={17} aria-hidden /> Redaktə et
                 </Link>
-              </Button>
-            ) : !isSellerViewer ? (
-              <ProductPurchaseOptions
-                product={detail.product}
-                viewerRole={viewerRole}
-                showWhatsappOrderButton
-                sellerPhone={sellerPhone}
-                sellerName={detail.store.name}
+              </>
+            ) : (
+              <ProductPurchaseOptions key={detail.product.id} product={detail.product} viewerRole={viewerRole}
+                showWhatsappOrderButton sellerPhone={sellerPhone} sellerName={detail.store.name}
                 buyerName={current?.profile?.full_name ?? current?.user.email ?? ""}
-                buyerPhone={current?.profile?.phone ?? ""}
-                disabled={!canBuy}
+                buyerPhone={current?.profile?.phone ?? ""} disabled={!canBuy}
                 isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : null}
-                isolatedStoreBaseHref={isCustomStorefrontProduct ? storeBaseHref : null}
-                compact={isCustomStorefrontProduct}
-              />
-            ) : null}
-            {!isSellerViewer ? (
-              <Button asChild variant="outline" className={`${isCustomStorefrontProduct ? "mt-2 h-10 sm:mt-2.5 sm:h-11" : "mt-2 h-10 sm:mt-3 sm:h-11"} w-full rounded-xl border-slate-200 bg-white text-slate-900 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10 dark:hover:text-orange-200`}>
-                <Link href={`${storeBaseHref === "/" ? "" : storeBaseHref}/products/${detail.product.slug}/questions`}>
-                  <MessageCircle className="mr-2 size-4" aria-hidden="true" />
-                  Sual & Cavablar
-                </Link>
-              </Button>
-            ) : null}
-            <div className="mt-4 empty:hidden"><StorePolicies policies={detail.store.policies} /></div>
-            {!isStoreOwner ? (
-              <div className={`${isCustomStorefrontProduct ? "mt-3 rounded-xl p-3" : "mt-4 rounded-xl p-3"} min-w-0 overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950/45`}>
-                <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(11rem,0.8fr)_minmax(0,1fr)]">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-                      {detail.store.logoUrl ? (
-                        <img
-                          src={detail.store.logoUrl}
-                          alt={detail.store.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-base font-semibold text-slate-500 dark:text-slate-400">
-                          {detail.store.name.slice(0, 1).toLocaleUpperCase("az-AZ")}
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Satıcı</p>
-                      <h2 className="line-clamp-2 break-words text-base font-semibold leading-5 tracking-normal text-slate-950 dark:text-slate-50">
-                        {detail.store.name}
-                      </h2>
-                    </div>
-                  </div>
-                  <div className="grid min-w-0 gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                      <Package className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{detail.store.productCount} məhsul</span>
-                    </span>
-                    <span className="inline-flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg bg-white px-3 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                      <Clock3 className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
-                      <span className="min-w-0 break-words">{formatLastActive(detail.store.updatedAt)}</span>
-                    </span>
-                    {sellerAddress ? (
-                      <span className="inline-flex min-h-9 w-full min-w-0 items-start gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
-                        <MapPin className="size-3.5 shrink-0 text-orange-600 dark:text-orange-300" aria-hidden="true" />
-                        <span className="min-w-0 break-words leading-5">{sellerAddress}</span>
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="grid w-full shrink-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:col-span-2">
-                    <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-slate-900 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10">
-                      <Link href={storeBaseHref}>Mağazaya keç</Link>
-                    </Button>
-                    {sellerMapUrl ? (
-                      <Button asChild variant="outline" className="h-10 rounded-lg border-slate-200 bg-white px-3 text-xs font-semibold text-orange-600 shadow-none hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-800 dark:bg-slate-900 dark:text-orange-300 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10">
-                        <a href={sellerMapUrl} target="_blank" rel="noreferrer">
-                          Xəritəni göstər
-                          <ExternalLink className="ml-1.5 size-3.5" aria-hidden="true" />
-                        </a>
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
+                isolatedStoreBaseHref={isCustomStorefrontProduct ? storeBaseHref : null} />
+            )}
+
+            {!isSellerViewer && (
+              <div className="pdp-quick-info">
+                {hasPolicies && <a href="#pdp-policies"><Truck size={18} aria-hidden /> Çatdırılma və qaytarma <ArrowUpRight size={16} aria-hidden /></a>}
+                <Link href={questionsHref}><MessageCircle size={18} aria-hidden /> Sual və cavablar <ArrowUpRight size={16} aria-hidden /></Link>
               </div>
-            ) : null}
-          </div>
-        </section>
+            )}
 
-        {detail.product.categoryId ? (
-          <div className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} scroll-mt-28`}>
-            <RelatedProductList
-              initialProducts={[]}
-              initialCursor={null}
-              initialHasMore
-              productId={detail.product.id}
-              categoryId={detail.product.categoryId}
+            {!isStoreOwner && (
+              <a href="#pdp-seller" className="pdp-seller-preview">
+                {detail.store.logoUrl
+                  ? <img src={detail.store.logoUrl} alt="" loading="lazy" width={44} height={44} />
+                  : <Store size={24} aria-hidden />}
+                <span><small>Satıcı</small><strong>{detail.store.name}</strong></span>
+                <ArrowUpRight size={18} aria-hidden />
+              </a>
+            )}
+          </section>
+        </div>
+
+        <div className="pdp-details">
+          <div className="pdp-detail-content">
+            {detail.product.description?.trim() && (
+              <section id="pdp-description" className="pdp-section">
+                <p className="pdp-eyebrow">Məhsul detalları</p>
+                <h2>Məhsul haqqında</h2>
+                <p className="pdp-prose">{detail.product.description.trim()}</p>
+              </section>
+            )}
+            {(options.length > 0 || detail.product.depositEnabled) && (
+              <section id="pdp-specifications" className="pdp-section">
+                <h2>Məhsul xüsusiyyətləri</h2>
+                <dl className="pdp-facts">
+                  {options.map((option) => (
+                    <div key={option.type}><dt>{option.name}</dt><dd>{option.values.map((value) => value.value).join(", ")}</dd></div>
+                  ))}
+                  {detail.product.depositEnabled && <div><dt>Depozit</dt><dd>{formatAznPrice(detail.product.depositAmount)}</dd></div>}
+                </dl>
+              </section>
+            )}
+            {hasPolicies && (
+              <section id="pdp-policies" className="pdp-section">
+                <h2>Çatdırılma və qaytarma</h2>
+                <dl className="pdp-facts">
+                  {storePolicyFields.map(({ key, label }) => detail.store.policies?.[key] && (
+                    <div key={key}><dt>{label}</dt><dd>{detail.store.policies[key]}</dd></div>
+                  ))}
+                </dl>
+              </section>
+            )}
+            <section id="pdp-reviews" className="pdp-section">
+              <h2>Alıcı rəyləri {reviewSummary.count > 0 && <small>({reviewSummary.count})</small>}</h2>
+              {canWriteReview && (
+                <ProductReviewForm productId={detail.product.id} storeSlug={detail.store.slug}
+                  viewerRole={viewerRole} reviewId={currentReview?.id ?? null}
+                  initialRating={currentReview?.rating ?? 0} initialComment={currentReview?.comment ?? ""}
+                  allowGuest={isCustomStorefrontProduct} />
+              )}
+              <ProductReviewList reviews={reviews} />
+            </section>
+          </div>
+
+          <aside className="pdp-detail-sidebar">
+            <section id="pdp-seller" className="pdp-section">
+              <p className="pdp-eyebrow">Mağaza</p>
+              <h2>{detail.store.name}</h2>
+              <p>{detail.store.productCount} məhsul</p>
+              {detail.store.description?.trim() && <p className="pdp-prose">{detail.store.description.trim()}</p>}
+              {sellerAddress && <p className="pdp-address"><MapPin size={17} aria-hidden /> {sellerAddress}</p>}
+              <div className="pdp-section-links">
+                <Link className="pdp-secondary-action" href={storeBaseHref}>Mağazaya keç <ArrowUpRight size={16} aria-hidden /></Link>
+                {sellerMapUrl && <a className="pdp-secondary-action" href={sellerMapUrl} target="_blank" rel="noreferrer">
+                  Xəritədə bax <ArrowUpRight size={16} aria-hidden />
+                </a>}
+              </div>
+            </section>
+            {!isSellerViewer && (
+              <section id="pdp-questions" className="pdp-section">
+                <h2>Suallar və cavablar</h2>
+                <p>Məhsulla bağlı sualınızı satıcıya ünvanlayın.</p>
+                <Link className="pdp-secondary-action" href={questionsHref}>
+                  <MessageCircle size={17} aria-hidden /> Suallara keç
+                </Link>
+              </section>
+            )}
+          </aside>
+        </div>
+
+        {detail.product.categoryId && (
+          <div className="pdp-related">
+            <RelatedProductList initialProducts={[]} initialCursor={null} initialHasMore
+              productId={detail.product.id} categoryId={detail.product.categoryId}
               storeId={isCustomStorefrontProduct ? detail.store.id : undefined}
-              isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : undefined}
-              locale={locale}
-            />
+              isolatedStoreSlug={isCustomStorefrontProduct ? detail.store.slug : undefined} locale={locale} />
           </div>
-        ) : null}
-
-        <section className={`${isCustomStorefrontProduct ? "mt-4 sm:mt-7" : "mt-4 sm:mt-6 md:mt-7"} min-w-0`}>
-          <div className={`min-w-0 border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 ${isCustomStorefrontProduct ? "rounded-xl p-2.5 sm:p-4" : "rounded-xl p-3 sm:rounded-2xl sm:p-4 md:p-5"}`}>
-            <div className={`${isCustomStorefrontProduct ? "mb-3" : "mb-4"} flex items-center gap-2`}>
-              <Star className="size-4 fill-amber-400 text-amber-400 sm:size-5" aria-hidden="true" />
-              <h2 className={`${isCustomStorefrontProduct ? "text-base sm:text-lg" : "text-base sm:text-xl"} min-w-0 break-words font-semibold leading-tight tracking-normal text-slate-950 dark:text-slate-50`}>Məhsul dəyərləndirməsi</h2>
-            </div>
-            {canWriteReview ? (
-              <ProductReviewForm
-                productId={detail.product.id}
-                storeSlug={detail.store.slug}
-                viewerRole={viewerRole}
-                reviewId={currentReview?.id ?? null}
-                initialRating={currentReview?.rating ?? 0}
-                initialComment={currentReview?.comment ?? ""}
-                allowGuest={isCustomStorefrontProduct}
-              />
-            ) : null}
-            <ProductReviewList reviews={reviews} />
-          </div>
-        </section>
+        )}
       </div>
       {isCustomStorefrontProduct ? (
         <>

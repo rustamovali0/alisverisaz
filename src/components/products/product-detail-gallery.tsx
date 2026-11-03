@@ -1,312 +1,138 @@
 "use client";
 
-import { ArrowLeft, ChevronLeft, ChevronRight, ShoppingCart, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-
+import { ChevronLeft, ChevronRight, ImageOff, Maximize2, X } from "lucide-react";
+import { useRef, useState, type KeyboardEvent, type TouchEvent } from "react";
+import { OptimizedImage } from "@/components/common/optimized-image";
 import { AddToCartButton } from "@/components/cart/cart-buttons";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "@/i18n/navigation";
 import type { AuthRole } from "@/lib/auth/types";
-import type { CartProduct, ProductImage } from "@/lib/cart/types";
-import { formatAznDiscountedPrice, formatAznPrice } from "@/lib/format";
 import { getRequiredSelectableProductOptions } from "@/lib/products/variant-utils";
-import { cn } from "@/lib/utils";
+import type { CartProduct, ProductImage } from "@/lib/cart/types";
 
-type ProductDetailGalleryProps = {
+export function ProductDetailGallery({ images, fallbackImageUrl, product, viewerRole, isolatedStoreSlug }: {
   images: ProductImage[];
   fallbackImageUrl: string | null;
   product: CartProduct;
-  productName: string;
-  viewerRole?: AuthRole | null;
-  compact?: boolean;
-};
+  viewerRole: AuthRole | null;
+  isolatedStoreSlug?: string;
+}) {
+  const productName = product.name;
+  const photos = [...new Set([
+    ...images.filter((image) => image.isPrimary).map((image) => image.url),
+    ...images.map((image) => image.url),
+    fallbackImageUrl,
+  ].filter((url): url is string => Boolean(url)))];
+  const [index, setIndex] = useState(0);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [failed, setFailed] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState<string[]>([]);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const thumbnails = useRef<HTMLDivElement>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const swipedAt = useRef(-Infinity);
+  const source = photos[index];
+  const usable = source && !failed.includes(source);
+  const multiple = photos.length > 1;
 
-export function ProductBackButton({ compact = false }: { compact?: boolean }) {
-  const router = useRouter();
-
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={() => router.back()}
-      className={cn(
-        "inline-flex border-slate-200 bg-white text-slate-700 shadow-none hover:bg-slate-50 hover:text-slate-950 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
-        compact ? "size-9 rounded-full p-0" : "h-9 self-start rounded-lg px-3 sm:h-10",
-      )}
-      aria-label="Geri"
-    >
-      <ArrowLeft className={cn("size-4", !compact && "mr-2")} aria-hidden="true" />
-      {!compact ? "Geri" : null}
-    </Button>
-  );
-}
-
-export function ProductDetailGallery({
-  images,
-  fallbackImageUrl,
-  product,
-  productName,
-  viewerRole,
-  compact = false,
-}: ProductDetailGalleryProps) {
-  const galleryImages = useMemo(() => {
-    if (images.length > 0) {
-      return images;
+  function select(next: number) {
+    const bounded = Math.max(0, Math.min(next, photos.length - 1));
+    setIndex(bounded);
+    const rail = thumbnails.current;
+    const item = rail?.children[bounded] as HTMLElement | undefined;
+    if (rail && item) {
+      if (item.offsetLeft < rail.scrollLeft) rail.scrollLeft = item.offsetLeft;
+      else if (item.offsetLeft + item.offsetWidth > rail.scrollLeft + rail.clientWidth)
+        rail.scrollLeft = item.offsetLeft + item.offsetWidth - rail.clientWidth;
     }
-
-    return fallbackImageUrl
-      ? [
-          {
-            url: fallbackImageUrl,
-            isPrimary: true,
-          },
-        ]
-      : [];
-  }, [fallbackImageUrl, images]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
-  const activeImage = galleryImages[activeIndex];
-  const hasMultipleImages = galleryImages.length > 1;
-  const canGoPrevious = hasMultipleImages && activeIndex > 0;
-  const canGoNext = hasMultipleImages && activeIndex < galleryImages.length - 1;
-  const hasDiscount = product.discountAmount > 0;
-  const currentPrice = formatAznDiscountedPrice(
-    product.priceAmount,
-    product.discountAmount,
-  );
-  const requiredOptions = getRequiredSelectableProductOptions(product.options ?? []);
-  const cartSelectionReady = requiredOptions.length === 0;
-
-  const goToPrevious = useCallback(() => {
-    setActiveIndex((index) => Math.max(index - 1, 0));
-  }, []);
-
-  const goToNext = useCallback(() => {
-    setActiveIndex((index) => Math.min(index + 1, galleryImages.length - 1));
-  }, [galleryImages.length, hasMultipleImages]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    const previousPosition = document.body.style.position;
-    const previousTop = document.body.style.top;
-    const previousWidth = document.body.style.width;
-    const previousTouchAction = document.body.style.touchAction;
-    const previousOverscrollBehavior = document.documentElement.style.overscrollBehavior;
-    const scrollY = window.scrollY;
-
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.body.style.touchAction = "none";
-    document.documentElement.style.overscrollBehavior = "none";
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        goToPrevious();
-      }
-
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        goToNext();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.body.style.position = previousPosition;
-      document.body.style.top = previousTop;
-      document.body.style.width = previousWidth;
-      document.body.style.touchAction = previousTouchAction;
-      document.documentElement.style.overscrollBehavior = previousOverscrollBehavior;
-      window.scrollTo(0, scrollY);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [goToNext, goToPrevious, isOpen]);
-
-  function handleTouchEnd(clientX: number) {
-    if (touchStartX === null) {
-      return;
-    }
-
-    const delta = touchStartX - clientX;
-    setTouchStartX(null);
-
-    if (Math.abs(delta) < 40) {
-      return;
-    }
-
-    if (delta > 0) {
-      goToNext();
-      return;
-    }
-
-    goToPrevious();
   }
 
-  return (
-    <>
-      <div className={cn("min-w-0 overflow-hidden border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] dark:border-slate-800 dark:bg-slate-900", compact ? "rounded-2xl" : "rounded-[24px]")}>
-        <button
-          type="button"
-          disabled={!activeImage}
-          onClick={() => activeImage && setIsOpen(true)}
-          className={cn("group relative block w-full overflow-hidden bg-slate-100 text-left dark:bg-slate-950/45", compact ? "aspect-[3/2] sm:aspect-square" : "aspect-[4/3]")}
-          aria-label="Şəkli böyüt"
-        >
-          {activeImage ? (
-            <>
-              <img src={activeImage.url} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-20 blur-2xl" aria-hidden="true" />
-              <span className="absolute inset-0 bg-white/55 backdrop-blur-[2px] dark:bg-slate-950/55" aria-hidden="true" />
-              <img
-                src={activeImage.url}
-                alt={productName}
-                className={cn("relative z-10 h-full w-full object-contain transition-transform duration-300 ease-out group-hover:scale-[1.02] motion-reduce:transition-none", compact ? "p-3 sm:p-5" : "p-3 sm:p-5")}
-              />
-            </>
-          ) : (
-            <div className="grid h-full place-items-center bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-              <span className="grid size-20 place-items-center rounded-2xl border border-slate-200 bg-white text-orange-500 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-orange-300">
-                <ShoppingCart className="size-10 stroke-[2.4]" aria-hidden="true" />
-              </span>
-            </div>
-          )}
-        </button>
-        {hasMultipleImages ? (
-          <div className="flex gap-2 overflow-x-auto border-t border-slate-200 bg-white p-2.5 [scrollbar-width:thin] dark:border-slate-800 dark:bg-slate-900 sm:grid sm:grid-cols-5 sm:p-3">
-            {galleryImages.map((image, index) => (
-              <button
-                key={`${image.url}-${index}`}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                className={cn(
-                  "size-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 sm:aspect-square sm:size-auto dark:border-slate-800 dark:bg-slate-950/45",
-                  index === activeIndex ? "border-orange-500 ring-2 ring-orange-500/20" : "",
-                )}
-                aria-label={`${index + 1}. şəkil`}
-              >
-                <img
-                  src={image.url}
-                  alt={`${productName} ${index + 1}`}
-                  className="h-full w-full object-contain p-1"
-                />
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+  function onKeys(event: KeyboardEvent) {
+    const step = event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+    if (step && multiple) {
+      event.preventDefault();
+      select(index + step);
+    }
+  }
 
-      {isOpen && activeImage ? (
-        <div
-          className="fixed inset-0 z-50 flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background/95 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${productName} şəkli`}
-          onClick={() => setIsOpen(false)}
-          onWheel={(event) => event.preventDefault()}
-          onTouchMove={(event) => event.preventDefault()}
-        >
-          <div
-            className="z-10 flex min-h-[76px] shrink-0 items-center gap-3 border-b bg-card/98 px-3 py-2 shadow-sm sm:min-h-[86px] sm:px-5"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="size-12 shrink-0 overflow-hidden rounded-md border bg-muted sm:size-14">
-              <img
-                src={activeImage.url}
-                alt={productName}
-                className="h-full w-full object-contain"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 text-sm font-black leading-5 sm:text-base">
-                {productName}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-black text-foreground">{currentPrice}</p>
-                {hasDiscount ? (
-                  <p className="text-xs text-muted-foreground line-through">
-                    {formatAznPrice(product.priceAmount)}
-                  </p>
-                ) : null}
-              </div>
-              {viewerRole !== "seller" ? (
-                <AddToCartButton
-                  product={product}
-                  viewerRole={viewerRole}
-                  selectionReady={cartSelectionReady}
-                  disabled={product.stockQuantity <= 0}
-                  className="!h-10 min-h-10 w-[124px] rounded-lg px-2 text-xs sm:w-[168px] sm:text-sm"
-                />
-              ) : null}
-              <button
-                type="button"
-                className="grid size-12 shrink-0 place-items-center rounded-xl border bg-background text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setIsOpen(false);
-                }}
-                aria-label="Bağla"
-              >
-                <X className="size-7 stroke-[2.7]" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <div
-            className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-2 py-3 sm:px-5 sm:py-5"
-            onClick={() => setIsOpen(false)}
-            onTouchStart={(event) => setTouchStartX(event.touches[0]?.clientX ?? null)}
-            onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0]?.clientX ?? 0)}
-          >
-            {canGoPrevious ? (
-              <button
-                type="button"
-                className="absolute left-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border bg-card/95 text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-4 sm:size-12"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  goToPrevious();
-                }}
-                aria-label="Əvvəlki şəkil"
-              >
-                <ChevronLeft className="size-7" aria-hidden="true" />
-              </button>
-            ) : null}
-            <img
-              src={activeImage.url}
-              alt={productName}
-              className="max-h-full max-w-full select-none object-contain"
-              draggable={false}
-              onClick={(event) => event.stopPropagation()}
-            />
-            {canGoNext ? (
-              <button
-                type="button"
-                className="absolute right-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full border bg-card/95 text-foreground shadow-lg transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:right-4 sm:size-12"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  goToNext();
-                }}
-                aria-label="Növbəti şəkil"
-              >
-                <ChevronRight className="size-7" aria-hidden="true" />
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+  function onTouchStart(event: TouchEvent) {
+    const touch = event.touches[0];
+    start.current = event.touches.length === 1 ? { x: touch.clientX, y: touch.clientY } : null;
+  }
+
+  function onTouchEnd(event: TouchEvent) {
+    const origin = start.current;
+    start.current = null;
+    const touch = event.changedTouches[0];
+    if (!origin || !touch || !multiple) return;
+    const dx = touch.clientX - origin.x;
+    if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(touch.clientY - origin.y)) {
+      swipedAt.current = performance.now();
+      select(index + (dx < 0 ? 1 : -1));
+    }
+  }
+
+  const controls = multiple && (
+    <>
+      <button type="button" className="pdp-photo-arrow pdp-photo-prev" disabled={index === 0}
+        onClick={() => select(index - 1)} aria-label="Əvvəlki şəkil"><ChevronLeft aria-hidden /></button>
+      <button type="button" className="pdp-photo-arrow pdp-photo-next" disabled={index === photos.length - 1}
+        onClick={() => select(index + 1)} aria-label="Növbəti şəkil"><ChevronRight aria-hidden /></button>
     </>
+  );
+  const placeholder = <span className="pdp-no-photo"><ImageOff aria-hidden /> Şəkil mövcud deyil</span>;
+
+  return (
+    <section className="pdp-gallery" aria-label="Məhsul şəkilləri" onKeyDown={onKeys}>
+      <div className="pdp-photo-stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        {usable ? (
+          <button type="button" className="pdp-photo-trigger" aria-label="Şəkli böyüt"
+            onClick={() => {
+              if (performance.now() - swipedAt.current < 350) return;
+              dialog.current?.showModal();
+              setViewerOpen(true);
+            }}>
+            <OptimizedImage key={source} src={source} alt={productName} fill
+              sizes="(min-width: 1600px) 860px, (min-width: 1024px) 53vw, 94vw"
+              loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : "auto"}
+              onLoad={() => setLoaded((current) => current.includes(source) ? current : [...current, source])}
+              onError={() => setFailed((current) => [...current, source])} />
+            <span className="pdp-photo-zoom"><Maximize2 size={18} aria-hidden /></span>
+          </button>
+        ) : placeholder}
+        {usable && !loaded.includes(source) && <span className="pdp-photo-skeleton" aria-hidden />}
+        {controls}
+        {photos.length > 0 && <span className="pdp-photo-count" aria-live="polite">{index + 1} / {photos.length}</span>}
+      </div>
+      {multiple && (
+        <div ref={thumbnails} className="pdp-thumbnails" aria-label="Kiçik şəkillər">
+          {photos.map((photo, i) => (
+            <button key={photo} type="button" aria-label={`${i + 1}-ci şəkil`}
+              aria-pressed={i === index} onClick={() => select(i)}>
+              {failed.includes(photo) ? <ImageOff aria-hidden /> :
+                <OptimizedImage src={photo} alt="" fill sizes="72px"
+                  onError={() => setFailed((current) => [...current, photo])} />}
+            </button>
+          ))}
+        </div>
+      )}
+      <dialog ref={dialog} className="pdp-lightbox" aria-label="Böyüdülmüş məhsul şəkli"
+        onClose={() => setViewerOpen(false)} onClick={(event) => {
+          if (event.target === event.currentTarget) dialog.current?.close();
+        }}>
+        <div className="pdp-lightbox-head">
+          <span>{productName} · {index + 1} / {photos.length}</span>
+          {viewerOpen && viewerRole !== "seller" && product.stockQuantity > 0 &&
+            getRequiredSelectableProductOptions(product.options ?? []).length === 0 && (
+              <AddToCartButton product={product} viewerRole={viewerRole} isolatedStoreSlug={isolatedStoreSlug}
+                className="!min-w-[130px] !w-[150px] !rounded-lg !bg-primary !text-primary-foreground" />
+            )}
+          <button type="button" className="pdp-lightbox-close" aria-label="Bağla" autoFocus onClick={() => dialog.current?.close()}><X aria-hidden /></button>
+        </div>
+        <div className="pdp-lightbox-photo" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {viewerOpen && usable ? <OptimizedImage src={source} alt={productName} fill sizes="100vw"
+            onError={() => setFailed((current) => [...current, source])} /> : placeholder}
+          {controls}
+        </div>
+      </dialog>
+    </section>
   );
 }

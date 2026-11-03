@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AddToCartButton, BuyNowButton } from "@/components/cart/cart-buttons";
 import { WhatsAppOrderButton } from "@/components/cart/whatsapp-order-button";
@@ -14,7 +14,7 @@ import {
   normalizeProductVariantSelection,
 } from "@/lib/products/variant-utils";
 import { formatAznPrice } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { ProductDetailPrice } from "./product-detail-price";
 
 type ProductPurchaseOptionsProps = {
   product: CartProduct;
@@ -27,7 +27,6 @@ type ProductPurchaseOptionsProps = {
   disabled?: boolean;
   isolatedStoreSlug?: string | null;
   isolatedStoreBaseHref?: string | null;
-  compact?: boolean;
 };
 
 function isSelectionReady(product: CartProduct, selection: Record<string, string>) {
@@ -82,13 +81,32 @@ export function ProductPurchaseOptions({
   disabled = false,
   isolatedStoreSlug,
   isolatedStoreBaseHref,
-  compact = false,
 }: ProductPurchaseOptionsProps) {
   const initialSelection = useMemo(
     () => getAutoProductVariantSelection(product.options ?? []),
     [product.options],
   );
   const [selection, setSelection] = useState(initialSelection);
+  const [requestedQuantity, setRequestedQuantity] = useState(1);
+  const buyBar = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const bar = buyBar.current;
+    const page = bar?.closest<HTMLElement>(".pdp");
+    if (!bar || !page) return;
+
+    const nav = document.querySelector(".mobile-bottom-nav-stable");
+    const update = () => {
+      page.style.setProperty("--pdp-nav-height", `${nav?.getBoundingClientRect().height ?? 0}px`);
+      page.style.setProperty("--pdp-bar-height", `${bar.getBoundingClientRect().height}px`);
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(bar);
+    if (nav) observer.observe(nav);
+    update();
+    return () => observer.disconnect();
+  }, []);
+
   const normalizedSelection = normalizeProductVariantSelection(selection);
   const visibleOptions = getEnabledProductOptions(product.options ?? []).filter(
     (option) => option.values.length > 1,
@@ -107,107 +125,76 @@ export function ProductPurchaseOptions({
   });
   const isUnavailable = disabled || stockLimit <= 0;
 
-  return (
-    <div className={cn("grid min-w-0", compact ? "mt-3 gap-2 sm:mt-5 sm:gap-3" : "mt-4 gap-2.5 sm:mt-4 sm:gap-3")}>
-      {visibleOptions.length > 0 ? (
-        <div className="grid gap-2.5 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/45">
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <p className="text-[13px] font-semibold text-slate-950 dark:text-slate-50">Seçimlər</p>
-            <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-800">
-              Məhsul variantı
-            </span>
-          </div>
-          {visibleOptions.map((option) => (
-            <div key={option.type} className="grid gap-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
-                  {option.name}
-                </p>
-              <div className="flex flex-wrap gap-1.5">
-                {option.values.map((value) => {
-                  const isSelected = normalizedSelection[option.type] === value.value;
-                  const isAvailable = optionValueWouldBeAvailable({
-                    product,
-                    currentSelection: normalizedSelection,
-                    optionType: option.type,
-                    value: value.value,
-                  });
+  const quantity = Math.max(1, Math.min(requestedQuantity, stockLimit));
+  const purchaseProps = {
+    product, viewerRole, selectedOptions: normalizedSelection,
+    selectionReady, disabled: isUnavailable, isolatedStoreSlug,
+  };
 
-                  return (
-                    <button
-                      key={value.value}
-                      type="button"
-                      disabled={!isAvailable}
-                      onClick={() =>
-                        setSelection((current) => ({
-                          ...current,
-                          [option.type]: value.value,
-                        }))
-                      }
-                      className={cn(
-                        "inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold shadow-sm transition",
-                        isSelected
-                          ? "border-orange-500 bg-orange-500 text-white"
-                          : "border-slate-200 bg-white text-slate-800 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-orange-400/50 dark:hover:bg-orange-500/10",
-                        !isAvailable && "cursor-not-allowed opacity-40",
-                      )}
-                    >
-                      {option.type === "color" ? (
-                        <span
-                          className="size-3.5 shrink-0 rounded-full border border-black/10"
-                          style={{ backgroundColor: value.colorHex ?? "#e5e7eb" }}
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span className="min-w-0 max-w-[9rem] truncate">{value.value}</span>
-                    </button>
-                  );
-                })}
+  return (
+    <div id="pdp-purchase" className="pdp-purchase">
+      <ProductDetailPrice product={product} unitPrice={unitPrice} stock={stockLimit}
+        hasVariantPrice={selectedVariant?.priceOverrideAmount != null} />
+      {visibleOptions.map((option) => (
+        <fieldset key={option.type} className="pdp-option">
+          <legend>{option.name}</legend>
+          <div>
+            {option.values.map((value) => {
+              const selected = normalizedSelection[option.type] === value.value;
+              const available = optionValueWouldBeAvailable({
+                product, currentSelection: normalizedSelection, optionType: option.type, value: value.value,
+              });
+              return (
+                <button key={value.value} type="button" aria-pressed={selected} disabled={!available}
+                  onClick={() => {
+                    setSelection((current) => ({ ...current, [option.type]: value.value }));
+                    setRequestedQuantity(1);
+                  }}>
+                  {option.type === "color" && <i style={{ backgroundColor: value.colorHex ?? "#e5e7eb" }} aria-hidden />}
+                  {value.value}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      ))}
+      {viewerRole !== "seller" && (
+        <>
+          {!isUnavailable && selectionReady && (
+            <div className="pdp-quantity">
+              <span>Miqdar</span>
+              <div role="group" aria-label="Miqdar">
+                <button type="button" aria-label="Miqdarı azalt" disabled={quantity <= 1}
+                  onClick={() => setRequestedQuantity(quantity - 1)}>−</button>
+                <output aria-live="polite">{quantity}</output>
+                <button type="button" aria-label="Miqdarı artır" disabled={quantity >= stockLimit}
+                  onClick={() => setRequestedQuantity(quantity + 1)}>+</button>
               </div>
             </div>
-          ))}
-          {unitPrice !== Math.max(product.priceAmount - product.discountAmount, 0) ? (
-            <p className="text-xs font-semibold text-primary">
-              Seçilmiş qiymət: {formatAznPrice(unitPrice)}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="grid min-w-0 gap-3 min-[380px]:grid-cols-2">
-        <BuyNowButton
-          product={product}
-          viewerRole={viewerRole}
-          selectedOptions={normalizedSelection}
-          selectionReady={selectionReady}
-          disabled={isUnavailable}
-          isolatedStoreSlug={isolatedStoreSlug}
-          isolatedStoreBaseHref={isolatedStoreBaseHref}
-          className={cn("w-full rounded-xl bg-orange-500 font-bold text-white shadow-none hover:bg-orange-600", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
-        />
-        <AddToCartButton
-          product={product}
-          viewerRole={viewerRole}
-          selectedOptions={normalizedSelection}
-          selectionReady={selectionReady}
-          disabled={isUnavailable}
-          isolatedStoreSlug={isolatedStoreSlug}
-          className={cn("w-full border-0 bg-slate-950 text-white shadow-none hover:bg-slate-800 hover:text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
-        />
-      </div>
-      {showWhatsappOrderButton ? (
-        <WhatsAppOrderButton
-          product={product}
-          sellerPhone={sellerPhone}
-          sellerName={sellerName}
-          viewerRole={viewerRole}
-          buyerName={buyerName}
-          buyerPhone={buyerPhone}
-          selectedOptions={normalizedSelection}
-          selectionReady={selectionReady}
-          disabled={isUnavailable}
-          className={cn("w-full rounded-xl border-emerald-200 bg-emerald-50 text-emerald-700 shadow-none hover:bg-emerald-100 hover:text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300", compact ? "h-10 sm:h-12" : "h-10 sm:h-11")}
-        />
-      ) : null}
+          )}
+          <div className="pdp-purchase-actions">
+            <div className="pdp-buy-bar" ref={buyBar}>
+              <span className="pdp-mobile-price">
+                <small>{isUnavailable ? "Stokda yoxdur" : quantity > 1 ? `${quantity} ədəd` : "Qiymət"}</small>
+                <strong>{formatAznPrice(unitPrice * quantity)}</strong>
+              </span>
+              {!selectionReady && !isUnavailable ? (
+                <a href="#pdp-purchase" className="pdp-secondary-action pdp-select-options">Variant seçin</a>
+              ) : (
+                <AddToCartButton {...purchaseProps} initialAddQuantity={quantity}
+                  className="pdp-add-cart !min-h-12 w-full !rounded-lg !border-0 !bg-primary !text-primary-foreground" />
+              )}
+            </div>
+            <BuyNowButton {...purchaseProps} orderQuantity={quantity} isolatedStoreBaseHref={isolatedStoreBaseHref}
+              className="pdp-buy-now !min-h-12 w-full !rounded-lg !border !border-primary/30 !bg-card !text-primary shadow-none" />
+          </div>
+          {showWhatsappOrderButton && (
+            <WhatsAppOrderButton {...purchaseProps} sellerPhone={sellerPhone} sellerName={sellerName}
+              buyerName={buyerName} buyerPhone={buyerPhone} orderQuantity={quantity}
+              className="pdp-whatsapp !min-h-11 w-full !rounded-lg shadow-none" />
+          )}
+        </>
+      )}
     </div>
   );
 }

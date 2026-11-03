@@ -1409,12 +1409,14 @@ async function getMarketplaceProductByIdUncached(input: {
   let storeId: string | undefined;
 
   if (input.storeSlug) {
-    const { data: store } = await (supabase as any)
+    const { data: store, error: storeError } = await (supabase as any)
       .from("stores")
       .select("id")
       .eq("slug", input.storeSlug)
       .eq("status", "active")
       .maybeSingle();
+
+    if (storeError) throw new Error(storeError.message);
 
     if (!store) {
       return null;
