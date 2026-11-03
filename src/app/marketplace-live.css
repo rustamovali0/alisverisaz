@@ -456,6 +456,7 @@
   flex-shrink: 0;
 }
 .live-home {
+  display: flow-root;
   background: #fff;
   color: #26362b;
   overflow-x: clip;
